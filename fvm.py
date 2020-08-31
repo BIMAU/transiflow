@@ -141,3 +141,35 @@ class Derivatives:
             for j in range(ny):
                 for k in range(nz):
                     Derivatives._p_x(atom[i, j, k, 1, 1, :], k, j, i, z, y, x)
+
+    @staticmethod
+    def _u_x(atom, i, j, k, x, y, z):
+        # volume size in the y direction
+        dy = y[j] - y[j-1]
+        # volume size in the z direction
+        dz = z[k] - z[k-1]
+
+        # second order finite difference
+        atom[1] = dy * dz
+        atom[0] = -atom[1]
+
+    @staticmethod
+    def u_x(atom, nx, ny, nz, x, y, z):
+        for i in range(nx):
+            for j in range(ny):
+                for k in range(nz):
+                    Derivatives._u_x(atom[i, j, k, :, 1, 1], i, j, k, x, y, z)
+
+    @staticmethod
+    def u_y(atom, nx, ny, nz, x, y, z):
+        for i in range(nx):
+            for j in range(ny):
+                for k in range(nz):
+                    Derivatives._u_x(atom[i, j, k, 1, :, 1], j, i, k, y, x, z)
+
+    @staticmethod
+    def u_z(atom, nx, ny, nz, x, y, z):
+        for i in range(nx):
+            for j in range(ny):
+                for k in range(nz):
+                    Derivatives._u_x(atom[i, j, k, 1, 1, :], k, j, i, z, y, x)

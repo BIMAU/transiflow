@@ -207,3 +207,45 @@ def test_p_z():
                 print(i, j, k)
                 assert atom[i, j, k, 1, 1, 1] == pytest.approx(-dy * dx)
                 assert atom[i, j, k, 1, 1, 2] == pytest.approx(dy * dx)
+
+def test_u_x():
+    nx, ny, nz, x, y, z, atom = create_test_problem()
+
+    fvm.Derivatives.u_x(atom, nx, ny, nz, x, y, z)
+
+    for i in range(nx):
+        for j in range(ny):
+            dy = y[j] - y[j-1]
+            for k in range(nz):
+                dz = z[k] - z[k-1]
+                print(i, j, k)
+                assert atom[i, j, k, 0, 1, 1] == pytest.approx(-dy * dz)
+                assert atom[i, j, k, 1, 1, 1] == pytest.approx(dy * dz)
+
+def test_u_y():
+    nx, ny, nz, x, y, z, atom = create_test_problem()
+
+    fvm.Derivatives.u_y(atom, nx, ny, nz, x, y, z)
+
+    for i in range(nx):
+        dx = x[i] - x[i-1]
+        for j in range(ny):
+            for k in range(nz):
+                dz = z[k] - z[k-1]
+                print(i, j, k)
+                assert atom[i, j, k, 1, 0, 1] == pytest.approx(-dx * dz)
+                assert atom[i, j, k, 1, 1, 1] == pytest.approx(dx * dz)
+
+def test_u_z():
+    nx, ny, nz, x, y, z, atom = create_test_problem()
+
+    fvm.Derivatives.u_z(atom, nx, ny, nz, x, y, z)
+
+    for i in range(nx):
+        dx = x[i] - x[i-1]
+        for j in range(ny):
+            dy = y[j] - y[j-1]
+            for k in range(nz):
+                print(i, j, k)
+                assert atom[i, j, k, 1, 1, 0] == pytest.approx(-dy * dx)
+                assert atom[i, j, k, 1, 1, 1] == pytest.approx(dy * dx)
