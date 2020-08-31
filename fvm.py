@@ -1,3 +1,5 @@
+import numpy
+
 class Derivatives:
     @staticmethod
     def _u_xx(atom, i, j, k, x, y, z):
@@ -16,25 +18,31 @@ class Derivatives:
         atom[1] = -atom[0] - atom[2]
 
     @staticmethod
-    def u_xx(atom, nx, ny, nz, x, y, z):
+    def u_xx(nx, ny, nz, x, y, z):
+        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
                     Derivatives._u_xx(atom[i, j, k, 0, 0, :, 1, 1], i, j, k, x, y, z)
+        return atom
 
     @staticmethod
-    def v_yy(atom, nx, ny, nz, x, y, z):
+    def v_yy(nx, ny, nz, x, y, z):
+        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
                     Derivatives._u_xx(atom[i, j, k, 1, 1, 1, :, 1], j, i, k, y, x, z)
+        return atom
 
     @staticmethod
-    def w_zz(atom, nx, ny, nz, x, y, z):
+    def w_zz(nx, ny, nz, x, y, z):
+        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
                     Derivatives._u_xx(atom[i, j, k, 2, 2, 1, 1, :], k, j, i, z, y, x)
+        return atom
 
     @staticmethod
     def _u_yy(atom, i, j, k, x, y, z):
@@ -53,25 +61,31 @@ class Derivatives:
         atom[1] = -atom[0] - atom[2]
 
     @staticmethod
-    def u_yy(atom, nx, ny, nz, x, y, z):
+    def u_yy(nx, ny, nz, x, y, z):
+        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
                     Derivatives._u_yy(atom[i, j, k, 0, 0, :, 1, 1], i, j, k, x, y, z)
+        return atom
 
     @staticmethod
-    def v_xx(atom, nx, ny, nz, x, y, z):
+    def v_xx(nx, ny, nz, x, y, z):
+        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
                     Derivatives._u_yy(atom[i, j, k, 1, 1, 1, :, 1], j, i, k, y, x, z)
+        return atom
 
     @staticmethod
-    def w_yy(atom, nx, ny, nz, x, y, z):
+    def w_yy(nx, ny, nz, x, y, z):
+        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
                     Derivatives._u_yy(atom[i, j, k, 2, 2, 1, 1, :], k, j, i, z, y, x)
+        return atom
 
     @staticmethod
     def _u_zz(atom, i, j, k, x, y, z):
@@ -90,25 +104,31 @@ class Derivatives:
         atom[1] = -atom[0] - atom[2]
 
     @staticmethod
-    def u_zz(atom, nx, ny, nz, x, y, z):
+    def u_zz(nx, ny, nz, x, y, z):
+        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
                     Derivatives._u_zz(atom[i, j, k, 0, 0, :, 1, 1], i, j, k, x, y, z)
+        return atom
 
     @staticmethod
-    def v_zz(atom, nx, ny, nz, x, y, z):
+    def v_zz(nx, ny, nz, x, y, z):
+        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
                     Derivatives._u_zz(atom[i, j, k, 1, 1, 1, :, 1], j, i, k, y, x, z)
+        return atom
 
     @staticmethod
-    def w_xx(atom, nx, ny, nz, x, y, z):
+    def w_xx(nx, ny, nz, x, y, z):
+        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
                     Derivatives._u_zz(atom[i, j, k, 2, 2, 1, 1, :], k, j, i, z, y, x)
+        return atom
 
     @staticmethod
     def _p_x(atom, i, j, k, x, y, z):
@@ -122,25 +142,31 @@ class Derivatives:
         atom[1] = -atom[2]
 
     @staticmethod
-    def p_x(atom, nx, ny, nz, x, y, z):
+    def p_x(nx, ny, nz, x, y, z):
+        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
                     Derivatives._p_x(atom[i, j, k, 0, 3, :, 1, 1], i, j, k, x, y, z)
+        return atom
 
     @staticmethod
-    def p_y(atom, nx, ny, nz, x, y, z):
+    def p_y(nx, ny, nz, x, y, z):
+        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
                     Derivatives._p_x(atom[i, j, k, 1, 3, 1, :, 1], j, i, k, y, x, z)
+        return atom
 
     @staticmethod
-    def p_z(atom, nx, ny, nz, x, y, z):
+    def p_z(nx, ny, nz, x, y, z):
+        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
                     Derivatives._p_x(atom[i, j, k, 2, 3, 1, 1, :], k, j, i, z, y, x)
+        return atom
 
     @staticmethod
     def _u_x(atom, i, j, k, x, y, z):
@@ -154,22 +180,28 @@ class Derivatives:
         atom[0] = -atom[1]
 
     @staticmethod
-    def u_x(atom, nx, ny, nz, x, y, z):
+    def u_x(nx, ny, nz, x, y, z):
+        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
                     Derivatives._u_x(atom[i, j, k, 3, 0, :, 1, 1], i, j, k, x, y, z)
+        return atom
 
     @staticmethod
-    def u_y(atom, nx, ny, nz, x, y, z):
+    def u_y(nx, ny, nz, x, y, z):
+        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
                     Derivatives._u_x(atom[i, j, k, 3, 1, 1, :, 1], j, i, k, y, x, z)
+        return atom
 
     @staticmethod
-    def u_z(atom, nx, ny, nz, x, y, z):
+    def u_z(nx, ny, nz, x, y, z):
+        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
                     Derivatives._u_x(atom[i, j, k, 3, 2, 1, 1, :], k, j, i, z, y, x)
+        return atom
