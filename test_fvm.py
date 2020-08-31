@@ -2,7 +2,8 @@ import numpy
 import fvm
 import pytest
 
-def create_coordinate_vector(dx):
+def create_coordinate_vector(nx):
+    dx = 1 / (nx + 1)
     return numpy.roll(numpy.arange(-dx, 1+dx, dx), -2)
 
 def create_test_problem():
@@ -10,13 +11,9 @@ def create_test_problem():
     ny = 3
     nz = 2
 
-    dx = 1 / (nx + 1)
-    dy = 1 / (ny + 1)
-    dz = 1 / (nz + 1)
-
-    x = create_coordinate_vector(dx)
-    y = create_coordinate_vector(dy)
-    z = create_coordinate_vector(dz)
+    x = create_coordinate_vector(nx)
+    y = create_coordinate_vector(ny)
+    z = create_coordinate_vector(nz)
 
     atom = numpy.zeros([nx, ny, nz, 3, 3, 3])
 
