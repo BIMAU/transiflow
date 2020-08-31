@@ -20,10 +20,10 @@ def create_test_problem():
 
     atom = numpy.zeros([nx, ny, nz, 3, 3, 3])
 
-    return (nx, ny, nz, dx, dy, dz, x, y, z, atom)
+    return (nx, ny, nz, x, y, z, atom)
 
 def test_u_xx():
-    nx, ny, nz, dx, dy, dz, x, y, z, atom = create_test_problem()
+    nx, ny, nz, x, y, z, atom = create_test_problem()
 
     fvm.Derivatives.u_xx(atom, nx, ny, nz, x, y, z)
 
@@ -38,7 +38,7 @@ def test_u_xx():
                 assert atom[i, j, k, 2, 1, 1] == pytest.approx(1 / dx * dy * dz)
 
 def test_v_yy():
-    nx, ny, nz, dx, dy, dz, x, y, z, atom = create_test_problem()
+    nx, ny, nz, x, y, z, atom = create_test_problem()
 
     fvm.Derivatives.v_yy(atom, nx, ny, nz, x, y, z)
 
@@ -53,7 +53,7 @@ def test_v_yy():
                 assert atom[i, j, k, 1, 2, 1] == pytest.approx(1 / dy * dx * dz)
 
 def test_w_zz():
-    nx, ny, nz, dx, dy, dz, x, y, z, atom = create_test_problem()
+    nx, ny, nz, x, y, z, atom = create_test_problem()
 
     fvm.Derivatives.w_zz(atom, nx, ny, nz, x, y, z)
 
@@ -68,7 +68,7 @@ def test_w_zz():
                 assert atom[i, j, k, 1, 1, 2] == pytest.approx(1 / dz * dy * dx)
 
 def test_u_yy():
-    nx, ny, nz, dx, dy, dz, x, y, z, atom = create_test_problem()
+    nx, ny, nz, x, y, z, atom = create_test_problem()
 
     fvm.Derivatives.u_yy(atom, nx, ny, nz, x, y, z)
 
@@ -83,7 +83,7 @@ def test_u_yy():
                 assert atom[i, j, k, 2, 1, 1] == pytest.approx(1 / dy * dx * dz)
 
 def test_v_xx():
-    nx, ny, nz, dx, dy, dz, x, y, z, atom = create_test_problem()
+    nx, ny, nz, x, y, z, atom = create_test_problem()
 
     fvm.Derivatives.v_xx(atom, nx, ny, nz, x, y, z)
 
@@ -98,7 +98,7 @@ def test_v_xx():
                 assert atom[i, j, k, 1, 2, 1] == pytest.approx(1 / dx * dy * dz)
 
 def test_w_yy():
-    nx, ny, nz, dx, dy, dz, x, y, z, atom = create_test_problem()
+    nx, ny, nz, x, y, z, atom = create_test_problem()
 
     fvm.Derivatives.w_yy(atom, nx, ny, nz, x, y, z)
 
@@ -113,7 +113,7 @@ def test_w_yy():
                 assert atom[i, j, k, 1, 1, 2] == pytest.approx(1 / dy * dz * dx)
 
 def test_u_zz():
-    nx, ny, nz, dx, dy, dz, x, y, z, atom = create_test_problem()
+    nx, ny, nz, x, y, z, atom = create_test_problem()
 
     fvm.Derivatives.u_zz(atom, nx, ny, nz, x, y, z)
 
@@ -128,7 +128,7 @@ def test_u_zz():
                 assert atom[i, j, k, 2, 1, 1] == pytest.approx(1 / dz * dx * dy)
 
 def test_v_zz():
-    nx, ny, nz, dx, dy, dz, x, y, z, atom = create_test_problem()
+    nx, ny, nz, x, y, z, atom = create_test_problem()
 
     fvm.Derivatives.v_zz(atom, nx, ny, nz, x, y, z)
 
@@ -143,7 +143,7 @@ def test_v_zz():
                 assert atom[i, j, k, 1, 2, 1] == pytest.approx(1 / dz * dy * dx)
 
 def test_w_xx():
-    nx, ny, nz, dx, dy, dz, x, y, z, atom = create_test_problem()
+    nx, ny, nz, x, y, z, atom = create_test_problem()
 
     fvm.Derivatives.w_xx(atom, nx, ny, nz, x, y, z)
 
