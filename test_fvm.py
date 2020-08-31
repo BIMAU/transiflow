@@ -28,6 +28,7 @@ def test_u_xx():
     fvm.Derivatives.u_xx(atom, nx, ny, nz, x, y, z)
 
     for i in range(nx):
+        dx = x[i] - x[i-1]
         for j in range(ny):
             for k in range(nz):
                 print(i, j, k)
@@ -40,6 +41,7 @@ def test_v_yy():
     fvm.Derivatives.v_yy(atom, nx, ny, nz, x, y, z)
 
     for i in range(nx):
+        dx = x[i] - x[i-1]
         for j in range(ny):
             for k in range(nz):
                 print(i, j, k)
@@ -52,6 +54,7 @@ def test_w_zz():
     fvm.Derivatives.w_zz(atom, nx, ny, nz, x, y, z)
 
     for i in range(nx):
+        dx = x[i] - x[i-1]
         for j in range(ny):
             for k in range(nz):
                 print(i, j, k)
@@ -64,6 +67,7 @@ def test_u_yy():
     fvm.Derivatives.u_yy(atom, nx, ny, nz, x, y, z)
 
     for i in range(nx):
+        dx = x[i] - x[i-1]
         for j in range(ny):
             for k in range(nz):
                 print(i, j, k)
@@ -76,6 +80,7 @@ def test_v_xx():
     fvm.Derivatives.v_xx(atom, nx, ny, nz, x, y, z)
 
     for i in range(nx):
+        dx = x[i] - x[i-1]
         for j in range(ny):
             for k in range(nz):
                 print(i, j, k)
@@ -88,6 +93,7 @@ def test_w_yy():
     fvm.Derivatives.w_yy(atom, nx, ny, nz, x, y, z)
 
     for i in range(nx):
+        dx = x[i] - x[i-1]
         for j in range(ny):
             for k in range(nz):
                 print(i, j, k)
@@ -100,6 +106,7 @@ def test_u_zz():
     fvm.Derivatives.u_zz(atom, nx, ny, nz, x, y, z)
 
     for i in range(nx):
+        dx = x[i] - x[i-1]
         for j in range(ny):
             for k in range(nz):
                 print(i, j, k)
@@ -112,6 +119,7 @@ def test_v_zz():
     fvm.Derivatives.v_zz(atom, nx, ny, nz, x, y, z)
 
     for i in range(nx):
+        dx = x[i] - x[i-1]
         for j in range(ny):
             for k in range(nz):
                 print(i, j, k)
@@ -124,6 +132,7 @@ def test_w_xx():
     fvm.Derivatives.w_xx(atom, nx, ny, nz, x, y, z)
 
     for i in range(nx):
+        dx = x[i] - x[i-1]
         for j in range(ny):
             for k in range(nz):
                 print(i, j, k)
