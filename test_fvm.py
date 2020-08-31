@@ -30,6 +30,7 @@ def test_u_xx():
     for i in range(nx):
         dx = x[i] - x[i-1]
         for j in range(ny):
+            dy = y[j] - y[j-1]
             for k in range(nz):
                 print(i, j, k)
                 assert atom[i, j, k, 0, 1, 1] == pytest.approx(1 / dx * dy * dz)
@@ -43,6 +44,7 @@ def test_v_yy():
     for i in range(nx):
         dx = x[i] - x[i-1]
         for j in range(ny):
+            dy = y[j] - y[j-1]
             for k in range(nz):
                 print(i, j, k)
                 assert atom[i, j, k, 1, 0, 1] == pytest.approx(1 / dy * dx * dz)
@@ -56,6 +58,7 @@ def test_w_zz():
     for i in range(nx):
         dx = x[i] - x[i-1]
         for j in range(ny):
+            dy = y[j] - y[j-1]
             for k in range(nz):
                 print(i, j, k)
                 assert atom[i, j, k, 1, 1, 0] == pytest.approx(1 / dz * dy * dx)
@@ -69,6 +72,7 @@ def test_u_yy():
     for i in range(nx):
         dx = x[i] - x[i-1]
         for j in range(ny):
+            dy = y[j] - y[j-1]
             for k in range(nz):
                 print(i, j, k)
                 assert atom[i, j, k, 0, 1, 1] == pytest.approx(1 / dy * dx * dz)
@@ -82,6 +86,7 @@ def test_v_xx():
     for i in range(nx):
         dx = x[i] - x[i-1]
         for j in range(ny):
+            dy = y[j] - y[j-1]
             for k in range(nz):
                 print(i, j, k)
                 assert atom[i, j, k, 1, 0, 1] == pytest.approx(1 / dx * dy * dz)
@@ -95,6 +100,7 @@ def test_w_yy():
     for i in range(nx):
         dx = x[i] - x[i-1]
         for j in range(ny):
+            dy = y[j] - y[j-1]
             for k in range(nz):
                 print(i, j, k)
                 assert atom[i, j, k, 1, 1, 0] == pytest.approx(1 / dy * dz * dx)
@@ -108,6 +114,7 @@ def test_u_zz():
     for i in range(nx):
         dx = x[i] - x[i-1]
         for j in range(ny):
+            dy = y[j] - y[j-1]
             for k in range(nz):
                 print(i, j, k)
                 assert atom[i, j, k, 0, 1, 1] == pytest.approx(1 / dz * dx * dy)
@@ -121,6 +128,7 @@ def test_v_zz():
     for i in range(nx):
         dx = x[i] - x[i-1]
         for j in range(ny):
+            dy = y[j] - y[j-1]
             for k in range(nz):
                 print(i, j, k)
                 assert atom[i, j, k, 1, 0, 1] == pytest.approx(1 / dz * dy * dx)
@@ -134,6 +142,7 @@ def test_w_xx():
     for i in range(nx):
         dx = x[i] - x[i-1]
         for j in range(ny):
+            dy = y[j] - y[j-1]
             for k in range(nz):
                 print(i, j, k)
                 assert atom[i, j, k, 1, 1, 0] == pytest.approx(1 / dx * dz * dy)
