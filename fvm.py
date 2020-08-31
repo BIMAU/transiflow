@@ -13,7 +13,7 @@ class Derivatives:
         # second order finite difference
         atom[0] = 1 / dx * dy * dz
         atom[2] = 1 / dxp1 * dy * dz
-        atom[1] = -atom[0] + atom[2]
+        atom[1] = -atom[0] - atom[2]
 
     @staticmethod
     def u_xx(atom, nx, ny, nz, x, y, z):
@@ -50,7 +50,7 @@ class Derivatives:
         # second order finite difference
         atom[0] = 1 / dy * dx * dz
         atom[2] = 1 / dyp1 * dx * dz
-        atom[1] = -atom[0] + atom[2]
+        atom[1] = -atom[0] - atom[2]
 
     @staticmethod
     def u_yy(atom, nx, ny, nz, x, y, z):
@@ -87,7 +87,7 @@ class Derivatives:
         # second order finite difference
         atom[0] = 1 / dz * dx * dy
         atom[2] = 1 / dzp1 * dx * dy
-        atom[1] = -atom[0] + atom[2]
+        atom[1] = -atom[0] - atom[2]
 
     @staticmethod
     def u_zz(atom, nx, ny, nz, x, y, z):
