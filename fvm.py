@@ -72,3 +72,40 @@ class Derivatives:
             for j in range(ny):
                 for k in range(nz):
                     Derivatives._u_yy(atom[i, j, k, 1, 1, :], k, j, i, z, y, x)
+
+    @staticmethod
+    def _u_zz(atom, i, j, k, x, y, z):
+        # distance between u[k] and u[k-1]
+        dz = (z[k] - z[k-2]) / 2
+        # distance between u[k+1] and u[k]
+        dzp1 = (z[k+1] - z[k-1]) / 2
+        # volume size in the x direction
+        dx = (x[i+1] - x[i-1]) / 2
+        # volume size in the y direction
+        dy = y[j] - y[j-1]
+
+        # second order finite difference
+        atom[0] = 1 / dz * dx * dy
+        atom[2] = 1 / dzp1 * dx * dy
+        atom[1] = -atom[0] + atom[2]
+
+    @staticmethod
+    def u_zz(atom, nx, ny, nz, x, y, z):
+        for i in range(nx):
+            for j in range(ny):
+                for k in range(nz):
+                    Derivatives._u_zz(atom[i, j, k, :, 1, 1], i, j, k, x, y, z)
+
+    @staticmethod
+    def v_zz(atom, nx, ny, nz, x, y, z):
+        for i in range(nx):
+            for j in range(ny):
+                for k in range(nz):
+                    Derivatives._u_zz(atom[i, j, k, 1, :, 1], j, i, k, y, x, z)
+
+    @staticmethod
+    def w_xx(atom, nx, ny, nz, x, y, z):
+        for i in range(nx):
+            for j in range(ny):
+                for k in range(nz):
+                    Derivatives._u_zz(atom[i, j, k, 1, 1, :], k, j, i, z, y, x)
