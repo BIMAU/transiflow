@@ -18,7 +18,7 @@ def create_test_problem():
     y = create_coordinate_vector(ny)
     z = create_coordinate_vector(nz)
 
-    atom = numpy.zeros([nx, ny, nz, 3, 3, 3])
+    atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
 
     return (nx, ny, nz, x, y, z, atom)
 
@@ -35,8 +35,8 @@ def test_u_xx():
             for k in range(nz):
                 dz = z[k] - z[k-1]
                 print(i, j, k)
-                assert atom[i, j, k, 0, 1, 1] == pytest.approx(1 / dx * dy * dz)
-                assert atom[i, j, k, 2, 1, 1] == pytest.approx(1 / dxp1 * dy * dz)
+                assert atom[i, j, k, 0, 0, 0, 1, 1] == pytest.approx(1 / dx * dy * dz)
+                assert atom[i, j, k, 0, 0, 2, 1, 1] == pytest.approx(1 / dxp1 * dy * dz)
 
 def test_v_yy():
     nx, ny, nz, x, y, z, atom = create_test_problem()
@@ -51,8 +51,8 @@ def test_v_yy():
             for k in range(nz):
                 dz = z[k] - z[k-1]
                 print(i, j, k)
-                assert atom[i, j, k, 1, 0, 1] == pytest.approx(1 / dy * dx * dz)
-                assert atom[i, j, k, 1, 2, 1] == pytest.approx(1 / dyp1 * dx * dz)
+                assert atom[i, j, k, 1, 1, 1, 0, 1] == pytest.approx(1 / dy * dx * dz)
+                assert atom[i, j, k, 1, 1, 1, 2, 1] == pytest.approx(1 / dyp1 * dx * dz)
 
 def test_w_zz():
     nx, ny, nz, x, y, z, atom = create_test_problem()
@@ -67,8 +67,8 @@ def test_w_zz():
                 dz = z[k] - z[k-1]
                 dzp1 = z[k+1] - z[k]
                 print(i, j, k)
-                assert atom[i, j, k, 1, 1, 0] == pytest.approx(1 / dz * dy * dx)
-                assert atom[i, j, k, 1, 1, 2] == pytest.approx(1 / dzp1 * dy * dx)
+                assert atom[i, j, k, 2, 2, 1, 1, 0] == pytest.approx(1 / dz * dy * dx)
+                assert atom[i, j, k, 2, 2, 1, 1, 2] == pytest.approx(1 / dzp1 * dy * dx)
 
 def test_u_yy():
     nx, ny, nz, x, y, z, atom = create_test_problem()
@@ -83,8 +83,8 @@ def test_u_yy():
             for k in range(nz):
                 dz = z[k] - z[k-1]
                 print(i, j, k)
-                assert atom[i, j, k, 0, 1, 1] == pytest.approx(1 / dy * dx * dz)
-                assert atom[i, j, k, 2, 1, 1] == pytest.approx(1 / dyp1 * dx * dz)
+                assert atom[i, j, k, 0, 0, 0, 1, 1] == pytest.approx(1 / dy * dx * dz)
+                assert atom[i, j, k, 0, 0, 2, 1, 1] == pytest.approx(1 / dyp1 * dx * dz)
 
 def test_v_xx():
     nx, ny, nz, x, y, z, atom = create_test_problem()
@@ -99,8 +99,8 @@ def test_v_xx():
             for k in range(nz):
                 dz = z[k] - z[k-1]
                 print(i, j, k)
-                assert atom[i, j, k, 1, 0, 1] == pytest.approx(1 / dx * dy * dz)
-                assert atom[i, j, k, 1, 2, 1] == pytest.approx(1 / dxp1 * dy * dz)
+                assert atom[i, j, k, 1, 1, 1, 0, 1] == pytest.approx(1 / dx * dy * dz)
+                assert atom[i, j, k, 1, 1, 1, 2, 1] == pytest.approx(1 / dxp1 * dy * dz)
 
 def test_w_yy():
     nx, ny, nz, x, y, z, atom = create_test_problem()
@@ -115,8 +115,8 @@ def test_w_yy():
             for k in range(nz):
                 dz = (z[k+1] - z[k-1]) / 2
                 print(i, j, k)
-                assert atom[i, j, k, 1, 1, 0] == pytest.approx(1 / dy * dz * dx)
-                assert atom[i, j, k, 1, 1, 2] == pytest.approx(1 / dyp1 * dz * dx)
+                assert atom[i, j, k, 2, 2, 1, 1, 0] == pytest.approx(1 / dy * dz * dx)
+                assert atom[i, j, k, 2, 2, 1, 1, 2] == pytest.approx(1 / dyp1 * dz * dx)
 
 def test_u_zz():
     nx, ny, nz, x, y, z, atom = create_test_problem()
@@ -131,8 +131,8 @@ def test_u_zz():
                 dz = (z[k] - z[k-2]) / 2
                 dzp1 = (z[k+1] - z[k-1]) / 2
                 print(i, j, k)
-                assert atom[i, j, k, 0, 1, 1] == pytest.approx(1 / dz * dx * dy)
-                assert atom[i, j, k, 2, 1, 1] == pytest.approx(1 / dzp1 * dx * dy)
+                assert atom[i, j, k, 0, 0, 0, 1, 1] == pytest.approx(1 / dz * dx * dy)
+                assert atom[i, j, k, 0, 0, 2, 1, 1] == pytest.approx(1 / dzp1 * dx * dy)
 
 def test_v_zz():
     nx, ny, nz, x, y, z, atom = create_test_problem()
@@ -147,8 +147,8 @@ def test_v_zz():
                 dz = (z[k] - z[k-2]) / 2
                 dzp1 = (z[k+1] - z[k-1]) / 2
                 print(i, j, k)
-                assert atom[i, j, k, 1, 0, 1] == pytest.approx(1 / dz * dy * dx)
-                assert atom[i, j, k, 1, 2, 1] == pytest.approx(1 / dzp1 * dy * dx)
+                assert atom[i, j, k, 1, 1, 1, 0, 1] == pytest.approx(1 / dz * dy * dx)
+                assert atom[i, j, k, 1, 1, 1, 2, 1] == pytest.approx(1 / dzp1 * dy * dx)
 
 def test_w_xx():
     nx, ny, nz, x, y, z, atom = create_test_problem()
@@ -163,8 +163,8 @@ def test_w_xx():
             for k in range(nz):
                 dz = (z[k+1] - z[k-1]) / 2
                 print(i, j, k)
-                assert atom[i, j, k, 1, 1, 0] == pytest.approx(1 / dx * dz * dy)
-                assert atom[i, j, k, 1, 1, 2] == pytest.approx(1 / dxp1 * dz * dy)
+                assert atom[i, j, k, 2, 2, 1, 1, 0] == pytest.approx(1 / dx * dz * dy)
+                assert atom[i, j, k, 2, 2, 1, 1, 2] == pytest.approx(1 / dxp1 * dz * dy)
 
 def test_p_x():
     nx, ny, nz, x, y, z, atom = create_test_problem()
@@ -177,8 +177,8 @@ def test_p_x():
             for k in range(nz):
                 dz = z[k] - z[k-1]
                 print(i, j, k)
-                assert atom[i, j, k, 1, 1, 1] == pytest.approx(-dy * dz)
-                assert atom[i, j, k, 2, 1, 1] == pytest.approx(dy * dz)
+                assert atom[i, j, k, 0, 3, 1, 1, 1] == pytest.approx(-dy * dz)
+                assert atom[i, j, k, 0, 3, 2, 1, 1] == pytest.approx(dy * dz)
 
 def test_p_y():
     nx, ny, nz, x, y, z, atom = create_test_problem()
@@ -191,8 +191,8 @@ def test_p_y():
             for k in range(nz):
                 dz = z[k] - z[k-1]
                 print(i, j, k)
-                assert atom[i, j, k, 1, 1, 1] == pytest.approx(-dx * dz)
-                assert atom[i, j, k, 1, 2, 1] == pytest.approx(dx * dz)
+                assert atom[i, j, k, 1, 3, 1, 1, 1] == pytest.approx(-dx * dz)
+                assert atom[i, j, k, 1, 3, 1, 2, 1] == pytest.approx(dx * dz)
 
 def test_p_z():
     nx, ny, nz, x, y, z, atom = create_test_problem()
@@ -205,8 +205,8 @@ def test_p_z():
             dy = y[j] - y[j-1]
             for k in range(nz):
                 print(i, j, k)
-                assert atom[i, j, k, 1, 1, 1] == pytest.approx(-dy * dx)
-                assert atom[i, j, k, 1, 1, 2] == pytest.approx(dy * dx)
+                assert atom[i, j, k, 2, 3, 1, 1, 1] == pytest.approx(-dy * dx)
+                assert atom[i, j, k, 2, 3, 1, 1, 2] == pytest.approx(dy * dx)
 
 def test_u_x():
     nx, ny, nz, x, y, z, atom = create_test_problem()
@@ -219,8 +219,8 @@ def test_u_x():
             for k in range(nz):
                 dz = z[k] - z[k-1]
                 print(i, j, k)
-                assert atom[i, j, k, 0, 1, 1] == pytest.approx(-dy * dz)
-                assert atom[i, j, k, 1, 1, 1] == pytest.approx(dy * dz)
+                assert atom[i, j, k, 3, 0, 0, 1, 1] == pytest.approx(-dy * dz)
+                assert atom[i, j, k, 3, 0, 1, 1, 1] == pytest.approx(dy * dz)
 
 def test_u_y():
     nx, ny, nz, x, y, z, atom = create_test_problem()
@@ -233,8 +233,8 @@ def test_u_y():
             for k in range(nz):
                 dz = z[k] - z[k-1]
                 print(i, j, k)
-                assert atom[i, j, k, 1, 0, 1] == pytest.approx(-dx * dz)
-                assert atom[i, j, k, 1, 1, 1] == pytest.approx(dx * dz)
+                assert atom[i, j, k, 3, 1, 1, 0, 1] == pytest.approx(-dx * dz)
+                assert atom[i, j, k, 3, 1, 1, 1, 1] == pytest.approx(dx * dz)
 
 def test_u_z():
     nx, ny, nz, x, y, z, atom = create_test_problem()
@@ -247,5 +247,5 @@ def test_u_z():
             dy = y[j] - y[j-1]
             for k in range(nz):
                 print(i, j, k)
-                assert atom[i, j, k, 1, 1, 0] == pytest.approx(-dy * dx)
-                assert atom[i, j, k, 1, 1, 1] == pytest.approx(dy * dx)
+                assert atom[i, j, k, 3, 2, 1, 1, 0] == pytest.approx(-dy * dx)
+                assert atom[i, j, k, 3, 2, 1, 1, 1] == pytest.approx(dy * dx)

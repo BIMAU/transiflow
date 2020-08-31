@@ -20,21 +20,21 @@ class Derivatives:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._u_xx(atom[i, j, k, :, 1, 1], i, j, k, x, y, z)
+                    Derivatives._u_xx(atom[i, j, k, 0, 0, :, 1, 1], i, j, k, x, y, z)
 
     @staticmethod
     def v_yy(atom, nx, ny, nz, x, y, z):
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._u_xx(atom[i, j, k, 1, :, 1], j, i, k, y, x, z)
+                    Derivatives._u_xx(atom[i, j, k, 1, 1, 1, :, 1], j, i, k, y, x, z)
 
     @staticmethod
     def w_zz(atom, nx, ny, nz, x, y, z):
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._u_xx(atom[i, j, k, 1, 1, :], k, j, i, z, y, x)
+                    Derivatives._u_xx(atom[i, j, k, 2, 2, 1, 1, :], k, j, i, z, y, x)
 
     @staticmethod
     def _u_yy(atom, i, j, k, x, y, z):
@@ -57,21 +57,21 @@ class Derivatives:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._u_yy(atom[i, j, k, :, 1, 1], i, j, k, x, y, z)
+                    Derivatives._u_yy(atom[i, j, k, 0, 0, :, 1, 1], i, j, k, x, y, z)
 
     @staticmethod
     def v_xx(atom, nx, ny, nz, x, y, z):
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._u_yy(atom[i, j, k, 1, :, 1], j, i, k, y, x, z)
+                    Derivatives._u_yy(atom[i, j, k, 1, 1, 1, :, 1], j, i, k, y, x, z)
 
     @staticmethod
     def w_yy(atom, nx, ny, nz, x, y, z):
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._u_yy(atom[i, j, k, 1, 1, :], k, j, i, z, y, x)
+                    Derivatives._u_yy(atom[i, j, k, 2, 2, 1, 1, :], k, j, i, z, y, x)
 
     @staticmethod
     def _u_zz(atom, i, j, k, x, y, z):
@@ -94,21 +94,21 @@ class Derivatives:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._u_zz(atom[i, j, k, :, 1, 1], i, j, k, x, y, z)
+                    Derivatives._u_zz(atom[i, j, k, 0, 0, :, 1, 1], i, j, k, x, y, z)
 
     @staticmethod
     def v_zz(atom, nx, ny, nz, x, y, z):
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._u_zz(atom[i, j, k, 1, :, 1], j, i, k, y, x, z)
+                    Derivatives._u_zz(atom[i, j, k, 1, 1, 1, :, 1], j, i, k, y, x, z)
 
     @staticmethod
     def w_xx(atom, nx, ny, nz, x, y, z):
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._u_zz(atom[i, j, k, 1, 1, :], k, j, i, z, y, x)
+                    Derivatives._u_zz(atom[i, j, k, 2, 2, 1, 1, :], k, j, i, z, y, x)
 
     @staticmethod
     def _p_x(atom, i, j, k, x, y, z):
@@ -126,21 +126,21 @@ class Derivatives:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._p_x(atom[i, j, k, :, 1, 1], i, j, k, x, y, z)
+                    Derivatives._p_x(atom[i, j, k, 0, 3, :, 1, 1], i, j, k, x, y, z)
 
     @staticmethod
     def p_y(atom, nx, ny, nz, x, y, z):
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._p_x(atom[i, j, k, 1, :, 1], j, i, k, y, x, z)
+                    Derivatives._p_x(atom[i, j, k, 1, 3, 1, :, 1], j, i, k, y, x, z)
 
     @staticmethod
     def p_z(atom, nx, ny, nz, x, y, z):
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._p_x(atom[i, j, k, 1, 1, :], k, j, i, z, y, x)
+                    Derivatives._p_x(atom[i, j, k, 2, 3, 1, 1, :], k, j, i, z, y, x)
 
     @staticmethod
     def _u_x(atom, i, j, k, x, y, z):
@@ -158,18 +158,18 @@ class Derivatives:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._u_x(atom[i, j, k, :, 1, 1], i, j, k, x, y, z)
+                    Derivatives._u_x(atom[i, j, k, 3, 0, :, 1, 1], i, j, k, x, y, z)
 
     @staticmethod
     def u_y(atom, nx, ny, nz, x, y, z):
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._u_x(atom[i, j, k, 1, :, 1], j, i, k, y, x, z)
+                    Derivatives._u_x(atom[i, j, k, 3, 1, 1, :, 1], j, i, k, y, x, z)
 
     @staticmethod
     def u_z(atom, nx, ny, nz, x, y, z):
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._u_x(atom[i, j, k, 1, 1, :], k, j, i, z, y, x)
+                    Derivatives._u_x(atom[i, j, k, 3, 2, 1, 1, :], k, j, i, z, y, x)
