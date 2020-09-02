@@ -66,7 +66,7 @@ class Derivatives:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._u_yy(atom[i, j, k, 0, 0, :, 1, 1], i, j, k, x, y, z)
+                    Derivatives._u_yy(atom[i, j, k, 0, 0, 1, :, 1], i, j, k, x, y, z)
         return atom
 
     @staticmethod
@@ -75,7 +75,7 @@ class Derivatives:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._u_yy(atom[i, j, k, 1, 1, 1, :, 1], j, i, k, y, x, z)
+                    Derivatives._u_yy(atom[i, j, k, 1, 1, :, 1, 1], j, i, k, y, x, z)
         return atom
 
     @staticmethod
@@ -84,7 +84,7 @@ class Derivatives:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._u_yy(atom[i, j, k, 2, 2, 1, 1, :], k, j, i, z, y, x)
+                    Derivatives._u_yy(atom[i, j, k, 2, 2, 1, :, 1], k, j, i, z, y, x)
         return atom
 
     @staticmethod
@@ -109,7 +109,7 @@ class Derivatives:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._u_zz(atom[i, j, k, 0, 0, :, 1, 1], i, j, k, x, y, z)
+                    Derivatives._u_zz(atom[i, j, k, 0, 0, 1, 1, :], i, j, k, x, y, z)
         return atom
 
     @staticmethod
@@ -118,7 +118,7 @@ class Derivatives:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._u_zz(atom[i, j, k, 1, 1, 1, :, 1], j, i, k, y, x, z)
+                    Derivatives._u_zz(atom[i, j, k, 1, 1, 1, 1, :], j, i, k, y, x, z)
         return atom
 
     @staticmethod
@@ -127,7 +127,7 @@ class Derivatives:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._u_zz(atom[i, j, k, 2, 2, 1, 1, :], k, j, i, z, y, x)
+                    Derivatives._u_zz(atom[i, j, k, 2, 2, :, 1, 1], k, j, i, z, y, x)
         return atom
 
     @staticmethod
