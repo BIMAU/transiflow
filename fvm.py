@@ -1,5 +1,50 @@
 import numpy
 
+class CrsMatrix:
+    def __init__(self, coA=None, jcoA=None, begA=None):
+        self.coA = coA
+        self.jcoA = jcoA
+        self.begA = begA
+
+def create_uniform_coordinate_vector(nx):
+    dx = 1 / nx
+    return numpy.roll(numpy.arange(-dx, 1+2*dx, dx), -2)
+
+def linear_part(Re, nx, ny, nz):
+    x = create_uniform_coordinate_vector(nx)
+    y = create_uniform_coordinate_vector(ny)
+    z = create_uniform_coordinate_vector(nz)
+
+    return 1 / Re * (Derivatives.u_xx(nx, ny, nz, x, y, z) + Derivatives.u_yy(nx, ny, nz, x, y, z) + Derivatives.u_zz(nx, ny, nz, x, y, z) \
+                  + Derivatives.v_xx(nx, ny, nz, x, y, z) + Derivatives.v_yy(nx, ny, nz, x, y, z) + Derivatives.v_zz(nx, ny, nz, x, y, z) \
+                  + Derivatives.w_xx(nx, ny, nz, x, y, z) + Derivatives.w_yy(nx, ny, nz, x, y, z) + Derivatives.w_zz(nx, ny, nz, x, y, z)) \
+                  - (Derivatives.p_x(nx, ny, nz, x, y, z) + Derivatives.p_y(nx, ny, nz, x, y, z) + Derivatives.p_z(nx, ny, nz, x, y, z)) \
+                  + (Derivatives.u_x(nx, ny, nz, x, y, z) + Derivatives.u_y(nx, ny, nz, x, y, z) + Derivatives.u_z(nx, ny, nz, x, y, z))
+
+def assemble(atom, nx, ny, nz):
+    dof = 4
+    row = 0
+    idx = 0
+    n = nx * ny * nz * dof
+    coA = numpy.zeros(27*n)
+    jcoA = numpy.zeros(27*n, dtype=int)
+    begA = numpy.zeros(n+1, dtype=int)
+    for i in range(nx):
+        for j in range(ny):
+            for k in range(nz):
+                for d1 in range(dof):
+                    for z in range(3):
+                        for y in range(3):
+                            for x in range(3):
+                                for d2 in range(dof):
+                                    if abs(atom[i, j, k, d1, d2, x, y, z]) > 1e-14:
+                                        jcoA[idx] = row + (x-1) * dof + (y-1) * nx * dof + (z-1) * nx * ny * dof + d2 - d1
+                                        coA[idx] = atom[i, j, k, d1, d2, x, y, z]
+                                        idx += 1
+                    row += 1
+                    begA[row] = idx
+    return CrsMatrix(coA, jcoA, begA)
+
 class Derivatives:
     @staticmethod
     def _u_xx(atom, i, j, k, x, y, z):
@@ -102,6 +147,7 @@ class Derivatives:
         atom[0] = 1 / dz * dx * dy
         atom[2] = 1 / dzp1 * dx * dy
         atom[1] = -atom[0] - atom[2]
+        print(i, j, k, atom[2])
 
     @staticmethod
     def u_zz(nx, ny, nz, x, y, z):

@@ -248,3 +248,55 @@ def test_u_z():
                 print(i, j, k)
                 assert atom[i, j, k, 3, 2, 1, 1, 0] == pytest.approx(-dy * dx)
                 assert atom[i, j, k, 3, 2, 1, 1, 1] == pytest.approx(dy * dx)
+
+def test_matrix():
+    nx = 4
+    ny = nx
+    nz = nx
+    dof = 4
+    Re = 100
+    n = nx * nx * nx * dof
+    atom = fvm.linear_part(Re, nx, nx, nx)
+    A = fvm.assemble(atom, nx, ny, nz)
+    # A = sparse.csr_matrix((A.coA, A.jcoA, A.begA), (n,n))
+    # print(A)
+    with open('lin_%sx%sx%s.txt' % (nx, nx, nx), 'r') as f:
+        cols = []
+        rows = []
+        vals = []
+        coA = []
+        jcoA = []
+        begA = [0]
+        idx = 0
+        for i in f.readlines():
+            r, c, v = [j.strip() for j in i.split(' ') if j]
+            r = int(r) - 1
+            c = int(c) - 1
+            v = float(v)
+            rows.append(r)
+            cols.append(c)
+            vals.append(v)
+            if r >= len(begA):
+                begA.append(idx)
+            jcoA.append(c)
+            coA.append(v)
+            idx += 1
+        begA.append(idx)
+        assert rows == sorted(rows)
+        # B = sparse.csr_matrix((vals, (rows, cols)))
+        B = sparse.csr_matrix((coA, jcoA, begA), (n,n))
+
+        for i in range(n):
+            print(i)
+            print(jcoA[begA[i]:begA[i+1]])
+            print(coA[begA[i]:begA[i+1]])
+            print(A.jcoA[A.begA[i]:A.begA[i+1]])
+            print(A.coA[A.begA[i]:A.begA[i+1]])
+            assert begA[i+1] - begA[i] == A.begA[i+1] - A.begA[i]
+            for j in range(begA[i], begA[i+1]):
+                assert jcoA[j] == A.jcoA[j]
+                assert coA[j] == A.coA[j]
+
+    # for i in range(n):
+    #     print(A.getrow(i) - B.getrow(i))
+    #     assert not numpy.any(A.getrow(i) != B.getrow(i))
