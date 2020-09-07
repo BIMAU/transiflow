@@ -19,7 +19,7 @@ def linear_part(Re, nx, ny, nz):
                   + Derivatives.v_xx(nx, ny, nz, x, y, z) + Derivatives.v_yy(nx, ny, nz, x, y, z) + Derivatives.v_zz(nx, ny, nz, x, y, z) \
                   + Derivatives.w_xx(nx, ny, nz, x, y, z) + Derivatives.w_yy(nx, ny, nz, x, y, z) + Derivatives.w_zz(nx, ny, nz, x, y, z)) \
                   - (Derivatives.p_x(nx, ny, nz, x, y, z) + Derivatives.p_y(nx, ny, nz, x, y, z) + Derivatives.p_z(nx, ny, nz, x, y, z)) \
-                  + (Derivatives.u_x(nx, ny, nz, x, y, z) + Derivatives.u_y(nx, ny, nz, x, y, z) + Derivatives.u_z(nx, ny, nz, x, y, z))
+                  + Derivatives.div(nx, ny, nz, x, y, z)
 
 def boundaries(atom, nx, ny, nz):
     BoundaryConditions.dirichlet_east(atom, nx, ny, nz)
@@ -236,13 +236,13 @@ class Derivatives:
         return atom
 
     @staticmethod
-    def _p_x(atom, i, j, k, x, y, z):
+    def _forward_u_x(atom, i, j, k, x, y, z):
         # volume size in the y direction
         dy = y[j] - y[j-1]
         # volume size in the z direction
         dz = z[k] - z[k-1]
 
-        # second order finite difference
+        # forward difference
         atom[2] = dy * dz
         atom[1] = -atom[2]
 
@@ -252,7 +252,7 @@ class Derivatives:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._p_x(atom[i, j, k, 0, 3, :, 1, 1], i, j, k, x, y, z)
+                    Derivatives._forward_u_x(atom[i, j, k, 0, 3, :, 1, 1], i, j, k, x, y, z)
         return atom
 
     @staticmethod
@@ -261,7 +261,7 @@ class Derivatives:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._p_x(atom[i, j, k, 1, 3, 1, :, 1], j, i, k, y, x, z)
+                    Derivatives._forward_u_x(atom[i, j, k, 1, 3, 1, :, 1], j, i, k, y, x, z)
         return atom
 
     @staticmethod
@@ -270,43 +270,49 @@ class Derivatives:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._p_x(atom[i, j, k, 2, 3, 1, 1, :], k, j, i, z, y, x)
+                    Derivatives._forward_u_x(atom[i, j, k, 2, 3, 1, 1, :], k, j, i, z, y, x)
         return atom
 
     @staticmethod
-    def _u_x(atom, i, j, k, x, y, z):
+    def _backward_u_x(atom, i, j, k, x, y, z):
         # volume size in the y direction
         dy = y[j] - y[j-1]
         # volume size in the z direction
         dz = z[k] - z[k-1]
 
-        # second order finite difference
+        # backward difference
         atom[1] = dy * dz
         atom[0] = -atom[1]
 
     @staticmethod
-    def u_x(nx, ny, nz, x, y, z):
+    def backward_u_x(nx, ny, nz, x, y, z):
         atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._u_x(atom[i, j, k, 3, 0, :, 1, 1], i, j, k, x, y, z)
+                    Derivatives._backward_u_x(atom[i, j, k, 3, 0, :, 1, 1], i, j, k, x, y, z)
         return atom
 
     @staticmethod
-    def u_y(nx, ny, nz, x, y, z):
+    def backward_v_y(nx, ny, nz, x, y, z):
         atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._u_x(atom[i, j, k, 3, 1, 1, :, 1], j, i, k, y, x, z)
+                    Derivatives._backward_u_x(atom[i, j, k, 3, 1, 1, :, 1], j, i, k, y, x, z)
         return atom
 
     @staticmethod
-    def u_z(nx, ny, nz, x, y, z):
+    def backward_w_z(nx, ny, nz, x, y, z):
         atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._u_x(atom[i, j, k, 3, 2, 1, 1, :], k, j, i, z, y, x)
+                    Derivatives._backward_u_x(atom[i, j, k, 3, 2, 1, 1, :], k, j, i, z, y, x)
         return atom
+
+    @staticmethod
+    def div(nx, ny, nz, x, y, z):
+        return Derivatives.backward_u_x(nx, ny, nz, x, y, z) \
+            + Derivatives.backward_v_y(nx, ny, nz, x, y, z) \
+            + Derivatives.backward_w_z(nx, ny, nz, x, y, z)

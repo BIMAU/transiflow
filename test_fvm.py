@@ -209,7 +209,7 @@ def test_p_z():
 def test_u_x():
     nx, ny, nz, x, y, z = create_test_problem()
 
-    atom =  fvm.Derivatives.u_x(nx, ny, nz, x, y, z)
+    atom =  fvm.Derivatives.backward_u_x(nx, ny, nz, x, y, z)
 
     for i in range(nx):
         for j in range(ny):
@@ -223,7 +223,7 @@ def test_u_x():
 def test_u_y():
     nx, ny, nz, x, y, z = create_test_problem()
 
-    atom =  fvm.Derivatives.u_y(nx, ny, nz, x, y, z)
+    atom =  fvm.Derivatives.backward_v_y(nx, ny, nz, x, y, z)
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -237,7 +237,7 @@ def test_u_y():
 def test_u_z():
     nx, ny, nz, x, y, z = create_test_problem()
 
-    atom =  fvm.Derivatives.u_z(nx, ny, nz, x, y, z)
+    atom =  fvm.Derivatives.backward_w_z(nx, ny, nz, x, y, z)
 
     for i in range(nx):
         dx = x[i] - x[i-1]
