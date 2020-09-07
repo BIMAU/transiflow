@@ -57,8 +57,7 @@ class BoundaryConditions:
     @staticmethod
     def dirichlet_east(atom, nx, ny, nz):
         # At the boundary u[i] = 0, v[i] + v[i+1] = 2*V similar for w. So v[i+1] = -v[i]+2*V.
-        atom[nx-1, 0:ny, 0:nz, [1,2,3], 1, 1, :, :] -= atom[nx-1, 0:ny, 0:nz, [1,2,3], 1, 2, :, :]
-        atom[nx-1, 0:ny, 0:nz, [1,2,3], 2, 1, :, :] -= atom[nx-1, 0:ny, 0:nz, [1,2,3], 2, 2, :, :]
+        atom[nx-1, 0:ny, 0:nz, :, [1,2], 1, :, :] -= atom[nx-1, 0:ny, 0:nz, :, [1,2], 2, :, :]
         atom[nx-1, 0:ny, 0:nz, :, 0, 1, :, :] = 0
         atom[nx-1, 0:ny, 0:nz, 0, :, :, :, :] = 0
         atom[nx-1, 0:ny, 0:nz, :, :, 2, :, :] = 0
@@ -75,8 +74,7 @@ class BoundaryConditions:
     @staticmethod
     def dirichlet_north(atom, nx, ny, nz):
         # At the boundary v[i] = 0, u[i] + u[i+1] = 2*U similar for w. So u[i+1] = -u[i]+2*U.
-        atom[0:nx, ny-1, 0:nz, [0,2,3], 0, :, 1, :] -= atom[0:nx, ny-1, 0:nz, [0,2,3], 0, :, 2, :]
-        atom[0:nx, ny-1, 0:nz, [0,2,3], 2, :, 1, :] -= atom[0:nx, ny-1, 0:nz, [0,2,3], 2, :, 2, :]
+        atom[0:nx, ny-1, 0:nz, :, [0,2], :, 1, :] -= atom[0:nx, ny-1, 0:nz, :, [0,2], :, 2, :]
         atom[0:nx, ny-1, 0:nz, :, 1, :, 1, :] = 0
         atom[0:nx, ny-1, 0:nz, 1, :, :, :, :] = 0
         atom[0:nx, ny-1, 0:nz, :, :, :, 2, :] = 0
@@ -93,8 +91,7 @@ class BoundaryConditions:
     @staticmethod
     def dirichlet_top(atom, nx, ny, nz):
         # At the boundary w[i] = 0, u[i] + u[i+1] = 2*U similar for v. So u[i+1] = -u[i]+2*U.
-        atom[0:nx, 0:ny, nz-1, [0,1,3], 0, :, :, 1] -= atom[0:nx, 0:ny, nz-1, [0,1,3], 0, :, :, 2]
-        atom[0:nx, 0:ny, nz-1, [0,1,3], 1, :, :, 1] -= atom[0:nx, 0:ny, nz-1, [0,1,3], 1, :, :, 2]
+        atom[0:nx, 0:ny, nz-1, :, [0,1], :, :, 1] -= atom[0:nx, 0:ny, nz-1, :, [0,1], :, :, 2]
         atom[0:nx, 0:ny, nz-1, :, 2, :, :, 1] = 0
         atom[0:nx, 0:ny, nz-1, 2, :, :, :, :] = 0
         atom[0:nx, 0:ny, nz-1, :, :, :, :, 2] = 0
