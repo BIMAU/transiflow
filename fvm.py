@@ -21,6 +21,14 @@ def linear_part(Re, nx, ny, nz):
                   - (Derivatives.p_x(nx, ny, nz, x, y, z) + Derivatives.p_y(nx, ny, nz, x, y, z) + Derivatives.p_z(nx, ny, nz, x, y, z)) \
                   + (Derivatives.u_x(nx, ny, nz, x, y, z) + Derivatives.u_y(nx, ny, nz, x, y, z) + Derivatives.u_z(nx, ny, nz, x, y, z))
 
+def boundaries(atom, nx, ny, nz):
+    BoundaryConditions.dirichlet_east(atom, nx, ny, nz)
+    BoundaryConditions.dirichlet_west(atom, nx, ny, nz)
+    BoundaryConditions.dirichlet_north(atom, nx, ny, nz)
+    BoundaryConditions.dirichlet_south(atom, nx, ny, nz)
+    BoundaryConditions.dirichlet_top(atom, nx, ny, nz)
+    BoundaryConditions.dirichlet_bottom(atom, nx, ny, nz)
+
 def assemble(atom, nx, ny, nz):
     dof = 4
     row = 0
@@ -29,9 +37,9 @@ def assemble(atom, nx, ny, nz):
     coA = numpy.zeros(27*n)
     jcoA = numpy.zeros(27*n, dtype=int)
     begA = numpy.zeros(n+1, dtype=int)
-    for i in range(nx):
+    for k in range(nz):
         for j in range(ny):
-            for k in range(nz):
+            for i in range(nx):
                 for d1 in range(dof):
                     for z in range(3):
                         for y in range(3):
@@ -44,6 +52,61 @@ def assemble(atom, nx, ny, nz):
                     row += 1
                     begA[row] = idx
     return CrsMatrix(coA, jcoA, begA)
+
+class BoundaryConditions:
+    @staticmethod
+    def dirichlet_east(atom, nx, ny, nz):
+        # At the boundary u[i] = 0, v[i] + v[i+1] = 2*V similar for w. So v[i+1] = -v[i]+2*V.
+        atom[nx-1, 0:ny, 0:nz, [1,2,3], 1, 1, :, :] -= atom[nx-1, 0:ny, 0:nz, [1,2,3], 1, 2, :, :]
+        atom[nx-1, 0:ny, 0:nz, [1,2,3], 2, 1, :, :] -= atom[nx-1, 0:ny, 0:nz, [1,2,3], 2, 2, :, :]
+        atom[nx-1, 0:ny, 0:nz, :, 0, 1, :, :] = 0
+        atom[nx-1, 0:ny, 0:nz, 0, :, :, :, :] = 0
+        atom[nx-1, 0:ny, 0:nz, :, :, 2, :, :] = 0
+        atom[nx-1, 0:ny, 0:nz, 0, 0, 1, 1, 1] = -1
+        # TODO: Do we need this?
+        atom[nx-2, 0:ny, 0:nz, 0, 0, 2, :, :] = 0
+
+    @staticmethod
+    def dirichlet_west(atom, nx, ny, nz):
+        # At the boundary u[i-1] = 0, v[i-1] + v[i] = 0 similar for w. So v[i-1] = -v[i].
+        atom[0, 0:ny, 0:nz, :, [1,2], 1, :, :] -= atom[0, 0:ny, 0:nz, :, [1,2], 0, :, :]
+        atom[0, 0:ny, 0:nz, :, :, 0, :, :] = 0
+
+    @staticmethod
+    def dirichlet_north(atom, nx, ny, nz):
+        # At the boundary v[i] = 0, u[i] + u[i+1] = 2*U similar for w. So u[i+1] = -u[i]+2*U.
+        atom[0:nx, ny-1, 0:nz, [0,2,3], 0, :, 1, :] -= atom[0:nx, ny-1, 0:nz, [0,2,3], 0, :, 2, :]
+        atom[0:nx, ny-1, 0:nz, [0,2,3], 2, :, 1, :] -= atom[0:nx, ny-1, 0:nz, [0,2,3], 2, :, 2, :]
+        atom[0:nx, ny-1, 0:nz, :, 1, :, 1, :] = 0
+        atom[0:nx, ny-1, 0:nz, 1, :, :, :, :] = 0
+        atom[0:nx, ny-1, 0:nz, :, :, :, 2, :] = 0
+        atom[0:nx, ny-1, 0:nz, 1, 1, 1, 1, 1] = -1
+        # TODO: Do we need this?
+        atom[0:nx, ny-2, 0:nz, 1, 1, :, 2, :] = 0
+
+    @staticmethod
+    def dirichlet_south(atom, nx, ny, nz):
+        # At the boundary v[i-1] = 0, u[i-1] + u[i] = 0 similar for w. So u[i-1] = -u[i].
+        atom[0:nx, 0, 0:nz, :, [0,2], :, 1, :] -= atom[0:nx, 0, 0:nz, :, [0,2], :, 0, :]
+        atom[0:nx, 0, 0:nz, :, :, :, 0, :] = 0
+
+    @staticmethod
+    def dirichlet_top(atom, nx, ny, nz):
+        # At the boundary w[i] = 0, u[i] + u[i+1] = 2*U similar for v. So u[i+1] = -u[i]+2*U.
+        atom[0:nx, 0:ny, nz-1, [0,1,3], 0, :, :, 1] -= atom[0:nx, 0:ny, nz-1, [0,1,3], 0, :, :, 2]
+        atom[0:nx, 0:ny, nz-1, [0,1,3], 1, :, :, 1] -= atom[0:nx, 0:ny, nz-1, [0,1,3], 1, :, :, 2]
+        atom[0:nx, 0:ny, nz-1, :, 2, :, :, 1] = 0
+        atom[0:nx, 0:ny, nz-1, 2, :, :, :, :] = 0
+        atom[0:nx, 0:ny, nz-1, :, :, :, :, 2] = 0
+        atom[0:nx, 0:ny, nz-1, 2, 2, 1, 1, 1] = -1
+        # TODO: Do we need this?
+        atom[0:nx, 0:ny, nz-2, 2, 2, :, :, 2] = 0
+
+    @staticmethod
+    def dirichlet_bottom(atom, nx, ny, nz):
+        # At the boundary w[i-1] = 0, u[i-1] + u[i] = 0 similar for v. So u[i-1] = -u[i].
+        atom[0:nx, 0:ny, 0, :, [0,1], :, :, 1] -= atom[0:nx, 0:ny, 0, :, [0,1], :, :, 0]
+        atom[0:nx, 0:ny, 0, :, :, :, :, 0] = 0
 
 class Derivatives:
     @staticmethod
@@ -147,7 +210,6 @@ class Derivatives:
         atom[0] = 1 / dz * dx * dy
         atom[2] = 1 / dzp1 * dx * dy
         atom[1] = -atom[0] - atom[2]
-        print(i, j, k, atom[2])
 
     @staticmethod
     def u_zz(nx, ny, nz, x, y, z):

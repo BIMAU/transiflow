@@ -248,7 +248,29 @@ def test_u_z():
                 assert atom[i, j, k, 3, 2, 1, 1, 0] == pytest.approx(-dy * dx)
                 assert atom[i, j, k, 3, 2, 1, 1, 1] == pytest.approx(dy * dx)
 
-def test_matrix():
+def read_matrix(fname):
+    A = fvm.CrsMatrix([], [], [0])
+
+    with open(fname, 'r') as f:
+        rows = []
+        idx = 0
+        for i in f.readlines():
+            r, c, v = [j.strip() for j in i.strip().split(' ') if j]
+            r = int(r) - 1
+            c = int(c) - 1
+            v = float(v)
+            rows.append(r)
+            if r >= len(A.begA):
+                A.begA.append(idx)
+            A.jcoA.append(c)
+            A.coA.append(v)
+            idx += 1
+        A.begA.append(idx)
+        assert rows == sorted(rows)
+
+    return A
+
+def test_lin():
     nx = 4
     ny = nx
     nz = nx
@@ -259,35 +281,46 @@ def test_matrix():
     atom = fvm.linear_part(Re, nx, nx, nx)
     A = fvm.assemble(atom, nx, ny, nz)
 
-    B = fvm.CrsMatrix([], [], [0])
+    B = read_matrix('lin_%sx%sx%s.txt' % (nx, nx, nx))
 
-    with open('lin_%sx%sx%s.txt' % (nx, nx, nx), 'r') as f:
-        rows = []
-        idx = 0
-        for i in f.readlines():
-            r, c, v = [j.strip() for j in i.split(' ') if j]
-            r = int(r) - 1
-            c = int(c) - 1
-            v = float(v)
-            rows.append(r)
-            if r >= len(B.begA):
-                B.begA.append(idx)
-            B.jcoA.append(c)
-            B.coA.append(v)
-            idx += 1
-        B.begA.append(idx)
-        assert rows == sorted(rows)
+    for i in range(n):
+        print(i)
 
-        for i in range(n):
-            print(i)
+        print(B.jcoA[B.begA[i]:B.begA[i+1]])
+        print(B.coA[B.begA[i]:B.begA[i+1]])
 
-            print(B.jcoA[B.begA[i]:B.begA[i+1]])
-            print(B.coA[B.begA[i]:B.begA[i+1]])
+        print(A.jcoA[A.begA[i]:A.begA[i+1]])
+        print(A.coA[A.begA[i]:A.begA[i+1]])
 
-            print(A.jcoA[A.begA[i]:A.begA[i+1]])
-            print(A.coA[A.begA[i]:A.begA[i+1]])
+        assert B.begA[i+1] - B.begA[i] == A.begA[i+1] - A.begA[i]
+        for j in range(B.begA[i], B.begA[i+1]):
+            assert B.jcoA[j] == A.jcoA[j]
+            assert B.coA[j] == A.coA[j]
 
-            assert B.begA[i+1] - B.begA[i] == A.begA[i+1] - A.begA[i]
-            for j in range(B.begA[i], B.begA[i+1]):
-                assert B.jcoA[j] == A.jcoA[j]
-                assert B.coA[j] == A.coA[j]
+def test_bnd():
+    nx = 4
+    ny = nx
+    nz = nx
+    dof = 4
+    Re = 100
+    n = nx * nx * nx * dof
+
+    atom = fvm.linear_part(Re, nx, nx, nx)
+    fvm.boundaries(atom, nx, ny, nz)
+    A = fvm.assemble(atom, nx, ny, nz)
+
+    B = read_matrix('bnd_%sx%sx%s.txt' % (nx, nx, nx))
+
+    for i in range(n):
+        print(i)
+
+        print(B.jcoA[B.begA[i]:B.begA[i+1]])
+        print(B.coA[B.begA[i]:B.begA[i+1]])
+
+        print(A.jcoA[A.begA[i]:A.begA[i+1]])
+        print(A.coA[A.begA[i]:A.begA[i+1]])
+
+        assert B.begA[i+1] - B.begA[i] == A.begA[i+1] - A.begA[i]
+        for j in range(B.begA[i], B.begA[i+1]):
+            assert B.jcoA[j] == A.jcoA[j]
+            assert B.coA[j] == A.coA[j]
