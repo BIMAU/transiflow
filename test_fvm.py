@@ -209,7 +209,7 @@ def test_p_z():
 def test_u_x():
     nx, ny, nz, x, y, z = create_test_problem()
 
-    atom =  fvm.Derivatives.backward_u_x(nx, ny, nz, x, y, z)
+    atom =  fvm.Derivatives.u_x(nx, ny, nz, x, y, z)
 
     for i in range(nx):
         for j in range(ny):
@@ -223,7 +223,7 @@ def test_u_x():
 def test_u_y():
     nx, ny, nz, x, y, z = create_test_problem()
 
-    atom =  fvm.Derivatives.backward_v_y(nx, ny, nz, x, y, z)
+    atom =  fvm.Derivatives.v_y(nx, ny, nz, x, y, z)
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -237,7 +237,7 @@ def test_u_y():
 def test_u_z():
     nx, ny, nz, x, y, z = create_test_problem()
 
-    atom =  fvm.Derivatives.backward_w_z(nx, ny, nz, x, y, z)
+    atom =  fvm.Derivatives.w_z(nx, ny, nz, x, y, z)
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -286,9 +286,11 @@ def test_lin():
     for i in range(n):
         print(i)
 
+        print('Expected:')
         print(B.jcoA[B.begA[i]:B.begA[i+1]])
         print(B.coA[B.begA[i]:B.begA[i+1]])
 
+        print('Got:')
         print(A.jcoA[A.begA[i]:A.begA[i+1]])
         print(A.coA[A.begA[i]:A.begA[i+1]])
 
@@ -314,9 +316,44 @@ def test_bnd():
     for i in range(n):
         print(i)
 
+        print('Expected:')
         print(B.jcoA[B.begA[i]:B.begA[i+1]])
         print(B.coA[B.begA[i]:B.begA[i+1]])
 
+        print('Got:')
+        print(A.jcoA[A.begA[i]:A.begA[i+1]])
+        print(A.coA[A.begA[i]:A.begA[i+1]])
+
+        assert B.begA[i+1] - B.begA[i] == A.begA[i+1] - A.begA[i]
+        for j in range(B.begA[i], B.begA[i+1]):
+            assert B.jcoA[j] == A.jcoA[j]
+            assert B.coA[j] == A.coA[j]
+
+def test_bil():
+    nx = 4
+    ny = nx
+    nz = nx
+    dof = 4
+    Re = 100
+    n = nx * nx * nx * dof
+
+    state = numpy.zeros(n)
+    for i in range(n):
+        state[i] = i+1
+
+    atom = fvm.convection(state, nx, nx, nx)
+    A = fvm.assemble(atom, nx, ny, nz)
+
+    B = read_matrix('bil_%sx%sx%s.txt' % (nx, nx, nx))
+
+    for i in range(n):
+        print(i)
+
+        print('Expected:')
+        print(B.jcoA[B.begA[i]:B.begA[i+1]])
+        print(B.coA[B.begA[i]:B.begA[i+1]])
+
+        print('Got:')
         print(A.jcoA[A.begA[i]:A.begA[i+1]])
         print(A.coA[A.begA[i]:A.begA[i+1]])
 
