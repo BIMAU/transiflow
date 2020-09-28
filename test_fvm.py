@@ -248,6 +248,46 @@ def test_u_z():
                 assert atom[i, j, k, 3, 2, 1, 1, 0] == pytest.approx(-dy * dx)
                 assert atom[i, j, k, 3, 2, 1, 1, 1] == pytest.approx(dy * dx)
 
+def test_MxU():
+    nx, ny, nz, x, y, z = create_test_problem()
+    dof = 4
+    n = dof * nx * ny * nz
+
+    bil = numpy.zeros([nx, ny, nz, 6, 3, 2])
+    fvm.ConvectiveTerm.averages(bil)
+
+    state = numpy.zeros(n)
+    for i in range(n):
+        state[i] = i+1
+
+    state_mtx = numpy.zeros([nx, ny, nz, dof])
+    for k in range(nz):
+        for j in range(ny):
+            for i in range(nx):
+                for d in range(dof):
+                    state_mtx[i, j, k, d] = state[d + i * dof + j * dof * nx + k * dof * nx * ny]
+
+    fvm.ConvectiveTerm.dirichlet_east(bil, nx, ny, nz)
+    fvm.ConvectiveTerm.dirichlet_west(bil, nx, ny, nz)
+    fvm.ConvectiveTerm.dirichlet_north(bil, nx, ny, nz)
+    fvm.ConvectiveTerm.dirichlet_south(bil, nx, ny, nz)
+    fvm.ConvectiveTerm.dirichlet_top(bil, nx, ny, nz)
+    fvm.ConvectiveTerm.dirichlet_bottom(bil, nx, ny, nz)
+
+    averages = numpy.zeros([nx, ny, nz, 3, 3])
+    fvm.ConvectiveTerm.MxU(averages, bil, state_mtx, nx, ny, nz)
+
+    for i in range(nx):
+        for j in range(ny):
+            for k in range(nz):
+                average = 0
+                if i < nx-1:
+                    average += state[i * dof + j * dof * nx + k * dof * nx * ny] / 2
+                if i > 0:
+                     average += state[(i-1) * dof + j * dof * nx + k * dof * nx * ny] / 2
+                print(i, j, k)
+                assert averages[i, j, k, 0, 0] == average
+
 def read_matrix(fname):
     A = fvm.CrsMatrix([], [], [0])
 
@@ -260,7 +300,7 @@ def read_matrix(fname):
             c = int(c) - 1
             v = float(v)
             rows.append(r)
-            if r >= len(A.begA):
+            while r >= len(A.begA):
                 A.begA.append(idx)
             A.jcoA.append(c)
             A.coA.append(v)
@@ -348,6 +388,9 @@ def test_bil():
 
     for i in range(n):
         print(i)
+
+        if i+1 >= len(B.begA):
+            break
 
         print('Expected:')
         print(B.jcoA[B.begA[i]:B.begA[i+1]])

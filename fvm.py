@@ -353,13 +353,23 @@ class Derivatives:
         return Derivatives.u_x(nx, ny, nz, x, y, z) + Derivatives.v_y(nx, ny, nz, x, y, z) + Derivatives.w_z(nx, ny, nz, x, y, z)
 
     @staticmethod
-    def _convection_v_u(atom, MxV, MyU, bil, varV, varU, ny, j):
+    def _convection_v_u(atomJ, atomF, MxV, MyU, bil, varV, varU, ny, j):
         bw = 1 # forward average, backward difference
         if varU == varV:
             bw = 0 # backward average, forward difference
  
         for d1 in range(2):
             j2 = max(min(j + d1 - bw, ny - 1), 0)
+
+            coef1 = MxV[j2] * bil[j, 3 + varV, varU, d1]
+            if abs(coef1) > 1e-15:
+                for d2 in range(2):
+                    coef2 = bil[j2, varU, varV, d2]
+                    if abs(coef2) > 1e-15:
+                        idx = [1, 1, 1]
+                        idx[varV] += d1 - bw
+                        idx[varV] += d2 - 1 + bw
+                        atomF[idx[0], idx[1], idx[2]] -= coef1 * coef2
 
             coef1 = MyU[j2] * bil[j, 3 + varV, varU, d1]
             if abs(coef1) > 1e-15:
@@ -369,7 +379,7 @@ class Derivatives:
                         idx = [1, 1, 1]
                         idx[varV] += d1 - bw
                         idx[varU] += d2 - 1 + bw
-                        atom[idx[0], idx[1], idx[2]] -= coef1 * coef2
+                        atomJ[idx[0], idx[1], idx[2]] -= coef1 * coef2
 
     @staticmethod
     def convection_u_u(averages, bil, nx, ny, nz):
@@ -377,7 +387,7 @@ class Derivatives:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._convection_v_u(atom[i, j, k, 0, 0, :, :, :], averages[:, j, k, 0, 0],
+                    Derivatives._convection_v_u(atom[i, j, k, 0, 0, :, :, :], atom[i, j, k, 0, 0, :, :, :], averages[:, j, k, 0, 0],
                                                 averages[:, j, k, 0, 0], bil[:, j, k, :, :, :], 0, 0, nx, i)
         return atom
 
@@ -387,7 +397,7 @@ class Derivatives:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._convection_v_u(atom[i, j, k, 0, 1, :, :, :], averages[i, :, k, 1, 0],
+                    Derivatives._convection_v_u(atom[i, j, k, 0, 1, :, :, :], atom[i, j, k, 0, 0, :, :, :], averages[i, :, k, 1, 0],
                                                 averages[i, :, k, 0, 1], bil[i, :, k, :, :, :], 1, 0, ny, j)
         return atom
 
@@ -397,7 +407,7 @@ class Derivatives:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._convection_v_u(atom[i, j, k, 0, 2, :, :, :], averages[i, j, :, 2, 0],
+                    Derivatives._convection_v_u(atom[i, j, k, 0, 2, :, :, :], atom[i, j, k, 0, 0, :, :, :], averages[i, j, :, 2, 0],
                                                 averages[i, j, :, 0, 2], bil[i, j, :, :, :, :], 2, 0, nz, k)
         return atom
 
@@ -407,7 +417,7 @@ class Derivatives:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._convection_v_u(atom[i, j, k, 1, 0, :, :, :], averages[:, j, k, 0, 1],
+                    Derivatives._convection_v_u(atom[i, j, k, 1, 0, :, :, :], atom[i, j, k, 1, 1, :, :, :], averages[:, j, k, 0, 1],
                                                 averages[:, j, k, 1, 0], bil[:, j, k, :, :, :], 0, 1, nx, i)
         return atom
 
@@ -417,7 +427,7 @@ class Derivatives:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._convection_v_u(atom[i, j, k, 1, 1, :, :, :], averages[i, :, k, 1, 1],
+                    Derivatives._convection_v_u(atom[i, j, k, 1, 1, :, :, :], atom[i, j, k, 1, 1, :, :, :], averages[i, :, k, 1, 1],
                                                 averages[i, :, k, 1, 1], bil[i, :, k, :, :, :], 1, 1, ny, j)
         return atom
 
@@ -427,7 +437,7 @@ class Derivatives:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._convection_v_u(atom[i, j, k, 1, 2, :, :, :], averages[i, j, :, 2, 1],
+                    Derivatives._convection_v_u(atom[i, j, k, 1, 2, :, :, :], atom[i, j, k, 1, 1, :, :, :], averages[i, j, :, 2, 1],
                                                 averages[i, j, :, 1, 2], bil[i, j, :, :, :, :], 2, 1, nz, k)
         return atom
 
@@ -437,7 +447,7 @@ class Derivatives:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._convection_v_u(atom[i, j, k, 2, 0, :, :, :], averages[:, j, k, 0, 2],
+                    Derivatives._convection_v_u(atom[i, j, k, 2, 0, :, :, :], atom[i, j, k, 2, 2, :, :, :], averages[:, j, k, 0, 2],
                                                 averages[:, j, k, 2, 0], bil[:, j, k, :, :, :], 0, 2, nx, i)
         return atom
 
@@ -447,7 +457,7 @@ class Derivatives:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._convection_v_u(atom[i, j, k, 2, 1, :, :, :], averages[i, :, k, 1, 2],
+                    Derivatives._convection_v_u(atom[i, j, k, 2, 1, :, :, :], atom[i, j, k, 2, 2, :, :, :], averages[i, :, k, 1, 2],
                                                 averages[i, :, k, 2, 1], bil[i, :, k, :, :, :], 1, 2, ny, j)
         return atom
 
@@ -457,7 +467,7 @@ class Derivatives:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    Derivatives._convection_v_u(atom[i, j, k, 2, 2, :, :, :], averages[i, j, :, 2, 2],
+                    Derivatives._convection_v_u(atom[i, j, k, 2, 2, :, :, :], atom[i, j, k, 2, 2, :, :, :], averages[i, j, :, 2, 2],
                                                 averages[i, j, :, 2, 2], bil[i, j, :, :, :, :], 2, 2, nz, k)
         return atom
 
@@ -485,6 +495,7 @@ class Derivatives:
         ConvectiveTerm.dirichlet_bottom(bil, nx, ny, nz)
 
         averages = numpy.zeros([nx, ny, nz, 3, 3])
+
         ConvectiveTerm.MxU(averages, bil, state, nx, ny, nz)
         ConvectiveTerm.MxV(averages, bil, state, nx, ny, nz)
         ConvectiveTerm.MxW(averages, bil, state, nx, ny, nz)
@@ -495,7 +506,7 @@ class Derivatives:
         ConvectiveTerm.MzV(averages, bil, state, nx, ny, nz)
         ConvectiveTerm.MzW(averages, bil, state, nx, ny, nz)
 
-        atom = Derivatives.convection_u_u(averages, bil, nx, ny, nz) + \
+        return Derivatives.convection_u_u(averages, bil, nx, ny, nz) + \
             Derivatives.convection_u_v(averages, bil, nx, ny, nz) + \
             Derivatives.convection_u_w(averages, bil, nx, ny, nz) + \
             Derivatives.convection_v_u(averages, bil, nx, ny, nz) + \
@@ -504,8 +515,6 @@ class Derivatives:
             Derivatives.convection_w_u(averages, bil, nx, ny, nz) + \
             Derivatives.convection_w_v(averages, bil, nx, ny, nz) + \
             Derivatives.convection_w_w(averages, bil, nx, ny, nz)
-
-        return atom
 
 
 class ConvectiveTerm:
