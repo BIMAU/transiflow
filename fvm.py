@@ -497,19 +497,22 @@ class Derivatives:
         ConvectiveTerm.MzV(averages, bil, state, nx, ny, nz)
         ConvectiveTerm.MzW(averages, bil, state, nx, ny, nz)
 
-        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
+        atomJ = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
+        atomF = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
 
-        Derivatives.convection_u_u(atom, atom, averages, bil, nx, ny, nz)
-        Derivatives.convection_u_v(atom, atom, averages, bil, nx, ny, nz)
-        Derivatives.convection_u_w(atom, atom, averages, bil, nx, ny, nz)
-        Derivatives.convection_v_u(atom, atom, averages, bil, nx, ny, nz)
-        Derivatives.convection_v_v(atom, atom, averages, bil, nx, ny, nz)
-        Derivatives.convection_v_w(atom, atom, averages, bil, nx, ny, nz)
-        Derivatives.convection_w_u(atom, atom, averages, bil, nx, ny, nz)
-        Derivatives.convection_w_v(atom, atom, averages, bil, nx, ny, nz)
-        Derivatives.convection_w_w(atom, atom, averages, bil, nx, ny, nz)
+        Derivatives.convection_u_u(atomJ, atomF, averages, bil, nx, ny, nz)
+        Derivatives.convection_u_v(atomJ, atomF, averages, bil, nx, ny, nz)
+        Derivatives.convection_u_w(atomJ, atomF, averages, bil, nx, ny, nz)
+        Derivatives.convection_v_u(atomJ, atomF, averages, bil, nx, ny, nz)
+        Derivatives.convection_v_v(atomJ, atomF, averages, bil, nx, ny, nz)
+        Derivatives.convection_v_w(atomJ, atomF, averages, bil, nx, ny, nz)
+        Derivatives.convection_w_u(atomJ, atomF, averages, bil, nx, ny, nz)
+        Derivatives.convection_w_v(atomJ, atomF, averages, bil, nx, ny, nz)
+        Derivatives.convection_w_w(atomJ, atomF, averages, bil, nx, ny, nz)
 
-        return atom
+        atomJ += atomF
+
+        return (atomJ, atomF)
 
 
 class ConvectiveTerm:

@@ -381,7 +381,7 @@ def test_bil():
     for i in range(n):
         state[i] = i+1
 
-    atom = fvm.convection(state, nx, nx, nx)
+    atom, atomF = fvm.convection(state, nx, nx, nx)
     A = fvm.assemble(atom, nx, ny, nz)
 
     B = read_matrix('bil_%sx%sx%s.txt' % (nx, nx, nx))
