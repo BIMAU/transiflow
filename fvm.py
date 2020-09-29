@@ -68,6 +68,26 @@ def assemble(atom, nx, ny, nz):
                     begA[row] = idx
     return CrsMatrix(coA, jcoA, begA)
 
+def rhs(state, atom, nx, ny, nz):
+    dof = 4
+    row = 0
+    idx = 0
+    n = nx * ny * nz * dof
+    out = numpy.zeros(n)
+    for k in range(nz):
+        for j in range(ny):
+            for i in range(nx):
+                for d1 in range(dof):
+                    for z in range(3):
+                        for y in range(3):
+                            for x in range(3):
+                                for d2 in range(dof):
+                                    if abs(atom[i, j, k, d1, d2, x, y, z]) > 1e-14:
+                                        offset = row + (x-1) * dof + (y-1) * nx * dof + (z-1) * nx * ny * dof + d2 - d1
+                                        out[row] -= atom[i, j, k, d1, d2, x, y, z] * state[offset]
+                    row += 1
+    return out
+
 class BoundaryConditions:
     @staticmethod
     def dirichlet_east(atom, nx, ny, nz):
