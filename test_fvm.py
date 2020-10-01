@@ -326,7 +326,7 @@ def test_lin():
     nz = nx
     dof = 4
     Re = 100
-    n = nx * nx * nx * dof
+    n = nx * ny * nz * dof
 
     atom = fvm.linear_part(Re, nx, ny, nz)
     A = fvm.assemble(atom, nx, ny, nz)
@@ -355,7 +355,7 @@ def test_bnd():
     nz = nx
     dof = 4
     Re = 100
-    n = nx * nx * nx * dof
+    n = nx * ny * nz * dof
 
     atom = fvm.linear_part(Re, nx, ny, nz)
     fvm.boundaries(atom, nx, ny, nz)
@@ -385,7 +385,7 @@ def test_bil():
     nz = nx
     dof = 4
     Re = 100
-    n = nx * nx * nx * dof
+    n = nx * ny * nz * dof
 
     state = numpy.zeros(n)
     for i in range(n):
@@ -421,7 +421,7 @@ def test_full():
     nz = nx
     dof = 4
     Re = 100
-    n = nx * nx * nx * dof
+    n = nx * ny * nz * dof
 
     state = numpy.zeros(n)
     for i in range(n):
