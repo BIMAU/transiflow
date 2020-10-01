@@ -457,3 +457,46 @@ def test_full():
             assert A.coA[j] == pytest.approx(B.coA[j])
 
         assert rhs_B[i] == pytest.approx(-rhs[i])
+
+def test_full8():
+    nx = 8
+    ny = nx
+    nz = nx
+    dof = 4
+    Re = 100
+    n = nx * ny * nz * dof
+
+    state = numpy.zeros(n)
+    for i in range(n):
+        state[i] = i+1
+
+    atom = fvm.linear_part(Re, nx, ny, nz)
+    frc = fvm.boundaries(atom, nx, ny, nz)
+    atomJ, atomF = fvm.convection(state, nx, ny, nz)
+
+    atomJ += atom
+    atomF += atom
+
+    A = fvm.assemble(atomJ, nx, ny, nz)
+    rhs = fvm.rhs(state, atomF, nx, ny, nz) - frc
+
+    B = read_matrix('full_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = read_vector('rhs_%sx%sx%s.txt' % (nx, ny, nz))
+
+    for i in range(n):
+        print(i)
+
+        print('Expected:')
+        print(B.jcoA[B.begA[i]:B.begA[i+1]])
+        print(B.coA[B.begA[i]:B.begA[i+1]])
+
+        print('Got:')
+        print(A.jcoA[A.begA[i]:A.begA[i+1]])
+        print(A.coA[A.begA[i]:A.begA[i+1]])
+
+        assert A.begA[i+1] - A.begA[i] == B.begA[i+1] - B.begA[i]
+        for j in range(A.begA[i], A.begA[i+1]):
+            assert A.jcoA[j] == B.jcoA[j]
+            assert A.coA[j] == pytest.approx(B.coA[j])
+
+        assert rhs_B[i] == pytest.approx(-rhs[i])
