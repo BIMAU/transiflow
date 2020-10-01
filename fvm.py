@@ -26,8 +26,9 @@ def boundaries(atom, nx, ny, nz):
     BoundaryConditions.dirichlet_west(atom, nx, ny, nz)
     BoundaryConditions.dirichlet_north(atom, nx, ny, nz)
     BoundaryConditions.dirichlet_south(atom, nx, ny, nz)
-    BoundaryConditions.dirichlet_top(atom, nx, ny, nz)
+    frc = BoundaryConditions.dirichlet_top(atom, nx, ny, nz)
     BoundaryConditions.dirichlet_bottom(atom, nx, ny, nz)
+    return frc
 
 def convection(state, nx, ny, nz):
     x = create_uniform_coordinate_vector(nx)
@@ -88,6 +89,30 @@ def rhs(state, atom, nx, ny, nz):
                     row += 1
     return out
 
+def ldc_forcing(atom, nx, ny, nz):
+    dof = 4
+    n = nx * ny * nz * dof
+    out = numpy.zeros(n)
+    k = nz-1
+    z = 2
+    for j in range(ny):
+        for i in range(nx):
+            for y in range(3):
+                for x in range(3):
+                    if i == 0 and x == 0:
+                        continue
+                    if j == 0 and y == 0:
+                        continue
+                    if i == nx-1 and x == 2:
+                        continue
+                    if j == ny-1 and y == 2:
+                        continue
+                    offset = i * dof + j * nx * dof + k * nx * ny * dof + 1
+                    out[offset] += 2 * atom[i, j, k, 1, 0, x, y, z]
+                    offset = i * dof + j * nx * dof + k * nx * ny * dof
+                    out[offset] += 2 * atom[i, j, k, 0, 0, x, y, z]
+    return out
+
 class BoundaryConditions:
     @staticmethod
     def dirichlet_east(atom, nx, ny, nz):
@@ -128,11 +153,13 @@ class BoundaryConditions:
         # At the boundary w[i] = 0, u[i] + u[i+1] = 2*U similar for v. So u[i+1] = -u[i]+2*U.
         atom[0:nx, 0:ny, nz-1, :, [0,1], :, :, 1] -= atom[0:nx, 0:ny, nz-1, :, [0,1], :, :, 2]
         atom[0:nx, 0:ny, nz-1, :, 2, :, :, 1] = 0
+        frc = ldc_forcing(atom, nx, ny, nz)
         atom[0:nx, 0:ny, nz-1, 2, :, :, :, :] = 0
         atom[0:nx, 0:ny, nz-1, :, :, :, :, 2] = 0
         atom[0:nx, 0:ny, nz-1, 2, 2, 1, 1, 1] = -1
         # TODO: Do we need this?
         atom[0:nx, 0:ny, nz-2, 2, 2, :, :, 2] = 0
+        return frc
 
     @staticmethod
     def dirichlet_bottom(atom, nx, ny, nz):
