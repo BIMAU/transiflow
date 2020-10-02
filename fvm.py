@@ -72,7 +72,6 @@ def assemble(atom, nx, ny, nz):
 def rhs(state, atom, nx, ny, nz):
     dof = 4
     row = 0
-    idx = 0
     n = nx * ny * nz * dof
     out = numpy.zeros(n)
     for k in range(nz):
@@ -99,14 +98,6 @@ def ldc_forcing(atom, nx, ny, nz):
         for i in range(nx):
             for y in range(3):
                 for x in range(3):
-                    if i == 0 and x == 0:
-                        continue
-                    if j == 0 and y == 0:
-                        continue
-                    if i == nx-1 and x == 2:
-                        continue
-                    if j == ny-1 and y == 2:
-                        continue
                     offset = i * dof + j * nx * dof + k * nx * ny * dof + 1
                     out[offset] += 2 * atom[i, j, k, 1, 0, x, y, z]
                     offset = i * dof + j * nx * dof + k * nx * ny * dof
