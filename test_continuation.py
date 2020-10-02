@@ -2,6 +2,36 @@ import continuation
 import numpy
 import matplotlib.pyplot as plt
 
+def get_state_mtx(x, nx, ny, nz, dof):
+    state_mtx = numpy.zeros([nx, ny, nz, dof])
+    for k in range(nz):
+        for j in range(ny):
+            for i in range(nx):
+                for d in range(dof):
+                    state_mtx[i, j, k, d] = x[d + i * dof + j * dof * nx + k * dof * nx * ny]
+    return state_mtx
+
+def plot_state(u, v, nx, ny):
+    psi = numpy.zeros([nx, ny])
+
+    for i in range(nx):
+        for j in range(ny):
+            psiu = u[i, j]
+            if j > 0:
+                psiu += u[i, j-1]
+            psiv = v[i, j]
+            if i > 0:
+                psiv += v[i-1, j]
+            psi[i, j] = numpy.linalg.norm([psiu, psiv])
+
+    e = numpy.arange(1/nx, 1+1/nx, 1/nx)
+    x, y = numpy.meshgrid(e, e)
+
+    fig1, ax1 = plt.subplots()
+    cs = ax1.contourf(x, y, psi.transpose(), 15)
+    fig1.colorbar(cs)
+    plt.show()
+
 def test_continuation():
     dof = 4
     nx = 4
@@ -24,33 +54,8 @@ def test_continuation():
 
     # print(x)
 
-    # state_mtx = numpy.zeros([nx, ny, nz, dof])
-    # for k in range(nz):
-    #     for j in range(ny):
-    #         for i in range(nx):
-    #             for d in range(dof):
-    #                 state_mtx[i, j, k, d] = x[d + i * dof + j * dof * nx + k * dof * nx * ny]
-
-
-    # psi = numpy.zeros([nx,ny])
-
-    # for i in range(nx):
-    #     for j in range(ny):
-    #         psiu = state_mtx[i, ny // 2, j, 0]
-    #         if j > 0:
-    #             psiu += state_mtx[i, ny // 2, j-1, 0]
-    #         psiv = state_mtx[i, ny // 2, j, 2]
-    #         if i > 0:
-    #             psiv += state_mtx[i-1, ny // 2, j, 2]
-    #         psi[i, j] = numpy.linalg.norm([psiu, psiv])
-
-    # e = numpy.arange(1/nx, 1+1/nx, 1/nx)
-    # x, y = numpy.meshgrid(e, e)
-
-    # fig1, ax1 = plt.subplots()
-    # cs = ax1.contourf(x, y, psi.transpose(), 15)
-    # fig1.colorbar(cs)
-    # plt.show()
+    # x = get_state_mtx(x, nx, ny, nz, dof)
+    # plot_state(x[:,ny//2,:,0], x[:,ny//2,:,2], nx, nz)
 
 def test_continuation_2d():
     dof = 4
@@ -74,32 +79,8 @@ def test_continuation_2d():
 
     # print(x)
 
-    # state_mtx = numpy.zeros([nx, ny, nz, dof])
-    # for k in range(nz):
-    #     for j in range(ny):
-    #         for i in range(nx):
-    #             for d in range(dof):
-    #                 state_mtx[i, j, k, d] = x[d + i * dof + j * dof * nx + k * dof * nx * ny]
-
-    # psi = numpy.zeros([nx,ny])
-
-    # for i in range(nx):
-    #     for j in range(ny):
-    #         psiu = state_mtx[i, j, 0, 0]
-    #         if j > 0:
-    #             psiu += state_mtx[i, j-1, 0, 0]
-    #         psiv = state_mtx[i, j, 0, 1]
-    #         if i > 0:
-    #             psiv += state_mtx[i-1, j, 0, 1]
-    #         psi[i, j] = numpy.linalg.norm([psiu, psiv])
-
-    # e = numpy.arange(1/nx, 1+1/nx, 1/nx)
-    # x, y = numpy.meshgrid(e, e)
-
-    # fig1, ax1 = plt.subplots()
-    # cs = ax1.contourf(x, y, psi.transpose(), 15)
-    # fig1.colorbar(cs)
-    # plt.show()
+    # x = get_state_mtx(x, nx, ny, nz, dof)
+    # plot_state(x[:,:,0,0], x[:,:,0,1], nx, ny)
 
 if __name__ == '__main__':
     test_continuation_2d()
