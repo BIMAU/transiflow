@@ -59,7 +59,7 @@ def test_continuation():
 
 def test_continuation_2d():
     dof = 4
-    nx = 4
+    nx = 8
     ny = nx
     nz = 1
     n = dof * nx * ny * nz
@@ -83,4 +83,5 @@ def test_continuation_2d():
     # plot_state(x[:,:,0,0], x[:,:,0,1], nx, ny)
 
 if __name__ == '__main__':
-    test_continuation_2d()
+    test_continuation()
+    # test_continuation_2d()

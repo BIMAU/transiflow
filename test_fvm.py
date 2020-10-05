@@ -1,3 +1,4 @@
+import os
 import numpy
 import fvm
 import pytest
@@ -480,6 +481,9 @@ def test_full8():
     A = fvm.assemble(atomJ, nx, ny, nz)
     rhs = fvm.rhs(state, atomF, nx, ny, nz) - frc
 
+    if not os.path.isfile('full_%sx%sx%s.txt' % (nx, ny, nz)):
+        return
+
     B = read_matrix('full_%sx%sx%s.txt' % (nx, ny, nz))
     rhs_B = read_vector('rhs_%sx%sx%s.txt' % (nx, ny, nz))
 
@@ -500,3 +504,6 @@ def test_full8():
             assert A.coA[j] == pytest.approx(B.coA[j])
 
         assert rhs_B[i] == pytest.approx(-rhs[i])
+
+if __name__ == '__main__':
+    test_full()
