@@ -46,6 +46,24 @@ def convection(state, nx, ny, nz):
     return Derivatives.convection(state_mtx, nx, ny, nz, x, y, z)
 
 def assemble(atom, nx, ny, nz):
+    ''' Assemble the Jacobian. Optimized version of
+
+    for k in range(nz):
+        for j in range(ny):
+            for i in range(nx):
+                for d1 in range(dof):
+                    for z in range(3):
+                        for y in range(3):
+                            for x in range(3):
+                                for d2 in range(dof):
+                                    if abs(atom[i, j, k, d1, d2, x, y, z]) > 1e-14:
+                                       jcoA[idx] = row + (x-1) * dof + (y-1) * nx * dof + (z-1) * nx * ny * dof + d2 - d1
+                                       coA[idx] = atom[i, j, k, d1, d2, x, y, z]
+                                       idx += 1
+                    row += 1
+                    begA[row] = idx
+    '''
+
     dof = 4
     row = 0
     idx = 0
@@ -78,6 +96,22 @@ def assemble(atom, nx, ny, nz):
     return CrsMatrix(coA, jcoA, begA)
 
 def rhs(state, atom, nx, ny, nz):
+    ''' Assemble the right-hand side. Optimized version of
+
+    for k in range(nz):
+        for j in range(ny):
+            for i in range(nx):
+                for d1 in range(dof):
+                    for z in range(3):
+                        for y in range(3):
+                            for x in range(3):
+                                for d2 in range(dof):
+                                    if abs(atom[i, j, k, d1, d2, x, y, z]) > 1e-14:
+                                        offset = row + (x-1) * dof + (y-1) * nx * dof + (z-1) * nx * ny * dof + d2 - d1
+                                        out[row] -= atom[i, j, k, d1, d2, x, y, z] * state[offset]
+                    row += 1
+    '''
+
     dof = 4
     row = 0
     n = nx * ny * nz * dof
