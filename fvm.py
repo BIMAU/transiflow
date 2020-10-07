@@ -473,6 +473,9 @@ class Derivatives:
 
     @staticmethod
     def _convection_v_u_unoptimized(atomJ, atomF, MxV, MyU, bil, varV, varU, ny, j):
+        ''' This method is left here for documentation purposes and
+        can be used when iterating over the entire grid'''
+
         bw = 1 # forward average, backward difference
         if varU == varV:
             bw = 0 # backward average, forward difference
