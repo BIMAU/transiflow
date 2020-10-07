@@ -501,7 +501,7 @@ class Derivatives:
                         atomJ[idx[0], idx[1], idx[2]] -= coef1 * coef2
 
     @staticmethod
-    def _convection_v_u(atomJ, atomF, MxV, MyU, bil, varV, varU, ny, j):
+    def _convection_v_u(atomJ, atomF, averages, bil, varV, varU, ny, j):
         bw = 1 # forward average, backward difference
         if varU == varV:
             bw = 0 # backward average, forward difference
@@ -509,7 +509,7 @@ class Derivatives:
         for d1 in range(2):
             j2 = max(min(j + d1 - bw, ny - 1), 0)
 
-            coef1 = MxV[:, j2, :] * bil[:, j, :, 3 + varV, varU, d1]
+            coef1 = averages[:, j2, :, varV, varU] * bil[:, j, :, 3 + varV, varU, d1]
             if numpy.any(coef1):
                 for d2 in range(2):
                     coef2 = bil[:, j2, :, varU, varV, d2]
@@ -519,7 +519,7 @@ class Derivatives:
                         idx[varV] += d2 - 1 + bw
                         atomF[:, j, :, varU, varU, idx[0], idx[1], idx[2]] -= coef1 * coef2
 
-            coef1 = MyU[:, j2, :] * bil[:, j, :, 3 + varV, varU, d1]
+            coef1 = averages[:, j2, :, varU, varV] * bil[:, j, :, 3 + varV, varU, d1]
             if numpy.any(coef1):
                 for d2 in range(2):
                     coef2 = bil[:, j2, :, varV, varU, d2]
@@ -530,7 +530,7 @@ class Derivatives:
                         atomJ[:, j, :, varU, varV, idx[0], idx[1], idx[2]] -= coef1 * coef2
 
     @staticmethod
-    def _convection_u_v(atomJ, atomF, MxV, MyU, bil, varV, varU, ny, j):
+    def _convection_u_v(atomJ, atomF, averages, bil, varV, varU, ny, j):
         bw = 1 # forward average, backward difference
         if varU == varV:
             bw = 0 # backward average, forward difference
@@ -538,7 +538,7 @@ class Derivatives:
         for d1 in range(2):
             j2 = max(min(j + d1 - bw, ny - 1), 0)
 
-            coef1 = MxV[j2, :, :] * bil[j, :, :, 3 + varV, varU, d1]
+            coef1 = averages[j2, :, :, varV, varU] * bil[j, :, :, 3 + varV, varU, d1]
             if numpy.any(coef1):
                 for d2 in range(2):
                     coef2 = bil[j2, :, :, varU, varV, d2]
@@ -548,7 +548,7 @@ class Derivatives:
                         idx[varV] += d2 - 1 + bw
                         atomF[j, :, :, varU, varU, idx[0], idx[1], idx[2]] -= coef1 * coef2
 
-            coef1 = MyU[j2, :, :] * bil[j, :, :, 3 + varV, varU, d1]
+            coef1 = averages[j2, :, :, varU, varV] * bil[j, :, :, 3 + varV, varU, d1]
             if numpy.any(coef1):
                 for d2 in range(2):
                     coef2 = bil[j2, :, :, varV, varU, d2]
@@ -559,7 +559,7 @@ class Derivatives:
                         atomJ[j, :, :, varU, varV, idx[0], idx[1], idx[2]] -= coef1 * coef2
 
     @staticmethod
-    def _convection_w_u(atomJ, atomF, MxV, MyU, bil, varV, varU, ny, j):
+    def _convection_w_u(atomJ, atomF, averages, bil, varV, varU, ny, j):
         bw = 1 # forward average, backward difference
         if varU == varV:
             bw = 0 # backward average, forward difference
@@ -567,7 +567,7 @@ class Derivatives:
         for d1 in range(2):
             j2 = max(min(j + d1 - bw, ny - 1), 0)
 
-            coef1 = MxV[:, :, j2] * bil[:, :, j, 3 + varV, varU, d1]
+            coef1 = averages[:, :, j2, varV, varU] * bil[:, :, j, 3 + varV, varU, d1]
             if numpy.any(coef1):
                 for d2 in range(2):
                     coef2 = bil[:, :, j2, varU, varV, d2]
@@ -577,7 +577,7 @@ class Derivatives:
                         idx[varV] += d2 - 1 + bw
                         atomF[:, :, j, varU, varU, idx[0], idx[1], idx[2]] -= coef1 * coef2
 
-            coef1 = MyU[:, :, j2] * bil[:, :, j, 3 + varV, varU, d1]
+            coef1 = averages[:, :, j2, varU, varV] * bil[:, :, j, 3 + varV, varU, d1]
             if numpy.any(coef1):
                 for d2 in range(2):
                     coef2 = bil[:, :, j2, varV, varU, d2]
@@ -590,64 +590,55 @@ class Derivatives:
     @staticmethod
     def convection_u_u(atomJ, atomF, averages, bil, nx, ny, nz):
         for i in range(nx):
-            Derivatives._convection_u_v(atomJ, atomF,
-                                        averages[:, :, :, 0, 0], averages[:, :, :, 0, 0],
+            Derivatives._convection_u_v(atomJ, atomF, averages,
                                         bil[:, :, :, :, :, :], 0, 0, nx, i)
 
     @staticmethod
     def convection_v_u(atomJ, atomF, averages, bil, nx, ny, nz):
         for j in range(ny):
-            Derivatives._convection_v_u(atomJ, atomF,
-                                        averages[:, :, :, 1, 0], averages[:, :, :, 0, 1],
+            Derivatives._convection_v_u(atomJ, atomF, averages,
                                         bil[:, :, :, :, :, :], 1, 0, ny, j)
 
     @staticmethod
     def convection_w_u(atomJ, atomF, averages, bil, nx, ny, nz):
         for k in range(nz):
-            Derivatives._convection_w_u(atomJ, atomF,
-                                        averages[:, :, :, 2, 0], averages[:, :, :, 0, 2],
+            Derivatives._convection_w_u(atomJ, atomF, averages,
                                         bil[:, :, :, :, :, :], 2, 0, nz, k)
 
     @staticmethod
     def convection_u_v(atomJ, atomF, averages, bil, nx, ny, nz):
         for i in range(nx):
-            Derivatives._convection_u_v(atomJ, atomF,
-                                        averages[:, :, :, 0, 1], averages[:, :, :, 1, 0],
+            Derivatives._convection_u_v(atomJ, atomF, averages,
                                         bil[:, :, :, :, :, :], 0, 1, nx, i)
 
     @staticmethod
     def convection_v_v(atomJ, atomF, averages, bil, nx, ny, nz):
         for j in range(ny):
-            Derivatives._convection_v_u(atomJ, atomF,
-                                        averages[:, :, :, 1, 1], averages[:, :, :, 1, 1],
+            Derivatives._convection_v_u(atomJ, atomF, averages,
                                         bil[:, :, :, :, :, :], 1, 1, ny, j)
 
     @staticmethod
     def convection_w_v(atomJ, atomF, averages, bil, nx, ny, nz):
         for k in range(nz):
-            Derivatives._convection_w_u(atomJ, atomF,
-                                        averages[:, :, :, 2, 1], averages[:, :, :, 1, 2],
+            Derivatives._convection_w_u(atomJ, atomF, averages,
                                         bil[:, :, :, :, :, :], 2, 1, nz, k)
 
     @staticmethod
     def convection_u_w(atomJ, atomF, averages, bil, nx, ny, nz):
         for i in range(nx):
-            Derivatives._convection_u_v(atomJ, atomF,
-                                        averages[:, :, :, 0, 2], averages[:, :, :, 2, 0],
+            Derivatives._convection_u_v(atomJ, atomF, averages,
                                         bil[:, :, :, :, :, :], 0, 2, nx, i)
 
     @staticmethod
     def convection_v_w(atomJ, atomF, averages, bil, nx, ny, nz):
         for j in range(ny):
-            Derivatives._convection_v_u(atomJ, atomF,
-                                        averages[:, :, :, 1, 2], averages[:, :, :, 2, 1],
+            Derivatives._convection_v_u(atomJ, atomF, averages,
                                         bil[:, :, :, :, :, :], 1, 2, ny, j)
 
     @staticmethod
     def convection_w_w(atomJ, atomF, averages, bil, nx, ny, nz):
         for k in range(nz):
-            Derivatives._convection_w_u(atomJ, atomF,
-                                        averages[:, :, :, 2, 2], averages[:, :, :, 2, 2],
+            Derivatives._convection_w_u(atomJ, atomF, averages,
                                         bil[:, :, :, :, :, :], 2, 2, nz, k)
 
     @staticmethod
