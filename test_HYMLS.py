@@ -1,9 +1,12 @@
-import HYMLSInterface
 import continuation
 
-from PyTrilinos import Epetra
-
 def test_HYMLS():
+    try:
+        import HYMLSInterface
+        from PyTrilinos import Epetra
+    except ImportError:
+        return
+
     dof = 4
     nx = 4
     ny = nx
