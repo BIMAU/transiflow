@@ -4,6 +4,7 @@ def test_HYMLS():
     try:
         import HYMLSInterface
         from PyTrilinos import Epetra
+        from PyTrilinos import Teuchos
     except ImportError:
         return
 
@@ -13,9 +14,14 @@ def test_HYMLS():
     nz = nx
     n = dof * nx * ny * nz
 
+    params = Teuchos.ParameterList()
+    prec_params = params.sublist('Preconditioner')
+    prec_params.set('Separator Length', 4)
+    prec_params.set('Number of Levels', 0)
+
     comm = Epetra.PyComm()
     m = Epetra.Map(n, 0, comm)
-    interface = HYMLSInterface.Interface(m, nx, ny, nz)
+    interface = HYMLSInterface.Interface(m, params, nx, ny, nz)
 
     x0 = HYMLSInterface.Vector(m)
     x0.PutScalar(0.0)

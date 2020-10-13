@@ -2,7 +2,6 @@ import continuation
 
 from PyTrilinos import Epetra
 from PyTrilinos import Amesos
-from PyTrilinos import Teuchos
 
 import HYMLS
 
@@ -21,9 +20,22 @@ class Vector(Epetra.Vector):
         return self.Dot(other)
 
 class Interface(continuation.Interface):
-    def __init__(self, m, nx, ny, nz):
+    def __init__(self, m, params, nx, ny, nz):
         continuation.Interface.__init__(self, nx, ny, nz)
+
         self.map = m
+        self.params = params
+        problem_params = self.params.sublist('Problem')
+        problem_params.set('nx', self.nx)
+        problem_params.set('ny', self.ny)
+        problem_params.set('nz', self.nz)
+        problem_params.set('Equations', 'Stokes-C')
+
+        solver_params = self.params.sublist('Solver')
+        solver_params.set('Initial Vector', 'Zero')
+
+        prec_params = self.params.sublist('Preconditioner')
+        prec_params.set('Partitioner', 'Skew Cartesian')
 
     def dirtect_solve(self, jac, rhs):
         A = Epetra.CrsMatrix(Epetra.Copy, self.map, 27)
@@ -59,26 +71,11 @@ class Interface(continuation.Interface):
         b = Vector(Epetra.Copy, self.map, rhs)
         x = Vector(b)
 
-        params = Teuchos.ParameterList()
-        problem_params = params.sublist('Problem')
-        problem_params.set('nx', self.nx)
-        problem_params.set('ny', self.ny)
-        problem_params.set('nz', self.nz)
-        problem_params.set('Equations', 'Stokes-C')
-
-        solver_params = params.sublist('Solver')
-        solver_params.set('Initial Vector', 'Zero')
-
-        prec_params = params.sublist('Preconditioner')
-        prec_params.set('Partitioner', 'Skew Cartesian')
-        prec_params.set('Separator Length', 4)
-        prec_params.set('Number of Levels', 0)
-
-        preconditioner = HYMLS.Preconditioner(A, params)
+        preconditioner = HYMLS.Preconditioner(A, self.params)
         preconditioner.Initialize()
         preconditioner.Compute()
 
-        solver = HYMLS.Solver(A, preconditioner, params)
+        solver = HYMLS.Solver(A, preconditioner, self.params)
         solver.ApplyInverse(b, x)
 
         return x
