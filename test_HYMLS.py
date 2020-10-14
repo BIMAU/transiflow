@@ -8,11 +8,9 @@ def test_HYMLS():
     except ImportError:
         return
 
-    dof = 4
     nx = 4
     ny = nx
     nz = nx
-    n = dof * nx * ny * nz
 
     params = Teuchos.ParameterList()
     prec_params = params.sublist('Preconditioner')
@@ -20,8 +18,8 @@ def test_HYMLS():
     prec_params.set('Number of Levels', 0)
 
     comm = Epetra.PyComm()
-    m = Epetra.Map(n, 0, comm)
-    interface = HYMLSInterface.Interface(m, params, nx, ny, nz)
+    interface = HYMLSInterface.Interface(comm, params, nx, ny, nz)
+    m = interface.map
 
     x0 = HYMLSInterface.Vector(m)
     x0.PutScalar(0.0)

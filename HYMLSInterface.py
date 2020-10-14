@@ -20,10 +20,13 @@ class Vector(Epetra.Vector):
         return self.Dot(other)
 
 class Interface(continuation.Interface):
-    def __init__(self, m, params, nx, ny, nz):
+    def __init__(self, comm, params, nx, ny, nz):
         continuation.Interface.__init__(self, nx, ny, nz)
 
-        self.map = m
+        dof = 4
+        n = nx * ny * nz * dof
+        self.comm = comm
+        self.map = Epetra.Map(n, 0, comm)
         self.params = params
         problem_params = self.params.sublist('Problem')
         problem_params.set('nx', self.nx)
