@@ -60,12 +60,18 @@ class Interface(continuation.Interface):
         prec_params = self.params.sublist('Preconditioner')
         prec_params.set('Partitioner', 'Skew Cartesian')
 
+        partitioner = HYMLS.SkewCartesianPartitioner(self.params, self.comm)
+        partitioner.Partition()
+
+        self.solve_map = partitioner.Map()
+        self.importer = Epetra.Import(self.solve_map, self.map)
+
     def partition_domain(self):
         rmin = 1e100
 
-        sx = 1
-        sy = 1
-        sz = 1
+        self.npx = 1
+        self.npy = 1
+        self.npz = 1
 
         nparts = self.comm.NumProc()
 
@@ -91,45 +97,64 @@ class Interface(continuation.Interface):
 
                     if r < rmin:
                         rmin = r
-                        npx = t1
-                        npy = t2
-                        npz = t3
+                        self.npx = t1
+                        self.npy = t2
+                        self.npz = t3
                         found = True
 
         if not found:
             raise Exception('Could not split %dx%dx%d domain in %d parts.' % (self.nx, self.ny, self.nz, nparts))
 
-        pidx, pidy, pidz, _ = ind2sub(npx, npy, npz, nparts, 1)
+        self.pidx, self.pidy, self.pidz, _ = ind2sub(self.npx, self.npy, self.npz, nparts)
 
         # Compute the local domain size and offset.
-        self.nx_local = self.nx // npx
-        self.ny_local = self.ny // npy
-        self.nz_local = self.nz // npz
+        self.nx_local = self.nx // self.npx
+        self.ny_local = self.ny // self.npy
+        self.nz_local = self.nz // self.npz
 
-        self.nx_offset = self.nx_local * pidx
-        self.ny_offset = self.ny_local * pidy
-        self.nz_offset = self.nz_local * pidz
+        self.nx_offset = self.nx_local * self.pidx
+        self.ny_offset = self.ny_local * self.pidy
+        self.nz_offset = self.nz_local * self.pidz
 
         # Add ghost nodes to factor out boundary conditions in the interior.
-        if pidx > 0:
+        if self.pidx > 0:
             self.nx_local += 2
             self.nx_offset -= 2
-        if pidx < npx - 1:
+        if self.pidx < self.npx - 1:
             self.nx_local += 2
-        if pidy > 0:
+        if self.pidy > 0:
             self.ny_local += 2
             self.ny_offset -= 2
-        if pidy < npy - 1:
+        if self.pidy < self.npy - 1:
             self.ny_local += 2
-        if pidz > 0:
+        if self.pidz > 0:
             self.nz_local += 2
             self.nz_offset -= 2
-        if pidz < npz - 1:
+        if self.pidz < self.npz - 1:
             self.nz_local += 2
 
         self.nx = self.nx_local
         self.ny = self.ny_local
         self.nz = self.nz_local
+
+    def is_ghost(self, idx):
+        i, j, k, _ = ind2sub(self.nx_local, self.ny_local, self.nz_local, idx, self.dof)
+
+        ghost = False
+        if self.pidx > 0 and i < 2:
+            ghost = True
+        elif self.pidx < self.npx - 1 and i >= self.nx_local - 2:
+            ghost = True
+        elif self.pidy > 0 and j < 2:
+            ghost = True
+        elif self.pidy < self.npy - 1 and j >= self.ny_local - 2:
+            ghost = True
+        elif self.pidz > 0 and k < 2:
+            ghost = True
+        elif self.pidz < self.npz - 1 and k >= self.nz_local - 2:
+            ghost = True
+
+        return ghost
 
     def create_map(self):
         local_elements = [0] * self.nx_local * self.ny_local * self.nz_local * self.dof
@@ -143,6 +168,20 @@ class Interface(continuation.Interface):
                         pos += 1
 
         self.map = Epetra.Map(-1, local_elements, 0, self.comm)
+
+    def jacobian(self, state, Re):
+        jac = continuation.Interface.jacobian(self, state, Re)
+
+        A = Epetra.FECrsMatrix(Epetra.Copy, self.solve_map, 27)
+        for i in range(len(jac.begA)-1):
+            if self.is_ghost(i):
+                continue
+            row = self.map.GID64(i)
+            for j in range(jac.begA[i], jac.begA[i+1]):
+                A.InsertGlobalValue(row, self.map.GID64(jac.jcoA[j]), jac.coA[j])
+        A.GlobalAssemble(True, Epetra.Insert)
+
+        return A
 
     def dirtect_solve(self, jac, rhs):
         A = Epetra.CrsMatrix(Epetra.Copy, self.map, 27)
@@ -169,20 +208,19 @@ class Interface(continuation.Interface):
         return x
 
     def solve(self, jac, rhs):
-        A = Epetra.CrsMatrix(Epetra.Copy, self.map, 27)
-        for i in range(len(jac.begA)-1):
-            for j in range(jac.begA[i], jac.begA[i+1]):
-                A[i, jac.jcoA[j]] = jac.coA[j]
-        A.FillComplete()
-
         b = Vector(Epetra.Copy, self.map, rhs)
-        x = Vector(b)
+        b2 = Vector(self.solve_map)
+        b2.Import(b, self.importer, Epetra.Insert)
+        x2 = Vector(b2)
 
-        preconditioner = HYMLS.Preconditioner(A, self.params)
+        preconditioner = HYMLS.Preconditioner(jac, self.params)
         preconditioner.Initialize()
         preconditioner.Compute()
 
-        solver = HYMLS.Solver(A, preconditioner, self.params)
-        solver.ApplyInverse(b, x)
+        solver = HYMLS.Solver(jac, preconditioner, self.params)
+        solver.ApplyInverse(b2, x2)
+
+        x = Vector(b)
+        x.Export(x2, self.importer, Epetra.Insert)
 
         return x
