@@ -74,6 +74,7 @@ class Interface(continuation.Interface):
         self.npz = 1
 
         nparts = self.comm.NumProc()
+        pid = self.comm.MyPID()
 
         found = False
 
@@ -105,7 +106,7 @@ class Interface(continuation.Interface):
         if not found:
             raise Exception('Could not split %dx%dx%d domain in %d parts.' % (self.nx, self.ny, self.nz, nparts))
 
-        self.pidx, self.pidy, self.pidz, _ = ind2sub(self.npx, self.npy, self.npz, nparts)
+        self.pidx, self.pidy, self.pidz, _ = ind2sub(self.npx, self.npy, self.npz, pid)
 
         # Compute the local domain size and offset.
         self.nx_local = self.nx // self.npx
