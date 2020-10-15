@@ -183,6 +183,10 @@ class Interface(continuation.Interface):
 
         return A
 
+    def rhs(self, state, Re):
+        rhs = continuation.Interface.rhs(self, state, Re)
+        return Vector(Epetra.Copy, self.map, rhs)
+
     def dirtect_solve(self, jac, rhs):
         A = Epetra.CrsMatrix(Epetra.Copy, self.map, 27)
         for i in range(len(jac.begA)-1):
@@ -194,11 +198,10 @@ class Interface(continuation.Interface):
                     A[i, jac.jcoA[j]] = jac.coA[j]
         A.FillComplete()
 
-        b = Vector(Epetra.Copy, self.map, rhs)
-        b[3] = 0
-        x = Vector(b)
+        rhs[3] = 0
+        x = Vector(rhs)
 
-        problem = Epetra.LinearProblem(A, x, b)
+        problem = Epetra.LinearProblem(A, x, rhs)
         factory = Amesos.Factory()
         solver = factory.Create('Klu', problem)
         solver.SymbolicFactorization()
@@ -208,19 +211,18 @@ class Interface(continuation.Interface):
         return x
 
     def solve(self, jac, rhs):
-        b = Vector(Epetra.Copy, self.map, rhs)
-        b2 = Vector(self.solve_map)
-        b2.Import(b, self.importer, Epetra.Insert)
-        x2 = Vector(b2)
+        rhs_sol = Vector(self.solve_map)
+        rhs_sol.Import(rhs, self.importer, Epetra.Insert)
+        x_sol = Vector(rhs_sol)
 
         preconditioner = HYMLS.Preconditioner(jac, self.params)
         preconditioner.Initialize()
         preconditioner.Compute()
 
         solver = HYMLS.Solver(jac, preconditioner, self.params)
-        solver.ApplyInverse(b2, x2)
+        solver.ApplyInverse(rhs_sol, x_sol)
 
-        x = Vector(b)
-        x.Export(x2, self.importer, Epetra.Insert)
+        x = Vector(rhs)
+        x.Export(x_sol, self.importer, Epetra.Insert)
 
         return x
