@@ -1,5 +1,4 @@
 import fvm
-import numpy
 
 from math import sqrt
 from scipy import sparse
@@ -64,6 +63,9 @@ class Interface:
         x = linalg.spsolve(A, rhs)
         return x
 
+def norm(x):
+    return sqrt(x.dot(x))
+
 def newton(interface, x0, l, tol=1.e-7, maxit=1000):
     x = x0
     for k in range(maxit):
@@ -73,7 +75,7 @@ def newton(interface, x0, l, tol=1.e-7, maxit=1000):
 
         x = x + dx
 
-        dxnorm = numpy.linalg.norm(dx)
+        dxnorm = norm(dx)
         if dxnorm < tol:
             print('Newton converged in %d steps with norm %e' % (k, dxnorm))
             break
@@ -115,7 +117,7 @@ def newtoncorrector(interface, ds, x, x0, l, l0, tol):
         x = x + dx
         l = l + dl
 
-        dxnorm = numpy.linalg.norm(dx)
+        dxnorm = norm(dx)
         if dxnorm < tol:
             print('Newton corrector converged in %d steps with norm %e' % (k, dxnorm))
             return (x, l)
