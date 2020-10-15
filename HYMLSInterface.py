@@ -37,6 +37,10 @@ class Interface(continuation.Interface):
     def __init__(self, comm, params, nx, ny, nz):
         continuation.Interface.__init__(self, nx, ny, nz)
 
+        self.nx_global = nx
+        self.ny_global = ny
+        self.nz_global = nz
+
         self.dof = 4
         self.comm = comm
 
@@ -45,9 +49,9 @@ class Interface(continuation.Interface):
 
         self.params = params
         problem_params = self.params.sublist('Problem')
-        problem_params.set('nx', self.nx)
-        problem_params.set('ny', self.ny)
-        problem_params.set('nz', self.nz)
+        problem_params.set('nx', self.nx_global)
+        problem_params.set('ny', self.ny_global)
+        problem_params.set('nz', self.nz_global)
         problem_params.set('Equations', 'Stokes-C')
 
         solver_params = self.params.sublist('Solver')
@@ -81,6 +85,7 @@ class Interface(continuation.Interface):
 
                     r1 = abs(self.nx / t1 - self.ny / t2)
                     r2 = abs(self.nx / t1 - self.nz / t3)
+
                     r3 = abs(self.ny / t2 - self.nz / t3)
                     r = r1 + r2 + r3
 
@@ -122,6 +127,10 @@ class Interface(continuation.Interface):
         if pidz < npz - 1:
             self.nz_local += 2
 
+        self.nx = self.nx_local
+        self.ny = self.ny_local
+        self.nz = self.nz_local
+
     def create_map(self):
         local_elements = [0] * self.nx_local * self.ny_local * self.nz_local * self.dof
 
@@ -130,7 +139,7 @@ class Interface(continuation.Interface):
             for j in range(self.ny_offset, self.ny_offset + self.ny_local):
                 for i in range(self.nx_offset, self.nx_offset + self.nx_local):
                     for var in range(self.dof):
-                        local_elements[pos] = sub2ind(self.nx, self.ny, self.nz, self.dof, i, j, k, var)
+                        local_elements[pos] = sub2ind(self.nx_global, self.ny_global, self.nz_global, self.dof, i, j, k, var)
                         pos += 1
 
         self.map = Epetra.Map(-1, local_elements, 0, self.comm)
