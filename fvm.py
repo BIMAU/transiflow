@@ -22,12 +22,14 @@ def linear_part(Re, nx, ny, nz):
                   + Derivatives.div(nx, ny, nz, x, y, z)
 
 def boundaries(atom, nx, ny, nz):
-    BoundaryConditions.dirichlet_east(atom, nx, ny, nz)
-    BoundaryConditions.dirichlet_west(atom, nx, ny, nz)
-    frc = BoundaryConditions.dirichlet_north(atom, nx, ny, nz)
-    BoundaryConditions.dirichlet_south(atom, nx, ny, nz)
-    frc += BoundaryConditions.dirichlet_top(atom, nx, ny, nz)
-    BoundaryConditions.dirichlet_bottom(atom, nx, ny, nz)
+    boundary_conditions = BoundaryConditions(nx, ny, nz)
+
+    boundary_conditions.dirichlet_east(atom)
+    boundary_conditions.dirichlet_west(atom)
+    frc = boundary_conditions.dirichlet_north(atom)
+    boundary_conditions.dirichlet_south(atom)
+    frc += boundary_conditions.dirichlet_top(atom)
+    boundary_conditions.dirichlet_bottom(atom)
     return frc
 
 def convection(state, nx, ny, nz):
@@ -143,101 +145,101 @@ def rhs(state, atom, nx, ny, nz):
                     row += 1
     return out
 
-def ldc_forcing_top(atom, nx, ny, nz):
-    dof = 4
-    n = nx * ny * nz * dof
-    out = numpy.zeros(n)
-
-    if nz <= 1:
-        return out
-
-    k = nz-1
-    z = 2
-    for j in range(ny):
-        for i in range(nx):
-            for y in range(3):
-                for x in range(3):
-                    offset = i * dof + j * nx * dof + k * nx * ny * dof + 1
-                    out[offset] += 2 * atom[i, j, k, 1, 0, x, y, z]
-                    offset = i * dof + j * nx * dof + k * nx * ny * dof
-                    out[offset] += 2 * atom[i, j, k, 0, 0, x, y, z]
-    return out
-
-def ldc_forcing_north(atom, nx, ny, nz):
-    dof = 4
-    n = nx * ny * nz * dof
-    out = numpy.zeros(n)
-
-    if nz > 1:
-        return out
-
-    j = ny-1
-    y = 2
-    for k in range(nz):
-        for i in range(nx):
-            for z in range(3):
-                for x in range(3):
-                    offset = i * dof + j * nx * dof + k * nx * ny * dof
-                    out[offset] += 2 * atom[i, j, k, 0, 0, x, y, z]
-                    offset = i * dof + j * nx * dof + k * nx * ny * dof + 2
-                    out[offset] += 2 * atom[i, j, k, 2, 0, x, y, z]
-    return out
-
 class BoundaryConditions:
-    @staticmethod
-    def dirichlet_east(atom, nx, ny, nz):
+
+    def __init__(self, nx, ny, nz):
+        self.nx = nx
+        self.ny = ny
+        self.nz = nz
+
+    def dirichlet_east(self, atom):
         # At the boundary u[i] = 0, v[i] + v[i+1] = 2*V similar for w. So v[i+1] = -v[i]+2*V.
-        atom[nx-1, 0:ny, 0:nz, :, [1,2], 1, :, :] -= atom[nx-1, 0:ny, 0:nz, :, [1,2], 2, :, :]
-        atom[nx-1, 0:ny, 0:nz, :, 0, 1, :, :] = 0
-        atom[nx-1, 0:ny, 0:nz, 0, :, :, :, :] = 0
-        atom[nx-1, 0:ny, 0:nz, :, :, 2, :, :] = 0
-        atom[nx-1, 0:ny, 0:nz, 0, 0, 1, 1, 1] = -1
+        atom[self.nx-1, 0:self.ny, 0:self.nz, :, [1,2], 1, :, :] -= atom[self.nx-1, 0:self.ny, 0:self.nz, :, [1,2], 2, :, :]
+        atom[self.nx-1, 0:self.ny, 0:self.nz, :, 0, 1, :, :] = 0
+        atom[self.nx-1, 0:self.ny, 0:self.nz, 0, :, :, :, :] = 0
+        atom[self.nx-1, 0:self.ny, 0:self.nz, :, :, 2, :, :] = 0
+        atom[self.nx-1, 0:self.ny, 0:self.nz, 0, 0, 1, 1, 1] = -1
         # TODO: Do we need this?
-        atom[nx-2, 0:ny, 0:nz, 0, 0, 2, :, :] = 0
+        atom[self.nx-2, 0:self.ny, 0:self.nz, 0, 0, 2, :, :] = 0
 
-    @staticmethod
-    def dirichlet_west(atom, nx, ny, nz):
+    def dirichlet_west(self, atom):
         # At the boundary u[i-1] = 0, v[i-1] + v[i] = 0 similar for w. So v[i-1] = -v[i].
-        atom[0, 0:ny, 0:nz, :, [1,2], 1, :, :] -= atom[0, 0:ny, 0:nz, :, [1,2], 0, :, :]
-        atom[0, 0:ny, 0:nz, :, :, 0, :, :] = 0
+        atom[0, 0:self.ny, 0:self.nz, :, [1,2], 1, :, :] -= atom[0, 0:self.ny, 0:self.nz, :, [1,2], 0, :, :]
+        atom[0, 0:self.ny, 0:self.nz, :, :, 0, :, :] = 0
 
-    @staticmethod
-    def dirichlet_north(atom, nx, ny, nz):
+    def dirichlet_north(self, atom):
         # At the boundary v[i] = 0, u[i] + u[i+1] = 2*U similar for w. So u[i+1] = -u[i]+2*U.
-        atom[0:nx, ny-1, 0:nz, :, [0,2], :, 1, :] -= atom[0:nx, ny-1, 0:nz, :, [0,2], :, 2, :]
-        atom[0:nx, ny-1, 0:nz, :, 1, :, 1, :] = 0
-        frc = ldc_forcing_north(atom, nx, ny, nz)
-        atom[0:nx, ny-1, 0:nz, 1, :, :, :, :] = 0
-        atom[0:nx, ny-1, 0:nz, :, :, :, 2, :] = 0
-        atom[0:nx, ny-1, 0:nz, 1, 1, 1, 1, 1] = -1
+        atom[0:self.nx, self.ny-1, 0:self.nz, :, [0,2], :, 1, :] -= atom[0:self.nx, self.ny-1, 0:self.nz, :, [0,2], :, 2, :]
+        atom[0:self.nx, self.ny-1, 0:self.nz, :, 1, :, 1, :] = 0
+        frc = self.ldc_forcing_north(atom)
+        atom[0:self.nx, self.ny-1, 0:self.nz, 1, :, :, :, :] = 0
+        atom[0:self.nx, self.ny-1, 0:self.nz, :, :, :, 2, :] = 0
+        atom[0:self.nx, self.ny-1, 0:self.nz, 1, 1, 1, 1, 1] = -1
         # TODO: Do we need this?
-        atom[0:nx, ny-2, 0:nz, 1, 1, :, 2, :] = 0
+        atom[0:self.nx, self.ny-2, 0:self.nz, 1, 1, :, 2, :] = 0
         return frc
 
-    @staticmethod
-    def dirichlet_south(atom, nx, ny, nz):
+    def dirichlet_south(self, atom):
         # At the boundary v[i-1] = 0, u[i-1] + u[i] = 0 similar for w. So u[i-1] = -u[i].
-        atom[0:nx, 0, 0:nz, :, [0,2], :, 1, :] -= atom[0:nx, 0, 0:nz, :, [0,2], :, 0, :]
-        atom[0:nx, 0, 0:nz, :, :, :, 0, :] = 0
+        atom[0:self.nx, 0, 0:self.nz, :, [0,2], :, 1, :] -= atom[0:self.nx, 0, 0:self.nz, :, [0,2], :, 0, :]
+        atom[0:self.nx, 0, 0:self.nz, :, :, :, 0, :] = 0
 
-    @staticmethod
-    def dirichlet_top(atom, nx, ny, nz):
+    def dirichlet_top(self, atom):
         # At the boundary w[i] = 0, u[i] + u[i+1] = 2*U similar for v. So u[i+1] = -u[i]+2*U.
-        atom[0:nx, 0:ny, nz-1, :, [0,1], :, :, 1] -= atom[0:nx, 0:ny, nz-1, :, [0,1], :, :, 2]
-        atom[0:nx, 0:ny, nz-1, :, 2, :, :, 1] = 0
-        frc = ldc_forcing_top(atom, nx, ny, nz)
-        atom[0:nx, 0:ny, nz-1, 2, :, :, :, :] = 0
-        atom[0:nx, 0:ny, nz-1, :, :, :, :, 2] = 0
-        atom[0:nx, 0:ny, nz-1, 2, 2, 1, 1, 1] = -1
+        atom[0:self.nx, 0:self.ny, self.nz-1, :, [0,1], :, :, 1] -= atom[0:self.nx, 0:self.ny, self.nz-1, :, [0,1], :, :, 2]
+        atom[0:self.nx, 0:self.ny, self.nz-1, :, 2, :, :, 1] = 0
+        frc = self.ldc_forcing_top(atom)
+        atom[0:self.nx, 0:self.ny, self.nz-1, 2, :, :, :, :] = 0
+        atom[0:self.nx, 0:self.ny, self.nz-1, :, :, :, :, 2] = 0
+        atom[0:self.nx, 0:self.ny, self.nz-1, 2, 2, 1, 1, 1] = -1
         # TODO: Do we need this?
-        atom[0:nx, 0:ny, nz-2, 2, 2, :, :, 2] = 0
+        atom[0:self.nx, 0:self.ny, self.nz-2, 2, 2, :, :, 2] = 0
         return frc
 
-    @staticmethod
-    def dirichlet_bottom(atom, nx, ny, nz):
+    def dirichlet_bottom(self, atom):
         # At the boundary w[i-1] = 0, u[i-1] + u[i] = 0 similar for v. So u[i-1] = -u[i].
-        atom[0:nx, 0:ny, 0, :, [0,1], :, :, 1] -= atom[0:nx, 0:ny, 0, :, [0,1], :, :, 0]
-        atom[0:nx, 0:ny, 0, :, :, :, :, 0] = 0
+        atom[0:self.nx, 0:self.ny, 0, :, [0,1], :, :, 1] -= atom[0:self.nx, 0:self.ny, 0, :, [0,1], :, :, 0]
+        atom[0:self.nx, 0:self.ny, 0, :, :, :, :, 0] = 0
+
+    def ldc_forcing_top(self, atom):
+        dof = 4
+        n = self.nx * self.ny * self.nz * dof
+        out = numpy.zeros(n)
+
+        if self.nz <= 1:
+            return out
+
+        k = self.nz-1
+        z = 2
+        for j in range(self.ny):
+            for i in range(self.nx):
+                for y in range(3):
+                    for x in range(3):
+                        offset = i * dof + j * self.nx * dof + k * self.nx * self.ny * dof + 1
+                        out[offset] += 2 * atom[i, j, k, 1, 0, x, y, z]
+                        offset = i * dof + j * self.nx * dof + k * self.nx * self.ny * dof
+                        out[offset] += 2 * atom[i, j, k, 0, 0, x, y, z]
+        return out
+
+    def ldc_forcing_north(self, atom):
+        dof = 4
+        n = self.nx * self.ny * self.nz * dof
+        out = numpy.zeros(n)
+
+        if self.nz > 1:
+            return out
+
+        j = self.ny-1
+        y = 2
+        for k in range(self.nz):
+            for i in range(self.nx):
+                for z in range(3):
+                    for x in range(3):
+                        offset = i * dof + j * self.nx * dof + k * self.nx * self.ny * dof
+                        out[offset] += 2 * atom[i, j, k, 0, 0, x, y, z]
+                        offset = i * dof + j * self.nx * dof + k * self.nx * self.ny * dof + 2
+                        out[offset] += 2 * atom[i, j, k, 2, 0, x, y, z]
+        return out
 
 class Derivatives:
     @staticmethod
