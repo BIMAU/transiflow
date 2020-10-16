@@ -34,17 +34,21 @@ def boundaries(atom, nx, ny, nz, dof):
     boundary_conditions.dirichlet_bottom(atom)
     return frc
 
-def convection(state, nx, ny, nz, dof):
-    x = create_uniform_coordinate_vector(nx)
-    y = create_uniform_coordinate_vector(ny)
-    z = create_uniform_coordinate_vector(nz)
-
+def create_state_mtx(state, nx, ny, nz, dof):
     state_mtx = numpy.zeros([nx, ny, nz, dof])
     for k in range(nz):
         for j in range(ny):
             for i in range(nx):
                 for d in range(dof):
                     state_mtx[i, j, k, d] = state[d + i * dof + j * dof * nx + k * dof * nx * ny]
+    return state_mtx
+
+def convection(state, nx, ny, nz, dof):
+    x = create_uniform_coordinate_vector(nx)
+    y = create_uniform_coordinate_vector(ny)
+    z = create_uniform_coordinate_vector(nz)
+
+    state_mtx = create_state_mtx(state, nx, ny, nz, dof)
 
     derivatives = Derivatives(nx, ny, nz, dof)
     return derivatives.convection(state_mtx, x, y, z)
@@ -118,13 +122,9 @@ def rhs(state, atom, nx, ny, nz, dof):
     row = 0
     n = nx * ny * nz * dof
 
-    # Put the state in matrix form
+    # Put the state in shifted matrix form
     state_mtx = numpy.zeros([nx+2, ny+2, nz+2, dof])
-    for k in range(nz):
-        for j in range(ny):
-            for i in range(nx):
-                for d in range(dof):
-                    state_mtx[i+1, j+1, k+1, d] = state[d + i * dof + j * dof * nx + k * dof * nx * ny]
+    state_mtx[1:nx+1, 1:ny+1, 1:nz+1, :] = create_state_mtx(state, nx, ny, nz, dof)
 
     # Add up all contributions without iterating over the domain
     out_mtx = numpy.zeros([nx, ny, nz, dof])
