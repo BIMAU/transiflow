@@ -60,9 +60,9 @@ class Interface(continuation.Interface):
         prec_params.set('Partitioner', 'Skew Cartesian')
 
         self.partition_domain()
-        self.create_map()
+        self.map = self.create_map()
 
-        self.create_assembly_map()
+        self.assembly_map = self.create_map(True)
         self.assembly_importer = Epetra.Import(self.assembly_map, self.map)
 
         partitioner = HYMLS.SkewCartesianPartitioner(self.params, self.comm)
@@ -163,35 +163,21 @@ class Interface(continuation.Interface):
 
         return ghost
 
-    def create_map(self):
+    def create_map(self, overlapping=False):
         local_elements = [0] * self.nx_local * self.ny_local * self.nz_local * self.dof
 
         pos = 0
         for k in range(self.nz_local):
             for j in range(self.ny_local):
                 for i in range(self.nx_local):
-                    if self.is_ghost(i, j, k):
+                    if not overlapping and self.is_ghost(i, j, k):
                         continue
                     for var in range(self.dof):
                         local_elements[pos] = sub2ind(self.nx_global, self.ny_global, self.nz_global, self.dof,
                                                       i + self.nx_offset, j + self.ny_offset, k + self.nz_offset, var)
                         pos += 1
 
-        self.map = Epetra.Map(-1, local_elements[0:pos], 0, self.comm)
-
-    def create_assembly_map(self):
-        local_elements = [0] * self.nx_local * self.ny_local * self.nz_local * self.dof
-
-        pos = 0
-        for k in range(self.nz_local):
-            for j in range(self.ny_local):
-                for i in range(self.nx_local):
-                    for var in range(self.dof):
-                        local_elements[pos] = sub2ind(self.nx_global, self.ny_global, self.nz_global, self.dof,
-                                                      i + self.nx_offset, j + self.ny_offset, k + self.nz_offset, var)
-                        pos += 1
-
-        self.assembly_map = Epetra.Map(-1, local_elements[0:pos], 0, self.comm)
+        return Epetra.Map(-1, local_elements[0:pos], 0, self.comm)
 
     def jacobian(self, state, Re):
         state_ass = Vector(self.assembly_map)
