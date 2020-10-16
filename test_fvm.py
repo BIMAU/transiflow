@@ -408,7 +408,7 @@ def test_bil():
     for i in range(n):
         state[i] = i+1
 
-    atom, atomF = fvm.convection(state, nx, ny, nz)
+    atom, atomF = fvm.convection(state, nx, ny, nz, dof)
     A = fvm.assemble(atom, nx, ny, nz, dof)
 
     B = read_matrix('bil_%sx%sx%s.txt' % (nx, ny, nz))
@@ -446,7 +446,7 @@ def test_full():
 
     atom = fvm.linear_part(Re, nx, ny, nz)
     frc = fvm.boundaries(atom, nx, ny, nz)
-    atomJ, atomF = fvm.convection(state, nx, ny, nz)
+    atomJ, atomF = fvm.convection(state, nx, ny, nz, dof)
 
     atomJ += atom
     atomF += atom
@@ -489,7 +489,7 @@ def test_full8():
 
     atom = fvm.linear_part(Re, nx, ny, nz)
     frc = fvm.boundaries(atom, nx, ny, nz)
-    atomJ, atomF = fvm.convection(state, nx, ny, nz)
+    atomJ, atomF = fvm.convection(state, nx, ny, nz, dof)
 
     atomJ += atom
     atomF += atom

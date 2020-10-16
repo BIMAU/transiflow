@@ -34,12 +34,11 @@ def boundaries(atom, nx, ny, nz):
     boundary_conditions.dirichlet_bottom(atom)
     return frc
 
-def convection(state, nx, ny, nz):
+def convection(state, nx, ny, nz, dof):
     x = create_uniform_coordinate_vector(nx)
     y = create_uniform_coordinate_vector(ny)
     z = create_uniform_coordinate_vector(nz)
 
-    dof = 4
     state_mtx = numpy.zeros([nx, ny, nz, dof])
     for k in range(nz):
         for j in range(ny):

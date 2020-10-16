@@ -21,7 +21,7 @@ class Interface:
         frc = fvm.boundaries(atom, self.nx, self.ny, self.nz)
 
         if Re_in != 0:
-            atomJ, atomF = fvm.convection(state, self.nx, self.ny, self.nz)
+            atomJ, atomF = fvm.convection(state, self.nx, self.ny, self.nz, self.dof)
             atom += atomF
 
         # FIXME: Check this minus signs
@@ -37,7 +37,7 @@ class Interface:
         fvm.boundaries(atom, self.nx, self.ny, self.nz)
 
         if Re_in != 0:
-            atomJ, atomF = fvm.convection(state, self.nx, self.ny, self.nz)
+            atomJ, atomF = fvm.convection(state, self.nx, self.ny, self.nz, self.dof)
             atom += atomJ
 
         return fvm.assemble(atom, self.nx, self.ny, self.nz, self.dof)
