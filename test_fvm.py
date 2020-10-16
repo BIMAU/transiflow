@@ -452,7 +452,7 @@ def test_full():
     atomF += atom
 
     A = fvm.assemble(atomJ, nx, ny, nz)
-    rhs = fvm.rhs(state, atomF, nx, ny, nz) - frc
+    rhs = fvm.rhs(state, atomF, nx, ny, nz, dof) - frc
 
     B = read_matrix('full_%sx%sx%s.txt' % (nx, ny, nz))
     rhs_B = read_vector('rhs_%sx%sx%s.txt' % (nx, ny, nz))
@@ -495,7 +495,7 @@ def test_full8():
     atomF += atom
 
     A = fvm.assemble(atomJ, nx, ny, nz)
-    rhs = fvm.rhs(state, atomF, nx, ny, nz) - frc
+    rhs = fvm.rhs(state, atomF, nx, ny, nz, dof) - frc
 
     if not os.path.isfile('full_%sx%sx%s.txt' % (nx, ny, nz)):
         return

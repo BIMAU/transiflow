@@ -100,7 +100,7 @@ def assemble(atom, nx, ny, nz):
                     begA[row] = idx
     return CrsMatrix(coA, jcoA, begA)
 
-def rhs(state, atom, nx, ny, nz):
+def rhs(state, atom, nx, ny, nz, dof):
     ''' Assemble the right-hand side. Optimized version of
 
     for k in range(nz):
@@ -117,7 +117,6 @@ def rhs(state, atom, nx, ny, nz):
                     row += 1
     '''
 
-    dof = 4
     row = 0
     n = nx * ny * nz * dof
 
