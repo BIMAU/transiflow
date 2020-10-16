@@ -8,7 +8,7 @@ def test_continuation(nx=4, interactive=False):
     nz = nx
     n = dof * nx * ny * nz
 
-    interface = continuation.Interface(nx, ny, nz)
+    interface = continuation.Interface(nx, ny, nz, dof)
 
     x0 = numpy.zeros(dof * nx * ny * nz)
     x0 = continuation.newton(interface, x0, 0)
@@ -35,7 +35,7 @@ def test_continuation_2D(nx=8, interactive=False):
     nz = 1
     n = dof * nx * ny * nz
 
-    interface = continuation.Interface(nx, ny, nz)
+    interface = continuation.Interface(nx, ny, nz, dof)
 
     x0 = numpy.zeros(dof * nx * ny * nz)
     x0 = continuation.newton(interface, x0, 0)

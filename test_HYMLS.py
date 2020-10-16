@@ -31,7 +31,7 @@ def test_HYMLS(nx=4, interactive=False):
     prec_params.set('Number of Levels', 0)
 
     comm = Epetra.PyComm()
-    interface = HYMLSInterface.Interface(comm, params, nx, ny, nz)
+    interface = HYMLSInterface.Interface(comm, params, nx, ny, nz, dof)
     m = interface.map
 
     x0 = HYMLSInterface.Vector(m)
@@ -74,7 +74,7 @@ def test_HYMLS_2D(nx=8, interactive=False):
     prec_params.set('Number of Levels', 0)
 
     comm = Epetra.PyComm()
-    interface = HYMLSInterface.Interface(comm, params, nx, ny, nz)
+    interface = HYMLSInterface.Interface(comm, params, nx, ny, nz, dof)
     m = interface.map
 
     x0 = HYMLSInterface.Vector(m)

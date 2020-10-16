@@ -34,14 +34,13 @@ def sub2ind(nx, ny, nz, dof, i, j, k, var):
     return ((k *ny + j) * nx + i) * dof + var
 
 class Interface(continuation.Interface):
-    def __init__(self, comm, params, nx, ny, nz):
-        continuation.Interface.__init__(self, nx, ny, nz)
+    def __init__(self, comm, params, nx, ny, nz, dof):
+        continuation.Interface.__init__(self, nx, ny, nz, dof)
 
         self.nx_global = nx
         self.ny_global = ny
         self.nz_global = nz
 
-        self.dof = 4
         self.comm = comm
 
         HYMLS.Tools.InitializeIO(self.comm);

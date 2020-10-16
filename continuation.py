@@ -5,10 +5,11 @@ from scipy import sparse
 from scipy.sparse import linalg
 
 class Interface:
-    def __init__(self, nx, ny, nz):
+    def __init__(self, nx, ny, nz, dof):
         self.nx = nx
         self.ny = ny
         self.nz = nz
+        self.dof = dof
 
     def rhs(self, state, Re_in):
         if Re_in == 0:
