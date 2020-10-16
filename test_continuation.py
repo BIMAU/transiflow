@@ -2,9 +2,8 @@ import continuation
 import numpy
 import plot_utils
 
-def test_continuation():
+def test_continuation(nx=4, interactive=False):
     dof = 4
-    nx = 4
     ny = nx
     nz = nx
     n = dof * nx * ny * nz
@@ -22,14 +21,16 @@ def test_continuation():
 
     assert numpy.linalg.norm(x) > 0
 
-    # print(x)
+    if not interactive:
+        return
 
-    # x = plot_utils.get_state_mtx(x, nx, ny, nz, dof)
-    # plot_utils.plot_state(x[:,ny//2,:,0], x[:,ny//2,:,2], nx, nz)
+    print(x)
 
-def test_continuation_2d():
+    x = plot_utils.get_state_mtx(x, nx, ny, nz, dof)
+    plot_utils.plot_state(x[:,ny//2,:,0], x[:,ny//2,:,2], nx, nz)
+
+def test_continuation_2D(nx=8, interactive=False):
     dof = 4
-    nx = 8
     ny = nx
     nz = 1
     n = dof * nx * ny * nz
@@ -47,11 +48,14 @@ def test_continuation_2d():
 
     assert numpy.linalg.norm(x) > 0
 
-    # print(x)
+    if not interactive:
+        return
 
-    # x = plot_utils.get_state_mtx(x, nx, ny, nz, dof)
-    # plot_utils.plot_state(x[:,:,0,0], x[:,:,0,1], nx, ny)
+    print(x)
+
+    x = plot_utils.get_state_mtx(x, nx, ny, nz, dof)
+    plot_utils.plot_state(x[:,:,0,0], x[:,:,0,1], nx, ny)
 
 if __name__ == '__main__':
-    test_continuation()
-    # test_continuation_2d()
+    # test_continuation(8, True)
+    test_continuation_2D(8, True)
