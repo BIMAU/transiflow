@@ -10,12 +10,12 @@ def create_uniform_coordinate_vector(nx):
     dx = 1 / nx
     return numpy.roll(numpy.arange(-dx, 1+2*dx, dx), -2)
 
-def linear_part(Re, nx, ny, nz):
+def linear_part(Re, nx, ny, nz, dof):
     x = create_uniform_coordinate_vector(nx)
     y = create_uniform_coordinate_vector(ny)
     z = create_uniform_coordinate_vector(nz)
 
-    derivatives = Derivatives(nx, ny, nz)
+    derivatives = Derivatives(nx, ny, nz, dof)
 
     return 1 / Re * (derivatives.u_xx(x, y, z) + derivatives.u_yy(x, y, z) + derivatives.u_zz(x, y, z) \
                   +  derivatives.v_xx(x, y, z) + derivatives.v_yy(x, y, z) + derivatives.v_zz(x, y, z) \
@@ -46,7 +46,7 @@ def convection(state, nx, ny, nz, dof):
                 for d in range(dof):
                     state_mtx[i, j, k, d] = state[d + i * dof + j * dof * nx + k * dof * nx * ny]
 
-    derivatives = Derivatives(nx, ny, nz)
+    derivatives = Derivatives(nx, ny, nz, dof)
     return derivatives.convection(state_mtx, x, y, z)
 
 def assemble(atom, nx, ny, nz, dof):
@@ -242,10 +242,11 @@ class BoundaryConditions:
 
 class Derivatives:
 
-    def __init__(self, nx, ny, nz):
+    def __init__(self, nx, ny, nz, dof):
         self.nx = nx
         self.ny = ny
         self.nz = nz
+        self.dof = dof
 
     @staticmethod
     def _u_xx(atom, i, j, k, x, y, z):
@@ -264,7 +265,7 @@ class Derivatives:
         atom[1] = -atom[0] - atom[2]
 
     def u_xx(self, x, y, z):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
@@ -272,7 +273,7 @@ class Derivatives:
         return atom
 
     def v_yy(self, x, y, z):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
@@ -280,7 +281,7 @@ class Derivatives:
         return atom
 
     def w_zz(self, x, y, z):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
@@ -304,7 +305,7 @@ class Derivatives:
         atom[1] = -atom[0] - atom[2]
 
     def u_yy(self, x, y, z):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
@@ -312,7 +313,7 @@ class Derivatives:
         return atom
 
     def v_xx(self, x, y, z):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
@@ -320,7 +321,7 @@ class Derivatives:
         return atom
 
     def w_yy(self, x, y, z):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
@@ -344,7 +345,7 @@ class Derivatives:
         atom[1] = -atom[0] - atom[2]
 
     def u_zz(self, x, y, z):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
@@ -352,7 +353,7 @@ class Derivatives:
         return atom
 
     def v_zz(self, x, y, z):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
@@ -360,7 +361,7 @@ class Derivatives:
         return atom
 
     def w_xx(self, x, y, z):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
@@ -379,7 +380,7 @@ class Derivatives:
         atom[1] = -atom[2]
 
     def p_x(self, x, y, z):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
@@ -387,7 +388,7 @@ class Derivatives:
         return atom
 
     def p_y(self, x, y, z):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
@@ -395,7 +396,7 @@ class Derivatives:
         return atom
 
     def p_z(self, x, y, z):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
@@ -414,7 +415,7 @@ class Derivatives:
         atom[0] = -atom[1]
 
     def u_x(self, x, y, z):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
@@ -422,7 +423,7 @@ class Derivatives:
         return atom
 
     def v_y(self, x, y, z):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
@@ -430,7 +431,7 @@ class Derivatives:
         return atom
 
     def w_z(self, x, y, z):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
@@ -653,8 +654,8 @@ class Derivatives:
         convective_term.MzV(averages, bil, state)
         convective_term.MzW(averages, bil, state)
 
-        atomJ = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
-        atomF = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
 
         self.convection_u_u(atomJ, atomF, averages, bil)
         self.convection_u_v(atomJ, atomF, averages, bil)

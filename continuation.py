@@ -17,7 +17,7 @@ class Interface:
         else:
             Re = Re_in
 
-        atom = fvm.linear_part(Re, self.nx, self.ny, self.nz)
+        atom = fvm.linear_part(Re, self.nx, self.ny, self.nz, self.dof)
         frc = fvm.boundaries(atom, self.nx, self.ny, self.nz, self.dof)
 
         if Re_in != 0:
@@ -33,7 +33,7 @@ class Interface:
         else:
             Re = Re_in
 
-        atom = fvm.linear_part(Re, self.nx, self.ny, self.nz)
+        atom = fvm.linear_part(Re, self.nx, self.ny, self.nz, self.dof)
         fvm.boundaries(atom, self.nx, self.ny, self.nz, self.dof)
 
         if Re_in != 0:
