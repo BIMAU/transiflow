@@ -375,7 +375,7 @@ def test_bnd():
     n = nx * ny * nz * dof
 
     atom = fvm.linear_part(Re, nx, ny, nz)
-    fvm.boundaries(atom, nx, ny, nz)
+    fvm.boundaries(atom, nx, ny, nz, dof)
     A = fvm.assemble(atom, nx, ny, nz, dof)
 
     B = read_matrix('bnd_%sx%sx%s.txt' % (nx, ny, nz))
@@ -445,7 +445,7 @@ def test_full():
         state[i] = i+1
 
     atom = fvm.linear_part(Re, nx, ny, nz)
-    frc = fvm.boundaries(atom, nx, ny, nz)
+    frc = fvm.boundaries(atom, nx, ny, nz, dof)
     atomJ, atomF = fvm.convection(state, nx, ny, nz, dof)
 
     atomJ += atom
@@ -488,7 +488,7 @@ def test_full8():
         state[i] = i+1
 
     atom = fvm.linear_part(Re, nx, ny, nz)
-    frc = fvm.boundaries(atom, nx, ny, nz)
+    frc = fvm.boundaries(atom, nx, ny, nz, dof)
     atomJ, atomF = fvm.convection(state, nx, ny, nz, dof)
 
     atomJ += atom

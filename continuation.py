@@ -18,7 +18,7 @@ class Interface:
             Re = Re_in
 
         atom = fvm.linear_part(Re, self.nx, self.ny, self.nz)
-        frc = fvm.boundaries(atom, self.nx, self.ny, self.nz)
+        frc = fvm.boundaries(atom, self.nx, self.ny, self.nz, self.dof)
 
         if Re_in != 0:
             atomJ, atomF = fvm.convection(state, self.nx, self.ny, self.nz, self.dof)
@@ -34,7 +34,7 @@ class Interface:
             Re = Re_in
 
         atom = fvm.linear_part(Re, self.nx, self.ny, self.nz)
-        fvm.boundaries(atom, self.nx, self.ny, self.nz)
+        fvm.boundaries(atom, self.nx, self.ny, self.nz, self.dof)
 
         if Re_in != 0:
             atomJ, atomF = fvm.convection(state, self.nx, self.ny, self.nz, self.dof)

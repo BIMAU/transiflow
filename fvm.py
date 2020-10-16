@@ -23,8 +23,8 @@ def linear_part(Re, nx, ny, nz):
                   - (derivatives.p_x(x, y, z) + derivatives.p_y(x, y, z) + derivatives.p_z(x, y, z)) \
                   + derivatives.div(x, y, z)
 
-def boundaries(atom, nx, ny, nz):
-    boundary_conditions = BoundaryConditions(nx, ny, nz)
+def boundaries(atom, nx, ny, nz, dof):
+    boundary_conditions = BoundaryConditions(nx, ny, nz, dof)
 
     boundary_conditions.dirichlet_east(atom)
     boundary_conditions.dirichlet_west(atom)
@@ -147,10 +147,11 @@ def rhs(state, atom, nx, ny, nz, dof):
 
 class BoundaryConditions:
 
-    def __init__(self, nx, ny, nz):
+    def __init__(self, nx, ny, nz, dof):
         self.nx = nx
         self.ny = ny
         self.nz = nz
+        self.dof = dof
 
     def dirichlet_east(self, atom):
         # At the boundary u[i] = 0, v[i] + v[i+1] = 2*V similar for w. So v[i+1] = -v[i]+2*V.
@@ -202,8 +203,7 @@ class BoundaryConditions:
         atom[0:self.nx, 0:self.ny, 0, :, :, :, :, 0] = 0
 
     def ldc_forcing_top(self, atom):
-        dof = 4
-        n = self.nx * self.ny * self.nz * dof
+        n = self.nx * self.ny * self.nz * self.dof
         out = numpy.zeros(n)
 
         if self.nz <= 1:
@@ -215,15 +215,14 @@ class BoundaryConditions:
             for i in range(self.nx):
                 for y in range(3):
                     for x in range(3):
-                        offset = i * dof + j * self.nx * dof + k * self.nx * self.ny * dof + 1
+                        offset = i * self.dof + j * self.nx * self.dof + k * self.nx * self.ny * self.dof + 1
                         out[offset] += 2 * atom[i, j, k, 1, 0, x, y, z]
-                        offset = i * dof + j * self.nx * dof + k * self.nx * self.ny * dof
+                        offset = i * self.dof + j * self.nx * self.dof + k * self.nx * self.ny * self.dof
                         out[offset] += 2 * atom[i, j, k, 0, 0, x, y, z]
         return out
 
     def ldc_forcing_north(self, atom):
-        dof = 4
-        n = self.nx * self.ny * self.nz * dof
+        n = self.nx * self.ny * self.nz * self.dof
         out = numpy.zeros(n)
 
         if self.nz > 1:
@@ -235,9 +234,9 @@ class BoundaryConditions:
             for i in range(self.nx):
                 for z in range(3):
                     for x in range(3):
-                        offset = i * dof + j * self.nx * dof + k * self.nx * self.ny * dof
+                        offset = i * self.dof + j * self.nx * self.dof + k * self.nx * self.ny * self.dof
                         out[offset] += 2 * atom[i, j, k, 0, 0, x, y, z]
-                        offset = i * dof + j * self.nx * dof + k * self.nx * self.ny * dof + 2
+                        offset = i * self.dof + j * self.nx * self.dof + k * self.nx * self.ny * self.dof + 2
                         out[offset] += 2 * atom[i, j, k, 2, 0, x, y, z]
         return out
 
