@@ -53,7 +53,7 @@ def test_HYMLS(nx=4, interactive=False):
     if comm.MyPID() == 0:
         print(x)
 
-        x = plot_utils.get_state_mtx(x, nx, ny, nz, dof)
+        x = plot_utils.create_state_mtx(x, nx, ny, nz, dof)
         plot_utils.plot_state(x[:,ny//2,:,0], x[:,ny//2,:,2], nx, nz)
 
 def test_HYMLS_2D(nx=8, interactive=False):
@@ -96,7 +96,7 @@ def test_HYMLS_2D(nx=8, interactive=False):
     if comm.MyPID() == 0:
         print(x)
 
-        x = plot_utils.get_state_mtx(x, nx, ny, nz, dof)
+        x = plot_utils.create_state_mtx(x, nx, ny, nz, dof)
         plot_utils.plot_state(x[:,:,0,0], x[:,:,0,1], nx, ny)
 
 if __name__ == '__main__':

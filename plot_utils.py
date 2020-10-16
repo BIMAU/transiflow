@@ -1,14 +1,7 @@
 import numpy
 import matplotlib.pyplot as plt
 
-def get_state_mtx(x, nx, ny, nz, dof):
-    state_mtx = numpy.zeros([nx, ny, nz, dof])
-    for k in range(nz):
-        for j in range(ny):
-            for i in range(nx):
-                for d in range(dof):
-                    state_mtx[i, j, k, d] = x[d + i * dof + j * dof * nx + k * dof * nx * ny]
-    return state_mtx
+from fvm import create_state_mtx
 
 def plot_state(u, v, nx, ny):
     psi = numpy.zeros([nx, ny])
