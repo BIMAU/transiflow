@@ -15,9 +15,11 @@ def linear_part(Re, nx, ny, nz):
     y = create_uniform_coordinate_vector(ny)
     z = create_uniform_coordinate_vector(nz)
 
-    return 1 / Re * (Derivatives.u_xx(nx, ny, nz, x, y, z) + Derivatives.u_yy(nx, ny, nz, x, y, z) + Derivatives.u_zz(nx, ny, nz, x, y, z) \
-                  + Derivatives.v_xx(nx, ny, nz, x, y, z) + Derivatives.v_yy(nx, ny, nz, x, y, z) + Derivatives.v_zz(nx, ny, nz, x, y, z) \
-                  + Derivatives.w_xx(nx, ny, nz, x, y, z) + Derivatives.w_yy(nx, ny, nz, x, y, z) + Derivatives.w_zz(nx, ny, nz, x, y, z)) \
+    derivatives = Derivatives(nx, ny, nz)
+
+    return 1 / Re * (derivatives.u_xx(x, y, z) + derivatives.u_yy(x, y, z) + derivatives.u_zz(x, y, z) \
+                  +  derivatives.v_xx(x, y, z) + derivatives.v_yy(x, y, z) + derivatives.v_zz(x, y, z) \
+                  +  derivatives.w_xx(x, y, z) + derivatives.w_yy(x, y, z) + derivatives.w_zz(x, y, z)) \
                   - (Derivatives.p_x(nx, ny, nz, x, y, z) + Derivatives.p_y(nx, ny, nz, x, y, z) + Derivatives.p_z(nx, ny, nz, x, y, z)) \
                   + Derivatives.div(nx, ny, nz, x, y, z)
 
@@ -242,6 +244,12 @@ class BoundaryConditions:
         return out
 
 class Derivatives:
+
+    def __init__(self, nx, ny, nz):
+        self.nx = nx
+        self.ny = ny
+        self.nz = nz
+
     @staticmethod
     def _u_xx(atom, i, j, k, x, y, z):
         # distance between u[i] and u[i-1]
@@ -258,30 +266,27 @@ class Derivatives:
         atom[2] = 1 / dxp1 * dy * dz
         atom[1] = -atom[0] - atom[2]
 
-    @staticmethod
-    def u_xx(nx, ny, nz, x, y, z):
-        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def u_xx(self, x, y, z):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     Derivatives._u_xx(atom[i, j, k, 0, 0, :, 1, 1], i, j, k, x, y, z)
         return atom
 
-    @staticmethod
-    def v_yy(nx, ny, nz, x, y, z):
-        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def v_yy(self, x, y, z):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     Derivatives._u_xx(atom[i, j, k, 1, 1, 1, :, 1], j, i, k, y, x, z)
         return atom
 
-    @staticmethod
-    def w_zz(nx, ny, nz, x, y, z):
-        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def w_zz(self, x, y, z):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     Derivatives._u_xx(atom[i, j, k, 2, 2, 1, 1, :], k, j, i, z, y, x)
         return atom
 
@@ -301,30 +306,27 @@ class Derivatives:
         atom[2] = 1 / dyp1 * dx * dz
         atom[1] = -atom[0] - atom[2]
 
-    @staticmethod
-    def u_yy(nx, ny, nz, x, y, z):
-        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def u_yy(self, x, y, z):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     Derivatives._u_yy(atom[i, j, k, 0, 0, 1, :, 1], i, j, k, x, y, z)
         return atom
 
-    @staticmethod
-    def v_xx(nx, ny, nz, x, y, z):
-        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def v_xx(self, x, y, z):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     Derivatives._u_yy(atom[i, j, k, 1, 1, :, 1, 1], j, i, k, y, x, z)
         return atom
 
-    @staticmethod
-    def w_yy(nx, ny, nz, x, y, z):
-        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def w_yy(self, x, y, z):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     Derivatives._u_yy(atom[i, j, k, 2, 2, 1, :, 1], k, j, i, z, y, x)
         return atom
 
@@ -344,30 +346,27 @@ class Derivatives:
         atom[2] = 1 / dzp1 * dx * dy
         atom[1] = -atom[0] - atom[2]
 
-    @staticmethod
-    def u_zz(nx, ny, nz, x, y, z):
-        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def u_zz(self, x, y, z):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     Derivatives._u_zz(atom[i, j, k, 0, 0, 1, 1, :], i, j, k, x, y, z)
         return atom
 
-    @staticmethod
-    def v_zz(nx, ny, nz, x, y, z):
-        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def v_zz(self, x, y, z):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     Derivatives._u_zz(atom[i, j, k, 1, 1, 1, 1, :], j, i, k, y, x, z)
         return atom
 
-    @staticmethod
-    def w_xx(nx, ny, nz, x, y, z):
-        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def w_xx(self, x, y, z):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     Derivatives._u_zz(atom[i, j, k, 2, 2, :, 1, 1], k, j, i, z, y, x)
         return atom
 
