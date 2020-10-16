@@ -585,50 +585,41 @@ class Derivatives:
                         idx[varU] += d2 - 1 + bw
                         atomJ[:, :, k, varU, varW, idx[0], idx[1], idx[2]] -= coef1 * coef2
 
-    @staticmethod
-    def convection_u_u(atomJ, atomF, averages, bil, nx, ny, nz):
-        for i in range(nx):
-            Derivatives._convection_u_v(atomJ, atomF, averages, bil, 0, 0, nx, i)
+    def convection_u_u(self, atomJ, atomF, averages, bil):
+        for i in range(self.nx):
+            Derivatives._convection_u_v(atomJ, atomF, averages, bil, 0, 0, self.nx, i)
 
-    @staticmethod
-    def convection_v_u(atomJ, atomF, averages, bil, nx, ny, nz):
-        for j in range(ny):
-            Derivatives._convection_v_u(atomJ, atomF, averages, bil, 1, 0, ny, j)
+    def convection_v_u(self, atomJ, atomF, averages, bil):
+        for j in range(self.ny):
+            Derivatives._convection_v_u(atomJ, atomF, averages, bil, 1, 0, self.ny, j)
 
-    @staticmethod
-    def convection_w_u(atomJ, atomF, averages, bil, nx, ny, nz):
-        for k in range(nz):
-            Derivatives._convection_w_u(atomJ, atomF, averages, bil, 2, 0, nz, k)
+    def convection_w_u(self, atomJ, atomF, averages, bil):
+        for k in range(self.nz):
+            Derivatives._convection_w_u(atomJ, atomF, averages, bil, 2, 0, self.nz, k)
 
-    @staticmethod
-    def convection_u_v(atomJ, atomF, averages, bil, nx, ny, nz):
-        for i in range(nx):
-            Derivatives._convection_u_v(atomJ, atomF, averages, bil, 0, 1, nx, i)
+    def convection_u_v(self, atomJ, atomF, averages, bil):
+        for i in range(self.nx):
+            Derivatives._convection_u_v(atomJ, atomF, averages, bil, 0, 1, self.nx, i)
 
-    @staticmethod
-    def convection_v_v(atomJ, atomF, averages, bil, nx, ny, nz):
-        for j in range(ny):
-            Derivatives._convection_v_u(atomJ, atomF, averages, bil, 1, 1, ny, j)
+    def convection_v_v(self, atomJ, atomF, averages, bil):
+        for j in range(self.ny):
+            Derivatives._convection_v_u(atomJ, atomF, averages, bil, 1, 1, self.ny, j)
 
-    @staticmethod
-    def convection_w_v(atomJ, atomF, averages, bil, nx, ny, nz):
-        for k in range(nz):
-            Derivatives._convection_w_u(atomJ, atomF, averages, bil, 2, 1, nz, k)
+    def convection_w_v(self, atomJ, atomF, averages, bil):
+        for k in range(self.nz):
+            Derivatives._convection_w_u(atomJ, atomF, averages, bil, 2, 1, self.nz, k)
 
-    @staticmethod
-    def convection_u_w(atomJ, atomF, averages, bil, nx, ny, nz):
-        for i in range(nx):
-            Derivatives._convection_u_v(atomJ, atomF, averages, bil, 0, 2, nx, i)
+    def convection_u_w(self, atomJ, atomF, averages, bil):
+        for i in range(self.nx):
+            Derivatives._convection_u_v(atomJ, atomF, averages, bil, 0, 2, self.nx, i)
 
-    @staticmethod
-    def convection_v_w(atomJ, atomF, averages, bil, nx, ny, nz):
-        for j in range(ny):
-            Derivatives._convection_v_u(atomJ, atomF, averages, bil, 1, 2, ny, j)
+    def convection_v_w(self, atomJ, atomF, averages, bil):
+        for j in range(self.ny):
+            Derivatives._convection_v_u(atomJ, atomF, averages, bil, 1, 2, self.ny, j)
 
-    @staticmethod
-    def convection_w_w(atomJ, atomF, averages, bil, nx, ny, nz):
-        for k in range(nz):
-            Derivatives._convection_w_u(atomJ, atomF, averages, bil, 2, 2, nz, k)
+    def convection_w_w(self, atomJ, atomF, averages, bil):
+        for k in range(self.nz):
+            Derivatives._convection_w_u(atomJ, atomF, averages, bil, 2, 2, self.nz, k)
 
     def convection(self, state, x, y, z):
         bil = numpy.zeros([self.nx, self.ny, self.nz, 6, 3, 2])
@@ -667,15 +658,15 @@ class Derivatives:
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
         atomF = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
 
-        Derivatives.convection_u_u(atomJ, atomF, averages, bil, self.nx, self.ny, self.nz)
-        Derivatives.convection_u_v(atomJ, atomF, averages, bil, self.nx, self.ny, self.nz)
-        Derivatives.convection_u_w(atomJ, atomF, averages, bil, self.nx, self.ny, self.nz)
-        Derivatives.convection_v_u(atomJ, atomF, averages, bil, self.nx, self.ny, self.nz)
-        Derivatives.convection_v_v(atomJ, atomF, averages, bil, self.nx, self.ny, self.nz)
-        Derivatives.convection_v_w(atomJ, atomF, averages, bil, self.nx, self.ny, self.nz)
-        Derivatives.convection_w_u(atomJ, atomF, averages, bil, self.nx, self.ny, self.nz)
-        Derivatives.convection_w_v(atomJ, atomF, averages, bil, self.nx, self.ny, self.nz)
-        Derivatives.convection_w_w(atomJ, atomF, averages, bil, self.nx, self.ny, self.nz)
+        self.convection_u_u(atomJ, atomF, averages, bil)
+        self.convection_u_v(atomJ, atomF, averages, bil)
+        self.convection_u_w(atomJ, atomF, averages, bil)
+        self.convection_v_u(atomJ, atomF, averages, bil)
+        self.convection_v_v(atomJ, atomF, averages, bil)
+        self.convection_v_w(atomJ, atomF, averages, bil)
+        self.convection_w_u(atomJ, atomF, averages, bil)
+        self.convection_w_v(atomJ, atomF, averages, bil)
+        self.convection_w_w(atomJ, atomF, averages, bil)
 
         atomJ += atomF
 
