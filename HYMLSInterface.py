@@ -44,6 +44,8 @@ class Interface(continuation.Interface):
         self.dof = 4
         self.comm = comm
 
+        HYMLS.Tools.InitializeIO(self.comm);
+
         self.params = params
         problem_params = self.params.sublist('Problem')
         problem_params.set('nx', self.nx_global)
