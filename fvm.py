@@ -624,36 +624,38 @@ class Derivatives:
     def convection(self, state, x, y, z):
         bil = numpy.zeros([self.nx, self.ny, self.nz, 6, 3, 2])
 
-        ConvectiveTerm.averages(bil)
+        convective_term = ConvectiveTerm(self.nx, self.ny, self.nz)
 
-        ConvectiveTerm.u_x(bil[:, :, :, 3, :, :], self.nx, self.ny, self.nz, x, y, z) # tMxUMxU
-        ConvectiveTerm.u_y(bil[:, :, :, 4, :, :], self.nx, self.ny, self.nz, x, y, z) # tMxVMyU
-        ConvectiveTerm.u_z(bil[:, :, :, 5, :, :], self.nx, self.ny, self.nz, x, y, z) # tMxWMzU
-        ConvectiveTerm.v_x(bil[:, :, :, 3, :, :], self.nx, self.ny, self.nz, x, y, z) # tMyUMxV
-        ConvectiveTerm.v_y(bil[:, :, :, 4, :, :], self.nx, self.ny, self.nz, x, y, z) # tMyVMyV
-        ConvectiveTerm.v_z(bil[:, :, :, 5, :, :], self.nx, self.ny, self.nz, x, y, z) # tMyWMzV
-        ConvectiveTerm.w_x(bil[:, :, :, 3, :, :], self.nx, self.ny, self.nz, x, y, z) # tMzUMxW
-        ConvectiveTerm.w_y(bil[:, :, :, 4, :, :], self.nx, self.ny, self.nz, x, y, z) # tMzVMyW
-        ConvectiveTerm.w_z(bil[:, :, :, 5, :, :], self.nx, self.ny, self.nz, x, y, z) # tMzWMzW
+        convective_term.averages(bil)
 
-        ConvectiveTerm.dirichlet_east(bil, self.nx, self.ny, self.nz)
-        ConvectiveTerm.dirichlet_west(bil, self.nx, self.ny, self.nz)
-        ConvectiveTerm.dirichlet_north(bil, self.nx, self.ny, self.nz)
-        ConvectiveTerm.dirichlet_south(bil, self.nx, self.ny, self.nz)
-        ConvectiveTerm.dirichlet_top(bil, self.nx, self.ny, self.nz)
-        ConvectiveTerm.dirichlet_bottom(bil, self.nx, self.ny, self.nz)
+        convective_term.u_x(bil[:, :, :, 3, :, :], x, y, z) # tMxUMxU
+        convective_term.u_y(bil[:, :, :, 4, :, :], x, y, z) # tMxVMyU
+        convective_term.u_z(bil[:, :, :, 5, :, :], x, y, z) # tMxWMzU
+        convective_term.v_x(bil[:, :, :, 3, :, :], x, y, z) # tMyUMxV
+        convective_term.v_y(bil[:, :, :, 4, :, :], x, y, z) # tMyVMyV
+        convective_term.v_z(bil[:, :, :, 5, :, :], x, y, z) # tMyWMzV
+        convective_term.w_x(bil[:, :, :, 3, :, :], x, y, z) # tMzUMxW
+        convective_term.w_y(bil[:, :, :, 4, :, :], x, y, z) # tMzVMyW
+        convective_term.w_z(bil[:, :, :, 5, :, :], x, y, z) # tMzWMzW
+
+        convective_term.dirichlet_east(bil)
+        convective_term.dirichlet_west(bil)
+        convective_term.dirichlet_north(bil)
+        convective_term.dirichlet_south(bil)
+        convective_term.dirichlet_top(bil)
+        convective_term.dirichlet_bottom(bil)
 
         averages = numpy.zeros([self.nx, self.ny, self.nz, 3, 3])
 
-        ConvectiveTerm.MxU(averages, bil, state, self.nx, self.ny, self.nz)
-        ConvectiveTerm.MxV(averages, bil, state, self.nx, self.ny, self.nz)
-        ConvectiveTerm.MxW(averages, bil, state, self.nx, self.ny, self.nz)
-        ConvectiveTerm.MyU(averages, bil, state, self.nx, self.ny, self.nz)
-        ConvectiveTerm.MyV(averages, bil, state, self.nx, self.ny, self.nz)
-        ConvectiveTerm.MyW(averages, bil, state, self.nx, self.ny, self.nz)
-        ConvectiveTerm.MzU(averages, bil, state, self.nx, self.ny, self.nz)
-        ConvectiveTerm.MzV(averages, bil, state, self.nx, self.ny, self.nz)
-        ConvectiveTerm.MzW(averages, bil, state, self.nx, self.ny, self.nz)
+        convective_term.MxU(averages, bil, state)
+        convective_term.MxV(averages, bil, state)
+        convective_term.MxW(averages, bil, state)
+        convective_term.MyU(averages, bil, state)
+        convective_term.MyV(averages, bil, state)
+        convective_term.MyW(averages, bil, state)
+        convective_term.MzU(averages, bil, state)
+        convective_term.MzV(averages, bil, state)
+        convective_term.MzW(averages, bil, state)
 
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
         atomF = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
@@ -675,21 +677,24 @@ class Derivatives:
 
 class ConvectiveTerm:
 
-    @staticmethod
-    def average(bil):
+    def __init__(self, nx, ny, nz):
+        self.nx = nx
+        self.ny = ny
+        self.nz = nz
+
+    def average(self, bil):
         bil[:, :, :, :] = 1/2
 
-    @staticmethod
-    def averages(bil):
-        ConvectiveTerm.average(bil[:, :, :, 0, 0, :]) # tMxU
-        ConvectiveTerm.average(bil[:, :, :, 1, 1, :]) # tMyV
-        ConvectiveTerm.average(bil[:, :, :, 2, 2, :]) # tMzW
-        ConvectiveTerm.average(bil[:, :, :, 1, 0, :]) # tMxV
-        ConvectiveTerm.average(bil[:, :, :, 2, 0, :]) # tMxW
-        ConvectiveTerm.average(bil[:, :, :, 0, 1, :]) # tMyU
-        ConvectiveTerm.average(bil[:, :, :, 2, 1, :]) # tMyW
-        ConvectiveTerm.average(bil[:, :, :, 0, 2, :]) # tMzU
-        ConvectiveTerm.average(bil[:, :, :, 1, 2, :]) # tMzV
+    def averages(self, bil):
+        self.average(bil[:, :, :, 0, 0, :]) # tMxU
+        self.average(bil[:, :, :, 1, 1, :]) # tMyV
+        self.average(bil[:, :, :, 2, 2, :]) # tMzW
+        self.average(bil[:, :, :, 1, 0, :]) # tMxV
+        self.average(bil[:, :, :, 2, 0, :]) # tMxW
+        self.average(bil[:, :, :, 0, 1, :]) # tMyU
+        self.average(bil[:, :, :, 2, 1, :]) # tMyW
+        self.average(bil[:, :, :, 0, 2, :]) # tMzU
+        self.average(bil[:, :, :, 1, 2, :]) # tMzV
 
     @staticmethod
     def _state_average(atom, bil, state, i):
@@ -698,179 +703,155 @@ class ConvectiveTerm:
             if abs(coef) > 1e-15:
                 atom[0] += coef * state[i+d2]
 
-    @staticmethod
-    def MxU(atom, bil, state, nx, ny, nz):
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def MxU(self, atom, bil, state):
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     ConvectiveTerm._state_average(atom[i, j, k, 0, 0:1], bil[i, j, k, 0, 0, :], state[:, j, k, 0], i-1)
 
-    @staticmethod
-    def MxV(atom, bil, state, nx, ny, nz):
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def MxV(self, atom, bil, state):
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     ConvectiveTerm._state_average(atom[i, j, k, 1, 0:1], bil[i, j, k, 1, 0, :], state[:, j, k, 1], i)
 
-    @staticmethod
-    def MxW(atom, bil, state, nx, ny, nz):
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def MxW(self, atom, bil, state):
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     ConvectiveTerm._state_average(atom[i, j, k, 2, 0:1], bil[i, j, k, 2, 0, :], state[:, j, k, 2], i)
 
-    @staticmethod
-    def MyU(atom, bil, state, nx, ny, nz):
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def MyU(self, atom, bil, state):
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     ConvectiveTerm._state_average(atom[i, j, k, 0, 1:2], bil[i, j, k, 0, 1, :], state[i, :, k, 0], j)
 
-    @staticmethod
-    def MyV(atom, bil, state, nx, ny, nz):
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def MyV(self, atom, bil, state):
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     ConvectiveTerm._state_average(atom[i, j, k, 1, 1:2], bil[i, j, k, 1, 1, :], state[i, :, k, 1], j-1)
 
-    @staticmethod
-    def MyW(atom, bil, state, nx, ny, nz):
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def MyW(self, atom, bil, state):
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     ConvectiveTerm._state_average(atom[i, j, k, 2, 1:2], bil[i, j, k, 2, 1, :], state[i, :, k, 2], j)
 
-    @staticmethod
-    def MzU(atom, bil, state, nx, ny, nz):
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def MzU(self, atom, bil, state):
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     ConvectiveTerm._state_average(atom[i, j, k, 0, 2:3], bil[i, j, k, 0, 2, :], state[i, j, :, 0], k)
 
-    @staticmethod
-    def MzV(atom, bil, state, nx, ny, nz):
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def MzV(self, atom, bil, state):
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     ConvectiveTerm._state_average(atom[i, j, k, 1, 2:3], bil[i, j, k, 1, 2, :], state[i, j, :, 1], k)
 
-    @staticmethod
-    def MzW(atom, bil, state, nx, ny, nz):
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def MzW(self, atom, bil, state):
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     ConvectiveTerm._state_average(atom[i, j, k, 2, 2:3], bil[i, j, k, 2, 2, :], state[i, j, :, 2], k-1)
 
-    @staticmethod
-    def u_x(atom, nx, ny, nz, x, y, z):
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def u_x(self, atom, x, y, z):
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     Derivatives._backward_u_x(atom[i, j, k, 0, :], i, j, k, x, y, z)
 
-    @staticmethod
-    def v_y(atom, nx, ny, nz, x, y, z):
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def v_y(self, atom, x, y, z):
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     Derivatives._backward_u_x(atom[i, j, k, 1, :], j, i, k, y, x, z)
 
-    @staticmethod
-    def w_z(atom, nx, ny, nz, x, y, z):
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def w_z(self, atom, x, y, z):
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     Derivatives._backward_u_x(atom[i, j, k, 2, :], k, j, i, z, y, x)
 
-    @staticmethod
-    def u_y(atom, nx, ny, nz, x, y, z):
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def u_y(self, atom, x, y, z):
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     Derivatives._backward_u_y(atom[i, j, k, 0, :], i, j, k, x, y, z)
 
-    @staticmethod
-    def v_x(atom, nx, ny, nz, x, y, z):
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def v_x(self, atom, x, y, z):
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     Derivatives._backward_u_y(atom[i, j, k, 1, :], j, i, k, y, x, z)
 
-    @staticmethod
-    def w_y(atom, nx, ny, nz, x, y, z):
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def w_y(self, atom, x, y, z):
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     Derivatives._backward_u_y(atom[i, j, k, 2, :], k, j, i, z, y, x)
 
-    @staticmethod
-    def u_z(atom, nx, ny, nz, x, y, z):
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def u_z(self, atom, x, y, z):
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     Derivatives._backward_u_z(atom[i, j, k, 0, :], i, j, k, x, y, z)
 
-    @staticmethod
-    def v_z(atom, nx, ny, nz, x, y, z):
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def v_z(self, atom, x, y, z):
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     Derivatives._backward_u_z(atom[i, j, k, 1, :], j, i, k, y, x, z)
 
-    @staticmethod
-    def w_x(atom, nx, ny, nz, x, y, z):
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def w_x(self, atom, x, y, z):
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     Derivatives._backward_u_z(atom[i, j, k, 2, :], k, j, i, z, y, x)
 
-    @staticmethod
-    def dirichlet_east(atom, nx, ny, nz):
-        atom[nx-1, 0:ny, 0:nz, 3, 0, :] = 0
-        atom[nx-1, 0:ny, 0:nz, 1, 0, :] = 0
-        atom[nx-1, 0:ny, 0:nz, 2, 0, :] = 0
-        atom[nx-1, 0:ny, 0:nz, 0, 1, :] = 0
-        atom[nx-1, 0:ny, 0:nz, 0, 2, :] = 0
-        atom[nx-1, 0:ny, 0:nz, 0, 0, 1] = 0
-        atom[nx-1, 0:ny, 0:nz, 3, 1, 1] = 0
-        atom[nx-1, 0:ny, 0:nz, 3, 2, 1] = 0
+    def dirichlet_east(self, atom):
+        atom[self.nx-1, 0:self.ny, 0:self.nz, 3, 0, :] = 0
+        atom[self.nx-1, 0:self.ny, 0:self.nz, 1, 0, :] = 0
+        atom[self.nx-1, 0:self.ny, 0:self.nz, 2, 0, :] = 0
+        atom[self.nx-1, 0:self.ny, 0:self.nz, 0, 1, :] = 0
+        atom[self.nx-1, 0:self.ny, 0:self.nz, 0, 2, :] = 0
+        atom[self.nx-1, 0:self.ny, 0:self.nz, 0, 0, 1] = 0
+        atom[self.nx-1, 0:self.ny, 0:self.nz, 3, 1, 1] = 0
+        atom[self.nx-1, 0:self.ny, 0:self.nz, 3, 2, 1] = 0
 
-    @staticmethod
-    def dirichlet_west(atom, nx, ny, nz):
-        atom[0, 0:ny, 0:nz, 0, 0, 0] = 0
-        atom[0, 0:ny, 0:nz, 3, 1, 0] = 0
-        atom[0, 0:ny, 0:nz, 3, 2, 0] = 0
+    def dirichlet_west(self, atom):
+        atom[0, 0:self.ny, 0:self.nz, 0, 0, 0] = 0
+        atom[0, 0:self.ny, 0:self.nz, 3, 1, 0] = 0
+        atom[0, 0:self.ny, 0:self.nz, 3, 2, 0] = 0
 
-    @staticmethod
-    def dirichlet_north(atom, nx, ny, nz):
-        atom[0:nx, ny-1, 0:nz, 4, 1, :] = 0
-        atom[0:nx, ny-1, 0:nz, 0, 1, :] = 0
-        atom[0:nx, ny-1, 0:nz, 2, 1, :] = 0
-        atom[0:nx, ny-1, 0:nz, 1, 0, :] = 0
-        atom[0:nx, ny-1, 0:nz, 1, 0, :] = 0
-        atom[0:nx, ny-1, 0:nz, 1, 1, 1] = 0
-        atom[0:nx, ny-1, 0:nz, 4, 0, 1] = 0
-        atom[0:nx, ny-1, 0:nz, 4, 2, 1] = 0
+    def dirichlet_north(self, atom):
+        atom[0:self.nx, self.ny-1, 0:self.nz, 4, 1, :] = 0
+        atom[0:self.nx, self.ny-1, 0:self.nz, 0, 1, :] = 0
+        atom[0:self.nx, self.ny-1, 0:self.nz, 2, 1, :] = 0
+        atom[0:self.nx, self.ny-1, 0:self.nz, 1, 0, :] = 0
+        atom[0:self.nx, self.ny-1, 0:self.nz, 1, 0, :] = 0
+        atom[0:self.nx, self.ny-1, 0:self.nz, 1, 1, 1] = 0
+        atom[0:self.nx, self.ny-1, 0:self.nz, 4, 0, 1] = 0
+        atom[0:self.nx, self.ny-1, 0:self.nz, 4, 2, 1] = 0
 
-    @staticmethod
-    def dirichlet_south(atom, nx, ny, nz):
-        atom[0:nx, 0, 0:nz, 1, 1, 0] = 0
-        atom[0:nx, 0, 0:nz, 4, 0, 0] = 0
-        atom[0:nx, 0, 0:nz, 4, 2, 0] = 0
+    def dirichlet_south(self, atom):
+        atom[0:self.nx, 0, 0:self.nz, 1, 1, 0] = 0
+        atom[0:self.nx, 0, 0:self.nz, 4, 0, 0] = 0
+        atom[0:self.nx, 0, 0:self.nz, 4, 2, 0] = 0
 
-    @staticmethod
-    def dirichlet_top(atom, nx, ny, nz):
-        atom[0:nx, 0:ny, nz-1, 5, 2, :] = 0
-        atom[0:nx, 0:ny, nz-1, 0, 2, :] = 0
-        atom[0:nx, 0:ny, nz-1, 1, 2, :] = 0
-        atom[0:nx, 0:ny, nz-1, 2, 0, :] = 0
-        atom[0:nx, 0:ny, nz-1, 2, 1, :] = 0
-        atom[0:nx, 0:ny, nz-1, 2, 2, 1] = 0
-        atom[0:nx, 0:ny, nz-1, 5, 0, 1] = 0
-        atom[0:nx, 0:ny, nz-1, 5, 1, 1] = 0
+    def dirichlet_top(self, atom):
+        atom[0:self.nx, 0:self.ny, self.nz-1, 5, 2, :] = 0
+        atom[0:self.nx, 0:self.ny, self.nz-1, 0, 2, :] = 0
+        atom[0:self.nx, 0:self.ny, self.nz-1, 1, 2, :] = 0
+        atom[0:self.nx, 0:self.ny, self.nz-1, 2, 0, :] = 0
+        atom[0:self.nx, 0:self.ny, self.nz-1, 2, 1, :] = 0
+        atom[0:self.nx, 0:self.ny, self.nz-1, 2, 2, 1] = 0
+        atom[0:self.nx, 0:self.ny, self.nz-1, 5, 0, 1] = 0
+        atom[0:self.nx, 0:self.ny, self.nz-1, 5, 1, 1] = 0
 
-    @staticmethod
-    def dirichlet_bottom(atom, nx, ny, nz):
-        atom[0:nx, 0:ny, 0, 2, 2, 0] = 0
-        atom[0:nx, 0:ny, 0, 5, 0, 0] = 0
-        atom[0:nx, 0:ny, 0, 5, 1, 0] = 0
+    def dirichlet_bottom(self, atom):
+        atom[0:self.nx, 0:self.ny, 0, 2, 2, 0] = 0
+        atom[0:self.nx, 0:self.ny, 0, 5, 0, 0] = 0
+        atom[0:self.nx, 0:self.ny, 0, 5, 1, 0] = 0
