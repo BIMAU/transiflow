@@ -20,8 +20,8 @@ def linear_part(Re, nx, ny, nz):
     return 1 / Re * (derivatives.u_xx(x, y, z) + derivatives.u_yy(x, y, z) + derivatives.u_zz(x, y, z) \
                   +  derivatives.v_xx(x, y, z) + derivatives.v_yy(x, y, z) + derivatives.v_zz(x, y, z) \
                   +  derivatives.w_xx(x, y, z) + derivatives.w_yy(x, y, z) + derivatives.w_zz(x, y, z)) \
-                  - (Derivatives.p_x(nx, ny, nz, x, y, z) + Derivatives.p_y(nx, ny, nz, x, y, z) + Derivatives.p_z(nx, ny, nz, x, y, z)) \
-                  + Derivatives.div(nx, ny, nz, x, y, z)
+                  - (derivatives.p_x(x, y, z) + derivatives.p_y(x, y, z) + derivatives.p_z(x, y, z)) \
+                  + derivatives.div(x, y, z)
 
 def boundaries(atom, nx, ny, nz):
     boundary_conditions = BoundaryConditions(nx, ny, nz)
@@ -381,30 +381,27 @@ class Derivatives:
         atom[2] = dy * dz
         atom[1] = -atom[2]
 
-    @staticmethod
-    def p_x(nx, ny, nz, x, y, z):
-        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def p_x(self, x, y, z):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     Derivatives._forward_u_x(atom[i, j, k, 0, 3, :, 1, 1], i, j, k, x, y, z)
         return atom
 
-    @staticmethod
-    def p_y(nx, ny, nz, x, y, z):
-        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def p_y(self, x, y, z):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     Derivatives._forward_u_x(atom[i, j, k, 1, 3, 1, :, 1], j, i, k, y, x, z)
         return atom
 
-    @staticmethod
-    def p_z(nx, ny, nz, x, y, z):
-        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def p_z(self, x, y, z):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     Derivatives._forward_u_x(atom[i, j, k, 2, 3, 1, 1, :], k, j, i, z, y, x)
         return atom
 
@@ -419,30 +416,27 @@ class Derivatives:
         atom[1] = dy * dz
         atom[0] = -atom[1]
 
-    @staticmethod
-    def u_x(nx, ny, nz, x, y, z):
-        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def u_x(self, x, y, z):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     Derivatives._backward_u_x(atom[i, j, k, 3, 0, :, 1, 1], i, j, k, x, y, z)
         return atom
 
-    @staticmethod
-    def v_y(nx, ny, nz, x, y, z):
-        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def v_y(self, x, y, z):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     Derivatives._backward_u_x(atom[i, j, k, 3, 1, 1, :, 1], j, i, k, y, x, z)
         return atom
 
-    @staticmethod
-    def w_z(nx, ny, nz, x, y, z):
-        atom = numpy.zeros([nx, ny, nz, 4, 4, 3, 3, 3])
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+    def w_z(self, x, y, z):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, 4, 4, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
                     Derivatives._backward_u_x(atom[i, j, k, 3, 2, 1, 1, :], k, j, i, z, y, x)
         return atom
 
@@ -468,9 +462,8 @@ class Derivatives:
         atom[1] = dx * dy
         atom[0] = -atom[1]
 
-    @staticmethod
-    def div(nx, ny, nz, x, y, z):
-        return Derivatives.u_x(nx, ny, nz, x, y, z) + Derivatives.v_y(nx, ny, nz, x, y, z) + Derivatives.w_z(nx, ny, nz, x, y, z)
+    def div(self, x, y, z):
+        return self.u_x(x, y, z) + self.v_y(x, y, z) + self.w_z(x, y, z)
 
     @staticmethod
     def _convection_v_u_unoptimized(atomJ, atomF, MxV, MyU, bil, varV, varU, ny, j):

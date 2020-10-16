@@ -177,7 +177,8 @@ def test_w_xx():
 def test_p_x():
     nx, ny, nz, x, y, z = create_test_problem()
 
-    atom =  fvm.Derivatives.p_x(nx, ny, nz, x, y, z)
+    derivatives = fvm.Derivatives(nx, ny, nz)
+    atom =  derivatives.p_x(x, y, z)
 
     for i in range(nx):
         for j in range(ny):
@@ -191,7 +192,8 @@ def test_p_x():
 def test_p_y():
     nx, ny, nz, x, y, z = create_test_problem()
 
-    atom =  fvm.Derivatives.p_y(nx, ny, nz, x, y, z)
+    derivatives = fvm.Derivatives(nx, ny, nz)
+    atom =  derivatives.p_y(x, y, z)
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -205,7 +207,8 @@ def test_p_y():
 def test_p_z():
     nx, ny, nz, x, y, z = create_test_problem()
 
-    atom =  fvm.Derivatives.p_z(nx, ny, nz, x, y, z)
+    derivatives = fvm.Derivatives(nx, ny, nz)
+    atom =  derivatives.p_z(x, y, z)
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -219,7 +222,8 @@ def test_p_z():
 def test_u_x():
     nx, ny, nz, x, y, z = create_test_problem()
 
-    atom =  fvm.Derivatives.u_x(nx, ny, nz, x, y, z)
+    derivatives = fvm.Derivatives(nx, ny, nz)
+    atom =  derivatives.u_x(x, y, z)
 
     for i in range(nx):
         for j in range(ny):
@@ -233,7 +237,8 @@ def test_u_x():
 def test_u_y():
     nx, ny, nz, x, y, z = create_test_problem()
 
-    atom =  fvm.Derivatives.v_y(nx, ny, nz, x, y, z)
+    derivatives = fvm.Derivatives(nx, ny, nz)
+    atom =  derivatives.v_y(x, y, z)
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -247,7 +252,8 @@ def test_u_y():
 def test_u_z():
     nx, ny, nz, x, y, z = create_test_problem()
 
-    atom =  fvm.Derivatives.w_z(nx, ny, nz, x, y, z)
+    derivatives = fvm.Derivatives(nx, ny, nz)
+    atom =  derivatives.w_z(x, y, z)
 
     for i in range(nx):
         dx = x[i] - x[i-1]
