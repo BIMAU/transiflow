@@ -40,7 +40,7 @@ class Interface:
             atomJ, atomF = fvm.convection(state, self.nx, self.ny, self.nz)
             atom += atomJ
 
-        return fvm.assemble(atom, self.nx, self.ny, self.nz)
+        return fvm.assemble(atom, self.nx, self.ny, self.nz, self.dof)
 
     def solve(self, jac, rhs):
         coA = []

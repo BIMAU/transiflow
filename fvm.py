@@ -50,7 +50,7 @@ def convection(state, nx, ny, nz):
     derivatives = Derivatives(nx, ny, nz)
     return derivatives.convection(state_mtx, x, y, z)
 
-def assemble(atom, nx, ny, nz):
+def assemble(atom, nx, ny, nz, dof):
     ''' Assemble the Jacobian. Optimized version of
 
     for k in range(nz):
@@ -69,7 +69,6 @@ def assemble(atom, nx, ny, nz):
                     begA[row] = idx
     '''
 
-    dof = 4
     row = 0
     idx = 0
     n = nx * ny * nz * dof

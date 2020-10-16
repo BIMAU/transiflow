@@ -346,7 +346,7 @@ def test_lin():
     n = nx * ny * nz * dof
 
     atom = fvm.linear_part(Re, nx, ny, nz)
-    A = fvm.assemble(atom, nx, ny, nz)
+    A = fvm.assemble(atom, nx, ny, nz, dof)
 
     B = read_matrix('lin_%sx%sx%s.txt' % (nx, ny, nz))
 
@@ -376,7 +376,7 @@ def test_bnd():
 
     atom = fvm.linear_part(Re, nx, ny, nz)
     fvm.boundaries(atom, nx, ny, nz)
-    A = fvm.assemble(atom, nx, ny, nz)
+    A = fvm.assemble(atom, nx, ny, nz, dof)
 
     B = read_matrix('bnd_%sx%sx%s.txt' % (nx, ny, nz))
 
@@ -409,7 +409,7 @@ def test_bil():
         state[i] = i+1
 
     atom, atomF = fvm.convection(state, nx, ny, nz)
-    A = fvm.assemble(atom, nx, ny, nz)
+    A = fvm.assemble(atom, nx, ny, nz, dof)
 
     B = read_matrix('bil_%sx%sx%s.txt' % (nx, ny, nz))
 
@@ -451,7 +451,7 @@ def test_full():
     atomJ += atom
     atomF += atom
 
-    A = fvm.assemble(atomJ, nx, ny, nz)
+    A = fvm.assemble(atomJ, nx, ny, nz, dof)
     rhs = fvm.rhs(state, atomF, nx, ny, nz, dof) - frc
 
     B = read_matrix('full_%sx%sx%s.txt' % (nx, ny, nz))
@@ -494,7 +494,7 @@ def test_full8():
     atomJ += atom
     atomF += atom
 
-    A = fvm.assemble(atomJ, nx, ny, nz)
+    A = fvm.assemble(atomJ, nx, ny, nz, dof)
     rhs = fvm.rhs(state, atomF, nx, ny, nz, dof) - frc
 
     if not os.path.isfile('full_%sx%sx%s.txt' % (nx, ny, nz)):
