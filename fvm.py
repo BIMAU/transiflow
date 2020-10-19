@@ -10,18 +10,23 @@ def create_uniform_coordinate_vector(nx):
     dx = 1 / nx
     return numpy.roll(numpy.arange(-dx, 1+2*dx, dx), -2)
 
-def linear_part(nx, ny, nz, dof, Re):
+def linear_part(nx, ny, nz, dof, Re, Ra=0):
     x = create_uniform_coordinate_vector(nx)
     y = create_uniform_coordinate_vector(ny)
     z = create_uniform_coordinate_vector(nz)
 
     derivatives = Derivatives(nx, ny, nz, dof)
 
-    return 1 / Re * (derivatives.u_xx(x, y, z) + derivatives.u_yy(x, y, z) + derivatives.u_zz(x, y, z) \
+    atom = 1 / Re * (derivatives.u_xx(x, y, z) + derivatives.u_yy(x, y, z) + derivatives.u_zz(x, y, z) \
                   +  derivatives.v_xx(x, y, z) + derivatives.v_yy(x, y, z) + derivatives.v_zz(x, y, z) \
                   +  derivatives.w_xx(x, y, z) + derivatives.w_yy(x, y, z) + derivatives.w_zz(x, y, z)) \
-                  - (derivatives.p_x(x, y, z) + derivatives.p_y(x, y, z) + derivatives.p_z(x, y, z)) \
-                  + derivatives.div(x, y, z)
+        - (derivatives.p_x(x, y, z) + derivatives.p_y(x, y, z) + derivatives.p_z(x, y, z)) \
+        + derivatives.div(x, y, z)
+
+    if Ra:
+        atom += Ra * derivatives.forward_average_z(x, y, z)
+
+    return atom
 
 def boundaries(atom, nx, ny, nz, dof):
     boundary_conditions = BoundaryConditions(nx, ny, nz, dof)
@@ -443,7 +448,7 @@ class Derivatives:
 
     @staticmethod
     def _backward_u_y(atom, i, j, k, x, y, z):
-        # volume size in the y direction
+        # volume size in the x direction
         dx = (x[i+1] - x[i-1]) / 2
         # volume size in the z direction
         dz = z[k] - z[k-1]
@@ -454,9 +459,9 @@ class Derivatives:
 
     @staticmethod
     def _backward_u_z(atom, i, j, k, x, y, z):
-        # volume size in the y direction
+        # volume size in the x direction
         dx = (x[i+1] - x[i-1]) / 2
-        # volume size in the z direction
+        # volume size in the y direction
         dy = y[k] - y[k-1]
 
         # backward difference
@@ -673,6 +678,27 @@ class Derivatives:
         atomJ += atomF
 
         return (atomJ, atomF)
+
+    @staticmethod
+    def _forward_average_x(atom, i, j, k, x, y, z):
+        # volume size in the x direction
+        dx = (x[i+1] - x[i-1]) / 2
+        # volume size in the y direction
+        dy = y[j] - y[j-1]
+        # volume size in the z direction
+        dz = z[k] - z[k-1]
+
+        # forward average
+        atom[1] = dx * dy * dz / 2
+        atom[2] = atom[1]
+
+    def forward_average_z(self, x, y, z):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
+                    Derivatives._forward_average_x(atom[i, j, k, 4, 2, 1, 1, :], k, j, i, z, y, x)
+        return atom
 
 
 class ConvectiveTerm:
