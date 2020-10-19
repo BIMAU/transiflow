@@ -433,7 +433,7 @@ def test_bil():
             assert B.jcoA[j] == A.jcoA[j]
             assert B.coA[j] == A.coA[j]
 
-def test_full():
+def test_ldc():
     nx = 4
     ny = nx
     nz = nx
@@ -455,8 +455,8 @@ def test_full():
     A = fvm.assemble(atomJ, nx, ny, nz, dof)
     rhs = fvm.rhs(state, atomF, nx, ny, nz, dof) - frc
 
-    B = read_matrix('full_%sx%sx%s.txt' % (nx, ny, nz))
-    rhs_B = read_vector('rhs_%sx%sx%s.txt' % (nx, ny, nz))
+    B = read_matrix('ldc_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = read_vector('ldc_rhs_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -476,7 +476,7 @@ def test_full():
 
         assert rhs_B[i] == pytest.approx(-rhs[i])
 
-def test_full8():
+def test_ldc8():
     nx = 8
     ny = nx
     nz = nx
@@ -498,11 +498,11 @@ def test_full8():
     A = fvm.assemble(atomJ, nx, ny, nz, dof)
     rhs = fvm.rhs(state, atomF, nx, ny, nz, dof) - frc
 
-    if not os.path.isfile('full_%sx%sx%s.txt' % (nx, ny, nz)):
+    if not os.path.isfile('ldc_%sx%sx%s.txt' % (nx, ny, nz)):
         return
 
-    B = read_matrix('full_%sx%sx%s.txt' % (nx, ny, nz))
-    rhs_B = read_vector('rhs_%sx%sx%s.txt' % (nx, ny, nz))
+    B = read_matrix('ldc_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = read_vector('ldc_rhs_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
