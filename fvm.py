@@ -10,7 +10,7 @@ def create_uniform_coordinate_vector(nx):
     dx = 1 / nx
     return numpy.roll(numpy.arange(-dx, 1+2*dx, dx), -2)
 
-def linear_part(nx, ny, nz, dof, Re, Ra=0):
+def linear_part(nx, ny, nz, dof, Re, Ra=0, Pr=0):
     x = create_uniform_coordinate_vector(nx)
     y = create_uniform_coordinate_vector(ny)
     z = create_uniform_coordinate_vector(nz)
@@ -25,6 +25,9 @@ def linear_part(nx, ny, nz, dof, Re, Ra=0):
 
     if Ra:
         atom += Ra * derivatives.forward_average_z(x, y, z)
+
+    if Pr:
+        atom += 1 / Pr * (derivatives.T_xx(x, y, z) + derivatives.T_yy(x, y, z) + derivatives.T_zz(x, y, z))
 
     return atom
 
@@ -374,6 +377,46 @@ class Derivatives:
             for j in range(self.ny):
                 for k in range(self.nz):
                     Derivatives._u_zz(atom[i, j, k, 2, 2, :, 1, 1], k, j, i, z, y, x)
+        return atom
+
+    @staticmethod
+    def _T_xx(atom, i, j, k, x, y, z):
+        # distance between u[i] and u[i-1]
+        dx = (x[i] - x[i-2]) / 2
+        # distance between u[i+1] and u[i]
+        dxp1 = (x[i+1] - x[i-1]) / 2
+        # volume size in the y direction
+        dy = y[j] - y[j-1]
+        # volume size in the z direction
+        dz = z[k] - z[k-1]
+
+        # second order finite difference
+        atom[0] = 1 / dx * dy * dz
+        atom[2] = 1 / dxp1 * dy * dz
+        atom[1] = -atom[0] - atom[2]
+
+    def T_xx(self, x, y, z):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
+                    Derivatives._T_xx(atom[i, j, k, 4, 4, :, 1, 1], i, j, k, x, y, z)
+        return atom
+
+    def T_yy(self, x, y, z):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
+                    Derivatives._T_xx(atom[i, j, k, 4, 4, 1, :, 1], j, i, k, y, x, z)
+        return atom
+
+    def T_zz(self, x, y, z):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
+                    Derivatives._T_xx(atom[i, j, k, 4, 4, 1, 1, :], k, j, i, z, y, x)
         return atom
 
     @staticmethod
