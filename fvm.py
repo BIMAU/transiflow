@@ -10,7 +10,7 @@ def create_uniform_coordinate_vector(nx):
     dx = 1 / nx
     return numpy.roll(numpy.arange(-dx, 1+2*dx, dx), -2)
 
-def linear_part(Re, nx, ny, nz, dof):
+def linear_part(nx, ny, nz, dof, Re):
     x = create_uniform_coordinate_vector(nx)
     y = create_uniform_coordinate_vector(ny)
     z = create_uniform_coordinate_vector(nz)

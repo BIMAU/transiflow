@@ -346,7 +346,7 @@ def test_lin():
     Re = 100
     n = nx * ny * nz * dof
 
-    atom = fvm.linear_part(Re, nx, ny, nz, dof)
+    atom = fvm.linear_part(nx, ny, nz, dof, Re)
     A = fvm.assemble(atom, nx, ny, nz, dof)
 
     B = read_matrix('lin_%sx%sx%s.txt' % (nx, ny, nz))
@@ -375,7 +375,7 @@ def test_bnd():
     Re = 100
     n = nx * ny * nz * dof
 
-    atom = fvm.linear_part(Re, nx, ny, nz, dof)
+    atom = fvm.linear_part(nx, ny, nz, dof, Re)
     fvm.boundaries(atom, nx, ny, nz, dof)
     A = fvm.assemble(atom, nx, ny, nz, dof)
 
@@ -445,7 +445,7 @@ def test_ldc():
     for i in range(n):
         state[i] = i+1
 
-    atom = fvm.linear_part(Re, nx, ny, nz, dof)
+    atom = fvm.linear_part(nx, ny, nz, dof, Re)
     frc = fvm.boundaries(atom, nx, ny, nz, dof)
     atomJ, atomF = fvm.convection(state, nx, ny, nz, dof)
 
@@ -488,7 +488,7 @@ def test_ldc8():
     for i in range(n):
         state[i] = i+1
 
-    atom = fvm.linear_part(Re, nx, ny, nz, dof)
+    atom = fvm.linear_part(nx, ny, nz, dof, Re)
     frc = fvm.boundaries(atom, nx, ny, nz, dof)
     atomJ, atomF = fvm.convection(state, nx, ny, nz, dof)
 
