@@ -155,52 +155,52 @@ class BoundaryConditions:
 
     def dirichlet_east(self, atom):
         # At the boundary u[i] = 0, v[i] + v[i+1] = 2*V similar for w. So v[i+1] = -v[i]+2*V.
-        atom[self.nx-1, 0:self.ny, 0:self.nz, :, [1,2], 1, :, :] -= atom[self.nx-1, 0:self.ny, 0:self.nz, :, [1,2], 2, :, :]
-        atom[self.nx-1, 0:self.ny, 0:self.nz, :, 0, 1, :, :] = 0
-        atom[self.nx-1, 0:self.ny, 0:self.nz, 0, :, :, :, :] = 0
-        atom[self.nx-1, 0:self.ny, 0:self.nz, :, :, 2, :, :] = 0
-        atom[self.nx-1, 0:self.ny, 0:self.nz, 0, 0, 1, 1, 1] = -1
+        atom[self.nx-1, :, :, :, [1,2], 1, :, :] -= atom[self.nx-1, :, :, :, [1,2], 2, :, :]
+        atom[self.nx-1, :, :, :, 0, 1, :, :] = 0
+        atom[self.nx-1, :, :, 0, :, :, :, :] = 0
+        atom[self.nx-1, :, :, :, :, 2, :, :] = 0
+        atom[self.nx-1, :, :, 0, 0, 1, 1, 1] = -1
         # TODO: Do we need this?
-        atom[self.nx-2, 0:self.ny, 0:self.nz, 0, 0, 2, :, :] = 0
+        atom[self.nx-2, :, :, 0, 0, 2, :, :] = 0
 
     def dirichlet_west(self, atom):
         # At the boundary u[i-1] = 0, v[i-1] + v[i] = 0 similar for w. So v[i-1] = -v[i].
-        atom[0, 0:self.ny, 0:self.nz, :, [1,2], 1, :, :] -= atom[0, 0:self.ny, 0:self.nz, :, [1,2], 0, :, :]
-        atom[0, 0:self.ny, 0:self.nz, :, :, 0, :, :] = 0
+        atom[0, :, :, :, [1,2], 1, :, :] -= atom[0, :, :, :, [1,2], 0, :, :]
+        atom[0, :, :, :, :, 0, :, :] = 0
 
     def dirichlet_north(self, atom):
         # At the boundary v[i] = 0, u[i] + u[i+1] = 2*U similar for w. So u[i+1] = -u[i]+2*U.
-        atom[0:self.nx, self.ny-1, 0:self.nz, :, [0,2], :, 1, :] -= atom[0:self.nx, self.ny-1, 0:self.nz, :, [0,2], :, 2, :]
-        atom[0:self.nx, self.ny-1, 0:self.nz, :, 1, :, 1, :] = 0
+        atom[:, self.ny-1, :, :, [0,2], :, 1, :] -= atom[:, self.ny-1, :, :, [0,2], :, 2, :]
+        atom[:, self.ny-1, :, :, 1, :, 1, :] = 0
         frc = self.ldc_forcing_north(atom)
-        atom[0:self.nx, self.ny-1, 0:self.nz, 1, :, :, :, :] = 0
-        atom[0:self.nx, self.ny-1, 0:self.nz, :, :, :, 2, :] = 0
-        atom[0:self.nx, self.ny-1, 0:self.nz, 1, 1, 1, 1, 1] = -1
+        atom[:, self.ny-1, :, 1, :, :, :, :] = 0
+        atom[:, self.ny-1, :, :, :, :, 2, :] = 0
+        atom[:, self.ny-1, :, 1, 1, 1, 1, 1] = -1
         # TODO: Do we need this?
-        atom[0:self.nx, self.ny-2, 0:self.nz, 1, 1, :, 2, :] = 0
+        atom[:, self.ny-2, :, 1, 1, :, 2, :] = 0
         return frc
 
     def dirichlet_south(self, atom):
         # At the boundary v[i-1] = 0, u[i-1] + u[i] = 0 similar for w. So u[i-1] = -u[i].
-        atom[0:self.nx, 0, 0:self.nz, :, [0,2], :, 1, :] -= atom[0:self.nx, 0, 0:self.nz, :, [0,2], :, 0, :]
-        atom[0:self.nx, 0, 0:self.nz, :, :, :, 0, :] = 0
+        atom[:, 0, :, :, [0,2], :, 1, :] -= atom[:, 0, :, :, [0,2], :, 0, :]
+        atom[:, 0, :, :, :, :, 0, :] = 0
 
     def dirichlet_top(self, atom):
         # At the boundary w[i] = 0, u[i] + u[i+1] = 2*U similar for v. So u[i+1] = -u[i]+2*U.
-        atom[0:self.nx, 0:self.ny, self.nz-1, :, [0,1], :, :, 1] -= atom[0:self.nx, 0:self.ny, self.nz-1, :, [0,1], :, :, 2]
-        atom[0:self.nx, 0:self.ny, self.nz-1, :, 2, :, :, 1] = 0
+        atom[:, :, self.nz-1, :, [0,1], :, :, 1] -= atom[:, :, self.nz-1, :, [0,1], :, :, 2]
+        atom[:, :, self.nz-1, :, 2, :, :, 1] = 0
         frc = self.ldc_forcing_top(atom)
-        atom[0:self.nx, 0:self.ny, self.nz-1, 2, :, :, :, :] = 0
-        atom[0:self.nx, 0:self.ny, self.nz-1, :, :, :, :, 2] = 0
-        atom[0:self.nx, 0:self.ny, self.nz-1, 2, 2, 1, 1, 1] = -1
+        atom[:, :, self.nz-1, 2, :, :, :, :] = 0
+        atom[:, :, self.nz-1, :, :, :, :, 2] = 0
+        atom[:, :, self.nz-1, 2, 2, 1, 1, 1] = -1
         # TODO: Do we need this?
-        atom[0:self.nx, 0:self.ny, self.nz-2, 2, 2, :, :, 2] = 0
+        atom[:, :, self.nz-2, 2, 2, :, :, 2] = 0
         return frc
 
     def dirichlet_bottom(self, atom):
         # At the boundary w[i-1] = 0, u[i-1] + u[i] = 0 similar for v. So u[i-1] = -u[i].
-        atom[0:self.nx, 0:self.ny, 0, :, [0,1], :, :, 1] -= atom[0:self.nx, 0:self.ny, 0, :, [0,1], :, :, 0]
-        atom[0:self.nx, 0:self.ny, 0, :, :, :, :, 0] = 0
+        atom[:, :, 0, :, [0,1], :, :, 1] -= atom[:, :, 0, :, [0,1], :, :, 0]
+        atom[:, :, 0, :, :, :, :, 0] = 0
 
     def ldc_forcing_top(self, atom):
         n = self.nx * self.ny * self.nz * self.dof
@@ -809,46 +809,46 @@ class ConvectiveTerm:
                     Derivatives._backward_u_z(atom[i, j, k, 2, :], k, j, i, z, y, x)
 
     def dirichlet_east(self, atom):
-        atom[self.nx-1, 0:self.ny, 0:self.nz, 3, 0, :] = 0
-        atom[self.nx-1, 0:self.ny, 0:self.nz, 1, 0, :] = 0
-        atom[self.nx-1, 0:self.ny, 0:self.nz, 2, 0, :] = 0
-        atom[self.nx-1, 0:self.ny, 0:self.nz, 0, 1, :] = 0
-        atom[self.nx-1, 0:self.ny, 0:self.nz, 0, 2, :] = 0
-        atom[self.nx-1, 0:self.ny, 0:self.nz, 0, 0, 1] = 0
-        atom[self.nx-1, 0:self.ny, 0:self.nz, 3, 1, 1] = 0
-        atom[self.nx-1, 0:self.ny, 0:self.nz, 3, 2, 1] = 0
+        atom[self.nx-1, :, :, 3, 0, :] = 0
+        atom[self.nx-1, :, :, 1, 0, :] = 0
+        atom[self.nx-1, :, :, 2, 0, :] = 0
+        atom[self.nx-1, :, :, 0, 1, :] = 0
+        atom[self.nx-1, :, :, 0, 2, :] = 0
+        atom[self.nx-1, :, :, 0, 0, 1] = 0
+        atom[self.nx-1, :, :, 3, 1, 1] = 0
+        atom[self.nx-1, :, :, 3, 2, 1] = 0
 
     def dirichlet_west(self, atom):
-        atom[0, 0:self.ny, 0:self.nz, 0, 0, 0] = 0
-        atom[0, 0:self.ny, 0:self.nz, 3, 1, 0] = 0
-        atom[0, 0:self.ny, 0:self.nz, 3, 2, 0] = 0
+        atom[0, :, :, 0, 0, 0] = 0
+        atom[0, :, :, 3, 1, 0] = 0
+        atom[0, :, :, 3, 2, 0] = 0
 
     def dirichlet_north(self, atom):
-        atom[0:self.nx, self.ny-1, 0:self.nz, 4, 1, :] = 0
-        atom[0:self.nx, self.ny-1, 0:self.nz, 0, 1, :] = 0
-        atom[0:self.nx, self.ny-1, 0:self.nz, 2, 1, :] = 0
-        atom[0:self.nx, self.ny-1, 0:self.nz, 1, 0, :] = 0
-        atom[0:self.nx, self.ny-1, 0:self.nz, 1, 0, :] = 0
-        atom[0:self.nx, self.ny-1, 0:self.nz, 1, 1, 1] = 0
-        atom[0:self.nx, self.ny-1, 0:self.nz, 4, 0, 1] = 0
-        atom[0:self.nx, self.ny-1, 0:self.nz, 4, 2, 1] = 0
+        atom[:, self.ny-1, :, 4, 1, :] = 0
+        atom[:, self.ny-1, :, 0, 1, :] = 0
+        atom[:, self.ny-1, :, 2, 1, :] = 0
+        atom[:, self.ny-1, :, 1, 0, :] = 0
+        atom[:, self.ny-1, :, 1, 0, :] = 0
+        atom[:, self.ny-1, :, 1, 1, 1] = 0
+        atom[:, self.ny-1, :, 4, 0, 1] = 0
+        atom[:, self.ny-1, :, 4, 2, 1] = 0
 
     def dirichlet_south(self, atom):
-        atom[0:self.nx, 0, 0:self.nz, 1, 1, 0] = 0
-        atom[0:self.nx, 0, 0:self.nz, 4, 0, 0] = 0
-        atom[0:self.nx, 0, 0:self.nz, 4, 2, 0] = 0
+        atom[:, 0, :, 1, 1, 0] = 0
+        atom[:, 0, :, 4, 0, 0] = 0
+        atom[:, 0, :, 4, 2, 0] = 0
 
     def dirichlet_top(self, atom):
-        atom[0:self.nx, 0:self.ny, self.nz-1, 5, 2, :] = 0
-        atom[0:self.nx, 0:self.ny, self.nz-1, 0, 2, :] = 0
-        atom[0:self.nx, 0:self.ny, self.nz-1, 1, 2, :] = 0
-        atom[0:self.nx, 0:self.ny, self.nz-1, 2, 0, :] = 0
-        atom[0:self.nx, 0:self.ny, self.nz-1, 2, 1, :] = 0
-        atom[0:self.nx, 0:self.ny, self.nz-1, 2, 2, 1] = 0
-        atom[0:self.nx, 0:self.ny, self.nz-1, 5, 0, 1] = 0
-        atom[0:self.nx, 0:self.ny, self.nz-1, 5, 1, 1] = 0
+        atom[:, :, self.nz-1, 5, 2, :] = 0
+        atom[:, :, self.nz-1, 0, 2, :] = 0
+        atom[:, :, self.nz-1, 1, 2, :] = 0
+        atom[:, :, self.nz-1, 2, 0, :] = 0
+        atom[:, :, self.nz-1, 2, 1, :] = 0
+        atom[:, :, self.nz-1, 2, 2, 1] = 0
+        atom[:, :, self.nz-1, 5, 0, 1] = 0
+        atom[:, :, self.nz-1, 5, 1, 1] = 0
 
     def dirichlet_bottom(self, atom):
-        atom[0:self.nx, 0:self.ny, 0, 2, 2, 0] = 0
-        atom[0:self.nx, 0:self.ny, 0, 5, 0, 0] = 0
-        atom[0:self.nx, 0:self.ny, 0, 5, 1, 0] = 0
+        atom[:, :, 0, 2, 2, 0] = 0
+        atom[:, :, 0, 5, 0, 0] = 0
+        atom[:, :, 0, 5, 1, 0] = 0
