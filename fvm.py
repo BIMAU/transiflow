@@ -765,13 +765,6 @@ class ConvectiveTerm:
         self.average(bil[:, :, :, 0, 2, :]) # tMzU
         self.average(bil[:, :, :, 1, 2, :]) # tMzV
 
-    @staticmethod
-    def _state_average(atom, bil, state, i):
-        for d2 in range(2):
-            coef = bil[d2]
-            if abs(coef) > 1e-15:
-                atom[0] += coef * state[i+d2]
-
     def MxU(self, atom, state):
         atom[1:self.nx, :, :, 0, 0] += 1/2 * state[0:self.nx-1, :, :, 0]
         atom[0:self.nx-1, :, :, 0, 0] += 1/2 * state[0:self.nx-1, :, :, 0]
