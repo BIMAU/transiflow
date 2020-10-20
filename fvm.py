@@ -884,11 +884,7 @@ class ConvectiveTerm:
         atom[self.nx-1, :, :, 3, 0, :] = 0
         atom[self.nx-1, :, :, 1, 0, :] = 0
         atom[self.nx-1, :, :, 2, 0, :] = 0
-        atom[self.nx-1, :, :, 0, 1, :] = 0
-        atom[self.nx-1, :, :, 0, 2, :] = 0
         atom[self.nx-1, :, :, 0, 0, 1] = 0
-        atom[self.nx-1, :, :, 3, 1, 1] = 0
-        atom[self.nx-1, :, :, 3, 2, 1] = 0
 
     def dirichlet_west(self, atom):
         atom[0, :, :, 0, 0, 0] = 0
@@ -899,11 +895,7 @@ class ConvectiveTerm:
         atom[:, self.ny-1, :, 4, 1, :] = 0
         atom[:, self.ny-1, :, 0, 1, :] = 0
         atom[:, self.ny-1, :, 2, 1, :] = 0
-        atom[:, self.ny-1, :, 1, 0, :] = 0
-        atom[:, self.ny-1, :, 1, 2, :] = 0
         atom[:, self.ny-1, :, 1, 1, 1] = 0
-        atom[:, self.ny-1, :, 4, 0, 1] = 0
-        atom[:, self.ny-1, :, 4, 2, 1] = 0
 
     def dirichlet_south(self, atom):
         atom[:, 0, :, 1, 1, 0] = 0
@@ -914,11 +906,7 @@ class ConvectiveTerm:
         atom[:, :, self.nz-1, 5, 2, :] = 0
         atom[:, :, self.nz-1, 0, 2, :] = 0
         atom[:, :, self.nz-1, 1, 2, :] = 0
-        atom[:, :, self.nz-1, 2, 0, :] = 0
-        atom[:, :, self.nz-1, 2, 1, :] = 0
         atom[:, :, self.nz-1, 2, 2, 1] = 0
-        atom[:, :, self.nz-1, 5, 0, 1] = 0
-        atom[:, :, self.nz-1, 5, 1, 1] = 0
 
     def dirichlet_bottom(self, atom):
         atom[:, :, 0, 2, 2, 0] = 0
