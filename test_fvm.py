@@ -272,7 +272,6 @@ def test_MxU():
 
     bil = numpy.zeros([nx, ny, nz, 6, 3, 2])
     convective_term = fvm.ConvectiveTerm(nx, ny, nz)
-    convective_term.averages(bil)
 
     state = numpy.zeros(n)
     for i in range(n):
@@ -285,15 +284,8 @@ def test_MxU():
                 for d in range(dof):
                     state_mtx[i, j, k, d] = state[d + i * dof + j * dof * nx + k * dof * nx * ny]
 
-    convective_term.dirichlet_east(bil)
-    convective_term.dirichlet_west(bil)
-    convective_term.dirichlet_north(bil)
-    convective_term.dirichlet_south(bil)
-    convective_term.dirichlet_top(bil)
-    convective_term.dirichlet_bottom(bil)
-
     averages = numpy.zeros([nx, ny, nz, 3, 3])
-    convective_term.MxU(averages, bil, state_mtx)
+    convective_term.MxU(averages, state_mtx)
 
     for i in range(nx):
         for j in range(ny):

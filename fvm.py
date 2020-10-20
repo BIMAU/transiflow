@@ -695,15 +695,15 @@ class Derivatives:
 
         averages = numpy.zeros([self.nx, self.ny, self.nz, 3, 3])
 
-        convective_term.MxU(averages, bil, state)
-        convective_term.MxV(averages, bil, state)
-        convective_term.MxW(averages, bil, state)
-        convective_term.MyU(averages, bil, state)
-        convective_term.MyV(averages, bil, state)
-        convective_term.MyW(averages, bil, state)
-        convective_term.MzU(averages, bil, state)
-        convective_term.MzV(averages, bil, state)
-        convective_term.MzW(averages, bil, state)
+        convective_term.MxU(averages, state)
+        convective_term.MxV(averages, state)
+        convective_term.MxW(averages, state)
+        convective_term.MyU(averages, state)
+        convective_term.MyV(averages, state)
+        convective_term.MyW(averages, state)
+        convective_term.MzU(averages, state)
+        convective_term.MzV(averages, state)
+        convective_term.MzW(averages, state)
 
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
@@ -772,39 +772,39 @@ class ConvectiveTerm:
             if abs(coef) > 1e-15:
                 atom[0] += coef * state[i+d2]
 
-    def MxU(self, atom, bil, state):
+    def MxU(self, atom, state):
         atom[1:self.nx, :, :, 0, 0] += 1/2 * state[0:self.nx-1, :, :, 0]
         atom[0:self.nx-1, :, :, 0, 0] += 1/2 * state[0:self.nx-1, :, :, 0]
 
-    def MxV(self, atom, bil, state):
+    def MxV(self, atom, state):
         atom[0:self.nx-1, :, :, 1, 0] += 1/2 * state[0:self.nx-1, :, :, 1]
         atom[0:self.nx-1, :, :, 1, 0] += 1/2 * state[1:self.nx, :, :, 1]
 
-    def MxW(self, atom, bil, state):
+    def MxW(self, atom, state):
         atom[0:self.nx-1, :, :, 2, 0] += 1/2 * state[0:self.nx-1, :, :, 2]
         atom[0:self.nx-1, :, :, 2, 0] += 1/2 * state[1:self.nx, :, :, 2]
 
-    def MyU(self, atom, bil, state):
+    def MyU(self, atom, state):
         atom[:, 0:self.ny-1, :, 0, 1] += 1/2 * state[:, 0:self.ny-1, :, 0]
         atom[:, 0:self.ny-1, :, 0, 1] += 1/2 * state[:, 1:self.ny, :, 0]
 
-    def MyV(self, atom, bil, state):
+    def MyV(self, atom, state):
         atom[:, 1:self.ny, :, 1, 1] += 1/2 * state[:, 0:self.ny-1, :, 1]
         atom[:, 0:self.ny-1, :, 1, 1] += 1/2 * state[:, 0:self.ny-1, :, 1]
 
-    def MyW(self, atom, bil, state):
+    def MyW(self, atom, state):
         atom[:, 0:self.ny-1, :, 2, 1] += 1/2 * state[:, 0:self.ny-1, :, 2]
         atom[:, 0:self.ny-1, :, 2, 1] += 1/2 * state[:, 1:self.ny, :, 2]
 
-    def MzU(self, atom, bil, state):
+    def MzU(self, atom, state):
         atom[:, :, 0:self.nz-1, 0, 2] += 1/2 * state[:, :, 0:self.nz-1, 0]
         atom[:, :, 0:self.nz-1, 0, 2] += 1/2 * state[:, :, 1:self.nz, 0]
 
-    def MzV(self, atom, bil, state):
+    def MzV(self, atom, state):
         atom[:, :, 0:self.nz-1, 1, 2] += 1/2 * state[:, :, 0:self.nz-1, 1]
         atom[:, :, 0:self.nz-1, 1, 2] += 1/2 * state[:, :, 1:self.nz, 1]
 
-    def MzW(self, atom, bil, state):
+    def MzW(self, atom, state):
         atom[:, :, 1:self.nz, 2, 2] += 1/2 * state[:, :, 0:self.nz-1, 2]
         atom[:, :, 0:self.nz-1, 2, 2] += 1/2 * state[:, :, 0:self.nz-1, 2]
 
