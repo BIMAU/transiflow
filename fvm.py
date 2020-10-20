@@ -777,44 +777,32 @@ class ConvectiveTerm:
         atom[0:self.nx-1, :, :, 0, 0] += 1/2 * state[0:self.nx-1, :, :, 0]
 
     def MxV(self, atom, bil, state):
-        for i in range(self.nx):
-            for j in range(self.ny):
-                for k in range(self.nz):
-                    ConvectiveTerm._state_average(atom[i, j, k, 1, 0:1], bil[i, j, k, 1, 0, :], state[:, j, k, 1], i)
+        atom[0:self.nx-1, :, :, 1, 0] += 1/2 * state[0:self.nx-1, :, :, 1]
+        atom[0:self.nx-1, :, :, 1, 0] += 1/2 * state[1:self.nx, :, :, 1]
 
     def MxW(self, atom, bil, state):
-        for i in range(self.nx):
-            for j in range(self.ny):
-                for k in range(self.nz):
-                    ConvectiveTerm._state_average(atom[i, j, k, 2, 0:1], bil[i, j, k, 2, 0, :], state[:, j, k, 2], i)
+        atom[0:self.nx-1, :, :, 2, 0] += 1/2 * state[0:self.nx-1, :, :, 2]
+        atom[0:self.nx-1, :, :, 2, 0] += 1/2 * state[1:self.nx, :, :, 2]
 
     def MyU(self, atom, bil, state):
-        for i in range(self.nx):
-            for j in range(self.ny):
-                for k in range(self.nz):
-                    ConvectiveTerm._state_average(atom[i, j, k, 0, 1:2], bil[i, j, k, 0, 1, :], state[i, :, k, 0], j)
+        atom[:, 0:self.ny-1, :, 0, 1] += 1/2 * state[:, 0:self.ny-1, :, 0]
+        atom[:, 0:self.ny-1, :, 0, 1] += 1/2 * state[:, 1:self.ny, :, 0]
 
     def MyV(self, atom, bil, state):
         atom[:, 1:self.ny, :, 1, 1] += 1/2 * state[:, 0:self.ny-1, :, 1]
         atom[:, 0:self.ny-1, :, 1, 1] += 1/2 * state[:, 0:self.ny-1, :, 1]
 
     def MyW(self, atom, bil, state):
-        for i in range(self.nx):
-            for j in range(self.ny):
-                for k in range(self.nz):
-                    ConvectiveTerm._state_average(atom[i, j, k, 2, 1:2], bil[i, j, k, 2, 1, :], state[i, :, k, 2], j)
+        atom[:, 0:self.ny-1, :, 2, 1] += 1/2 * state[:, 0:self.ny-1, :, 2]
+        atom[:, 0:self.ny-1, :, 2, 1] += 1/2 * state[:, 1:self.ny, :, 2]
 
     def MzU(self, atom, bil, state):
-        for i in range(self.nx):
-            for j in range(self.ny):
-                for k in range(self.nz):
-                    ConvectiveTerm._state_average(atom[i, j, k, 0, 2:3], bil[i, j, k, 0, 2, :], state[i, j, :, 0], k)
+        atom[:, :, 0:self.nz-1, 0, 2] += 1/2 * state[:, :, 0:self.nz-1, 0]
+        atom[:, :, 0:self.nz-1, 0, 2] += 1/2 * state[:, :, 1:self.nz, 0]
 
     def MzV(self, atom, bil, state):
-        for i in range(self.nx):
-            for j in range(self.ny):
-                for k in range(self.nz):
-                    ConvectiveTerm._state_average(atom[i, j, k, 1, 2:3], bil[i, j, k, 1, 2, :], state[i, j, :, 1], k)
+        atom[:, :, 0:self.nz-1, 1, 2] += 1/2 * state[:, :, 0:self.nz-1, 1]
+        atom[:, :, 0:self.nz-1, 1, 2] += 1/2 * state[:, :, 1:self.nz, 1]
 
     def MzW(self, atom, bil, state):
         atom[:, :, 1:self.nz, 2, 2] += 1/2 * state[:, :, 0:self.nz-1, 2]
