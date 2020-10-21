@@ -869,8 +869,6 @@ class ConvectiveTerm:
 
     def dirichlet_west(self, atom):
         atom[0, :, :, 0, 0, 0] = 0
-        atom[0, :, :, 3, 1, 0] = 0
-        atom[0, :, :, 3, 2, 0] = 0
 
     def dirichlet_north(self, atom):
         atom[:, self.ny-1, :, 4, 1, :] = 0
@@ -880,8 +878,6 @@ class ConvectiveTerm:
 
     def dirichlet_south(self, atom):
         atom[:, 0, :, 1, 1, 0] = 0
-        atom[:, 0, :, 4, 0, 0] = 0
-        atom[:, 0, :, 4, 2, 0] = 0
 
     def dirichlet_top(self, atom):
         atom[:, :, self.nz-1, 5, 2, :] = 0
@@ -891,5 +887,3 @@ class ConvectiveTerm:
 
     def dirichlet_bottom(self, atom):
         atom[:, :, 0, 2, 2, 0] = 0
-        atom[:, :, 0, 5, 0, 0] = 0
-        atom[:, :, 0, 5, 1, 0] = 0
