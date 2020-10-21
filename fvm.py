@@ -862,28 +862,25 @@ class ConvectiveTerm:
                     Derivatives._backward_u_z(atom[i, j, k, 2, :], k, j, i, z, y, x)
 
     def dirichlet_east(self, atom):
-        atom[self.nx-1, :, :, 3, 0, :] = 0
-        atom[self.nx-1, :, :, 1, 0, :] = 0
-        atom[self.nx-1, :, :, 2, 0, :] = 0
-        atom[self.nx-1, :, :, 0, 0, 1] = 0
+        tmp = numpy.copy(atom[self.nx-1, :, :, 0, 0, 0])
+        atom[self.nx-1, :, :, :, 0, :] = 0
+        atom[self.nx-1, :, :, 0, 0, 0] = tmp
 
     def dirichlet_west(self, atom):
         atom[0, :, :, 0, 0, 0] = 0
 
     def dirichlet_north(self, atom):
-        atom[:, self.ny-1, :, 4, 1, :] = 0
-        atom[:, self.ny-1, :, 0, 1, :] = 0
-        atom[:, self.ny-1, :, 2, 1, :] = 0
-        atom[:, self.ny-1, :, 1, 1, 1] = 0
+        tmp = numpy.copy(atom[:, self.ny-1, :, 1, 1, 0])
+        atom[:, self.ny-1, :, :, 1, :] = 0
+        atom[:, self.ny-1, :, 1, 1, 0] = tmp
 
     def dirichlet_south(self, atom):
         atom[:, 0, :, 1, 1, 0] = 0
 
     def dirichlet_top(self, atom):
-        atom[:, :, self.nz-1, 5, 2, :] = 0
-        atom[:, :, self.nz-1, 0, 2, :] = 0
-        atom[:, :, self.nz-1, 1, 2, :] = 0
-        atom[:, :, self.nz-1, 2, 2, 1] = 0
+        tmp = numpy.copy(atom[:, :, self.nz-1, 2, 2, 0])
+        atom[:, :, self.nz-1, :, 2, :] = 0
+        atom[:, :, self.nz-1, 2, 2, 0] = tmp
 
     def dirichlet_bottom(self, atom):
         atom[:, :, 0, 2, 2, 0] = 0
