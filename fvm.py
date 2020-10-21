@@ -553,7 +553,9 @@ class Derivatives:
             bw = 0 # backward average, forward difference
 
         for d1 in range(2):
-            i2 = max(min(i + d1 - bw, nx - 1), 0)
+            i2 = i + d1 - bw
+            if i2 < 0 or i2 > nx - 1:
+                continue
 
             coef1 = averages[i2, :, :, varU, varV] * bil[i, :, :, 3 + varU, varV, d1]
             if numpy.any(coef1):
@@ -582,7 +584,9 @@ class Derivatives:
             bw = 0 # backward average, forward difference
 
         for d1 in range(2):
-            j2 = max(min(j + d1 - bw, ny - 1), 0)
+            j2 = j + d1 - bw
+            if j2 < 0 or j2 > ny - 1:
+                continue
 
             coef1 = averages[:, j2, :, varV, varU] * bil[:, j, :, 3 + varV, varU, d1]
             if numpy.any(coef1):
@@ -611,7 +615,9 @@ class Derivatives:
             bw = 0 # backward average, forward difference
 
         for d1 in range(2):
-            k2 = max(min(k + d1 - bw, nz - 1), 0)
+            k2 = k + d1 - bw
+            if k2 < 0 or k2 > nz - 1:
+                continue
 
             coef1 = averages[:, :, k2, varW, varU] * bil[:, :, k, 3 + varW, varU, d1]
             if numpy.any(coef1):
