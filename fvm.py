@@ -559,22 +559,22 @@ class Derivatives:
 
             coef1 = averages[i2, :, :, varU, varV] * bil[i, :, :, 3 + varU, varV, d1]
             if numpy.any(coef1):
-                for d2 in range(2):
+                for d2 in range(3):
                     coef2 = bil[i2, :, :, varV, varU, d2]
                     if numpy.any(coef2):
                         idx = [1, 1, 1]
                         idx[varU] += d1 - bw
-                        idx[varU] += d2 - 1 + bw
+                        idx[varU] += d2 - 1
                         atomF[i, :, :, varV, varV, idx[0], idx[1], idx[2]] -= coef1 * coef2
 
             coef1 = averages[i2, :, :, varV, varU] * bil[i, :, :, 3 + varU, varV, d1]
             if numpy.any(coef1):
-                for d2 in range(2):
+                for d2 in range(3):
                     coef2 = bil[i2, :, :, varU, varV, d2]
                     if numpy.any(coef2):
                         idx = [1, 1, 1]
                         idx[varU] += d1 - bw
-                        idx[varV] += d2 - 1 + bw
+                        idx[varV] += d2 - 1
                         atomJ[i, :, :, varV, varU, idx[0], idx[1], idx[2]] -= coef1 * coef2
 
     @staticmethod
@@ -590,22 +590,22 @@ class Derivatives:
 
             coef1 = averages[:, j2, :, varV, varU] * bil[:, j, :, 3 + varV, varU, d1]
             if numpy.any(coef1):
-                for d2 in range(2):
+                for d2 in range(3):
                     coef2 = bil[:, j2, :, varU, varV, d2]
                     if numpy.any(coef2):
                         idx = [1, 1, 1]
                         idx[varV] += d1 - bw
-                        idx[varV] += d2 - 1 + bw
+                        idx[varV] += d2 - 1
                         atomF[:, j, :, varU, varU, idx[0], idx[1], idx[2]] -= coef1 * coef2
 
             coef1 = averages[:, j2, :, varU, varV] * bil[:, j, :, 3 + varV, varU, d1]
             if numpy.any(coef1):
-                for d2 in range(2):
+                for d2 in range(3):
                     coef2 = bil[:, j2, :, varV, varU, d2]
                     if numpy.any(coef2):
                         idx = [1, 1, 1]
                         idx[varV] += d1 - bw
-                        idx[varU] += d2 - 1 + bw
+                        idx[varU] += d2 - 1
                         atomJ[:, j, :, varU, varV, idx[0], idx[1], idx[2]] -= coef1 * coef2
 
     @staticmethod
@@ -621,22 +621,22 @@ class Derivatives:
 
             coef1 = averages[:, :, k2, varW, varU] * bil[:, :, k, 3 + varW, varU, d1]
             if numpy.any(coef1):
-                for d2 in range(2):
+                for d2 in range(3):
                     coef2 = bil[:, :, k2, varU, varW, d2]
                     if numpy.any(coef2):
                         idx = [1, 1, 1]
                         idx[varW] += d1 - bw
-                        idx[varW] += d2 - 1 + bw
+                        idx[varW] += d2 - 1
                         atomF[:, :, k, varU, varU, idx[0], idx[1], idx[2]] -= coef1 * coef2
 
             coef1 = averages[:, :, k2, varU, varW] * bil[:, :, k, 3 + varW, varU, d1]
             if numpy.any(coef1):
-                for d2 in range(2):
+                for d2 in range(3):
                     coef2 = bil[:, :, k2, varW, varU, d2]
                     if numpy.any(coef2):
                         idx = [1, 1, 1]
                         idx[varW] += d1 - bw
-                        idx[varU] += d2 - 1 + bw
+                        idx[varU] += d2 - 1
                         atomJ[:, :, k, varU, varW, idx[0], idx[1], idx[2]] -= coef1 * coef2
 
     def convection_u_u(self, atomJ, atomF, averages, bil):
@@ -676,7 +676,7 @@ class Derivatives:
             Derivatives._convection_w_u(atomJ, atomF, averages, bil, 2, 2, self.nz, k)
 
     def convection(self, state, x, y, z):
-        bil = numpy.zeros([self.nx, self.ny, self.nz, 6, 3, 2])
+        bil = numpy.zeros([self.nx, self.ny, self.nz, 6, 3, 3])
 
         convective_term = ConvectiveTerm(self.nx, self.ny, self.nz)
 
@@ -761,15 +761,15 @@ class ConvectiveTerm:
         bil[:, :, :, :] = 1/2
 
     def averages(self, bil):
-        self.average(bil[:, :, :, 0, 0, :]) # tMxU
-        self.average(bil[:, :, :, 1, 1, :]) # tMyV
-        self.average(bil[:, :, :, 2, 2, :]) # tMzW
-        self.average(bil[:, :, :, 1, 0, :]) # tMxV
-        self.average(bil[:, :, :, 2, 0, :]) # tMxW
-        self.average(bil[:, :, :, 0, 1, :]) # tMyU
-        self.average(bil[:, :, :, 2, 1, :]) # tMyW
-        self.average(bil[:, :, :, 0, 2, :]) # tMzU
-        self.average(bil[:, :, :, 1, 2, :]) # tMzV
+        self.average(bil[:, :, :, 0, 0, 0:2]) # tMxU
+        self.average(bil[:, :, :, 1, 1, 0:2]) # tMyV
+        self.average(bil[:, :, :, 2, 2, 0:2]) # tMzW
+        self.average(bil[:, :, :, 1, 0, 1:3]) # tMxV
+        self.average(bil[:, :, :, 2, 0, 1:3]) # tMxW
+        self.average(bil[:, :, :, 0, 1, 1:3]) # tMyU
+        self.average(bil[:, :, :, 2, 1, 1:3]) # tMyW
+        self.average(bil[:, :, :, 0, 2, 1:3]) # tMzU
+        self.average(bil[:, :, :, 1, 2, 1:3]) # tMzV
 
     def MxU(self, atom, state):
         atom[1:self.nx, :, :, 0, 0] += 1/2 * state[0:self.nx-1, :, :, 0]
