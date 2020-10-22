@@ -550,8 +550,6 @@ class Derivatives:
     def _convection_u_v(atomJ, atomF, averages, bil, varU, varV, nx, i):
         for d1 in range(3):
             i2 = i + d1 - 1
-            if i2 < 0 or i2 > nx - 1:
-                continue
 
             v_x = bil[i, :, :, 3 + varU, varV, d1]
             if not numpy.any(v_x):
@@ -579,8 +577,6 @@ class Derivatives:
     def _convection_v_u(atomJ, atomF, averages, bil, varV, varU, ny, j):
         for d1 in range(3):
             j2 = j + d1 - 1
-            if j2 < 0 or j2 > ny - 1:
-                continue
 
             u_y = bil[:, j, :, 3 + varV, varU, d1]
             if not numpy.any(u_y):
@@ -608,8 +604,6 @@ class Derivatives:
     def _convection_w_u(atomJ, atomF, averages, bil, varW, varU, nz, k):
         for d1 in range(3):
             k2 = k + d1 - 1
-            if k2 < 0 or k2 > nz - 1:
-                continue
 
             u_z = bil[:, :, k, 3 + varW, varU, d1]
             if not numpy.any(u_z):
