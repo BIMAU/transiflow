@@ -57,5 +57,5 @@ def test_continuation_2D(nx=8, interactive=False):
     plot_utils.plot_state(x[:,:,0,0], x[:,:,0,1], nx, ny)
 
 if __name__ == '__main__':
-    # test_continuation(8, True)
-    test_continuation_2D(8, True)
+    test_continuation(8, False)
+    # test_continuation_2D(8, True)

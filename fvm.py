@@ -551,13 +551,13 @@ class Derivatives:
         for d1 in range(3):
             i2 = i + d1 - 1
 
-            v_x = bil[i, :, :, 3 + varU, varV, d1]
+            v_x = bil[i, :, :, 1, varU, varV, d1]
             if not numpy.any(v_x):
                 continue
 
             coef1 = averages[i2, :, :, varU, varV] * v_x
             for d2 in range(3):
-                coef2 = bil[i2, :, :, varV, varU, d2]
+                coef2 = bil[i2, :, :, 0, varV, varU, d2]
                 if numpy.any(coef2):
                     idx = [1, 1, 1]
                     idx[varU] += d1 - 1
@@ -566,7 +566,7 @@ class Derivatives:
 
             coef1 = averages[i2, :, :, varV, varU] * v_x
             for d2 in range(3):
-                coef2 = bil[i2, :, :, varU, varV, d2]
+                coef2 = bil[i2, :, :, 0, varU, varV, d2]
                 if numpy.any(coef2):
                     idx = [1, 1, 1]
                     idx[varU] += d1 - 1
@@ -578,13 +578,13 @@ class Derivatives:
         for d1 in range(3):
             j2 = j + d1 - 1
 
-            u_y = bil[:, j, :, 3 + varV, varU, d1]
+            u_y = bil[:, j, :, 1, varV, varU, d1]
             if not numpy.any(u_y):
                 continue
 
             coef1 = averages[:, j2, :, varV, varU] * u_y
             for d2 in range(3):
-                coef2 = bil[:, j2, :, varU, varV, d2]
+                coef2 = bil[:, j2, :, 0, varU, varV, d2]
                 if numpy.any(coef2):
                     idx = [1, 1, 1]
                     idx[varV] += d1 - 1
@@ -593,7 +593,7 @@ class Derivatives:
 
             coef1 = averages[:, j2, :, varU, varV] * u_y
             for d2 in range(3):
-                coef2 = bil[:, j2, :, varV, varU, d2]
+                coef2 = bil[:, j2, :, 0, varV, varU, d2]
                 if numpy.any(coef2):
                     idx = [1, 1, 1]
                     idx[varV] += d1 - 1
@@ -605,13 +605,13 @@ class Derivatives:
         for d1 in range(3):
             k2 = k + d1 - 1
 
-            u_z = bil[:, :, k, 3 + varW, varU, d1]
+            u_z = bil[:, :, k, 1, varW, varU, d1]
             if not numpy.any(u_z):
                 continue
 
             coef1 = averages[:, :, k2, varW, varU] * u_z
             for d2 in range(3):
-                coef2 = bil[:, :, k2, varU, varW, d2]
+                coef2 = bil[:, :, k2, 0, varU, varW, d2]
                 if numpy.any(coef2):
                     idx = [1, 1, 1]
                     idx[varW] += d1 - 1
@@ -620,7 +620,7 @@ class Derivatives:
 
             coef1 = averages[:, :, k2, varU, varW] * u_z
             for d2 in range(3):
-                coef2 = bil[:, :, k2, varW, varU, d2]
+                coef2 = bil[:, :, k2, 0, varW, varU, d2]
                 if numpy.any(coef2):
                     idx = [1, 1, 1]
                     idx[varW] += d1 - 1
@@ -664,7 +664,7 @@ class Derivatives:
             Derivatives._convection_w_u(atomJ, atomF, averages, bil, 2, 2, self.nz, k)
 
     def convection(self, state, x, y, z):
-        bil = numpy.zeros([self.nx, self.ny, self.nz, self.dof * 2, self.dof, 3])
+        bil = numpy.zeros([self.nx, self.ny, self.nz, 2, self.dof, self.dof, 3])
 
         convective_term = ConvectiveTerm(self.nx, self.ny, self.nz)
 
@@ -749,15 +749,15 @@ class ConvectiveTerm:
         bil[:, :, :, :] = 1/2
 
     def averages(self, bil):
-        self.average(bil[:, :, :, 0, 0, 0:2]) # tMxU
-        self.average(bil[:, :, :, 1, 1, 0:2]) # tMyV
-        self.average(bil[:, :, :, 2, 2, 0:2]) # tMzW
-        self.average(bil[:, :, :, 1, 0, 1:3]) # tMxV
-        self.average(bil[:, :, :, 2, 0, 1:3]) # tMxW
-        self.average(bil[:, :, :, 0, 1, 1:3]) # tMyU
-        self.average(bil[:, :, :, 2, 1, 1:3]) # tMyW
-        self.average(bil[:, :, :, 0, 2, 1:3]) # tMzU
-        self.average(bil[:, :, :, 1, 2, 1:3]) # tMzV
+        self.average(bil[:, :, :, 0, 0, 0, 0:2]) # tMxU
+        self.average(bil[:, :, :, 0, 1, 1, 0:2]) # tMyV
+        self.average(bil[:, :, :, 0, 2, 2, 0:2]) # tMzW
+        self.average(bil[:, :, :, 0, 1, 0, 1:3]) # tMxV
+        self.average(bil[:, :, :, 0, 2, 0, 1:3]) # tMxW
+        self.average(bil[:, :, :, 0, 0, 1, 1:3]) # tMyU
+        self.average(bil[:, :, :, 0, 2, 1, 1:3]) # tMyW
+        self.average(bil[:, :, :, 0, 0, 2, 1:3]) # tMzU
+        self.average(bil[:, :, :, 0, 1, 2, 1:3]) # tMzV
 
     def MxU(self, atom, state):
         atom[1:self.nx, :, :, 0, 0] += 1/2 * state[0:self.nx-1, :, :, 0]
@@ -799,76 +799,76 @@ class ConvectiveTerm:
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._forward_u_x(atom[i, j, k, 3, 0, :], i, j, k, x, y, z)
+                    Derivatives._forward_u_x(atom[i, j, k, 1, 0, 0, :], i, j, k, x, y, z)
 
     def v_y(self, atom, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._forward_u_x(atom[i, j, k, 4, 1, :], j, i, k, y, x, z)
+                    Derivatives._forward_u_x(atom[i, j, k, 1, 1, 1, :], j, i, k, y, x, z)
 
     def w_z(self, atom, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._forward_u_x(atom[i, j, k, 5, 2, :], k, j, i, z, y, x)
+                    Derivatives._forward_u_x(atom[i, j, k, 1, 2, 2, :], k, j, i, z, y, x)
 
     def u_y(self, atom, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._backward_u_y(atom[i, j, k, 4, 0, :], i, j, k, x, y, z)
+                    Derivatives._backward_u_y(atom[i, j, k, 1, 1, 0, :], i, j, k, x, y, z)
 
     def v_x(self, atom, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._backward_u_y(atom[i, j, k, 3, 1, :], j, i, k, y, x, z)
+                    Derivatives._backward_u_y(atom[i, j, k, 1, 0, 1, :], j, i, k, y, x, z)
 
     def w_y(self, atom, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._backward_u_y(atom[i, j, k, 4, 2, :], k, j, i, z, y, x)
+                    Derivatives._backward_u_y(atom[i, j, k, 1, 1, 2, :], k, j, i, z, y, x)
 
     def u_z(self, atom, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._backward_u_z(atom[i, j, k, 5, 0, :], i, j, k, x, y, z)
+                    Derivatives._backward_u_z(atom[i, j, k, 1, 2, 0, :], i, j, k, x, y, z)
 
     def v_z(self, atom, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._backward_u_z(atom[i, j, k, 5, 1, :], j, i, k, y, x, z)
+                    Derivatives._backward_u_z(atom[i, j, k, 1, 2, 1, :], j, i, k, y, x, z)
 
     def w_x(self, atom, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._backward_u_z(atom[i, j, k, 3, 2, :], k, j, i, z, y, x)
+                    Derivatives._backward_u_z(atom[i, j, k, 1, 0, 2, :], k, j, i, z, y, x)
 
     def dirichlet_east(self, atom):
-        tmp = numpy.copy(atom[self.nx-1, :, :, 0, 0, 0])
-        atom[self.nx-1, :, :, :, 0, :] = 0
-        atom[self.nx-1, :, :, 0, 0, 0] = tmp
+        tmp = numpy.copy(atom[self.nx-1, :, :, 0, 0, 0, 0])
+        atom[self.nx-1, :, :, :, :, 0, :] = 0
+        atom[self.nx-1, :, :, 0, 0, 0, 0] = tmp
 
     def dirichlet_west(self, atom):
-        atom[0, :, :, 0, 0, 0] = 0
+        atom[0, :, :, 0, 0, 0, 0] = 0
 
     def dirichlet_north(self, atom):
-        tmp = numpy.copy(atom[:, self.ny-1, :, 1, 1, 0])
-        atom[:, self.ny-1, :, :, 1, :] = 0
-        atom[:, self.ny-1, :, 1, 1, 0] = tmp
+        tmp = numpy.copy(atom[:, self.ny-1, :, 0, 1, 1, 0])
+        atom[:, self.ny-1, :, :, :, 1, :] = 0
+        atom[:, self.ny-1, :, 0, 1, 1, 0] = tmp
 
     def dirichlet_south(self, atom):
-        atom[:, 0, :, 1, 1, 0] = 0
+        atom[:, 0, :, 0, 1, 1, 0] = 0
 
     def dirichlet_top(self, atom):
-        tmp = numpy.copy(atom[:, :, self.nz-1, 2, 2, 0])
-        atom[:, :, self.nz-1, :, 2, :] = 0
-        atom[:, :, self.nz-1, 2, 2, 0] = tmp
+        tmp = numpy.copy(atom[:, :, self.nz-1, 0, 2, 2, 0])
+        atom[:, :, self.nz-1, :, :, 2, :] = 0
+        atom[:, :, self.nz-1, 0, 2, 2, 0] = tmp
 
     def dirichlet_bottom(self, atom):
-        atom[:, :, 0, 2, 2, 0] = 0
+        atom[:, :, 0, 0, 2, 2, 0] = 0
