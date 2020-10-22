@@ -664,7 +664,7 @@ class Derivatives:
             Derivatives._convection_w_u(atomJ, atomF, averages, bil, 2, 2, self.nz, k)
 
     def convection(self, state, x, y, z):
-        bil = numpy.zeros([self.nx, self.ny, self.nz, 6, 3, 3])
+        bil = numpy.zeros([self.nx, self.ny, self.nz, self.dof * 2, self.dof, 3])
 
         convective_term = ConvectiveTerm(self.nx, self.ny, self.nz)
 
