@@ -668,7 +668,15 @@ class Derivatives:
 
         convective_term = ConvectiveTerm(self.nx, self.ny, self.nz)
 
-        convective_term.averages(bil)
+        convective_term.average(bil[:, :, :, 0, 0, 0, 0:2]) # tMxU
+        convective_term.average(bil[:, :, :, 0, 1, 1, 0:2]) # tMyV
+        convective_term.average(bil[:, :, :, 0, 2, 2, 0:2]) # tMzW
+        convective_term.average(bil[:, :, :, 0, 1, 0, 1:3]) # tMxV
+        convective_term.average(bil[:, :, :, 0, 2, 0, 1:3]) # tMxW
+        convective_term.average(bil[:, :, :, 0, 0, 1, 1:3]) # tMyU
+        convective_term.average(bil[:, :, :, 0, 2, 1, 1:3]) # tMyW
+        convective_term.average(bil[:, :, :, 0, 0, 2, 1:3]) # tMzU
+        convective_term.average(bil[:, :, :, 0, 1, 2, 1:3]) # tMzV
 
         convective_term.u_x(bil, x, y, z) # tMxUMxU
         convective_term.u_y(bil, x, y, z) # tMxVMyU
@@ -747,17 +755,6 @@ class ConvectiveTerm:
 
     def average(self, bil):
         bil[:, :, :, :] = 1/2
-
-    def averages(self, bil):
-        self.average(bil[:, :, :, 0, 0, 0, 0:2]) # tMxU
-        self.average(bil[:, :, :, 0, 1, 1, 0:2]) # tMyV
-        self.average(bil[:, :, :, 0, 2, 2, 0:2]) # tMzW
-        self.average(bil[:, :, :, 0, 1, 0, 1:3]) # tMxV
-        self.average(bil[:, :, :, 0, 2, 0, 1:3]) # tMxW
-        self.average(bil[:, :, :, 0, 0, 1, 1:3]) # tMyU
-        self.average(bil[:, :, :, 0, 2, 1, 1:3]) # tMyW
-        self.average(bil[:, :, :, 0, 0, 2, 1:3]) # tMzU
-        self.average(bil[:, :, :, 0, 1, 2, 1:3]) # tMzV
 
     def MxU(self, atom, state):
         atom[1:self.nx, :, :, 0, 0] += 1/2 * state[0:self.nx-1, :, :, 0]
