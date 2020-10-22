@@ -330,7 +330,7 @@ def read_vector(fname):
             vec = numpy.append(vec, float(i.strip()))
     return vec
 
-def test_lin():
+def test_ldc_lin():
     nx = 4
     ny = nx
     nz = nx
@@ -341,7 +341,7 @@ def test_lin():
     atom = fvm.linear_part(nx, ny, nz, dof, Re)
     A = fvm.assemble(atom, nx, ny, nz, dof)
 
-    B = read_matrix('lin_%sx%sx%s.txt' % (nx, ny, nz))
+    B = read_matrix('ldc_lin_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -359,7 +359,7 @@ def test_lin():
             assert B.jcoA[j] == A.jcoA[j]
             assert B.coA[j] == A.coA[j]
 
-def test_bnd():
+def test_ldc_bnd():
     nx = 4
     ny = nx
     nz = nx
@@ -371,7 +371,7 @@ def test_bnd():
     fvm.boundaries(atom, nx, ny, nz, dof)
     A = fvm.assemble(atom, nx, ny, nz, dof)
 
-    B = read_matrix('bnd_%sx%sx%s.txt' % (nx, ny, nz))
+    B = read_matrix('ldc_bnd_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -389,7 +389,7 @@ def test_bnd():
             assert B.jcoA[j] == A.jcoA[j]
             assert B.coA[j] == A.coA[j]
 
-def test_bil():
+def test_ldc_bil():
     nx = 4
     ny = nx
     nz = nx
@@ -404,7 +404,7 @@ def test_bil():
     atom, atomF = fvm.convection(state, nx, ny, nz, dof)
     A = fvm.assemble(atom, nx, ny, nz, dof)
 
-    B = read_matrix('bil_%sx%sx%s.txt' % (nx, ny, nz))
+    B = read_matrix('ldc_bil_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
