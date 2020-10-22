@@ -24,10 +24,11 @@ def linear_part(nx, ny, nz, dof, Re, Ra=0, Pr=0):
         + derivatives.div(x, y, z)
 
     if Ra:
-        atom += Ra * derivatives.forward_average_z(x, y, z)
+        atom += Ra * derivatives.forward_average_T_z(x, y, z)
 
     if Pr:
         atom += 1 / Pr * (derivatives.T_xx(x, y, z) + derivatives.T_yy(x, y, z) + derivatives.T_zz(x, y, z))
+        atom += 1 / Pr * derivatives.backward_average_w_z(x, y, z)
 
     return atom
 
@@ -737,12 +738,33 @@ class Derivatives:
         atom[1] = dx * dy * dz / 2
         atom[2] = atom[1]
 
-    def forward_average_z(self, x, y, z):
+    def forward_average_T_z(self, x, y, z):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._forward_average_x(atom[i, j, k, 4, 2, 1, 1, :], k, j, i, z, y, x)
+                    Derivatives._forward_average_x(atom[i, j, k, 2, 4, 1, 1, :], k, j, i, z, y, x)
+        return atom
+
+    @staticmethod
+    def _backward_average_x(atom, i, j, k, x, y, z):
+        # volume size in the x direction
+        dx = (x[i+1] - x[i-1]) / 2
+        # volume size in the y direction
+        dy = y[j] - y[j-1]
+        # volume size in the z direction
+        dz = z[k] - z[k-1]
+
+        # forward average
+        atom[0] = dx * dy * dz / 2
+        atom[1] = atom[0]
+
+    def backward_average_w_z(self, x, y, z):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
+                    Derivatives._backward_average_x(atom[i, j, k, 4, 2, 1, 1, :], k, j, i, z, y, x)
         return atom
 
 

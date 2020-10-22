@@ -320,6 +320,27 @@ def read_matrix(fname):
 
     return A
 
+def read_bous_matrix(fname):
+    A = read_matrix(fname)
+
+    dof = 5
+    B = fvm.CrsMatrix([], [], [0])
+    # Swap indices since the Fortran code had T at position 3
+    for i in range(len(A.begA)-1):
+        i2 = i + (i % dof == 3) - (i % dof == 4)
+        row = []
+        for j in range(A.begA[i2], A.begA[i2+1]):
+            col = A.jcoA[j] + (A.jcoA[j] % dof == 3) - (A.jcoA[j] % dof == 4)
+            row.append((col, A.coA[j]))
+
+        row = sorted(row, key=lambda col: col[0])
+        for col, val in row:
+            B.jcoA.append(col)
+            B.coA.append(val)
+        B.begA.append(len(B.jcoA))
+
+    return B
+
 def read_vector(fname):
     vec = numpy.array([])
 
@@ -342,6 +363,37 @@ def test_ldc_lin():
     A = fvm.assemble(atom, nx, ny, nz, dof)
 
     B = read_matrix('ldc_lin_%sx%sx%s.txt' % (nx, ny, nz))
+
+    for i in range(n):
+        print(i)
+
+        print('Expected:')
+        print(B.jcoA[B.begA[i]:B.begA[i+1]])
+        print(B.coA[B.begA[i]:B.begA[i+1]])
+
+        print('Got:')
+        print(A.jcoA[A.begA[i]:A.begA[i+1]])
+        print(A.coA[A.begA[i]:A.begA[i+1]])
+
+        assert B.begA[i+1] - B.begA[i] == A.begA[i+1] - A.begA[i]
+        for j in range(B.begA[i], B.begA[i+1]):
+            assert B.jcoA[j] == A.jcoA[j]
+            assert B.coA[j] == A.coA[j]
+
+def test_bous_lin():
+    nx = 4
+    ny = nx
+    nz = nx
+    dof = 5
+    Re = 1
+    Ra = 100
+    Pr = 100
+    n = nx * ny * nz * dof
+
+    atom = fvm.linear_part(nx, ny, nz, dof, Re, Ra, Pr)
+    A = fvm.assemble(atom, nx, ny, nz, dof)
+
+    B = read_bous_matrix('bous_lin_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
