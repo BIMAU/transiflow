@@ -795,80 +795,80 @@ class ConvectiveTerm:
         atom[:, :, 1:self.nz, 2, 2] += 1/2 * state[:, :, 0:self.nz-1, 2]
         atom[:, :, 0:self.nz-1, 2, 2] += 1/2 * state[:, :, 0:self.nz-1, 2]
 
-    def u_x(self, atom, x, y, z):
+    def u_x(self, bil, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._forward_u_x(atom[i, j, k, 1, 0, 0, :], i, j, k, x, y, z)
+                    Derivatives._forward_u_x(bil[i, j, k, 1, 0, 0, :], i, j, k, x, y, z)
 
-    def v_y(self, atom, x, y, z):
+    def v_y(self, bil, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._forward_u_x(atom[i, j, k, 1, 1, 1, :], j, i, k, y, x, z)
+                    Derivatives._forward_u_x(bil[i, j, k, 1, 1, 1, :], j, i, k, y, x, z)
 
-    def w_z(self, atom, x, y, z):
+    def w_z(self, bil, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._forward_u_x(atom[i, j, k, 1, 2, 2, :], k, j, i, z, y, x)
+                    Derivatives._forward_u_x(bil[i, j, k, 1, 2, 2, :], k, j, i, z, y, x)
 
-    def u_y(self, atom, x, y, z):
+    def u_y(self, bil, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._backward_u_y(atom[i, j, k, 1, 1, 0, :], i, j, k, x, y, z)
+                    Derivatives._backward_u_y(bil[i, j, k, 1, 1, 0, :], i, j, k, x, y, z)
 
-    def v_x(self, atom, x, y, z):
+    def v_x(self, bil, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._backward_u_y(atom[i, j, k, 1, 0, 1, :], j, i, k, y, x, z)
+                    Derivatives._backward_u_y(bil[i, j, k, 1, 0, 1, :], j, i, k, y, x, z)
 
-    def w_y(self, atom, x, y, z):
+    def w_y(self, bil, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._backward_u_y(atom[i, j, k, 1, 1, 2, :], k, j, i, z, y, x)
+                    Derivatives._backward_u_y(bil[i, j, k, 1, 1, 2, :], k, j, i, z, y, x)
 
-    def u_z(self, atom, x, y, z):
+    def u_z(self, bil, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._backward_u_z(atom[i, j, k, 1, 2, 0, :], i, j, k, x, y, z)
+                    Derivatives._backward_u_z(bil[i, j, k, 1, 2, 0, :], i, j, k, x, y, z)
 
-    def v_z(self, atom, x, y, z):
+    def v_z(self, bil, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._backward_u_z(atom[i, j, k, 1, 2, 1, :], j, i, k, y, x, z)
+                    Derivatives._backward_u_z(bil[i, j, k, 1, 2, 1, :], j, i, k, y, x, z)
 
-    def w_x(self, atom, x, y, z):
+    def w_x(self, bil, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._backward_u_z(atom[i, j, k, 1, 0, 2, :], k, j, i, z, y, x)
+                    Derivatives._backward_u_z(bil[i, j, k, 1, 0, 2, :], k, j, i, z, y, x)
 
-    def dirichlet_east(self, atom):
-        tmp = numpy.copy(atom[self.nx-1, :, :, 0, 0, 0, 0])
-        atom[self.nx-1, :, :, :, :, 0, :] = 0
-        atom[self.nx-1, :, :, 0, 0, 0, 0] = tmp
+    def dirichlet_east(self, bil):
+        tmp = numpy.copy(bil[self.nx-1, :, :, 0, 0, 0, 0])
+        bil[self.nx-1, :, :, :, :, 0, :] = 0
+        bil[self.nx-1, :, :, 0, 0, 0, 0] = tmp
 
-    def dirichlet_west(self, atom):
-        atom[0, :, :, 0, 0, 0, 0] = 0
+    def dirichlet_west(self, bil):
+        bil[0, :, :, 0, 0, 0, 0] = 0
 
-    def dirichlet_north(self, atom):
-        tmp = numpy.copy(atom[:, self.ny-1, :, 0, 1, 1, 0])
-        atom[:, self.ny-1, :, :, :, 1, :] = 0
-        atom[:, self.ny-1, :, 0, 1, 1, 0] = tmp
+    def dirichlet_north(self, bil):
+        tmp = numpy.copy(bil[:, self.ny-1, :, 0, 1, 1, 0])
+        bil[:, self.ny-1, :, :, :, 1, :] = 0
+        bil[:, self.ny-1, :, 0, 1, 1, 0] = tmp
 
-    def dirichlet_south(self, atom):
-        atom[:, 0, :, 0, 1, 1, 0] = 0
+    def dirichlet_south(self, bil):
+        bil[:, 0, :, 0, 1, 1, 0] = 0
 
-    def dirichlet_top(self, atom):
-        tmp = numpy.copy(atom[:, :, self.nz-1, 0, 2, 2, 0])
-        atom[:, :, self.nz-1, :, :, 2, :] = 0
-        atom[:, :, self.nz-1, 0, 2, 2, 0] = tmp
+    def dirichlet_top(self, bil):
+        tmp = numpy.copy(bil[:, :, self.nz-1, 0, 2, 2, 0])
+        bil[:, :, self.nz-1, :, :, 2, :] = 0
+        bil[:, :, self.nz-1, 0, 2, 2, 0] = tmp
 
-    def dirichlet_bottom(self, atom):
-        atom[:, :, 0, 0, 2, 2, 0] = 0
+    def dirichlet_bottom(self, bil):
+        bil[:, :, 0, 0, 2, 2, 0] = 0
