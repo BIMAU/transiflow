@@ -670,15 +670,15 @@ class Derivatives:
 
         convective_term.averages(bil)
 
-        convective_term.u_x(bil[:, :, :, 3, :, :], x, y, z) # tMxUMxU
-        convective_term.u_y(bil[:, :, :, 4, :, :], x, y, z) # tMxVMyU
-        convective_term.u_z(bil[:, :, :, 5, :, :], x, y, z) # tMxWMzU
-        convective_term.v_x(bil[:, :, :, 3, :, :], x, y, z) # tMyUMxV
-        convective_term.v_y(bil[:, :, :, 4, :, :], x, y, z) # tMyVMyV
-        convective_term.v_z(bil[:, :, :, 5, :, :], x, y, z) # tMyWMzV
-        convective_term.w_x(bil[:, :, :, 3, :, :], x, y, z) # tMzUMxW
-        convective_term.w_y(bil[:, :, :, 4, :, :], x, y, z) # tMzVMyW
-        convective_term.w_z(bil[:, :, :, 5, :, :], x, y, z) # tMzWMzW
+        convective_term.u_x(bil, x, y, z) # tMxUMxU
+        convective_term.u_y(bil, x, y, z) # tMxVMyU
+        convective_term.u_z(bil, x, y, z) # tMxWMzU
+        convective_term.v_x(bil, x, y, z) # tMyUMxV
+        convective_term.v_y(bil, x, y, z) # tMyVMyV
+        convective_term.v_z(bil, x, y, z) # tMyWMzV
+        convective_term.w_x(bil, x, y, z) # tMzUMxW
+        convective_term.w_y(bil, x, y, z) # tMzVMyW
+        convective_term.w_z(bil, x, y, z) # tMzWMzW
 
         convective_term.dirichlet_east(bil)
         convective_term.dirichlet_west(bil)
@@ -799,55 +799,55 @@ class ConvectiveTerm:
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._forward_u_x(atom[i, j, k, 0, :], i, j, k, x, y, z)
+                    Derivatives._forward_u_x(atom[i, j, k, 3, 0, :], i, j, k, x, y, z)
 
     def v_y(self, atom, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._forward_u_x(atom[i, j, k, 1, :], j, i, k, y, x, z)
+                    Derivatives._forward_u_x(atom[i, j, k, 4, 1, :], j, i, k, y, x, z)
 
     def w_z(self, atom, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._forward_u_x(atom[i, j, k, 2, :], k, j, i, z, y, x)
+                    Derivatives._forward_u_x(atom[i, j, k, 5, 2, :], k, j, i, z, y, x)
 
     def u_y(self, atom, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._backward_u_y(atom[i, j, k, 0, :], i, j, k, x, y, z)
+                    Derivatives._backward_u_y(atom[i, j, k, 4, 0, :], i, j, k, x, y, z)
 
     def v_x(self, atom, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._backward_u_y(atom[i, j, k, 1, :], j, i, k, y, x, z)
+                    Derivatives._backward_u_y(atom[i, j, k, 3, 1, :], j, i, k, y, x, z)
 
     def w_y(self, atom, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._backward_u_y(atom[i, j, k, 2, :], k, j, i, z, y, x)
+                    Derivatives._backward_u_y(atom[i, j, k, 4, 2, :], k, j, i, z, y, x)
 
     def u_z(self, atom, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._backward_u_z(atom[i, j, k, 0, :], i, j, k, x, y, z)
+                    Derivatives._backward_u_z(atom[i, j, k, 5, 0, :], i, j, k, x, y, z)
 
     def v_z(self, atom, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._backward_u_z(atom[i, j, k, 1, :], j, i, k, y, x, z)
+                    Derivatives._backward_u_z(atom[i, j, k, 5, 1, :], j, i, k, y, x, z)
 
     def w_x(self, atom, x, y, z):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Derivatives._backward_u_z(atom[i, j, k, 2, :], k, j, i, z, y, x)
+                    Derivatives._backward_u_z(atom[i, j, k, 3, 2, :], k, j, i, z, y, x)
 
     def dirichlet_east(self, atom):
         tmp = numpy.copy(atom[self.nx-1, :, :, 0, 0, 0])
