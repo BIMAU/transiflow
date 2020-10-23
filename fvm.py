@@ -37,9 +37,11 @@ def boundaries(atom, nx, ny, nz, dof):
 
     boundary_conditions.dirichlet_east(atom)
     boundary_conditions.dirichlet_west(atom)
-    frc = boundary_conditions.dirichlet_north(atom)
+    frc = boundary_conditions.ldc_forcing_north(atom)
+    boundary_conditions.dirichlet_north(atom)
     boundary_conditions.dirichlet_south(atom)
-    frc += boundary_conditions.dirichlet_top(atom)
+    frc += boundary_conditions.ldc_forcing_top(atom)
+    boundary_conditions.dirichlet_top(atom)
     boundary_conditions.dirichlet_bottom(atom)
     return frc
 
@@ -182,13 +184,11 @@ class BoundaryConditions:
         # At the boundary v[i] = 0, u[i] + u[i+1] = 2*U similar for w. So u[i+1] = -u[i]+2*U.
         atom[:, self.ny-1, :, :, :, :, 1, :] -= atom[:, self.ny-1, :, :, :, :, 2, :]
         atom[:, self.ny-1, :, :, 1, :, 1, :] = 0
-        frc = self.ldc_forcing_north(atom)
         atom[:, self.ny-1, :, 1, :, :, :, :] = 0
         atom[:, self.ny-1, :, :, :, :, 2, :] = 0
         atom[:, self.ny-1, :, 1, 1, 1, 1, 1] = -1
         # TODO: Do we need this?
         atom[:, self.ny-2, :, 1, 1, :, 2, :] = 0
-        return frc
 
     def dirichlet_south(self, atom):
         # At the boundary v[i-1] = 0, u[i-1] + u[i] = 0 similar for w. So u[i-1] = -u[i].
@@ -200,13 +200,11 @@ class BoundaryConditions:
         # At the boundary w[i] = 0, u[i] + u[i+1] = 2*U similar for v. So u[i+1] = -u[i]+2*U.
         atom[:, :, self.nz-1, :, :, :, :, 1] -= atom[:, :, self.nz-1, :, :, :, :, 2]
         atom[:, :, self.nz-1, :, 2, :, :, 1] = 0
-        frc = self.ldc_forcing_top(atom)
         atom[:, :, self.nz-1, 2, :, :, :, :] = 0
         atom[:, :, self.nz-1, :, :, :, :, 2] = 0
         atom[:, :, self.nz-1, 2, 2, 1, 1, 1] = -1
         # TODO: Do we need this?
         atom[:, :, self.nz-2, 2, 2, :, :, 2] = 0
-        return frc
 
     def dirichlet_bottom(self, atom):
         # At the boundary w[i-1] = 0, u[i-1] + u[i] = 0 similar for v. So u[i-1] = -u[i].
