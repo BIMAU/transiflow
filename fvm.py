@@ -39,17 +39,20 @@ def boundaries(atom, nx, ny, nz, dof, problem_type='Lid-driven cavity'):
     boundary_conditions = BoundaryConditions(nx, ny, nz, dof)
 
     frc = None
-    if problem_type_equals(problem_type, 'Lid-driven cavity'):
-        if nz > 1:
-            frc = boundary_conditions.ldc_forcing_top(atom)
-        else:
-            frc = boundary_conditions.ldc_forcing_north(atom)
 
     boundary_conditions.dirichlet_east(atom)
     boundary_conditions.dirichlet_west(atom)
-    boundary_conditions.dirichlet_north(atom)
+
+    if problem_type_equals(problem_type, 'Lid-driven cavity') and nz <= 1:
+        frc = boundary_conditions.moving_lid_north(atom)
+    else:
+        boundary_conditions.dirichlet_north(atom)
     boundary_conditions.dirichlet_south(atom)
-    boundary_conditions.dirichlet_top(atom)
+
+    if problem_type_equals(problem_type, 'Lid-driven cavity') and nz > 1:
+        frc = boundary_conditions.moving_lid_top(atom)
+    else:
+        boundary_conditions.dirichlet_top(atom)
     boundary_conditions.dirichlet_bottom(atom)
 
     return frc
@@ -221,16 +224,9 @@ class BoundaryConditions:
         atom[:, :, 0, :, :, :, :, 1] -= atom[:, :, 0, :, :, :, :, 0]
         atom[:, :, 0, :, :, :, :, 0] = 0
 
-    def ldc_forcing_north(self, atom):
+    def moving_lid_north(self, atom):
         n = self.nx * self.ny * self.nz * self.dof
         out = numpy.zeros(n)
-
-        if self.nz > 1:
-            return out
-
-        atom = atom.copy()
-        self.dirichlet_east(atom)
-        self.dirichlet_west(atom)
 
         j = self.ny-1
         y = 2
@@ -242,20 +238,14 @@ class BoundaryConditions:
                         out[offset] += 2 * atom[i, j, k, 0, 0, x, y, z]
                         offset = i * self.dof + j * self.nx * self.dof + k * self.nx * self.ny * self.dof + 2
                         out[offset] += 2 * atom[i, j, k, 2, 0, x, y, z]
+
+        self.dirichlet_north(atom)
+
         return out
 
-    def ldc_forcing_top(self, atom):
+    def moving_lid_top(self, atom):
         n = self.nx * self.ny * self.nz * self.dof
         out = numpy.zeros(n)
-
-        if self.nz <= 1:
-            return out
-
-        atom = atom.copy()
-        self.dirichlet_east(atom)
-        self.dirichlet_west(atom)
-        self.dirichlet_north(atom)
-        self.dirichlet_south(atom)
 
         k = self.nz-1
         z = 2
@@ -267,6 +257,9 @@ class BoundaryConditions:
                         out[offset] += 2 * atom[i, j, k, 1, 0, x, y, z]
                         offset = i * self.dof + j * self.nx * self.dof + k * self.nx * self.ny * self.dof
                         out[offset] += 2 * atom[i, j, k, 0, 0, x, y, z]
+
+        self.dirichlet_top(atom)
+
         return out
 
 class Derivatives:
