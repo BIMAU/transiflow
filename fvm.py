@@ -34,16 +34,25 @@ def linear_part(nx, ny, nz, dof, Re, Ra=0, Pr=0):
 
 def boundaries(atom, nx, ny, nz, dof):
     boundary_conditions = BoundaryConditions(nx, ny, nz, dof)
-
-    frc = boundary_conditions.ldc_forcing_north(atom)
-    frc += boundary_conditions.ldc_forcing_top(atom)
-
     boundary_conditions.dirichlet_east(atom)
     boundary_conditions.dirichlet_west(atom)
     boundary_conditions.dirichlet_north(atom)
     boundary_conditions.dirichlet_south(atom)
     boundary_conditions.dirichlet_top(atom)
     boundary_conditions.dirichlet_bottom(atom)
+
+def problem_type_equals(first, second):
+    return first.lower() == second.lower()
+
+def forcing(atom, nx, ny, nz, dof, problem_type='Lid-driven cavity'):
+    boundary_conditions = BoundaryConditions(nx, ny, nz, dof)
+
+    frc = None
+    if problem_type_equals(problem_type, 'Lid-driven cavity'):
+        if nz > 1:
+            frc = boundary_conditions.ldc_forcing_top(atom)
+        else:
+            frc = boundary_conditions.ldc_forcing_north(atom)
     return frc
 
 def create_state_mtx(state, nx, ny, nz, dof):

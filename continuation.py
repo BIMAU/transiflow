@@ -5,11 +5,12 @@ from scipy import sparse
 from scipy.sparse import linalg
 
 class Interface:
-    def __init__(self, nx, ny, nz, dof):
+    def __init__(self, nx, ny, nz, dof, problem_type='Lid-driven cavity'):
         self.nx = nx
         self.ny = ny
         self.nz = nz
         self.dof = dof
+        self.problem_type = problem_type
 
     def rhs(self, state, Re_in):
         if Re_in == 0:
@@ -18,7 +19,8 @@ class Interface:
             Re = Re_in
 
         atom = fvm.linear_part(self.nx, self.ny, self.nz, self.dof, Re)
-        frc = fvm.boundaries(atom, self.nx, self.ny, self.nz, self.dof)
+        frc = fvm.forcing(atom, self.nx, self.ny, self.nz, self.dof, self.problem_type)
+        fvm.boundaries(atom, self.nx, self.ny, self.nz, self.dof)
 
         if Re_in != 0:
             atomJ, atomF = fvm.convection(state, self.nx, self.ny, self.nz, self.dof)

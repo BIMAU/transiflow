@@ -490,7 +490,8 @@ def test_ldc():
         state[i] = i+1
 
     atom = fvm.linear_part(nx, ny, nz, dof, Re)
-    frc = fvm.boundaries(atom, nx, ny, nz, dof)
+    frc = fvm.forcing(atom, nx, ny, nz, dof)
+    fvm.boundaries(atom, nx, ny, nz, dof)
     atomJ, atomF = fvm.convection(state, nx, ny, nz, dof)
 
     atomJ += atom
@@ -533,7 +534,8 @@ def test_ldc8():
         state[i] = i+1
 
     atom = fvm.linear_part(nx, ny, nz, dof, Re)
-    frc = fvm.boundaries(atom, nx, ny, nz, dof)
+    frc = fvm.forcing(atom, nx, ny, nz, dof)
+    fvm.boundaries(atom, nx, ny, nz, dof)
     atomJ, atomF = fvm.convection(state, nx, ny, nz, dof)
 
     atomJ += atom
