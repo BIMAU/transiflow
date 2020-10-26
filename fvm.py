@@ -705,9 +705,9 @@ class Derivatives:
             convective_term.forward_average(bil[:, :, :, 0, 4, 0, :]) # tMxT
             convective_term.forward_average(bil[:, :, :, 0, 4, 1, :]) # tMyT
             convective_term.forward_average(bil[:, :, :, 0, 4, 2, :]) # tMzT
-            convective_term.value(bil[:, :, :, 0, 0, 4, :])
-            convective_term.value(bil[:, :, :, 0, 1, 4, :])
-            convective_term.value(bil[:, :, :, 0, 2, 4, :])
+            convective_term.value(bil[:, :, :, 0, 0, 4, :]) # U
+            convective_term.value(bil[:, :, :, 0, 1, 4, :]) # V
+            convective_term.value(bil[:, :, :, 0, 2, 4, :]) # W
 
         convective_term.u_x(bil, x, y, z) # tMxUMxU
         convective_term.u_y(bil, x, y, z) # tMxVMyU
@@ -720,9 +720,9 @@ class Derivatives:
         convective_term.w_z(bil, x, y, z) # tMzWMzW
 
         if self.dof > 4:
-            convective_term.T_x(bil, x, y, z) # tMxUMxU
-            convective_term.T_y(bil, x, y, z) # tMxVMyU
-            convective_term.T_z(bil, x, y, z) # tMxWMzU
+            convective_term.T_x(bil, x, y, z)
+            convective_term.T_y(bil, x, y, z)
+            convective_term.T_z(bil, x, y, z)
 
         convective_term.dirichlet_east(bil)
         convective_term.dirichlet_west(bil)
