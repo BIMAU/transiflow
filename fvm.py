@@ -741,7 +741,7 @@ class Derivatives:
         convective_term.forward_average_y(averages[:, :, :, 2, :], state[:, :, :, 2]) # tMyW
         convective_term.MzU(averages, state)
         convective_term.MzV(averages, state)
-        convective_term.MzW(averages, state)
+        convective_term.backward_average_z(averages[:, :, :, 2, :], state[:, :, :, 2]) # tMzW
 
         if self.dof > 4:
             convective_term.forward_average_x(averages[:, :, :, 4, :], state[:, :, :, 4]) # tMxT
@@ -856,9 +856,9 @@ class ConvectiveTerm:
         atom[:, :, 0:self.nz-1, 1, 2] += 1/2 * state[:, :, 0:self.nz-1, 1]
         atom[:, :, 0:self.nz-1, 1, 2] += 1/2 * state[:, :, 1:self.nz, 1]
 
-    def MzW(self, atom, state):
-        atom[:, :, 1:self.nz, 2, 2] += 1/2 * state[:, :, 0:self.nz-1, 2]
-        atom[:, :, 0:self.nz-1, 2, 2] += 1/2 * state[:, :, 0:self.nz-1, 2]
+    def backward_average_z(self, atom, state):
+        atom[:, :, 1:self.nz, 2] += 1/2 * state[:, :, 0:self.nz-1]
+        atom[:, :, 0:self.nz-1, 2] += 1/2 * state[:, :, 0:self.nz-1]
 
     def MzT(self, atom, state):
         atom[:, :, 0:self.nz-1, 4, 2] += 1/2 * state[:, :, 0:self.nz-1, 4]
