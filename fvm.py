@@ -694,17 +694,17 @@ class Derivatives:
         convective_term.backward_average(bil[:, :, :, 0, 0, 0, :]) # tMxU
         convective_term.backward_average(bil[:, :, :, 0, 1, 1, :]) # tMyV
         convective_term.backward_average(bil[:, :, :, 0, 2, 2, :]) # tMzW
-        convective_term.average(bil[:, :, :, 0, 1, 0, 1:3]) # tMxV
-        convective_term.average(bil[:, :, :, 0, 2, 0, 1:3]) # tMxW
-        convective_term.average(bil[:, :, :, 0, 0, 1, 1:3]) # tMyU
-        convective_term.average(bil[:, :, :, 0, 2, 1, 1:3]) # tMyW
-        convective_term.average(bil[:, :, :, 0, 0, 2, 1:3]) # tMzU
-        convective_term.average(bil[:, :, :, 0, 1, 2, 1:3]) # tMzV
+        convective_term.forward_average(bil[:, :, :, 0, 1, 0, :]) # tMxV
+        convective_term.forward_average(bil[:, :, :, 0, 2, 0, :]) # tMxW
+        convective_term.forward_average(bil[:, :, :, 0, 0, 1, :]) # tMyU
+        convective_term.forward_average(bil[:, :, :, 0, 2, 1, :]) # tMyW
+        convective_term.forward_average(bil[:, :, :, 0, 0, 2, :]) # tMzU
+        convective_term.forward_average(bil[:, :, :, 0, 1, 2, :]) # tMzV
 
         if self.dof > 4:
-            convective_term.average(bil[:, :, :, 0, 4, 0, 1:3]) # tMxT
-            convective_term.average(bil[:, :, :, 0, 4, 1, 1:3]) # tMyT
-            convective_term.average(bil[:, :, :, 0, 4, 2, 1:3]) # tMzT
+            convective_term.forward_average(bil[:, :, :, 0, 4, 0, :]) # tMxT
+            convective_term.forward_average(bil[:, :, :, 0, 4, 1, :]) # tMyT
+            convective_term.forward_average(bil[:, :, :, 0, 4, 2, :]) # tMzT
             bil[:, :, :, 0, 0, 4, 0] = 0
             bil[:, :, :, 0, 1, 4, 0] = 0
             bil[:, :, :, 0, 2, 4, 0] = 0
@@ -829,8 +829,8 @@ class ConvectiveTerm:
     def backward_average(self, bil):
         bil[:, :, :, 0:2] = 1/2
 
-    def average(self, bil):
-        bil[:, :, :, :] = 1/2
+    def forward_average(self, bil):
+        bil[:, :, :, 1:3] = 1/2
 
     def MxU(self, atom, state):
         atom[1:self.nx, :, :, 0, 0] += 1/2 * state[0:self.nx-1, :, :, 0]
