@@ -737,7 +737,7 @@ class Derivatives:
         convective_term.forward_average_x(averages[:, :, :, 1, :], state[:, :, :, 1]) # tMxV
         convective_term.forward_average_x(averages[:, :, :, 2, :], state[:, :, :, 2]) # tMxW
         convective_term.MyU(averages, state)
-        convective_term.MyV(averages, state)
+        convective_term.backward_average_y(averages[:, :, :, 1, :], state[:, :, :, 1]) # tMyV
         convective_term.MyW(averages, state)
         convective_term.MzU(averages, state)
         convective_term.MzV(averages, state)
@@ -844,9 +844,9 @@ class ConvectiveTerm:
         atom[:, 0:self.ny-1, :, 0, 1] += 1/2 * state[:, 0:self.ny-1, :, 0]
         atom[:, 0:self.ny-1, :, 0, 1] += 1/2 * state[:, 1:self.ny, :, 0]
 
-    def MyV(self, atom, state):
-        atom[:, 1:self.ny, :, 1, 1] += 1/2 * state[:, 0:self.ny-1, :, 1]
-        atom[:, 0:self.ny-1, :, 1, 1] += 1/2 * state[:, 0:self.ny-1, :, 1]
+    def backward_average_y(self, atom, state):
+        atom[:, 1:self.ny, :, 1] += 1/2 * state[:, 0:self.ny-1, :]
+        atom[:, 0:self.ny-1, :, 1] += 1/2 * state[:, 0:self.ny-1, :]
 
     def MyW(self, atom, state):
         atom[:, 0:self.ny-1, :, 2, 1] += 1/2 * state[:, 0:self.ny-1, :, 2]
