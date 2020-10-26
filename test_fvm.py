@@ -285,7 +285,7 @@ def test_MxU():
                     state_mtx[i, j, k, d] = state[d + i * dof + j * dof * nx + k * dof * nx * ny]
 
     averages = numpy.zeros([nx, ny, nz, 3, 3])
-    convective_term.MxU(averages, state_mtx)
+    convective_term.backward_average_x(averages[:, :, :, :, 0], state_mtx[:, :, :, 0])
 
     for i in range(nx):
         for j in range(ny):
