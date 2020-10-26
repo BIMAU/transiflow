@@ -705,12 +705,9 @@ class Derivatives:
             convective_term.forward_average(bil[:, :, :, 0, 4, 0, :]) # tMxT
             convective_term.forward_average(bil[:, :, :, 0, 4, 1, :]) # tMyT
             convective_term.forward_average(bil[:, :, :, 0, 4, 2, :]) # tMzT
-            bil[:, :, :, 0, 0, 4, 0] = 0
-            bil[:, :, :, 0, 1, 4, 0] = 0
-            bil[:, :, :, 0, 2, 4, 0] = 0
-            bil[:, :, :, 0, 0, 4, 1] = 1
-            bil[:, :, :, 0, 1, 4, 1] = 1
-            bil[:, :, :, 0, 2, 4, 1] = 1
+            convective_term.value(bil[:, :, :, 0, 0, 4, :])
+            convective_term.value(bil[:, :, :, 0, 1, 4, :])
+            convective_term.value(bil[:, :, :, 0, 2, 4, :])
 
         convective_term.u_x(bil, x, y, z) # tMxUMxU
         convective_term.u_y(bil, x, y, z) # tMxVMyU
@@ -825,6 +822,9 @@ class ConvectiveTerm:
         self.nx = nx
         self.ny = ny
         self.nz = nz
+
+    def value(self, bil):
+        bil[:, :, :, 1] = 1
 
     def backward_average(self, bil):
         bil[:, :, :, 0:2] = 1/2
