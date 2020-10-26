@@ -736,17 +736,17 @@ class Derivatives:
         convective_term.backward_average_x(averages[:, :, :, 0, :], state[:, :, :, 0]) # tMxU
         convective_term.forward_average_x(averages[:, :, :, 1, :], state[:, :, :, 1]) # tMxV
         convective_term.forward_average_x(averages[:, :, :, 2, :], state[:, :, :, 2]) # tMxW
-        convective_term.forward_average_y(averages[:, :, :, 0, :], state[:, :, :, 0]) # tMyV
+        convective_term.forward_average_y(averages[:, :, :, 0, :], state[:, :, :, 0]) # tMyU
         convective_term.backward_average_y(averages[:, :, :, 1, :], state[:, :, :, 1]) # tMyV
         convective_term.forward_average_y(averages[:, :, :, 2, :], state[:, :, :, 2]) # tMyW
-        convective_term.MzU(averages, state)
-        convective_term.MzV(averages, state)
+        convective_term.forward_average_z(averages[:, :, :, 0, :], state[:, :, :, 0]) # tMzU
+        convective_term.forward_average_z(averages[:, :, :, 1, :], state[:, :, :, 1]) # tMzV
         convective_term.backward_average_z(averages[:, :, :, 2, :], state[:, :, :, 2]) # tMzW
 
         if self.dof > 4:
             convective_term.forward_average_x(averages[:, :, :, 4, :], state[:, :, :, 4]) # tMxT
             convective_term.forward_average_y(averages[:, :, :, 4, :], state[:, :, :, 4]) # tMyT
-            convective_term.MzT(averages, state)
+            convective_term.forward_average_z(averages[:, :, :, 4, :], state[:, :, :, 4]) # tMzT
             convective_term.value_u(averages, state)
             convective_term.value_v(averages, state)
             convective_term.value_w(averages, state)
@@ -848,21 +848,13 @@ class ConvectiveTerm:
         atom[:, 0:self.ny-1, :, 1] += 1/2 * state[:, 0:self.ny-1, :]
         atom[:, 0:self.ny-1, :, 1] += 1/2 * state[:, 1:self.ny, :]
 
-    def MzU(self, atom, state):
-        atom[:, :, 0:self.nz-1, 0, 2] += 1/2 * state[:, :, 0:self.nz-1, 0]
-        atom[:, :, 0:self.nz-1, 0, 2] += 1/2 * state[:, :, 1:self.nz, 0]
-
-    def MzV(self, atom, state):
-        atom[:, :, 0:self.nz-1, 1, 2] += 1/2 * state[:, :, 0:self.nz-1, 1]
-        atom[:, :, 0:self.nz-1, 1, 2] += 1/2 * state[:, :, 1:self.nz, 1]
-
     def backward_average_z(self, atom, state):
         atom[:, :, 1:self.nz, 2] += 1/2 * state[:, :, 0:self.nz-1]
         atom[:, :, 0:self.nz-1, 2] += 1/2 * state[:, :, 0:self.nz-1]
 
-    def MzT(self, atom, state):
-        atom[:, :, 0:self.nz-1, 4, 2] += 1/2 * state[:, :, 0:self.nz-1, 4]
-        atom[:, :, 0:self.nz-1, 4, 2] += 1/2 * state[:, :, 1:self.nz, 4]
+    def forward_average_z(self, atom, state):
+        atom[:, :, 0:self.nz-1, 2] += 1/2 * state[:, :, 0:self.nz-1]
+        atom[:, :, 0:self.nz-1, 2] += 1/2 * state[:, :, 1:self.nz]
 
     def value_u(self, atom, state):
         atom[0:self.nx-1, :, :, 0, 4] = state[0:self.nx-1, :, :, 0]
