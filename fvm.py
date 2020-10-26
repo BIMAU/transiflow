@@ -581,7 +581,7 @@ class Derivatives:
                 if numpy.any(coef2):
                     idx = [1, 1, 1]
                     idx[varU] += d1 - 1
-                    idx[varV] += d2 - 1
+                    idx[varV if varV < 3 else varU] += d2 - 1
                     atomJ[i, :, :, varV, varU, idx[0], idx[1], idx[2]] -= coef1 * coef2
 
     @staticmethod
@@ -608,7 +608,7 @@ class Derivatives:
                 if numpy.any(coef2):
                     idx = [1, 1, 1]
                     idx[varV] += d1 - 1
-                    idx[varU] += d2 - 1
+                    idx[varU if varU < 3 else varV] += d2 - 1
                     atomJ[:, j, :, varU, varV, idx[0], idx[1], idx[2]] -= coef1 * coef2
 
     @staticmethod
@@ -635,7 +635,7 @@ class Derivatives:
                 if numpy.any(coef2):
                     idx = [1, 1, 1]
                     idx[varW] += d1 - 1
-                    idx[varU] += d2 - 1
+                    idx[varU if varU < 3 else varW] += d2 - 1
                     atomJ[:, :, k, varU, varW, idx[0], idx[1], idx[2]] -= coef1 * coef2
 
     def convection_u_u(self, atomJ, atomF, averages, bil):
@@ -674,6 +674,18 @@ class Derivatives:
         for k in range(self.nz):
             Derivatives._convection_w_u(atomJ, atomF, averages, bil, 2, 2, self.nz, k)
 
+    def convection_T_u(self, atomJ, atomF, averages, bil):
+        for i in range(self.nx):
+            Derivatives._convection_u_v(atomJ, atomF, averages, bil, 0, 4, self.nx, i)
+
+    def convection_T_v(self, atomJ, atomF, averages, bil):
+        for j in range(self.ny):
+            Derivatives._convection_v_u(atomJ, atomF, averages, bil, 1, 4, self.ny, j)
+
+    def convection_T_w(self, atomJ, atomF, averages, bil):
+        for k in range(self.nz):
+            Derivatives._convection_w_u(atomJ, atomF, averages, bil, 2, 4, self.nz, k)
+
     def convection(self, state, x, y, z):
         bil = numpy.zeros([self.nx, self.ny, self.nz, 2, self.dof, self.dof, 3])
 
@@ -689,6 +701,17 @@ class Derivatives:
         convective_term.average(bil[:, :, :, 0, 0, 2, 1:3]) # tMzU
         convective_term.average(bil[:, :, :, 0, 1, 2, 1:3]) # tMzV
 
+        if self.dof > 4:
+            convective_term.average(bil[:, :, :, 0, 4, 0, 1:3]) # tMxT
+            convective_term.average(bil[:, :, :, 0, 4, 1, 1:3]) # tMyT
+            convective_term.average(bil[:, :, :, 0, 4, 2, 1:3]) # tMzT
+            bil[:, :, :, 0, 0, 4, 0] = 0
+            bil[:, :, :, 0, 1, 4, 0] = 0
+            bil[:, :, :, 0, 2, 4, 0] = 0
+            bil[:, :, :, 0, 0, 4, 1] = 1
+            bil[:, :, :, 0, 1, 4, 1] = 1
+            bil[:, :, :, 0, 2, 4, 1] = 1
+
         convective_term.u_x(bil, x, y, z) # tMxUMxU
         convective_term.u_y(bil, x, y, z) # tMxVMyU
         convective_term.u_z(bil, x, y, z) # tMxWMzU
@@ -699,6 +722,11 @@ class Derivatives:
         convective_term.w_y(bil, x, y, z) # tMzVMyW
         convective_term.w_z(bil, x, y, z) # tMzWMzW
 
+        if self.dof > 4:
+            convective_term.T_x(bil, x, y, z) # tMxUMxU
+            convective_term.T_y(bil, x, y, z) # tMxVMyU
+            convective_term.T_z(bil, x, y, z) # tMxWMzU
+
         convective_term.dirichlet_east(bil)
         convective_term.dirichlet_west(bil)
         convective_term.dirichlet_north(bil)
@@ -706,7 +734,7 @@ class Derivatives:
         convective_term.dirichlet_top(bil)
         convective_term.dirichlet_bottom(bil)
 
-        averages = numpy.zeros([self.nx, self.ny, self.nz, 3, 3])
+        averages = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof])
 
         convective_term.MxU(averages, state)
         convective_term.MxV(averages, state)
@@ -717,6 +745,14 @@ class Derivatives:
         convective_term.MzU(averages, state)
         convective_term.MzV(averages, state)
         convective_term.MzW(averages, state)
+
+        if self.dof > 4:
+            convective_term.MxT(averages, state)
+            convective_term.MyT(averages, state)
+            convective_term.MzT(averages, state)
+            averages[0:self.nx-1, :, :, 0, 4] = state[0:self.nx-1, :, :, 0]
+            averages[:, 0:self.ny-1, :, 1, 4] = state[:, 0:self.ny-1, :, 1]
+            averages[:, :, 0:self.nz-1, 2, 4] = state[:, :, 0:self.nz-1, 2]
 
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
@@ -730,6 +766,11 @@ class Derivatives:
         self.convection_w_u(atomJ, atomF, averages, bil)
         self.convection_w_v(atomJ, atomF, averages, bil)
         self.convection_w_w(atomJ, atomF, averages, bil)
+
+        if self.dof > 4:
+            self.convection_T_u(atomJ, atomF, averages, bil)
+            self.convection_T_v(atomJ, atomF, averages, bil)
+            self.convection_T_w(atomJ, atomF, averages, bil)
 
         atomJ += atomF
 
@@ -800,6 +841,10 @@ class ConvectiveTerm:
         atom[0:self.nx-1, :, :, 2, 0] += 1/2 * state[0:self.nx-1, :, :, 2]
         atom[0:self.nx-1, :, :, 2, 0] += 1/2 * state[1:self.nx, :, :, 2]
 
+    def MxT(self, atom, state):
+        atom[0:self.nx-1, :, :, 4, 0] += 1/2 * state[0:self.nx-1, :, :, 4]
+        atom[0:self.nx-1, :, :, 4, 0] += 1/2 * state[1:self.nx, :, :, 4]
+
     def MyU(self, atom, state):
         atom[:, 0:self.ny-1, :, 0, 1] += 1/2 * state[:, 0:self.ny-1, :, 0]
         atom[:, 0:self.ny-1, :, 0, 1] += 1/2 * state[:, 1:self.ny, :, 0]
@@ -812,6 +857,10 @@ class ConvectiveTerm:
         atom[:, 0:self.ny-1, :, 2, 1] += 1/2 * state[:, 0:self.ny-1, :, 2]
         atom[:, 0:self.ny-1, :, 2, 1] += 1/2 * state[:, 1:self.ny, :, 2]
 
+    def MyT(self, atom, state):
+        atom[:, 0:self.ny-1, :, 4, 1] += 1/2 * state[:, 0:self.ny-1, :, 4]
+        atom[:, 0:self.ny-1, :, 4, 1] += 1/2 * state[:, 1:self.ny, :, 4]
+
     def MzU(self, atom, state):
         atom[:, :, 0:self.nz-1, 0, 2] += 1/2 * state[:, :, 0:self.nz-1, 0]
         atom[:, :, 0:self.nz-1, 0, 2] += 1/2 * state[:, :, 1:self.nz, 0]
@@ -823,6 +872,10 @@ class ConvectiveTerm:
     def MzW(self, atom, state):
         atom[:, :, 1:self.nz, 2, 2] += 1/2 * state[:, :, 0:self.nz-1, 2]
         atom[:, :, 0:self.nz-1, 2, 2] += 1/2 * state[:, :, 0:self.nz-1, 2]
+
+    def MzT(self, atom, state):
+        atom[:, :, 0:self.nz-1, 4, 2] += 1/2 * state[:, :, 0:self.nz-1, 4]
+        atom[:, :, 0:self.nz-1, 4, 2] += 1/2 * state[:, :, 1:self.nz, 4]
 
     def u_x(self, bil, x, y, z):
         for i in range(self.nx):
@@ -877,6 +930,24 @@ class ConvectiveTerm:
             for j in range(self.ny):
                 for k in range(self.nz):
                     Derivatives._backward_u_z(bil[i, j, k, 1, 0, 2, :], k, j, i, z, y, x)
+
+    def T_x(self, bil, x, y, z):
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
+                    Derivatives._backward_u_x(bil[i, j, k, 1, 0, 4, :], i, j, k, x, y, z)
+
+    def T_y(self, bil, x, y, z):
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
+                    Derivatives._backward_u_x(bil[i, j, k, 1, 1, 4, :], j, i, k, y, x, z)
+
+    def T_z(self, bil, x, y, z):
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
+                    Derivatives._backward_u_x(bil[i, j, k, 1, 2, 4, :], k, j, i, z, y, x)
 
     def dirichlet_east(self, bil):
         tmp = numpy.copy(bil[self.nx-1, :, :, 0, 0, 0, 0])

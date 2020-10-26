@@ -328,6 +328,9 @@ def read_bous_matrix(fname):
     # Swap indices since the Fortran code had T at position 3
     for i in range(len(A.begA)-1):
         i2 = i + (i % dof == 3) - (i % dof == 4)
+        if i2 + 1 >= len(A.begA):
+            continue
+
         row = []
         for j in range(A.begA[i2], A.begA[i2+1]):
             col = A.jcoA[j] + (A.jcoA[j] % dof == 3) - (A.jcoA[j] % dof == 4)
@@ -446,7 +449,6 @@ def test_ldc_bil():
     ny = nx
     nz = nx
     dof = 4
-    Re = 100
     n = nx * ny * nz * dof
 
     state = numpy.zeros(n)
@@ -457,6 +459,41 @@ def test_ldc_bil():
     A = fvm.assemble(atom, nx, ny, nz, dof)
 
     B = read_matrix('ldc_bil_%sx%sx%s.txt' % (nx, ny, nz))
+
+    for i in range(n):
+        print(i)
+
+        if i+1 >= len(B.begA):
+            break
+
+        print('Expected:')
+        print(B.jcoA[B.begA[i]:B.begA[i+1]])
+        print(B.coA[B.begA[i]:B.begA[i+1]])
+
+        print('Got:')
+        print(A.jcoA[A.begA[i]:A.begA[i+1]])
+        print(A.coA[A.begA[i]:A.begA[i+1]])
+
+        assert B.begA[i+1] - B.begA[i] == A.begA[i+1] - A.begA[i]
+        for j in range(B.begA[i], B.begA[i+1]):
+            assert B.jcoA[j] == A.jcoA[j]
+            assert B.coA[j] == A.coA[j]
+
+def test_bous_bil():
+    nx = 4
+    ny = nx
+    nz = nx
+    dof = 5
+    n = nx * ny * nz * dof
+
+    state = numpy.zeros(n)
+    for i in range(n):
+        state[i] = i+1
+
+    atom, atomF = fvm.convection(state, nx, ny, nz, dof)
+    A = fvm.assemble(atom, nx, ny, nz, dof)
+
+    B = read_bous_matrix('bous_bil_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
