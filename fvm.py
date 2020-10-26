@@ -747,9 +747,9 @@ class Derivatives:
             convective_term.MxT(averages, state)
             convective_term.MyT(averages, state)
             convective_term.MzT(averages, state)
-            averages[0:self.nx-1, :, :, 0, 4] = state[0:self.nx-1, :, :, 0]
-            averages[:, 0:self.ny-1, :, 1, 4] = state[:, 0:self.ny-1, :, 1]
-            averages[:, :, 0:self.nz-1, 2, 4] = state[:, :, 0:self.nz-1, 2]
+            convective_term.value_u(averages, state)
+            convective_term.value_v(averages, state)
+            convective_term.value_w(averages, state)
 
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
@@ -879,6 +879,15 @@ class ConvectiveTerm:
     def MzT(self, atom, state):
         atom[:, :, 0:self.nz-1, 4, 2] += 1/2 * state[:, :, 0:self.nz-1, 4]
         atom[:, :, 0:self.nz-1, 4, 2] += 1/2 * state[:, :, 1:self.nz, 4]
+
+    def value_u(self, atom, state):
+        atom[0:self.nx-1, :, :, 0, 4] = state[0:self.nx-1, :, :, 0]
+
+    def value_v(self, atom, state):
+        atom[:, 0:self.ny-1, :, 1, 4] = state[:, 0:self.ny-1, :, 1]
+
+    def value_w(self, atom, state):
+        atom[:, :, 0:self.nz-1, 2, 4] = state[:, :, 0:self.nz-1, 2]
 
     def u_x(self, bil, x, y, z):
         for i in range(self.nx):
