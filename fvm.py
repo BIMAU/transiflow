@@ -733,9 +733,9 @@ class Derivatives:
 
         averages = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof])
 
-        convective_term.backward_average_x(averages[:, :, :, :, 0], state[:, :, :, 0]) # tMxU
-        convective_term.MxV(averages, state)
-        convective_term.MxW(averages, state)
+        convective_term.backward_average_x(averages[:, :, :, 0, :], state[:, :, :, 0]) # tMxU
+        convective_term.forward_average_x(averages[:, :, :, 1, :], state[:, :, :, 1]) # tMxV
+        convective_term.forward_average_x(averages[:, :, :, 2, :], state[:, :, :, 2]) # tMxW
         convective_term.MyU(averages, state)
         convective_term.MyV(averages, state)
         convective_term.MyW(averages, state)
@@ -744,7 +744,7 @@ class Derivatives:
         convective_term.MzW(averages, state)
 
         if self.dof > 4:
-            convective_term.MxT(averages, state)
+            convective_term.forward_average_x(averages[:, :, :, 4, :], state[:, :, :, 4]) # tMxT
             convective_term.MyT(averages, state)
             convective_term.MzT(averages, state)
             convective_term.value_u(averages, state)
@@ -836,17 +836,9 @@ class ConvectiveTerm:
         atom[1:self.nx, :, :, 0] += 1/2 * state[0:self.nx-1, :, :]
         atom[0:self.nx-1, :, :, 0] += 1/2 * state[0:self.nx-1, :, :]
 
-    def MxV(self, atom, state):
-        atom[0:self.nx-1, :, :, 1, 0] += 1/2 * state[0:self.nx-1, :, :, 1]
-        atom[0:self.nx-1, :, :, 1, 0] += 1/2 * state[1:self.nx, :, :, 1]
-
-    def MxW(self, atom, state):
-        atom[0:self.nx-1, :, :, 2, 0] += 1/2 * state[0:self.nx-1, :, :, 2]
-        atom[0:self.nx-1, :, :, 2, 0] += 1/2 * state[1:self.nx, :, :, 2]
-
-    def MxT(self, atom, state):
-        atom[0:self.nx-1, :, :, 4, 0] += 1/2 * state[0:self.nx-1, :, :, 4]
-        atom[0:self.nx-1, :, :, 4, 0] += 1/2 * state[1:self.nx, :, :, 4]
+    def forward_average_x(self, atom, state):
+        atom[0:self.nx-1, :, :, 0] += 1/2 * state[0:self.nx-1, :, :]
+        atom[0:self.nx-1, :, :, 0] += 1/2 * state[1:self.nx, :, :]
 
     def MyU(self, atom, state):
         atom[:, 0:self.ny-1, :, 0, 1] += 1/2 * state[:, 0:self.ny-1, :, 0]
