@@ -734,18 +734,18 @@ class Derivatives:
 
         convective_term = ConvectiveTerm(self.nx, self.ny, self.nz)
 
-        convective_term.backward_average_x(bil[:, :, :, :, :, 0, :], averages[:, :, :, 0, :], state[:, :, :, 0]) # tMxU
+        convective_term.backward_average_x(bil[:, :, :, :, 0, :, :], averages[:, :, :, 0, :], state[:, :, :, 0]) # tMxU
+        convective_term.forward_average_x(bil[:, :, :, :, 1, :, :], averages[:, :, :, 1, :], state[:, :, :, 1]) # tMxV
+        convective_term.forward_average_x(bil[:, :, :, :, 2, :, :], averages[:, :, :, 2, :], state[:, :, :, 2]) # tMxW
         convective_term.backward_average(bil[:, :, :, 0, 1, 1, :]) # tMyV
         convective_term.backward_average(bil[:, :, :, 0, 2, 2, :]) # tMzW
-        convective_term.forward_average(bil[:, :, :, 0, 1, 0, :]) # tMxV
-        convective_term.forward_average(bil[:, :, :, 0, 2, 0, :]) # tMxW
         convective_term.forward_average(bil[:, :, :, 0, 0, 1, :]) # tMyU
         convective_term.forward_average(bil[:, :, :, 0, 2, 1, :]) # tMyW
         convective_term.forward_average(bil[:, :, :, 0, 0, 2, :]) # tMzU
         convective_term.forward_average(bil[:, :, :, 0, 1, 2, :]) # tMzV
 
         if self.dof > 4:
-            convective_term.forward_average(bil[:, :, :, 0, 4, 0, :]) # tMxT
+            convective_term.forward_average_x(bil[:, :, :, :, 4, :, :], averages[:, :, :, 4, :], state[:, :, :, 4]) # tMxT
             convective_term.forward_average(bil[:, :, :, 0, 4, 1, :]) # tMyT
             convective_term.forward_average(bil[:, :, :, 0, 4, 2, :]) # tMzT
             convective_term.value(bil[:, :, :, 0, 0, 4, :]) # U
@@ -774,8 +774,6 @@ class Derivatives:
         convective_term.dirichlet_top(bil)
         convective_term.dirichlet_bottom(bil)
 
-        convective_term.forward_average_x(averages[:, :, :, 1, :], state[:, :, :, 1]) # tMxV
-        convective_term.forward_average_x(averages[:, :, :, 2, :], state[:, :, :, 2]) # tMxW
         convective_term.forward_average_y(averages[:, :, :, 0, :], state[:, :, :, 0]) # tMyU
         convective_term.backward_average_y(averages[:, :, :, 1, :], state[:, :, :, 1]) # tMyV
         convective_term.forward_average_y(averages[:, :, :, 2, :], state[:, :, :, 2]) # tMyW
@@ -784,7 +782,6 @@ class Derivatives:
         convective_term.backward_average_z(averages[:, :, :, 2, :], state[:, :, :, 2]) # tMzW
 
         if self.dof > 4:
-            convective_term.forward_average_x(averages[:, :, :, 4, :], state[:, :, :, 4]) # tMxT
             convective_term.forward_average_y(averages[:, :, :, 4, :], state[:, :, :, 4]) # tMyT
             convective_term.forward_average_z(averages[:, :, :, 4, :], state[:, :, :, 4]) # tMzT
             convective_term.value_u(averages, state)
@@ -835,9 +832,10 @@ class ConvectiveTerm:
         averages[1:self.nx, :, :, 0] += 1/2 * state[0:self.nx-1, :, :]
         averages[0:self.nx-1, :, :, 0] += 1/2 * state[0:self.nx-1, :, :]
 
-    def forward_average_x(self, atom, state):
-        atom[0:self.nx-1, :, :, 0] += 1/2 * state[0:self.nx-1, :, :]
-        atom[0:self.nx-1, :, :, 0] += 1/2 * state[1:self.nx, :, :]
+    def forward_average_x(self, bil, averages, state):
+        bil[:, :, :, 0, 0, 1:3] = 1/2
+        averages[0:self.nx-1, :, :, 0] += 1/2 * state[0:self.nx-1, :, :]
+        averages[0:self.nx-1, :, :, 0] += 1/2 * state[1:self.nx, :, :]
 
     def backward_average_y(self, atom, state):
         atom[:, 1:self.ny, :, 1] += 1/2 * state[:, 0:self.ny-1, :]
