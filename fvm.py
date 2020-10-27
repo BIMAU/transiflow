@@ -526,6 +526,48 @@ class Derivatives:
         return self.u_x(x, y, z) + self.v_y(x, y, z) + self.w_z(x, y, z)
 
     @staticmethod
+    def _forward_average_x(atom, i, j, k, x, y, z):
+        # volume size in the x direction
+        dx = (x[i+1] - x[i-1]) / 2
+        # volume size in the y direction
+        dy = y[j] - y[j-1]
+        # volume size in the z direction
+        dz = z[k] - z[k-1]
+
+        # forward average
+        atom[1] = dx * dy * dz / 2
+        atom[2] = atom[1]
+
+    def forward_average_T_z(self, x, y, z):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
+                    Derivatives._forward_average_x(atom[i, j, k, 2, 4, 1, 1, :], k, j, i, z, y, x)
+        return atom
+
+    @staticmethod
+    def _backward_average_x(atom, i, j, k, x, y, z):
+        # volume size in the x direction
+        dx = (x[i+1] - x[i-1]) / 2
+        # volume size in the y direction
+        dy = y[j] - y[j-1]
+        # volume size in the z direction
+        dz = z[k] - z[k-1]
+
+        # forward average
+        atom[0] = dx * dy * dz / 2
+        atom[1] = atom[0]
+
+    def backward_average_w_z(self, x, y, z):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
+                    Derivatives._backward_average_x(atom[i, j, k, 4, 2, 1, 1, :], k, j, i, z, y, x)
+        return atom
+
+    @staticmethod
     def _convection_v_u_unoptimized(atomJ, atomF, MxV, MyU, bil, varV, varU, ny, j):
         ''' This method is left here for documentation purposes and
         can be used when iterating over the entire grid'''
@@ -772,48 +814,6 @@ class Derivatives:
         atomJ += atomF
 
         return (atomJ, atomF)
-
-    @staticmethod
-    def _forward_average_x(atom, i, j, k, x, y, z):
-        # volume size in the x direction
-        dx = (x[i+1] - x[i-1]) / 2
-        # volume size in the y direction
-        dy = y[j] - y[j-1]
-        # volume size in the z direction
-        dz = z[k] - z[k-1]
-
-        # forward average
-        atom[1] = dx * dy * dz / 2
-        atom[2] = atom[1]
-
-    def forward_average_T_z(self, x, y, z):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
-        for i in range(self.nx):
-            for j in range(self.ny):
-                for k in range(self.nz):
-                    Derivatives._forward_average_x(atom[i, j, k, 2, 4, 1, 1, :], k, j, i, z, y, x)
-        return atom
-
-    @staticmethod
-    def _backward_average_x(atom, i, j, k, x, y, z):
-        # volume size in the x direction
-        dx = (x[i+1] - x[i-1]) / 2
-        # volume size in the y direction
-        dy = y[j] - y[j-1]
-        # volume size in the z direction
-        dz = z[k] - z[k-1]
-
-        # forward average
-        atom[0] = dx * dy * dz / 2
-        atom[1] = atom[0]
-
-    def backward_average_w_z(self, x, y, z):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
-        for i in range(self.nx):
-            for j in range(self.ny):
-                for k in range(self.nz):
-                    Derivatives._backward_average_x(atom[i, j, k, 4, 2, 1, 1, :], k, j, i, z, y, x)
-        return atom
 
 
 class ConvectiveTerm:
