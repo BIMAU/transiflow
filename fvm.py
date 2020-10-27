@@ -812,12 +812,6 @@ class ConvectiveTerm:
     def value(self, bil):
         bil[:, :, :, 1] = 1
 
-    def backward_average(self, bil):
-        bil[:, :, :, 0:2] = 1/2
-
-    def forward_average(self, bil):
-        bil[:, :, :, 1:3] = 1/2
-
     def backward_average_x(self, bil, averages, state):
         bil[:, :, :, 0, 0, 0:2] = 1/2
         averages[1:self.nx, :, :, 0] += 1/2 * state[0:self.nx-1, :, :]
