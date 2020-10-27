@@ -748,9 +748,9 @@ class Derivatives:
             convective_term.forward_average_x(bil[:, :, :, :, 4, :, :], averages[:, :, :, 4, :], state[:, :, :, 4]) # tMxT
             convective_term.forward_average_y(bil[:, :, :, :, 4, :, :], averages[:, :, :, 4, :], state[:, :, :, 4]) # tMyT
             convective_term.forward_average_z(bil[:, :, :, :, 4, :, :], averages[:, :, :, 4, :], state[:, :, :, 4]) # tMzT
-            convective_term.value(bil[:, :, :, 0, 0, 4, :]) # U
-            convective_term.value(bil[:, :, :, 0, 1, 4, :]) # V
-            convective_term.value(bil[:, :, :, 0, 2, 4, :]) # W
+            convective_term.value_u(bil[:, :, :, :, :, 4, :], averages[:, :, :, :, 4], state)
+            convective_term.value_v(bil[:, :, :, :, :, 4, :], averages[:, :, :, :, 4], state)
+            convective_term.value_w(bil[:, :, :, :, :, 4, :], averages[:, :, :, :, 4], state)
 
         convective_term.u_x(bil, x, y, z) # tMxUMxU
         convective_term.u_y(bil, x, y, z) # tMxVMyU
@@ -773,11 +773,6 @@ class Derivatives:
         convective_term.dirichlet_south(bil)
         convective_term.dirichlet_top(bil)
         convective_term.dirichlet_bottom(bil)
-
-        if self.dof > 4:
-            convective_term.value_u(averages, state)
-            convective_term.value_v(averages, state)
-            convective_term.value_w(averages, state)
 
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
@@ -809,9 +804,6 @@ class ConvectiveTerm:
         self.ny = ny
         self.nz = nz
 
-    def value(self, bil):
-        bil[:, :, :, 1] = 1
-
     def backward_average_x(self, bil, averages, state):
         bil[:, :, :, 0, 0, 0:2] = 1/2
         averages[1:self.nx, :, :, 0] += 1/2 * state[0:self.nx-1, :, :]
@@ -842,14 +834,17 @@ class ConvectiveTerm:
         averages[:, :, 0:self.nz-1, 2] += 1/2 * state[:, :, 0:self.nz-1]
         averages[:, :, 0:self.nz-1, 2] += 1/2 * state[:, :, 1:self.nz]
 
-    def value_u(self, atom, state):
-        atom[0:self.nx-1, :, :, 0, 4] = state[0:self.nx-1, :, :, 0]
+    def value_u(self, bil, averages, state):
+        bil[:, :, :, 0, 0, 1] = 1
+        averages[0:self.nx-1, :, :, 0] = state[0:self.nx-1, :, :, 0]
 
-    def value_v(self, atom, state):
-        atom[:, 0:self.ny-1, :, 1, 4] = state[:, 0:self.ny-1, :, 1]
+    def value_v(self, bil, averages, state):
+        bil[:, :, :, 0, 1, 1] = 1
+        averages[:, 0:self.ny-1, :, 1] = state[:, 0:self.ny-1, :, 1]
 
-    def value_w(self, atom, state):
-        atom[:, :, 0:self.nz-1, 2, 4] = state[:, :, 0:self.nz-1, 2]
+    def value_w(self, bil, averages, state):
+        bil[:, :, :, 0, 2, 1] = 1
+        averages[:, :, 0:self.nz-1, 2] = state[:, :, 0:self.nz-1, 2]
 
     def u_x(self, bil, x, y, z):
         for i in range(self.nx):
