@@ -256,23 +256,14 @@ class BoundaryConditions:
         atom[:, :, 0, :, :, :, :, 0] = 0
 
     def moving_lid_north(self, atom):
-        n = self.nx * self.ny * self.nz * self.dof
-        out = numpy.zeros(n)
-
-        j = self.ny-1
-        y = 2
-        for k in range(self.nz):
-            for i in range(self.nx):
-                for z in range(3):
-                    for x in range(3):
-                        offset = i * self.dof + j * self.nx * self.dof + k * self.nx * self.ny * self.dof
-                        out[offset] += 2 * atom[i, j, k, 0, 0, x, y, z]
-                        offset = i * self.dof + j * self.nx * self.dof + k * self.nx * self.ny * self.dof + 2
-                        out[offset] += 2 * atom[i, j, k, 2, 0, x, y, z]
+        frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        frc[:, self.ny-1, :, :] += self._constant_forcing(atom[:, self.ny-1, :, :, 0, :, 2, :], self.nx, self.nz, 0, 1)
+        frc[:, self.ny-1, :, :] += self._constant_forcing(atom[:, self.ny-1, :, :, 0, :, 2, :], self.nx, self.nz, 2, 1)
+        frc = create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
 
         self.dirichlet_north(atom)
 
-        return out
+        return frc
 
     def moving_lid_top(self, atom):
         n = self.nx * self.ny * self.nz * self.dof
@@ -362,6 +353,15 @@ class BoundaryConditions:
         '''T[k] - T[k-1] = h * Tbc, h = (z[k+1] - z[k-1]) / 2'''
         atom[:, :, 0, 4, 4, :, :, 1] += 2 * atom[:, :, 0, 4, 4, :, :, 0]
         self.dirichlet_bottom(atom)
+
+    def _constant_forcing(self, atom, nx, ny, var, value):
+        out = numpy.zeros([nx, ny, self.dof])
+        for j in range(ny):
+            for i in range(nx):
+                for y in range(3):
+                    for x in range(3):
+                        out[i, j, var] += 2 * atom[i, j, var, x, y] * value
+        return out
 
 class Derivatives:
 
