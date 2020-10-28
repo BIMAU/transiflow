@@ -256,20 +256,16 @@ class BoundaryConditions:
         atom[:, :, 0, :, :, :, :, 0] = 0
 
     def moving_lid_north(self, atom, velocity):
-        frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
-        frc[:, self.ny-1, :, :] += self._constant_forcing(atom[:, self.ny-1, :, :, 0, :, 2, :], self.nx, self.nz, 0, velocity)
-        frc[:, self.ny-1, :, :] += self._constant_forcing(atom[:, self.ny-1, :, :, 0, :, 2, :], self.nx, self.nz, 2, velocity)
-        frc = create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
+        frc = self._constant_forcing_north(atom[:, :, :, :, 0, :, :, :], 0, velocity) + \
+            self._constant_forcing_north(atom[:, :, :, :, 0, :, :, :], 2, velocity)
 
         self.dirichlet_north(atom)
 
         return frc
 
     def moving_lid_top(self, atom, velocity):
-        frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
-        frc[:, :, self.nz-1, :] += self._constant_forcing(atom[:, :, self.nz-1, :, 0, :, :, 2], self.nx, self.ny, 0, velocity)
-        frc[:, :, self.nz-1, :] += self._constant_forcing(atom[:, :, self.nz-1, :, 0, :, :, 2], self.nx, self.ny, 1, velocity)
-        frc = create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
+        frc = self._constant_forcing_top(atom[:, :, :, :, 0, :, :, :], 0, velocity) + \
+            self._constant_forcing_top(atom[:, :, :, :, 0, :, :, :], 1, velocity)
 
         self.dirichlet_top(atom)
 
@@ -277,9 +273,7 @@ class BoundaryConditions:
 
     def temperature_east(self, atom, temperature):
         '''T[i] + T[i+1] = 2 * Tb'''
-        frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
-        frc[self.nx-1, :, :, :] += self._constant_forcing(atom[self.nx-1, :, :, :, 4, 2, :, :], self.ny, self.nz, 4, temperature)
-        frc = create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
+        frc = self._constant_forcing_east(atom[:, :, :, :, 4, :, :, :], 4, temperature)
 
         self.dirichlet_east(atom)
 
@@ -287,9 +281,7 @@ class BoundaryConditions:
 
     def temperature_west(self, atom, temperature):
         '''T[i] + T[i-1] = 2 * Tb'''
-        frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
-        frc[0, :, :, :] += self._constant_forcing(atom[0, :, :, :, 4, 0, :, :], self.ny, self.nz, 4, temperature)
-        frc = create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
+        frc = self._constant_forcing_west(atom[:, :, :, :, 4, :, :, :], 4, temperature)
 
         self.dirichlet_west(atom)
 
@@ -326,13 +318,43 @@ class BoundaryConditions:
         self.dirichlet_bottom(atom)
 
     def _constant_forcing(self, atom, nx, ny, var, value):
-        out = numpy.zeros([nx, ny, self.dof])
+        frc = numpy.zeros([nx, ny, self.dof])
         for j in range(ny):
             for i in range(nx):
                 for y in range(3):
                     for x in range(3):
-                        out[i, j, var] += 2 * atom[i, j, var, x, y] * value
-        return out
+                        frc[i, j, var] += 2 * atom[i, j, var, x, y] * value
+        return frc
+
+    def _constant_forcing_east(self, atom, var, value):
+        frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        frc[self.nx-1, :, :] = self._constant_forcing(atom[self.nx-1, :, :, :, 2, :, :], self.ny, self.nz, var, value)
+        return create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
+
+    def _constant_forcing_west(self, atom, var, value):
+        frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        frc[0, :, :] = self._constant_forcing(atom[0, :, :, :, 0, :, :], self.ny, self.nz, var, value)
+        return create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
+
+    def _constant_forcing_north(self, atom, var, value):
+        frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        frc[:, self.ny-1, :] = self._constant_forcing(atom[:, self.ny-1, :, :, :, 2, :], self.nx, self.nz, var, value)
+        return create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
+
+    def _constant_forcing_south(self, atom, var, value):
+        frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        frc[:, 0, :] = self._constant_forcing(atom[:, 0, :, :, :, 0, :], self.nx, self.nz, var, value)
+        return create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
+
+    def _constant_forcing_top(self, atom, var, value):
+        frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        frc[:, :, self.nz-1] = self._constant_forcing(atom[:, :, self.nz-1, :, :, :, 2], self.nx, self.ny, var, value)
+        return create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
+
+    def _constant_forcing_bottom(self, atom, var, value):
+        frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        frc[:, :, 0] = self._constant_forcing(atom[:, :, 0, :, :, :, 0], self.nx, self.ny, var, value)
+        return create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
 
 class Derivatives:
 
