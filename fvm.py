@@ -266,23 +266,14 @@ class BoundaryConditions:
         return frc
 
     def moving_lid_top(self, atom):
-        n = self.nx * self.ny * self.nz * self.dof
-        out = numpy.zeros(n)
-
-        k = self.nz-1
-        z = 2
-        for j in range(self.ny):
-            for i in range(self.nx):
-                for y in range(3):
-                    for x in range(3):
-                        offset = i * self.dof + j * self.nx * self.dof + k * self.nx * self.ny * self.dof + 1
-                        out[offset] += 2 * atom[i, j, k, 1, 0, x, y, z]
-                        offset = i * self.dof + j * self.nx * self.dof + k * self.nx * self.ny * self.dof
-                        out[offset] += 2 * atom[i, j, k, 0, 0, x, y, z]
+        frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        frc[:, :, self.nz-1, :] += self._constant_forcing(atom[:, :, self.nz-1, :, 0, :, :, 2], self.nx, self.ny, 0, 1)
+        frc[:, :, self.nz-1, :] += self._constant_forcing(atom[:, :, self.nz-1, :, 0, :, :, 2], self.nx, self.ny, 1, 1)
+        frc = create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
 
         self.dirichlet_top(atom)
 
-        return out
+        return frc
 
     def temperature_east(self, atom):
         '''T[i] + T[i+1] = 2 * Tb'''
