@@ -55,7 +55,7 @@ def boundaries(atom, nx, ny, nz, dof, problem_type='Lid-driven cavity'):
         boundary_conditions.dirichlet_west(atom)
 
     if problem_type_equals(problem_type, 'Lid-driven cavity') and nz <= 1:
-        frc += boundary_conditions.moving_lid_north(atom)
+        frc += boundary_conditions.moving_lid_north(atom, 1)
     elif problem_type_equals(problem_type, 'Rayleigh-Benard'):
         boundary_conditions.heatflux_north(atom)
     elif problem_type_equals(problem_type, 'Differentially heated cavity'):
@@ -71,7 +71,7 @@ def boundaries(atom, nx, ny, nz, dof, problem_type='Lid-driven cavity'):
         boundary_conditions.dirichlet_south(atom)
 
     if problem_type_equals(problem_type, 'Lid-driven cavity') and nz > 1:
-        frc += boundary_conditions.moving_lid_top(atom)
+        frc += boundary_conditions.moving_lid_top(atom, 1)
     elif problem_type_equals(problem_type, 'Differentially heated cavity'):
         boundary_conditions.heatflux_top(atom)
     else:
@@ -255,20 +255,20 @@ class BoundaryConditions:
         atom[:, :, 0, :, :, :, :, 1] -= atom[:, :, 0, :, :, :, :, 0]
         atom[:, :, 0, :, :, :, :, 0] = 0
 
-    def moving_lid_north(self, atom):
+    def moving_lid_north(self, atom, velocity):
         frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
-        frc[:, self.ny-1, :, :] += self._constant_forcing(atom[:, self.ny-1, :, :, 0, :, 2, :], self.nx, self.nz, 0, 1)
-        frc[:, self.ny-1, :, :] += self._constant_forcing(atom[:, self.ny-1, :, :, 0, :, 2, :], self.nx, self.nz, 2, 1)
+        frc[:, self.ny-1, :, :] += self._constant_forcing(atom[:, self.ny-1, :, :, 0, :, 2, :], self.nx, self.nz, 0, velocity)
+        frc[:, self.ny-1, :, :] += self._constant_forcing(atom[:, self.ny-1, :, :, 0, :, 2, :], self.nx, self.nz, 2, velocity)
         frc = create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
 
         self.dirichlet_north(atom)
 
         return frc
 
-    def moving_lid_top(self, atom):
+    def moving_lid_top(self, atom, velocity):
         frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
-        frc[:, :, self.nz-1, :] += self._constant_forcing(atom[:, :, self.nz-1, :, 0, :, :, 2], self.nx, self.ny, 0, 1)
-        frc[:, :, self.nz-1, :] += self._constant_forcing(atom[:, :, self.nz-1, :, 0, :, :, 2], self.nx, self.ny, 1, 1)
+        frc[:, :, self.nz-1, :] += self._constant_forcing(atom[:, :, self.nz-1, :, 0, :, :, 2], self.nx, self.ny, 0, velocity)
+        frc[:, :, self.nz-1, :] += self._constant_forcing(atom[:, :, self.nz-1, :, 0, :, :, 2], self.nx, self.ny, 1, velocity)
         frc = create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
 
         self.dirichlet_top(atom)
