@@ -93,6 +93,18 @@ def create_state_mtx(state, nx, ny, nz, dof):
                     state_mtx[i, j, k, d] = state[d + i * dof + j * dof * nx + k * dof * nx * ny]
     return state_mtx
 
+def create_state_vec(state_mtx, nx, ny, nz, dof):
+    state = numpy.zeros(nx * ny * nz * dof)
+
+    row = 0
+    for k in range(nz):
+        for j in range(ny):
+            for i in range(nx):
+                for d in range(dof):
+                    state[row] = state_mtx[i, j, k, d]
+                    row += 1
+    return state
+
 def convection(state, nx, ny, nz, dof):
     x = create_uniform_coordinate_vector(nx)
     y = create_uniform_coordinate_vector(ny)
@@ -185,15 +197,7 @@ def rhs(state, atom, nx, ny, nz, dof):
                     for d2 in range(dof):
                         out_mtx[:, :, :, d1] -= atom[:, :, :, d1, d2, i, j, k] * state_mtx[i:(i+nx), j:(j+ny), k:(k+nz), d2]
 
-    # Put the output in vector form
-    out = numpy.zeros(n)
-    for k in range(nz):
-        for j in range(ny):
-            for i in range(nx):
-                for d1 in range(dof):
-                    out[row] = out_mtx[i, j, k, d1]
-                    row += 1
-    return out
+    return create_state_vec(out_mtx, nx, ny, nz, dof)
 
 class BoundaryConditions:
 
