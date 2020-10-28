@@ -354,6 +354,15 @@ def read_vector(fname):
             vec = numpy.append(vec, float(i.strip()))
     return vec
 
+def read_bous_vector(fname):
+    vec = read_vector(fname)
+
+    dof = 5
+    out = numpy.zeros(len(vec))
+    for i in range(len(vec)):
+        out[i] = vec[i + (i % dof == 3) - (i % dof == 4)]
+    return out
+
 def test_ldc_lin():
     nx = 4
     ny = nx
@@ -570,6 +579,51 @@ def test_ldc():
 
     B = read_matrix('ldc_%sx%sx%s.txt' % (nx, ny, nz))
     rhs_B = read_vector('ldc_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+
+    for i in range(n):
+        print(i)
+
+        print('Expected:')
+        print(B.jcoA[B.begA[i]:B.begA[i+1]])
+        print(B.coA[B.begA[i]:B.begA[i+1]])
+
+        print('Got:')
+        print(A.jcoA[A.begA[i]:A.begA[i+1]])
+        print(A.coA[A.begA[i]:A.begA[i+1]])
+
+        assert A.begA[i+1] - A.begA[i] == B.begA[i+1] - B.begA[i]
+        for j in range(A.begA[i], A.begA[i+1]):
+            assert A.jcoA[j] == B.jcoA[j]
+            assert A.coA[j] == pytest.approx(B.coA[j])
+
+        assert rhs_B[i] == pytest.approx(-rhs[i])
+
+def test_bous():
+    nx = 4
+    ny = nx
+    nz = nx
+    dof = 5
+    Re = 1
+    Ra = 100
+    Pr = 100
+    n = nx * ny * nz * dof
+
+    state = numpy.zeros(n)
+    for i in range(n):
+        state[i] = i+1
+
+    atom = fvm.linear_part(nx, ny, nz, dof, Re, Ra, Pr)
+    frc = fvm.boundaries(atom, nx, ny, nz, dof, 'Rayleigh-Benard')
+    atomJ, atomF = fvm.convection(state, nx, ny, nz, dof)
+
+    atomJ += atom
+    atomF += atom
+
+    A = fvm.assemble(atomJ, nx, ny, nz, dof)
+    rhs = fvm.rhs(state, atomF, nx, ny, nz, dof) - frc
+
+    B = read_bous_matrix('bous_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = read_bous_vector('bous_rhs_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
