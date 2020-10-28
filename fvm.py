@@ -43,14 +43,14 @@ def boundaries(atom, nx, ny, nz, dof, problem_type='Lid-driven cavity'):
     if problem_type_equals(problem_type, 'Rayleigh-Benard'):
         boundary_conditions.heatflux_east(atom)
     elif problem_type_equals(problem_type, 'Differentially heated cavity'):
-        frc += boundary_conditions.temperature_east(atom)
+        frc += boundary_conditions.temperature_east(atom, -1/2)
     else:
         boundary_conditions.dirichlet_east(atom)
 
     if problem_type_equals(problem_type, 'Rayleigh-Benard'):
         boundary_conditions.heatflux_west(atom)
     elif problem_type_equals(problem_type, 'Differentially heated cavity'):
-        frc += boundary_conditions.temperature_west(atom)
+        frc += boundary_conditions.temperature_west(atom, 1/2)
     else:
         boundary_conditions.dirichlet_west(atom)
 
@@ -275,20 +275,20 @@ class BoundaryConditions:
 
         return frc
 
-    def temperature_east(self, atom):
+    def temperature_east(self, atom, temperature):
         '''T[i] + T[i+1] = 2 * Tb'''
         frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
-        frc[self.nx-1, :, :, :] += self._constant_forcing(atom[self.nx-1, :, :, :, 4, 2, :, :], self.ny, self.nz, 4, -1/2)
+        frc[self.nx-1, :, :, :] += self._constant_forcing(atom[self.nx-1, :, :, :, 4, 2, :, :], self.ny, self.nz, 4, temperature)
         frc = create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
 
         self.dirichlet_east(atom)
 
         return out
 
-    def temperature_west(self, atom):
+    def temperature_west(self, atom, temperature):
         '''T[i] + T[i-1] = 2 * Tb'''
         frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
-        frc[0, :, :, :] += self._constant_forcing(atom[0, :, :, :, 4, 0, :, :], self.ny, self.nz, 4, 1/2)
+        frc[0, :, :, :] += self._constant_forcing(atom[0, :, :, :, 4, 0, :, :], self.ny, self.nz, 4, temperature)
         frc = create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
 
         self.dirichlet_west(atom)
