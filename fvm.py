@@ -38,22 +38,49 @@ def problem_type_equals(first, second):
 def boundaries(atom, nx, ny, nz, dof, problem_type='Lid-driven cavity'):
     boundary_conditions = BoundaryConditions(nx, ny, nz, dof)
 
-    frc = None
+    frc = numpy.zeros(nx * ny * nz * dof)
 
-    boundary_conditions.dirichlet_east(atom)
-    boundary_conditions.dirichlet_west(atom)
+    if problem_type_equals(problem_type, 'Rayleigh-Benard'):
+        boundary_conditions.heatflux_east(atom)
+    elif problem_type_equals(problem_type, 'Differentially heated cavity'):
+        frc += boundary_conditions.temperature_east(atom)
+    else:
+        boundary_conditions.dirichlet_east(atom)
+
+    if problem_type_equals(problem_type, 'Rayleigh-Benard'):
+        boundary_conditions.heatflux_west(atom)
+    elif problem_type_equals(problem_type, 'Differentially heated cavity'):
+        frc += boundary_conditions.temperature_west(atom)
+    else:
+        boundary_conditions.dirichlet_west(atom)
 
     if problem_type_equals(problem_type, 'Lid-driven cavity') and nz <= 1:
-        frc = boundary_conditions.moving_lid_north(atom)
+        frc += boundary_conditions.moving_lid_north(atom)
+    elif problem_type_equals(problem_type, 'Rayleigh-Benard'):
+        boundary_conditions.heatflux_north(atom)
+    elif problem_type_equals(problem_type, 'Differentially heated cavity'):
+        boundary_conditions.heatflux_north(atom)
     else:
         boundary_conditions.dirichlet_north(atom)
-    boundary_conditions.dirichlet_south(atom)
+
+    if problem_type_equals(problem_type, 'Rayleigh-Benard'):
+        boundary_conditions.heatflux_south(atom)
+    elif problem_type_equals(problem_type, 'Differentially heated cavity'):
+        boundary_conditions.heatflux_south(atom)
+    else:
+        boundary_conditions.dirichlet_south(atom)
 
     if problem_type_equals(problem_type, 'Lid-driven cavity') and nz > 1:
-        frc = boundary_conditions.moving_lid_top(atom)
+        frc += boundary_conditions.moving_lid_top(atom)
+    elif problem_type_equals(problem_type, 'Differentially heated cavity'):
+        boundary_conditions.heatflux_top(atom)
     else:
         boundary_conditions.dirichlet_top(atom)
-    boundary_conditions.dirichlet_bottom(atom)
+
+    if problem_type_equals(problem_type, 'Differentially heated cavity'):
+        boundary_conditions.heatflux_bottom(atom)
+    else:
+        boundary_conditions.dirichlet_bottom(atom)
 
     return frc
 
@@ -261,6 +288,76 @@ class BoundaryConditions:
         self.dirichlet_top(atom)
 
         return out
+
+    def temperature_east(self, atom):
+        '''T[i] + T[i+1] = 2 * Tb'''
+        n = self.nx * self.ny * self.nz * self.dof
+        out = numpy.zeros(n)
+
+        Tb = -1/2
+
+        i = self.nx-1
+        x = 2
+        for k in range(self.nz):
+            for j in range(self.ny):
+                for z in range(3):
+                    for y in range(3):
+                        offset = i * self.dof + j * self.nx * self.dof + k * self.nx * self.ny * self.dof + 4
+                        out[offset] += 2 * atom[i, j, k, 4, 4, x, y, z] * Tb
+
+        self.dirichlet_east(atom)
+
+        return out
+
+    def temperature_west(self, atom):
+        '''T[i] + T[i-1] = 2 * Tb'''
+        n = self.nx * self.ny * self.nz * self.dof
+        out = numpy.zeros(n)
+
+        Tb = 1/2
+
+        i = 0
+        x = 0
+        for k in range(self.nz):
+            for j in range(self.ny):
+                for z in range(3):
+                    for y in range(3):
+                        offset = i * self.dof + j * self.nx * self.dof + k * self.nx * self.ny * self.dof + 4
+                        out[offset] += 2 * atom[i, j, k, 4, 4, x, y, z] * Tb
+
+        self.dirichlet_west(atom)
+
+        return out
+
+    def heatflux_east(self, atom):
+        '''T[i+1] - T[i] = h * Tbc, h = (x[i+1] - x[i-1]) / 2'''
+        atom[self.nx-1, :, :, 4, 4, 1, :, :] += 2 * atom[self.nx-1, :, :, 4, 4, 2, :, :]
+        self.dirichlet_east(atom)
+
+    def heatflux_west(self, atom):
+        '''T[i] - T[i-1] = h * Tbc, h = (x[i+1] - x[i-1]) / 2'''
+        atom[0, :, :, 4, 4, 1, :, :] += 2 * atom[0, :, :, 4, 4, 0, :, :]
+        self.dirichlet_west(atom)
+
+    def heatflux_north(self, atom):
+        '''T[j+1] - T[j] = h * Tbc, h = (y[j+1] - y[j-1]) / 2'''
+        atom[:, self.ny-1, :, 4, 4, :, 1, :] += 2 * atom[:, self.ny-1, :, 4, 4, :, 2, :]
+        self.dirichlet_north(atom)
+
+    def heatflux_south(self, atom):
+        '''T[j] - T[j-1] = h * Tbc, h = (y[j+1] - y[j-1]) / 2'''
+        atom[:, 0, :, 4, 4, :, 1, :] += 2 * atom[:, 0, :, 4, 4, :, 0, :]
+        self.dirichlet_south(atom)
+
+    def heatflux_top(self, atom):
+        '''T[k+1] - T[k] = h * Tbc, h = (z[k+1] - z[k-1]) / 2'''
+        atom[:, :, self.nz-1, 4, 4, :, :, 1] += 2 * atom[:, :, self.nz-1, 4, 4, :, :, 2]
+        self.dirichlet_top(atom)
+
+    def heatflux_bottom(self, atom):
+        '''T[k] - T[k-1] = h * Tbc, h = (z[k+1] - z[k-1]) / 2'''
+        atom[:, :, 0, 4, 4, :, :, 1] += 2 * atom[:, :, 0, 4, 4, :, :, 0]
+        self.dirichlet_bottom(atom)
 
 class Derivatives:
 

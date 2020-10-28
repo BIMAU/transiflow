@@ -444,6 +444,38 @@ def test_ldc_bnd():
             assert B.jcoA[j] == A.jcoA[j]
             assert B.coA[j] == A.coA[j]
 
+def test_bous_bnd():
+    nx = 4
+    ny = nx
+    nz = nx
+    dof = 5
+    Re = 1
+    Ra = 100
+    Pr = 100
+    n = nx * ny * nz * dof
+
+    atom = fvm.linear_part(nx, ny, nz, dof, Re, Ra, Pr)
+    fvm.boundaries(atom, nx, ny, nz, dof, 'Rayleigh-Benard')
+    A = fvm.assemble(atom, nx, ny, nz, dof)
+
+    B = read_bous_matrix('bous_bnd_%sx%sx%s.txt' % (nx, ny, nz))
+
+    for i in range(n):
+        print(i)
+
+        print('Expected:')
+        print(B.jcoA[B.begA[i]:B.begA[i+1]])
+        print(B.coA[B.begA[i]:B.begA[i+1]])
+
+        print('Got:')
+        print(A.jcoA[A.begA[i]:A.begA[i+1]])
+        print(A.coA[A.begA[i]:A.begA[i+1]])
+
+        assert B.begA[i+1] - B.begA[i] == A.begA[i+1] - A.begA[i]
+        for j in range(B.begA[i], B.begA[i+1]):
+            assert B.jcoA[j] == A.jcoA[j]
+            assert B.coA[j] == pytest.approx(A.coA[j])
+
 def test_ldc_bil():
     nx = 4
     ny = nx
