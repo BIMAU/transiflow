@@ -277,19 +277,9 @@ class BoundaryConditions:
 
     def temperature_east(self, atom):
         '''T[i] + T[i+1] = 2 * Tb'''
-        n = self.nx * self.ny * self.nz * self.dof
-        out = numpy.zeros(n)
-
-        Tb = -1/2
-
-        i = self.nx-1
-        x = 2
-        for k in range(self.nz):
-            for j in range(self.ny):
-                for z in range(3):
-                    for y in range(3):
-                        offset = i * self.dof + j * self.nx * self.dof + k * self.nx * self.ny * self.dof + 4
-                        out[offset] += 2 * atom[i, j, k, 4, 4, x, y, z] * Tb
+        frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        frc[self.nx-1, :, :, :] += self._constant_forcing(atom[self.nx-1, :, :, :, 4, 2, :, :], self.ny, self.nz, 4, -1/2)
+        frc = create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
 
         self.dirichlet_east(atom)
 
@@ -297,19 +287,9 @@ class BoundaryConditions:
 
     def temperature_west(self, atom):
         '''T[i] + T[i-1] = 2 * Tb'''
-        n = self.nx * self.ny * self.nz * self.dof
-        out = numpy.zeros(n)
-
-        Tb = 1/2
-
-        i = 0
-        x = 0
-        for k in range(self.nz):
-            for j in range(self.ny):
-                for z in range(3):
-                    for y in range(3):
-                        offset = i * self.dof + j * self.nx * self.dof + k * self.nx * self.ny * self.dof + 4
-                        out[offset] += 2 * atom[i, j, k, 4, 4, x, y, z] * Tb
+        frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        frc[0, :, :, :] += self._constant_forcing(atom[0, :, :, :, 4, 0, :, :], self.ny, self.nz, 4, 1/2)
+        frc = create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
 
         self.dirichlet_west(atom)
 
