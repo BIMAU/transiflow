@@ -178,11 +178,11 @@ class Interface(fvm.Interface):
 
         return Epetra.Map(-1, local_elements[0:pos], 0, self.comm)
 
-    def jacobian(self, state, Re):
+    def jacobian(self, state):
         state_ass = Vector(self.assembly_map)
         state_ass.Import(state, self.assembly_importer, Epetra.Insert)
 
-        jac = fvm.Interface.jacobian(self, state_ass, Re)
+        jac = fvm.Interface.jacobian(self, state_ass)
 
         A = Epetra.FECrsMatrix(Epetra.Copy, self.solve_map, 27)
         for i in range(len(jac.begA)-1):
@@ -195,11 +195,11 @@ class Interface(fvm.Interface):
 
         return A
 
-    def rhs(self, state, Re):
+    def rhs(self, state):
         state_ass = Vector(self.assembly_map)
         state_ass.Import(state, self.assembly_importer, Epetra.Insert)
 
-        rhs = fvm.Interface.rhs(self, state_ass, Re)
+        rhs = fvm.Interface.rhs(self, state_ass)
         rhs_ass = Vector(Epetra.Copy, self.assembly_map, rhs)
         rhs = Vector(self.map)
         rhs.Export(rhs_ass, self.assembly_importer, Epetra.Zero)

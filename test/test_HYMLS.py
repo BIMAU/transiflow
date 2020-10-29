@@ -39,13 +39,12 @@ def test_HYMLS(nx=4, interactive=False):
 
     x0 = HYMLSInterface.Vector(m)
     x0.PutScalar(0.0)
-    x0 = continuation.newton(interface, x0, 0)
+    x0 = continuation.newton(interface, x0)
 
-    l = 0
     target = 100
     ds = 100
     maxit = 20
-    x = continuation.continuation(interface, x0, l, target, ds, maxit)
+    x = continuation.continuation(interface, x0, 'Reynolds Number', target, ds, maxit)
 
     assert x.Norm2() > 0
 
@@ -84,13 +83,12 @@ def test_HYMLS_2D(nx=8, interactive=False):
 
     x0 = HYMLSInterface.Vector(m)
     x0.PutScalar(0.0)
-    x0 = continuation.newton(interface, x0, 0)
+    x0 = continuation.newton(interface, x0)
 
-    l = 0
     target = 2000
     ds = 100
     maxit = 20
-    x = continuation.continuation(interface, x0, l, target, ds, maxit)
+    x = continuation.continuation(interface, x0, 'Reynolds Number', target, ds, maxit)
 
     assert x.Norm2() > 0
 

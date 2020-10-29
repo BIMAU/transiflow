@@ -3,11 +3,11 @@ from math import sqrt
 def norm(x):
     return sqrt(x.dot(x))
 
-def newton(interface, x0, l, tol=1.e-7, maxit=1000):
+def newton(interface, x0, tol=1.e-7, maxit=1000):
     x = x0
     for k in range(maxit):
-        fval = interface.rhs(x, l)
-        jac = interface.jacobian(x, l)
+        fval = interface.rhs(x)
+        jac = interface.jacobian(x)
         dx = -interface.solve(jac, fval)
 
         x = x + dx
@@ -19,7 +19,7 @@ def newton(interface, x0, l, tol=1.e-7, maxit=1000):
 
     return x
 
-def newtoncorrector(interface, ds, x, x0, l, l0, tol):
+def newtoncorrector(interface, parameter_name, ds, x, x0, l, l0, tol):
     # Set some parameters
     maxit = 100
     zeta = 1 / len(x)
@@ -28,13 +28,16 @@ def newtoncorrector(interface, ds, x, x0, l, l0, tol):
     # Do the main iteration
     for k in range(maxit):
         # Set the parameter value and compute F (RHS of 2.2.9)
-        fval = interface.rhs(x, l)
+        interface.set_parameter(parameter_name, l)
+        fval = interface.rhs(x)
 
         # Compute F_mu (bottom part of the RHS of 2.2.9)
-        dflval = (interface.rhs(x, l + delta) - fval) / delta
+        interface.set_parameter(parameter_name, l + delta)
+        dflval = (interface.rhs(x) - fval) / delta
+        interface.set_parameter(parameter_name, l)
 
         # Compute the jacobian at x
-        jac = interface.jacobian(x, l)
+        jac = interface.jacobian(x)
 
         # Solve twice with F_x (2.2.9)
         z1 = -interface.solve(jac, fval)
@@ -61,16 +64,19 @@ def newtoncorrector(interface, ds, x, x0, l, l0, tol):
 
     print('No convergence achieved by Newton corrector')
 
-def continuation(interface, x0, l, target, ds, maxit):
+def continuation(interface, x0, parameter_name, target, ds, maxit):
     x = x0
 
     # Get the initial tangent (2.2.5 - 2.2.7). 'l' is called mu in Erik's thesis.
     delta = 1
-    fval = interface.rhs(x, l)
-    dl = (interface.rhs(x, l + delta) - fval) / delta
+    l = interface.get_parameter(parameter_name)
+    fval = interface.rhs(x)
+    interface.set_parameter(parameter_name, l + delta)
+    dl = (interface.rhs(x) - fval) / delta
+    interface.set_parameter(parameter_name, l)
 
     # Compute the jacobian at x and solve with it (2.2.5)
-    jac = interface.jacobian(x, l)
+    jac = interface.jacobian(x)
     dx = -interface.solve(jac, dl)
 
     # Scaling of the initial tangent (2.2.7)
@@ -93,15 +99,16 @@ def continuation(interface, x0, l, target, ds, maxit):
         x = x0 + ds * dx0
 
         # Corrector (2.2.9 and onward)
-        x2, l2 = newtoncorrector(interface, ds, x, x0, l, l0, 1e-4)
+        x2, l2 = newtoncorrector(interface, parameter_name, ds, x, x0, l, l0, 1e-4)
 
-        print("Re:", l2)
+        print("%s: %f" % (parameter_name, l2))
 
         if (l2 >= target and l0 < target) or (l2 <= target and l0 > target):
             # Converge onto the end point (we usually go past it, so we
             # use Newton to converge)
             l = target
-            x = newton(interface, x, l, 1e-4)
+            interface.set_parameter(parameter_name, l)
+            x = newton(interface, x, 1e-4)
 
             return x
 

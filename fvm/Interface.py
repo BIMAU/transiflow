@@ -12,38 +12,28 @@ class Interface:
         self.problem_type = problem_type
         self.discretization = Discretization(parameters, nx, ny, nz, dof)
 
-    def rhs(self, state, Re_in):
-        if Re_in == 0:
-            Re = 1
-        else:
-            Re = Re_in
+    def set_parameter(self, name, value):
+        self.discretization.set_parameter(name, value)
 
-        self.discretization.set_parameter('Reynolds Number', Re)
+    def get_parameter(self, name):
+        return self.discretization.get_parameter(name)
 
+    def rhs(self, state):
         atom = self.discretization.linear_part()
         frc = self.discretization.boundaries(atom, self.problem_type)
 
-        if Re_in != 0:
-            atomJ, atomF = self.discretization.nonlinear_part(state)
-            atom += atomF
+        atomJ, atomF = self.discretization.nonlinear_part(state)
+        atom += atomF
 
         # FIXME: Check this minus signs
         return -self.discretization.rhs(state, atom) + frc
 
-    def jacobian(self, state, Re_in):
-        if Re_in == 0:
-            Re = 1
-        else:
-            Re = Re_in
-
-        self.discretization.set_parameter('Reynolds Number', Re)
-
+    def jacobian(self, state):
         atom = self.discretization.linear_part()
         self.discretization.boundaries(atom)
 
-        if Re_in != 0:
-            atomJ, atomF = self.discretization.nonlinear_part(state)
-            atom += atomJ
+        atomJ, atomF = self.discretization.nonlinear_part(state)
+        atom += atomJ
 
         return self.discretization.jacobian(atom)
 
