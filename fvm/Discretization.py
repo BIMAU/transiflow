@@ -15,9 +15,9 @@ class Discretization:
         self.nz = nz
         self.dof = dof
 
-        self.x = utils.create_uniform_coordinate_vector(0, 1, self.nx) if not x else x
-        self.y = utils.create_uniform_coordinate_vector(0, 1, self.ny) if not y else y
-        self.z = utils.create_uniform_coordinate_vector(0, 1, self.nz) if not z else z
+        self.x = utils.create_uniform_coordinate_vector(0, 1, self.nx) if x is None else x
+        self.y = utils.create_uniform_coordinate_vector(0, 1, self.ny) if y is None else y
+        self.z = utils.create_uniform_coordinate_vector(0, 1, self.nz) if z is None else z
 
     def set_parameter(self, name, value):
         self.parameters[name] = value

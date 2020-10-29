@@ -35,6 +35,8 @@ def sub2ind(nx, ny, nz, dof, i, j, k, var):
 
 class Interface(fvm.Interface):
     def __init__(self, comm, parameters, nx, ny, nz, dof):
+        fvm.Interface.__init__(self,parameters, nx, ny, nz, dof)
+
         self.nx_global = nx
         self.ny_global = ny
         self.nz_global = nz
@@ -69,7 +71,25 @@ class Interface(fvm.Interface):
         self.solve_map = partitioner.Map()
         self.solve_importer = Epetra.Import(self.solve_map, self.map)
 
-        fvm.Interface.__init__(self, self.parameters, self.nx_local, self.ny_local, self.nz_local, self.dof)
+        # Create local coordinate vectors
+        x = fvm.utils.create_uniform_coordinate_vector(self.nx_offset / self.nx_global,
+                                                       (self.nx_offset + self.nx_local) / self.nx_global,
+                                                       self.nx_local)
+        y = fvm.utils.create_uniform_coordinate_vector(self.ny_offset / self.ny_global,
+                                                       (self.ny_offset + self.ny_local) / self.ny_global,
+                                                       self.ny_local)
+        z = fvm.utils.create_uniform_coordinate_vector(self.nz_offset / self.nz_global,
+                                                       (self.nz_offset + self.nz_local) / self.nz_global,
+                                                       self.nz_local)
+
+        # Re-initialize the fvm.Interface parameters
+        self.nx = self.nx_local
+        self.ny = self.ny_local
+        self.nz = self.nz_local
+        self.discretization = fvm.Discretization(self.parameters, self.nx_local, self.ny_local, self.nz_local, self.dof, x, y, z)
+
+        print(self.nx_local)
+        print(self.ny_local)
 
     def partition_domain(self):
         rmin = 1e100
@@ -97,7 +117,6 @@ class Interface(fvm.Interface):
 
                     r1 = abs(self.nx_global / t1 - self.ny_global / t2)
                     r2 = abs(self.nx_global / t1 - self.nz_global / t3)
-
                     r3 = abs(self.ny_global / t2 - self.nz_global / t3)
                     r = r1 + r2 + r3
 
