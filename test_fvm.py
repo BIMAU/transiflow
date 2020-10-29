@@ -1,7 +1,8 @@
 import os
 import numpy
-import fvm
 import pytest
+
+import fvm_main as fvm
 
 def create_coordinate_vector(nx):
     dx = 1 / (nx + 1)
