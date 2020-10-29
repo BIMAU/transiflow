@@ -1,5 +1,7 @@
 import numpy
 
+from fvm import utils
+
 class Discretization:
 
     def __init__(self, nx, ny, nz, dof):
@@ -7,6 +9,26 @@ class Discretization:
         self.ny = ny
         self.nz = nz
         self.dof = dof
+
+    def linear_part(self, Re, Ra=0, Pr=0):
+        x = utils.create_uniform_coordinate_vector(self.nx)
+        y = utils.create_uniform_coordinate_vector(self.ny)
+        z = utils.create_uniform_coordinate_vector(self.nz)
+
+        atom = 1 / Re * (self.u_xx(x, y, z) + self.u_yy(x, y, z) + self.u_zz(x, y, z) \
+                      +  self.v_xx(x, y, z) + self.v_yy(x, y, z) + self.v_zz(x, y, z) \
+                      +  self.w_xx(x, y, z) + self.w_yy(x, y, z) + self.w_zz(x, y, z)) \
+            - (self.p_x(x, y, z) + self.p_y(x, y, z) + self.p_z(x, y, z)) \
+            + self.div(x, y, z)
+
+        if Ra:
+            atom += Ra * self.forward_average_T_z(x, y, z)
+
+        if Pr:
+            atom += 1 / Pr * (self.T_xx(x, y, z) + self.T_yy(x, y, z) + self.T_zz(x, y, z))
+            atom += 1 / Pr * self.backward_average_w_z(x, y, z)
+
+        return atom
 
     @staticmethod
     def _u_xx(atom, i, j, k, x, y, z):

@@ -10,28 +10,6 @@ class CrsMatrix:
         self.jcoA = jcoA
         self.begA = begA
 
-def linear_part(nx, ny, nz, dof, Re, Ra=0, Pr=0):
-    x = utils.create_uniform_coordinate_vector(nx)
-    y = utils.create_uniform_coordinate_vector(ny)
-    z = utils.create_uniform_coordinate_vector(nz)
-
-    discretization = Discretization(nx, ny, nz, dof)
-
-    atom = 1 / Re * (discretization.u_xx(x, y, z) + discretization.u_yy(x, y, z) + discretization.u_zz(x, y, z) \
-                  +  discretization.v_xx(x, y, z) + discretization.v_yy(x, y, z) + discretization.v_zz(x, y, z) \
-                  +  discretization.w_xx(x, y, z) + discretization.w_yy(x, y, z) + discretization.w_zz(x, y, z)) \
-        - (discretization.p_x(x, y, z) + discretization.p_y(x, y, z) + discretization.p_z(x, y, z)) \
-        + discretization.div(x, y, z)
-
-    if Ra:
-        atom += Ra * discretization.forward_average_T_z(x, y, z)
-
-    if Pr:
-        atom += 1 / Pr * (discretization.T_xx(x, y, z) + discretization.T_yy(x, y, z) + discretization.T_zz(x, y, z))
-        atom += 1 / Pr * discretization.backward_average_w_z(x, y, z)
-
-    return atom
-
 def problem_type_equals(first, second):
     return first.lower() == second.lower()
 

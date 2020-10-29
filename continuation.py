@@ -4,6 +4,8 @@ from math import sqrt
 from scipy import sparse
 from scipy.sparse import linalg
 
+from fvm import Discretization
+
 class Interface:
     def __init__(self, nx, ny, nz, dof, problem_type='Lid-driven cavity'):
         self.nx = nx
@@ -11,6 +13,7 @@ class Interface:
         self.nz = nz
         self.dof = dof
         self.problem_type = problem_type
+        self.discretization = Discretization(nx, ny, nz, dof)
 
     def rhs(self, state, Re_in):
         if Re_in == 0:
@@ -18,7 +21,7 @@ class Interface:
         else:
             Re = Re_in
 
-        atom = fvm.linear_part(self.nx, self.ny, self.nz, self.dof, Re)
+        atom = self.discretization.linear_part(Re)
         frc = fvm.boundaries(atom, self.nx, self.ny, self.nz, self.dof, self.problem_type)
 
         if Re_in != 0:
@@ -34,7 +37,7 @@ class Interface:
         else:
             Re = Re_in
 
-        atom = fvm.linear_part(self.nx, self.ny, self.nz, self.dof, Re)
+        atom = self.discretization.linear_part(Re)
         fvm.boundaries(atom, self.nx, self.ny, self.nz, self.dof)
 
         if Re_in != 0:
