@@ -2,6 +2,7 @@ import numpy
 
 from fvm import BoundaryConditions
 from fvm import Discretization
+from fvm import utils
 
 class CrsMatrix:
     def __init__(self, coA=None, jcoA=None, begA=None):
@@ -9,14 +10,10 @@ class CrsMatrix:
         self.jcoA = jcoA
         self.begA = begA
 
-def create_uniform_coordinate_vector(nx):
-    dx = 1 / nx
-    return numpy.roll(numpy.arange(-dx, 1+2*dx, dx), -2)
-
 def linear_part(nx, ny, nz, dof, Re, Ra=0, Pr=0):
-    x = create_uniform_coordinate_vector(nx)
-    y = create_uniform_coordinate_vector(ny)
-    z = create_uniform_coordinate_vector(nz)
+    x = utils.create_uniform_coordinate_vector(nx)
+    y = utils.create_uniform_coordinate_vector(ny)
+    z = utils.create_uniform_coordinate_vector(nz)
 
     discretization = Discretization(nx, ny, nz, dof)
 
@@ -41,9 +38,9 @@ def problem_type_equals(first, second):
 def boundaries(atom, nx, ny, nz, dof, problem_type='Lid-driven cavity'):
     boundary_conditions = BoundaryConditions(nx, ny, nz, dof)
 
-    x = create_uniform_coordinate_vector(nx)
-    y = create_uniform_coordinate_vector(ny)
-    z = create_uniform_coordinate_vector(nz)
+    x = utils.create_uniform_coordinate_vector(nx)
+    y = utils.create_uniform_coordinate_vector(ny)
+    z = utils.create_uniform_coordinate_vector(nz)
 
     frc = numpy.zeros(nx * ny * nz * dof)
 
@@ -91,33 +88,12 @@ def boundaries(atom, nx, ny, nz, dof, problem_type='Lid-driven cavity'):
 
     return frc
 
-def create_state_mtx(state, nx, ny, nz, dof):
-    state_mtx = numpy.zeros([nx, ny, nz, dof])
-    for k in range(nz):
-        for j in range(ny):
-            for i in range(nx):
-                for d in range(dof):
-                    state_mtx[i, j, k, d] = state[d + i * dof + j * dof * nx + k * dof * nx * ny]
-    return state_mtx
-
-def create_state_vec(state_mtx, nx, ny, nz, dof):
-    state = numpy.zeros(nx * ny * nz * dof)
-
-    row = 0
-    for k in range(nz):
-        for j in range(ny):
-            for i in range(nx):
-                for d in range(dof):
-                    state[row] = state_mtx[i, j, k, d]
-                    row += 1
-    return state
-
 def convection(state, nx, ny, nz, dof):
-    x = create_uniform_coordinate_vector(nx)
-    y = create_uniform_coordinate_vector(ny)
-    z = create_uniform_coordinate_vector(nz)
+    x = utils.create_uniform_coordinate_vector(nx)
+    y = utils.create_uniform_coordinate_vector(ny)
+    z = utils.create_uniform_coordinate_vector(nz)
 
-    state_mtx = create_state_mtx(state, nx, ny, nz, dof)
+    state_mtx = utils.create_state_mtx(state, nx, ny, nz, dof)
 
     discretization = Discretization(nx, ny, nz, dof)
     return discretization.convection(state_mtx, x, y, z)
@@ -193,7 +169,7 @@ def rhs(state, atom, nx, ny, nz, dof):
 
     # Put the state in shifted matrix form
     state_mtx = numpy.zeros([nx+2, ny+2, nz+2, dof])
-    state_mtx[1:nx+1, 1:ny+1, 1:nz+1, :] = create_state_mtx(state, nx, ny, nz, dof)
+    state_mtx[1:nx+1, 1:ny+1, 1:nz+1, :] = utils.create_state_mtx(state, nx, ny, nz, dof)
 
     # Add up all contributions without iterating over the domain
     out_mtx = numpy.zeros([nx, ny, nz, dof])
@@ -204,4 +180,4 @@ def rhs(state, atom, nx, ny, nz, dof):
                     for d2 in range(dof):
                         out_mtx[:, :, :, d1] -= atom[:, :, :, d1, d2, i, j, k] * state_mtx[i:(i+nx), j:(j+ny), k:(k+nz), d2]
 
-    return create_state_vec(out_mtx, nx, ny, nz, dof)
+    return utils.create_state_vec(out_mtx, nx, ny, nz, dof)
