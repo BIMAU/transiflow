@@ -307,7 +307,8 @@ def test_MxU():
 def read_matrix(fname):
     A = fvm.CrsMatrix([], [], [0])
 
-    with open(fname, 'r') as f:
+    dirname = os.path.dirname(__file__)
+    with open(os.path.join(dirname, fname), 'r') as f:
         rows = []
         idx = 0
         for i in f.readlines():
@@ -353,7 +354,8 @@ def read_bous_matrix(fname):
 def read_vector(fname):
     vec = numpy.array([])
 
-    with open(fname, 'r') as f:
+    dirname = os.path.dirname(__file__)
+    with open(os.path.join(dirname, fname), 'r') as f:
         rows = []
         idx = 0
         for i in f.readlines():
