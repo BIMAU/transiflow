@@ -1,4 +1,5 @@
 import numpy
+import copy
 
 from fvm import utils
 from fvm import BoundaryConditions
@@ -11,12 +12,25 @@ class Discretization:
         self.ny = ny
         self.nz = nz
         self.dof = dof
-        self.parameters = parameters
+        self.parameters = copy.copy(parameters)
 
-    def linear_part(self, Re, Ra=0, Pr=0):
+    def set_parameter(self, name, value):
+        self.parameters[name] = value
+
+    def get_parameter(self, name, default=0):
+        return self.parameters.get(name, default)
+
+    def linear_part(self):
         x = utils.create_uniform_coordinate_vector(self.nx)
         y = utils.create_uniform_coordinate_vector(self.ny)
         z = utils.create_uniform_coordinate_vector(self.nz)
+
+        Re = self.get_parameter('Reynolds Number')
+        Ra = self.get_parameter('Rayleigh Number')
+        Pr = self.get_parameter('Prandtl Number')
+
+        if Re == 0:
+            Re = 1
 
         atom = 1 / Re * (self.u_xx(x, y, z) + self.u_yy(x, y, z) + self.u_zz(x, y, z) \
                       +  self.v_xx(x, y, z) + self.v_yy(x, y, z) + self.v_zz(x, y, z) \
@@ -39,6 +53,10 @@ class Discretization:
         z = utils.create_uniform_coordinate_vector(self.nz)
 
         state_mtx = utils.create_state_mtx(state, self.nx, self.ny, self.nz, self.dof)
+
+        Re = self.get_parameter('Reynolds Number')
+        if Re == 0:
+            state_mtx[:, :, :, :] = 0
 
         return self.convection(state_mtx, x, y, z)
 

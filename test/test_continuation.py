@@ -10,7 +10,7 @@ def test_continuation(nx=4, interactive=False):
     nz = nx
     n = dof * nx * ny * nz
 
-    parameters = {}
+    parameters = {'Reynolds Number': 0}
     interface = Interface(parameters, nx, ny, nz, dof)
 
     x0 = numpy.zeros(dof * nx * ny * nz)
@@ -38,7 +38,7 @@ def test_continuation_2D(nx=8, interactive=False):
     nz = 1
     n = dof * nx * ny * nz
 
-    parameters = {}
+    parameters = {'Reynolds Number': 0}
     interface = Interface(parameters, nx, ny, nz, dof)
 
     x0 = numpy.zeros(dof * nx * ny * nz)

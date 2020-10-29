@@ -31,6 +31,8 @@ def test_HYMLS(nx=4, interactive=False):
     prec_params.set('Separator Length', 4)
     prec_params.set('Number of Levels', 0)
 
+    params.set('Reynolds Number', 0)
+
     comm = Epetra.PyComm()
     interface = HYMLSInterface.Interface(comm, params, nx, ny, nz, dof)
     m = interface.map
@@ -73,6 +75,8 @@ def test_HYMLS_2D(nx=8, interactive=False):
     prec_params = params.sublist('Preconditioner')
     prec_params.set('Separator Length', 4)
     prec_params.set('Number of Levels', 0)
+
+    params.set('Reynolds Number', 0)
 
     comm = Epetra.PyComm()
     interface = HYMLSInterface.Interface(comm, params, nx, ny, nz, dof)

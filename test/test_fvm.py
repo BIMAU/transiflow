@@ -377,12 +377,11 @@ def test_ldc_lin():
     ny = nx
     nz = nx
     dof = 4
-    Re = 100
-    parameters = {}
+    parameters = {'Reynolds Number': 100}
     n = nx * ny * nz * dof
 
     discretization = Discretization(parameters, nx, ny, nz, dof)
-    atom = discretization.linear_part(Re)
+    atom = discretization.linear_part()
     A = discretization.jacobian(atom)
 
     B = read_matrix('ldc_lin_%sx%sx%s.txt' % (nx, ny, nz))
@@ -408,14 +407,11 @@ def test_bous_lin():
     ny = nx
     nz = nx
     dof = 5
-    Re = 1
-    Ra = 100
-    Pr = 100
-    parameters = {}
+    parameters = {'Reynolds Number': 1, 'Rayleigh Number': 100, 'Prandtl Number': 100}
     n = nx * ny * nz * dof
 
     discretization = Discretization(parameters, nx, ny, nz, dof)
-    atom = discretization.linear_part(Re, Ra, Pr)
+    atom = discretization.linear_part()
     A = discretization.jacobian(atom)
 
     B = read_bous_matrix('bous_lin_%sx%sx%s.txt' % (nx, ny, nz))
@@ -441,12 +437,11 @@ def test_ldc_bnd():
     ny = nx
     nz = nx
     dof = 4
-    Re = 100
-    parameters = {}
+    parameters = {'Reynolds Number': 100}
     n = nx * ny * nz * dof
 
     discretization = Discretization(parameters, nx, ny, nz, dof)
-    atom = discretization.linear_part(Re)
+    atom = discretization.linear_part()
     discretization.boundaries(atom)
     A = discretization.jacobian(atom)
 
@@ -473,14 +468,11 @@ def test_bous_bnd():
     ny = nx
     nz = nx
     dof = 5
-    Re = 1
-    Ra = 100
-    Pr = 100
-    parameters = {}
+    parameters = {'Reynolds Number': 1, 'Rayleigh Number': 100, 'Prandtl Number': 100}
     n = nx * ny * nz * dof
 
     discretization = Discretization(parameters, nx, ny, nz, dof)
-    atom = discretization.linear_part(Re, Ra, Pr)
+    atom = discretization.linear_part()
     discretization.boundaries(atom, 'Rayleigh-Benard')
     A = discretization.jacobian(atom)
 
@@ -507,7 +499,7 @@ def test_ldc_bil():
     ny = nx
     nz = nx
     dof = 4
-    parameters = {}
+    parameters = {'Reynolds Number': 100}
     n = nx * ny * nz * dof
 
     state = numpy.zeros(n)
@@ -544,7 +536,7 @@ def test_bous_bil():
     ny = nx
     nz = nx
     dof = 5
-    parameters = {}
+    parameters = {'Reynolds Number': 1, 'Rayleigh Number': 100, 'Prandtl Number': 100}
     n = nx * ny * nz * dof
 
     state = numpy.zeros(n)
@@ -581,8 +573,7 @@ def test_ldc():
     ny = nx
     nz = nx
     dof = 4
-    Re = 100
-    parameters = {}
+    parameters = {'Reynolds Number': 100}
     n = nx * ny * nz * dof
 
     state = numpy.zeros(n)
@@ -590,7 +581,7 @@ def test_ldc():
         state[i] = i+1
 
     discretization = Discretization(parameters, nx, ny, nz, dof)
-    atom = discretization.linear_part(Re)
+    atom = discretization.linear_part()
     frc = discretization.boundaries(atom)
     atomJ, atomF = discretization.nonlinear_part(state)
 
@@ -626,10 +617,7 @@ def test_bous():
     ny = nx
     nz = nx
     dof = 5
-    Re = 1
-    Ra = 100
-    Pr = 100
-    parameters = {}
+    parameters = {'Reynolds Number': 1, 'Rayleigh Number': 100, 'Prandtl Number': 100}
     n = nx * ny * nz * dof
 
     state = numpy.zeros(n)
@@ -637,7 +625,7 @@ def test_bous():
         state[i] = i+1
 
     discretization = Discretization(parameters, nx, ny, nz, dof)
-    atom = discretization.linear_part(Re, Ra, Pr)
+    atom = discretization.linear_part()
     frc = discretization.boundaries(atom, 'Rayleigh-Benard')
     atomJ, atomF = discretization.nonlinear_part(state)
 
@@ -673,8 +661,7 @@ def test_ldc8():
     ny = nx
     nz = nx
     dof = 4
-    Re = 100
-    parameters = {}
+    parameters = {'Reynolds Number': 100}
     n = nx * ny * nz * dof
 
     state = numpy.zeros(n)
@@ -682,7 +669,7 @@ def test_ldc8():
         state[i] = i+1
 
     discretization = Discretization(parameters, nx, ny, nz, dof)
-    atom = discretization.linear_part(Re)
+    atom = discretization.linear_part()
     frc = discretization.boundaries(atom)
     atomJ, atomF = discretization.nonlinear_part(state)
 

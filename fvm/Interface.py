@@ -18,7 +18,9 @@ class Interface:
         else:
             Re = Re_in
 
-        atom = self.discretization.linear_part(Re)
+        self.discretization.set_parameter('Reynolds Number', Re)
+
+        atom = self.discretization.linear_part()
         frc = self.discretization.boundaries(atom, self.problem_type)
 
         if Re_in != 0:
@@ -34,7 +36,9 @@ class Interface:
         else:
             Re = Re_in
 
-        atom = self.discretization.linear_part(Re)
+        self.discretization.set_parameter('Reynolds Number', Re)
+
+        atom = self.discretization.linear_part()
         self.discretization.boundaries(atom)
 
         if Re_in != 0:
