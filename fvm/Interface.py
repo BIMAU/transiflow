@@ -4,12 +4,11 @@ from scipy.sparse import linalg
 from fvm import Discretization
 
 class Interface:
-    def __init__(self, parameters, nx, ny, nz, dof, problem_type='Lid-driven cavity'):
+    def __init__(self, parameters, nx, ny, nz, dof):
         self.nx = nx
         self.ny = ny
         self.nz = nz
         self.dof = dof
-        self.problem_type = problem_type
         self.discretization = Discretization(parameters, nx, ny, nz, dof)
 
     def set_parameter(self, name, value):
@@ -20,7 +19,7 @@ class Interface:
 
     def rhs(self, state):
         atom = self.discretization.linear_part()
-        frc = self.discretization.boundaries(atom, self.problem_type)
+        frc = self.discretization.boundaries(atom)
 
         atomJ, atomF = self.discretization.nonlinear_part(state)
         atom += atomF

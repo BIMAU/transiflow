@@ -148,8 +148,9 @@ class Discretization:
     def _problem_type_equals(first, second):
         return first.lower() == second.lower()
 
-    def boundaries(self, atom, problem_type='Lid-driven cavity'):
+    def boundaries(self, atom):
         boundary_conditions = BoundaryConditions(self.nx, self.ny, self.nz, self.dof)
+        problem_type = self.get_parameter('Problem Type', 'Lid-driven cavity')
 
         x = utils.create_uniform_coordinate_vector(self.nx)
         y = utils.create_uniform_coordinate_vector(self.ny)

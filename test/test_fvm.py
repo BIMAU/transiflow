@@ -468,12 +468,12 @@ def test_bous_bnd():
     ny = nx
     nz = nx
     dof = 5
-    parameters = {'Reynolds Number': 1, 'Rayleigh Number': 100, 'Prandtl Number': 100}
+    parameters = {'Reynolds Number': 1, 'Rayleigh Number': 100, 'Prandtl Number': 100, 'Problem Type': 'Rayleigh-Benard'}
     n = nx * ny * nz * dof
 
     discretization = Discretization(parameters, nx, ny, nz, dof)
     atom = discretization.linear_part()
-    discretization.boundaries(atom, 'Rayleigh-Benard')
+    discretization.boundaries(atom)
     A = discretization.jacobian(atom)
 
     B = read_bous_matrix('bous_bnd_%sx%sx%s.txt' % (nx, ny, nz))
@@ -617,7 +617,7 @@ def test_bous():
     ny = nx
     nz = nx
     dof = 5
-    parameters = {'Reynolds Number': 1, 'Rayleigh Number': 100, 'Prandtl Number': 100}
+    parameters = {'Reynolds Number': 1, 'Rayleigh Number': 100, 'Prandtl Number': 100, 'Problem Type': 'Rayleigh-Benard'}
     n = nx * ny * nz * dof
 
     state = numpy.zeros(n)
@@ -626,7 +626,7 @@ def test_bous():
 
     discretization = Discretization(parameters, nx, ny, nz, dof)
     atom = discretization.linear_part()
-    frc = discretization.boundaries(atom, 'Rayleigh-Benard')
+    frc = discretization.boundaries(atom)
     atomJ, atomF = discretization.nonlinear_part(state)
 
     atomJ += atom
