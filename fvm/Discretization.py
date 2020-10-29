@@ -8,11 +8,16 @@ from fvm import CrsMatrix
 class Discretization:
 
     def __init__(self, parameters, nx, ny, nz, dof):
+        self.parameters = copy.copy(parameters)
+
         self.nx = nx
         self.ny = ny
         self.nz = nz
         self.dof = dof
-        self.parameters = copy.copy(parameters)
+
+        self.x = utils.create_uniform_coordinate_vector(self.nx)
+        self.y = utils.create_uniform_coordinate_vector(self.ny)
+        self.z = utils.create_uniform_coordinate_vector(self.nz)
 
     def set_parameter(self, name, value):
         self.parameters[name] = value
@@ -21,9 +26,6 @@ class Discretization:
         return self.parameters.get(name, default)
 
     def linear_part(self):
-        x = utils.create_uniform_coordinate_vector(self.nx)
-        y = utils.create_uniform_coordinate_vector(self.ny)
-        z = utils.create_uniform_coordinate_vector(self.nz)
 
         Re = self.get_parameter('Reynolds Number')
         Ra = self.get_parameter('Rayleigh Number')
@@ -32,33 +34,29 @@ class Discretization:
         if Re == 0:
             Re = 1
 
-        atom = 1 / Re * (self.u_xx(x, y, z) + self.u_yy(x, y, z) + self.u_zz(x, y, z) \
-                      +  self.v_xx(x, y, z) + self.v_yy(x, y, z) + self.v_zz(x, y, z) \
-                      +  self.w_xx(x, y, z) + self.w_yy(x, y, z) + self.w_zz(x, y, z)) \
-            - (self.p_x(x, y, z) + self.p_y(x, y, z) + self.p_z(x, y, z)) \
-            + self.div(x, y, z)
+        atom = 1 / Re * (self.u_xx(self.x, self.y, self.z) + self.u_yy(self.x, self.y, self.z) + self.u_zz(self.x, self.y, self.z) \
+                      +  self.v_xx(self.x, self.y, self.z) + self.v_yy(self.x, self.y, self.z) + self.v_zz(self.x, self.y, self.z) \
+                      +  self.w_xx(self.x, self.y, self.z) + self.w_yy(self.x, self.y, self.z) + self.w_zz(self.x, self.y, self.z)) \
+            - (self.p_x(self.x, self.y, self.z) + self.p_y(self.x, self.y, self.z) + self.p_z(self.x, self.y, self.z)) \
+            + self.div(self.x, self.y, self.z)
 
         if Ra:
-            atom += Ra * self.forward_average_T_z(x, y, z)
+            atom += Ra * self.forward_average_T_z(self.x, self.y, self.z)
 
         if Pr:
-            atom += 1 / Pr * (self.T_xx(x, y, z) + self.T_yy(x, y, z) + self.T_zz(x, y, z))
-            atom += 1 / Pr * self.backward_average_w_z(x, y, z)
+            atom += 1 / Pr * (self.T_xx(self.x, self.y, self.z) + self.T_yy(self.x, self.y, self.z) + self.T_zz(self.x, self.y, self.z))
+            atom += 1 / Pr * self.backward_average_w_z(self.x, self.y, self.z)
 
         return atom
 
     def nonlinear_part(self, state):
-        x = utils.create_uniform_coordinate_vector(self.nx)
-        y = utils.create_uniform_coordinate_vector(self.ny)
-        z = utils.create_uniform_coordinate_vector(self.nz)
-
         state_mtx = utils.create_state_mtx(state, self.nx, self.ny, self.nz, self.dof)
 
         Re = self.get_parameter('Reynolds Number')
         if Re == 0:
             state_mtx[:, :, :, :] = 0
 
-        return self.convection(state_mtx, x, y, z)
+        return self.convection(state_mtx, self.x, self.y, self.z)
 
     def rhs(self, state, atom):
         ''' Assemble the right-hand side. Optimized version of
@@ -152,21 +150,17 @@ class Discretization:
         boundary_conditions = BoundaryConditions(self.nx, self.ny, self.nz, self.dof)
         problem_type = self.get_parameter('Problem Type', 'Lid-driven cavity')
 
-        x = utils.create_uniform_coordinate_vector(self.nx)
-        y = utils.create_uniform_coordinate_vector(self.ny)
-        z = utils.create_uniform_coordinate_vector(self.nz)
-
         frc = numpy.zeros(self.nx * self.ny * self.nz * self.dof)
 
         if Discretization._problem_type_equals(problem_type, 'Rayleigh-Benard'):
-            frc += boundary_conditions.heatflux_east(atom, x, y, z, 0)
+            frc += boundary_conditions.heatflux_east(atom, self.x, self.y, self.z, 0)
         elif Discretization._problem_type_equals(problem_type, 'Differentially heated cavity'):
             frc += boundary_conditions.temperature_east(atom, -1/2)
         else:
             boundary_conditions.dirichlet_east(atom)
 
         if Discretization._problem_type_equals(problem_type, 'Rayleigh-Benard'):
-            frc += boundary_conditions.heatflux_west(atom, x, y, z, 0)
+            frc += boundary_conditions.heatflux_west(atom, self.x, self.y, self.z, 0)
         elif Discretization._problem_type_equals(problem_type, 'Differentially heated cavity'):
             frc += boundary_conditions.temperature_west(atom, 1/2)
         else:
@@ -175,28 +169,28 @@ class Discretization:
         if Discretization._problem_type_equals(problem_type, 'Lid-driven cavity') and self.nz <= 1:
             frc += boundary_conditions.moving_lid_north(atom, 1)
         elif Discretization._problem_type_equals(problem_type, 'Rayleigh-Benard'):
-            frc += boundary_conditions.heatflux_north(atom, x, y, z, 0)
+            frc += boundary_conditions.heatflux_north(atom, self.x, self.y, self.z, 0)
         elif Discretization._problem_type_equals(problem_type, 'Differentially heated cavity'):
-            frc += boundary_conditions.heatflux_north(atom, x, y, z, 0)
+            frc += boundary_conditions.heatflux_north(atom, self.x, self.y, self.z, 0)
         else:
             boundary_conditions.dirichlet_north(atom)
 
         if Discretization._problem_type_equals(problem_type, 'Rayleigh-Benard'):
-            frc += boundary_conditions.heatflux_south(atom, x, y, z, 0)
+            frc += boundary_conditions.heatflux_south(atom, self.x, self.y, self.z, 0)
         elif Discretization._problem_type_equals(problem_type, 'Differentially heated cavity'):
-            frc += boundary_conditions.heatflux_south(atom, x, y, z, 0)
+            frc += boundary_conditions.heatflux_south(atom, self.x, self.y, self.z, 0)
         else:
             boundary_conditions.dirichlet_south(atom)
 
         if Discretization._problem_type_equals(problem_type, 'Lid-driven cavity') and self.nz > 1:
             frc += boundary_conditions.moving_lid_top(atom, 1)
         elif Discretization._problem_type_equals(problem_type, 'Differentially heated cavity'):
-            frc += boundary_conditions.heatflux_top(atom, x, y, z, 0)
+            frc += boundary_conditions.heatflux_top(atom, self.x, self.y, self.z, 0)
         else:
             boundary_conditions.dirichlet_top(atom)
 
         if Discretization._problem_type_equals(problem_type, 'Differentially heated cavity'):
-            frc += boundary_conditions.heatflux_bottom(atom, x, y, z, 0)
+            frc += boundary_conditions.heatflux_bottom(atom, self.x, self.y, self.z, 0)
         else:
             boundary_conditions.dirichlet_bottom(atom)
 
@@ -448,7 +442,7 @@ class Discretization:
         # volume size in the x direction
         dx = (x[i+1] - x[i-1]) / 2
         # volume size in the y direction
-        dy = y[k] - y[k-1]
+        dy = y[j] - y[j-1]
 
         # backward difference
         atom[1] = dx * dy
