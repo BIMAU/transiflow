@@ -1,5 +1,3 @@
-import fvm_main as fvm
-
 from math import sqrt
 from scipy import sparse
 from scipy.sparse import linalg
@@ -44,7 +42,7 @@ class Interface:
             atomJ, atomF = self.discretization.nonlinear_part(state)
             atom += atomJ
 
-        return fvm.assemble(atom, self.nx, self.ny, self.nz, self.dof)
+        return self.discretization.jacobian(atom)
 
     def solve(self, jac, rhs):
         coA = []

@@ -2,8 +2,8 @@ import os
 import numpy
 import pytest
 
+from fvm import CrsMatrix
 from fvm import Discretization
-import fvm_main as fvm
 
 def create_coordinate_vector(nx):
     dx = 1 / (nx + 1)
@@ -27,7 +27,7 @@ def create_test_problem():
 def test_u_xx():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = fvm.Discretization(nx, ny, nz, dof)
+    discretization = Discretization(nx, ny, nz, dof)
     atom = discretization.u_xx(x, y, z)
 
     for i in range(nx):
@@ -44,7 +44,7 @@ def test_u_xx():
 def test_v_yy():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = fvm.Discretization(nx, ny, nz, dof)
+    discretization = Discretization(nx, ny, nz, dof)
     atom =  discretization.v_yy(x, y, z)
 
     for i in range(nx):
@@ -61,7 +61,7 @@ def test_v_yy():
 def test_w_zz():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = fvm.Discretization(nx, ny, nz, dof)
+    discretization = Discretization(nx, ny, nz, dof)
     atom =  discretization.w_zz(x, y, z)
 
     for i in range(nx):
@@ -78,7 +78,7 @@ def test_w_zz():
 def test_u_yy():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = fvm.Discretization(nx, ny, nz, dof)
+    discretization = Discretization(nx, ny, nz, dof)
     atom =  discretization.u_yy(x, y, z)
 
     for i in range(nx):
@@ -95,7 +95,7 @@ def test_u_yy():
 def test_v_xx():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = fvm.Discretization(nx, ny, nz, dof)
+    discretization = Discretization(nx, ny, nz, dof)
     atom =  discretization.v_xx(x, y, z)
 
     for i in range(nx):
@@ -112,7 +112,7 @@ def test_v_xx():
 def test_w_yy():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = fvm.Discretization(nx, ny, nz, dof)
+    discretization = Discretization(nx, ny, nz, dof)
     atom =  discretization.w_yy(x, y, z)
 
     for i in range(nx):
@@ -129,7 +129,7 @@ def test_w_yy():
 def test_u_zz():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = fvm.Discretization(nx, ny, nz, dof)
+    discretization = Discretization(nx, ny, nz, dof)
     atom =  discretization.u_zz(x, y, z)
 
     for i in range(nx):
@@ -146,7 +146,7 @@ def test_u_zz():
 def test_v_zz():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = fvm.Discretization(nx, ny, nz, dof)
+    discretization = Discretization(nx, ny, nz, dof)
     atom =  discretization.v_zz(x, y, z)
 
     for i in range(nx):
@@ -163,7 +163,7 @@ def test_v_zz():
 def test_w_xx():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = fvm.Discretization(nx, ny, nz, dof)
+    discretization = Discretization(nx, ny, nz, dof)
     atom =  discretization.w_xx(x, y, z)
 
     for i in range(nx):
@@ -180,7 +180,7 @@ def test_w_xx():
 def test_p_x():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = fvm.Discretization(nx, ny, nz, dof)
+    discretization = Discretization(nx, ny, nz, dof)
     atom =  discretization.p_x(x, y, z)
 
     for i in range(nx):
@@ -195,7 +195,7 @@ def test_p_x():
 def test_p_y():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = fvm.Discretization(nx, ny, nz, dof)
+    discretization = Discretization(nx, ny, nz, dof)
     atom =  discretization.p_y(x, y, z)
 
     for i in range(nx):
@@ -210,7 +210,7 @@ def test_p_y():
 def test_p_z():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = fvm.Discretization(nx, ny, nz, dof)
+    discretization = Discretization(nx, ny, nz, dof)
     atom =  discretization.p_z(x, y, z)
 
     for i in range(nx):
@@ -225,7 +225,7 @@ def test_p_z():
 def test_u_x():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = fvm.Discretization(nx, ny, nz, dof)
+    discretization = Discretization(nx, ny, nz, dof)
     atom =  discretization.u_x(x, y, z)
 
     for i in range(nx):
@@ -240,7 +240,7 @@ def test_u_x():
 def test_u_y():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = fvm.Discretization(nx, ny, nz, dof)
+    discretization = Discretization(nx, ny, nz, dof)
     atom =  discretization.v_y(x, y, z)
 
     for i in range(nx):
@@ -255,7 +255,7 @@ def test_u_y():
 def test_u_z():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = fvm.Discretization(nx, ny, nz, dof)
+    discretization = Discretization(nx, ny, nz, dof)
     atom =  discretization.w_z(x, y, z)
 
     for i in range(nx):
@@ -306,7 +306,7 @@ def test_MxU():
                 assert averages[i, j, k, 0, 0] == average
 
 def read_matrix(fname):
-    A = fvm.CrsMatrix([], [], [0])
+    A = CrsMatrix([], [], [0])
 
     dirname = os.path.dirname(__file__)
     with open(os.path.join(dirname, fname), 'r') as f:
@@ -332,7 +332,7 @@ def read_bous_matrix(fname):
     A = read_matrix(fname)
 
     dof = 5
-    B = fvm.CrsMatrix([], [], [0])
+    B = CrsMatrix([], [], [0])
     # Swap indices since the Fortran code had T at position 3
     for i in range(len(A.begA)-1):
         i2 = i + (i % dof == 3) - (i % dof == 4)
@@ -382,7 +382,7 @@ def test_ldc_lin():
 
     discretization = Discretization(nx, ny, nz, dof)
     atom = discretization.linear_part(Re)
-    A = fvm.assemble(atom, nx, ny, nz, dof)
+    A = discretization.jacobian(atom)
 
     B = read_matrix('ldc_lin_%sx%sx%s.txt' % (nx, ny, nz))
 
@@ -414,7 +414,7 @@ def test_bous_lin():
 
     discretization = Discretization(nx, ny, nz, dof)
     atom = discretization.linear_part(Re, Ra, Pr)
-    A = fvm.assemble(atom, nx, ny, nz, dof)
+    A = discretization.jacobian(atom)
 
     B = read_bous_matrix('bous_lin_%sx%sx%s.txt' % (nx, ny, nz))
 
@@ -445,7 +445,7 @@ def test_ldc_bnd():
     discretization = Discretization(nx, ny, nz, dof)
     atom = discretization.linear_part(Re)
     discretization.boundaries(atom)
-    A = fvm.assemble(atom, nx, ny, nz, dof)
+    A = discretization.jacobian(atom)
 
     B = read_matrix('ldc_bnd_%sx%sx%s.txt' % (nx, ny, nz))
 
@@ -478,7 +478,7 @@ def test_bous_bnd():
     discretization = Discretization(nx, ny, nz, dof)
     atom = discretization.linear_part(Re, Ra, Pr)
     discretization.boundaries(atom, 'Rayleigh-Benard')
-    A = fvm.assemble(atom, nx, ny, nz, dof)
+    A = discretization.jacobian(atom)
 
     B = read_bous_matrix('bous_bnd_%sx%sx%s.txt' % (nx, ny, nz))
 
@@ -511,7 +511,7 @@ def test_ldc_bil():
 
     discretization = Discretization(nx, ny, nz, dof)
     atom, atomF = discretization.nonlinear_part(state)
-    A = fvm.assemble(atom, nx, ny, nz, dof)
+    A = discretization.jacobian(atom)
 
     B = read_matrix('ldc_bil_%sx%sx%s.txt' % (nx, ny, nz))
 
@@ -547,7 +547,7 @@ def test_bous_bil():
 
     discretization = Discretization(nx, ny, nz, dof)
     atom, atomF = discretization.nonlinear_part(state)
-    A = fvm.assemble(atom, nx, ny, nz, dof)
+    A = discretization.jacobian(atom)
 
     B = read_bous_matrix('bous_bil_%sx%sx%s.txt' % (nx, ny, nz))
 
@@ -590,7 +590,7 @@ def test_ldc():
     atomJ += atom
     atomF += atom
 
-    A = fvm.assemble(atomJ, nx, ny, nz, dof)
+    A = discretization.jacobian(atomJ)
     rhs = discretization.rhs(state, atomF) - frc
 
     B = read_matrix('ldc_%sx%sx%s.txt' % (nx, ny, nz))
@@ -636,7 +636,7 @@ def test_bous():
     atomJ += atom
     atomF += atom
 
-    A = fvm.assemble(atomJ, nx, ny, nz, dof)
+    A = discretization.jacobian(atomJ)
     rhs = discretization.rhs(state, atomF) - frc
 
     B = read_bous_matrix('bous_%sx%sx%s.txt' % (nx, ny, nz))
@@ -680,7 +680,7 @@ def test_ldc8():
     atomJ += atom
     atomF += atom
 
-    A = fvm.assemble(atomJ, nx, ny, nz, dof)
+    A = discretization.jacobian(atomJ)
     rhs = discretization.rhs(state, atomF) - frc
 
     if not os.path.isfile('ldc_%sx%sx%s.txt' % (nx, ny, nz)):
