@@ -22,7 +22,7 @@ class Interface:
             Re = Re_in
 
         atom = self.discretization.linear_part(Re)
-        frc = fvm.boundaries(atom, self.nx, self.ny, self.nz, self.dof, self.problem_type)
+        frc = self.discretization.boundaries(atom, self.problem_type)
 
         if Re_in != 0:
             atomJ, atomF = fvm.convection(state, self.nx, self.ny, self.nz, self.dof)
@@ -38,7 +38,7 @@ class Interface:
             Re = Re_in
 
         atom = self.discretization.linear_part(Re)
-        fvm.boundaries(atom, self.nx, self.ny, self.nz, self.dof)
+        self.discretization.boundaries(atom)
 
         if Re_in != 0:
             atomJ, atomF = fvm.convection(state, self.nx, self.ny, self.nz, self.dof)

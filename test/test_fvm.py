@@ -444,7 +444,7 @@ def test_ldc_bnd():
 
     discretization = Discretization(nx, ny, nz, dof)
     atom = discretization.linear_part(Re)
-    fvm.boundaries(atom, nx, ny, nz, dof)
+    discretization.boundaries(atom)
     A = fvm.assemble(atom, nx, ny, nz, dof)
 
     B = read_matrix('ldc_bnd_%sx%sx%s.txt' % (nx, ny, nz))
@@ -477,7 +477,7 @@ def test_bous_bnd():
 
     discretization = Discretization(nx, ny, nz, dof)
     atom = discretization.linear_part(Re, Ra, Pr)
-    fvm.boundaries(atom, nx, ny, nz, dof, 'Rayleigh-Benard')
+    discretization.boundaries(atom, 'Rayleigh-Benard')
     A = fvm.assemble(atom, nx, ny, nz, dof)
 
     B = read_bous_matrix('bous_bnd_%sx%sx%s.txt' % (nx, ny, nz))
@@ -582,7 +582,7 @@ def test_ldc():
 
     discretization = Discretization(nx, ny, nz, dof)
     atom = discretization.linear_part(Re)
-    frc = fvm.boundaries(atom, nx, ny, nz, dof)
+    frc = discretization.boundaries(atom)
     atomJ, atomF = fvm.convection(state, nx, ny, nz, dof)
 
     atomJ += atom
@@ -628,7 +628,7 @@ def test_bous():
 
     discretization = Discretization(nx, ny, nz, dof)
     atom = discretization.linear_part(Re, Ra, Pr)
-    frc = fvm.boundaries(atom, nx, ny, nz, dof, 'Rayleigh-Benard')
+    frc = discretization.boundaries(atom, 'Rayleigh-Benard')
     atomJ, atomF = fvm.convection(state, nx, ny, nz, dof)
 
     atomJ += atom
@@ -672,7 +672,7 @@ def test_ldc8():
 
     discretization = Discretization(nx, ny, nz, dof)
     atom = discretization.linear_part(Re)
-    frc = fvm.boundaries(atom, nx, ny, nz, dof)
+    frc = discretization.boundaries(atom)
     atomJ, atomF = fvm.convection(state, nx, ny, nz, dof)
 
     atomJ += atom

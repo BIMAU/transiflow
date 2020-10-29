@@ -1,6 +1,5 @@
 import numpy
 
-from fvm import BoundaryConditions
 from fvm import Discretization
 from fvm import utils
 
@@ -9,62 +8,6 @@ class CrsMatrix:
         self.coA = coA
         self.jcoA = jcoA
         self.begA = begA
-
-def problem_type_equals(first, second):
-    return first.lower() == second.lower()
-
-def boundaries(atom, nx, ny, nz, dof, problem_type='Lid-driven cavity'):
-    boundary_conditions = BoundaryConditions(nx, ny, nz, dof)
-
-    x = utils.create_uniform_coordinate_vector(nx)
-    y = utils.create_uniform_coordinate_vector(ny)
-    z = utils.create_uniform_coordinate_vector(nz)
-
-    frc = numpy.zeros(nx * ny * nz * dof)
-
-    if problem_type_equals(problem_type, 'Rayleigh-Benard'):
-        frc += boundary_conditions.heatflux_east(atom, x, y, z, 0)
-    elif problem_type_equals(problem_type, 'Differentially heated cavity'):
-        frc += boundary_conditions.temperature_east(atom, -1/2)
-    else:
-        boundary_conditions.dirichlet_east(atom)
-
-    if problem_type_equals(problem_type, 'Rayleigh-Benard'):
-        frc += boundary_conditions.heatflux_west(atom, x, y, z, 0)
-    elif problem_type_equals(problem_type, 'Differentially heated cavity'):
-        frc += boundary_conditions.temperature_west(atom, 1/2)
-    else:
-        boundary_conditions.dirichlet_west(atom)
-
-    if problem_type_equals(problem_type, 'Lid-driven cavity') and nz <= 1:
-        frc += boundary_conditions.moving_lid_north(atom, 1)
-    elif problem_type_equals(problem_type, 'Rayleigh-Benard'):
-        frc += boundary_conditions.heatflux_north(atom, x, y, z, 0)
-    elif problem_type_equals(problem_type, 'Differentially heated cavity'):
-        frc += boundary_conditions.heatflux_north(atom, x, y, z, 0)
-    else:
-        boundary_conditions.dirichlet_north(atom)
-
-    if problem_type_equals(problem_type, 'Rayleigh-Benard'):
-        frc += boundary_conditions.heatflux_south(atom, x, y, z, 0)
-    elif problem_type_equals(problem_type, 'Differentially heated cavity'):
-        frc += boundary_conditions.heatflux_south(atom, x, y, z, 0)
-    else:
-        boundary_conditions.dirichlet_south(atom)
-
-    if problem_type_equals(problem_type, 'Lid-driven cavity') and nz > 1:
-        frc += boundary_conditions.moving_lid_top(atom, 1)
-    elif problem_type_equals(problem_type, 'Differentially heated cavity'):
-        frc += boundary_conditions.heatflux_top(atom, x, y, z, 0)
-    else:
-        boundary_conditions.dirichlet_top(atom)
-
-    if problem_type_equals(problem_type, 'Differentially heated cavity'):
-        frc += boundary_conditions.heatflux_bottom(atom, x, y, z, 0)
-    else:
-        boundary_conditions.dirichlet_bottom(atom)
-
-    return frc
 
 def convection(state, nx, ny, nz, dof):
     x = utils.create_uniform_coordinate_vector(nx)

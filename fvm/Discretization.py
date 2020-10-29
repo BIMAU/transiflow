@@ -1,6 +1,7 @@
 import numpy
 
 from fvm import utils
+from fvm import BoundaryConditions
 
 class Discretization:
 
@@ -29,6 +30,63 @@ class Discretization:
             atom += 1 / Pr * self.backward_average_w_z(x, y, z)
 
         return atom
+
+    @staticmethod
+    def _problem_type_equals(first, second):
+        return first.lower() == second.lower()
+
+    def boundaries(self, atom, problem_type='Lid-driven cavity'):
+        boundary_conditions = BoundaryConditions(self.nx, self.ny, self.nz, self.dof)
+
+        x = utils.create_uniform_coordinate_vector(self.nx)
+        y = utils.create_uniform_coordinate_vector(self.ny)
+        z = utils.create_uniform_coordinate_vector(self.nz)
+
+        frc = numpy.zeros(self.nx * self.ny * self.nz * self.dof)
+
+        if Discretization._problem_type_equals(problem_type, 'Rayleigh-Benard'):
+            frc += boundary_conditions.heatflux_east(atom, x, y, z, 0)
+        elif Discretization._problem_type_equals(problem_type, 'Differentially heated cavity'):
+            frc += boundary_conditions.temperature_east(atom, -1/2)
+        else:
+            boundary_conditions.dirichlet_east(atom)
+
+        if Discretization._problem_type_equals(problem_type, 'Rayleigh-Benard'):
+            frc += boundary_conditions.heatflux_west(atom, x, y, z, 0)
+        elif Discretization._problem_type_equals(problem_type, 'Differentially heated cavity'):
+            frc += boundary_conditions.temperature_west(atom, 1/2)
+        else:
+            boundary_conditions.dirichlet_west(atom)
+
+        if Discretization._problem_type_equals(problem_type, 'Lid-driven cavity') and self.nz <= 1:
+            frc += boundary_conditions.moving_lid_north(atom, 1)
+        elif Discretization._problem_type_equals(problem_type, 'Rayleigh-Benard'):
+            frc += boundary_conditions.heatflux_north(atom, x, y, z, 0)
+        elif Discretization._problem_type_equals(problem_type, 'Differentially heated cavity'):
+            frc += boundary_conditions.heatflux_north(atom, x, y, z, 0)
+        else:
+            boundary_conditions.dirichlet_north(atom)
+
+        if Discretization._problem_type_equals(problem_type, 'Rayleigh-Benard'):
+            frc += boundary_conditions.heatflux_south(atom, x, y, z, 0)
+        elif Discretization._problem_type_equals(problem_type, 'Differentially heated cavity'):
+            frc += boundary_conditions.heatflux_south(atom, x, y, z, 0)
+        else:
+            boundary_conditions.dirichlet_south(atom)
+
+        if Discretization._problem_type_equals(problem_type, 'Lid-driven cavity') and self.nz > 1:
+            frc += boundary_conditions.moving_lid_top(atom, 1)
+        elif Discretization._problem_type_equals(problem_type, 'Differentially heated cavity'):
+            frc += boundary_conditions.heatflux_top(atom, x, y, z, 0)
+        else:
+            boundary_conditions.dirichlet_top(atom)
+
+        if Discretization._problem_type_equals(problem_type, 'Differentially heated cavity'):
+            frc += boundary_conditions.heatflux_bottom(atom, x, y, z, 0)
+        else:
+            boundary_conditions.dirichlet_bottom(atom)
+
+        return frc
 
     @staticmethod
     def _u_xx(atom, i, j, k, x, y, z):
