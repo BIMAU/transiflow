@@ -1,6 +1,6 @@
-import continuation
 import numpy
 
+from fvm import Continuation
 from fvm import plot_utils
 from fvm import Interface
 
@@ -14,12 +14,12 @@ def test_continuation(nx=4, interactive=False):
     interface = Interface(parameters, nx, ny, nz, dof)
 
     x0 = numpy.zeros(dof * nx * ny * nz)
-    x0 = continuation.newton(interface, x0)
+    x0 = Continuation.newton(interface, x0)
 
     target = 100
     ds = 100
     maxit = 20
-    x = continuation.continuation(interface, x0, 'Reynolds Number', target, ds, maxit)
+    x = Continuation.continuation(interface, x0, 'Reynolds Number', target, ds, maxit)
 
     assert numpy.linalg.norm(x) > 0
 
@@ -41,12 +41,12 @@ def test_continuation_2D(nx=8, interactive=False):
     interface = Interface(parameters, nx, ny, nz, dof)
 
     x0 = numpy.zeros(dof * nx * ny * nz)
-    x0 = continuation.newton(interface, x0)
+    x0 = Continuation.newton(interface, x0)
 
     target = 2000
     ds = 100
     maxit = 20
-    x = continuation.continuation(interface, x0, 'Reynolds Number', target, ds, maxit)
+    x = Continuation.continuation(interface, x0, 'Reynolds Number', target, ds, maxit)
 
     assert numpy.linalg.norm(x) > 0
 
