@@ -2,6 +2,7 @@ import continuation
 import numpy
 
 from fvm import plot_utils
+from fvm import Interface
 
 def test_continuation(nx=4, interactive=False):
     dof = 4
@@ -10,7 +11,7 @@ def test_continuation(nx=4, interactive=False):
     n = dof * nx * ny * nz
 
     parameters = {}
-    interface = continuation.Interface(parameters, nx, ny, nz, dof)
+    interface = Interface(parameters, nx, ny, nz, dof)
 
     x0 = numpy.zeros(dof * nx * ny * nz)
     x0 = continuation.newton(interface, x0, 0)
@@ -38,7 +39,7 @@ def test_continuation_2D(nx=8, interactive=False):
     n = dof * nx * ny * nz
 
     parameters = {}
-    interface = continuation.Interface(parameters, nx, ny, nz, dof)
+    interface = Interface(parameters, nx, ny, nz, dof)
 
     x0 = numpy.zeros(dof * nx * ny * nz)
     x0 = continuation.newton(interface, x0, 0)

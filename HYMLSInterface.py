@@ -1,7 +1,7 @@
-import continuation
-
 from PyTrilinos import Epetra
 from PyTrilinos import Amesos
+
+import fvm
 
 import HYMLS
 
@@ -33,9 +33,9 @@ def ind2sub(nx, ny, nz, idx, dof=1):
 def sub2ind(nx, ny, nz, dof, i, j, k, var):
     return ((k *ny + j) * nx + i) * dof + var
 
-class Interface(continuation.Interface):
+class Interface(fvm.Interface):
     def __init__(self, comm, parameters, nx, ny, nz, dof):
-        continuation.Interface.__init__(self, parameters, nx, ny, nz, dof)
+        fvm.Interface.__init__(self, parameters, nx, ny, nz, dof)
 
         self.nx_global = nx
         self.ny_global = ny
@@ -182,7 +182,7 @@ class Interface(continuation.Interface):
         state_ass = Vector(self.assembly_map)
         state_ass.Import(state, self.assembly_importer, Epetra.Insert)
 
-        jac = continuation.Interface.jacobian(self, state_ass, Re)
+        jac = fvm.Interface.jacobian(self, state_ass, Re)
 
         A = Epetra.FECrsMatrix(Epetra.Copy, self.solve_map, 27)
         for i in range(len(jac.begA)-1):
@@ -199,7 +199,7 @@ class Interface(continuation.Interface):
         state_ass = Vector(self.assembly_map)
         state_ass.Import(state, self.assembly_importer, Epetra.Insert)
 
-        rhs = continuation.Interface.rhs(self, state_ass, Re)
+        rhs = fvm.Interface.rhs(self, state_ass, Re)
         rhs_ass = Vector(Epetra.Copy, self.assembly_map, rhs)
         rhs = Vector(self.map)
         rhs.Export(rhs_ass, self.assembly_importer, Epetra.Zero)
