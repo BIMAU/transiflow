@@ -35,11 +35,10 @@ def sub2ind(nx, ny, nz, dof, i, j, k, var):
 
 class Interface(fvm.Interface):
     def __init__(self, comm, parameters, nx, ny, nz, dof):
-        fvm.Interface.__init__(self, parameters, nx, ny, nz, dof)
-
         self.nx_global = nx
         self.ny_global = ny
         self.nz_global = nz
+        self.dof = dof
 
         self.comm = comm
 
@@ -70,6 +69,8 @@ class Interface(fvm.Interface):
         self.solve_map = partitioner.Map()
         self.solve_importer = Epetra.Import(self.solve_map, self.map)
 
+        fvm.Interface.__init__(self, self.parameters, self.nx_local, self.ny_local, self.nz_local, self.dof)
+
     def partition_domain(self):
         rmin = 1e100
 
@@ -87,17 +88,17 @@ class Interface(fvm.Interface):
             for t2 in range(1, nparts // t1 + 1):
                 t3 = nparts // (t1 * t2)
                 if t1 * t2 * t3 == nparts:
-                    nx_loc = self.nx // t1
-                    ny_loc = self.ny // t2
-                    nz_loc = self.nz // t3
+                    nx_loc = self.nx_global // t1
+                    ny_loc = self.ny_global // t2
+                    nz_loc = self.nz_global // t3
 
-                    if nx_loc * t1 != self.nx or ny_loc * t2 != self.ny or nz_loc * t3 != self.nz:
+                    if nx_loc * t1 != self.nx_global or ny_loc * t2 != self.ny_global or nz_loc * t3 != self.nz_global:
                         continue
 
-                    r1 = abs(self.nx / t1 - self.ny / t2)
-                    r2 = abs(self.nx / t1 - self.nz / t3)
+                    r1 = abs(self.nx_global / t1 - self.ny_global / t2)
+                    r2 = abs(self.nx_global / t1 - self.nz_global / t3)
 
-                    r3 = abs(self.ny / t2 - self.nz / t3)
+                    r3 = abs(self.ny_global / t2 - self.nz_global / t3)
                     r = r1 + r2 + r3
 
                     if r < rmin:
@@ -108,14 +109,14 @@ class Interface(fvm.Interface):
                         found = True
 
         if not found:
-            raise Exception('Could not split %dx%dx%d domain in %d parts.' % (self.nx, self.ny, self.nz, nparts))
+            raise Exception('Could not split %dx%dx%d domain in %d parts.' % (self.nx_global, self.ny_global, self.nz_global, nparts))
 
         self.pidx, self.pidy, self.pidz, _ = ind2sub(self.npx, self.npy, self.npz, pid)
 
         # Compute the local domain size and offset.
-        self.nx_local = self.nx // self.npx
-        self.ny_local = self.ny // self.npy
-        self.nz_local = self.nz // self.npz
+        self.nx_local = self.nx_global // self.npx
+        self.ny_local = self.ny_global // self.npy
+        self.nz_local = self.nz_global // self.npz
 
         self.nx_offset = self.nx_local * self.pidx
         self.ny_offset = self.ny_local * self.pidy
@@ -137,10 +138,6 @@ class Interface(fvm.Interface):
             self.nz_offset -= 2
         if self.pidz < self.npz - 1:
             self.nz_local += 2
-
-        self.nx = self.nx_local
-        self.ny = self.ny_local
-        self.nz = self.nz_local
 
     def is_ghost(self, i, j=None, k=None):
         if j is None:
