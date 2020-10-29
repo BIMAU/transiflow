@@ -509,7 +509,8 @@ def test_ldc_bil():
     for i in range(n):
         state[i] = i+1
 
-    atom, atomF = fvm.convection(state, nx, ny, nz, dof)
+    discretization = Discretization(nx, ny, nz, dof)
+    atom, atomF = discretization.nonlinear_part(state)
     A = fvm.assemble(atom, nx, ny, nz, dof)
 
     B = read_matrix('ldc_bil_%sx%sx%s.txt' % (nx, ny, nz))
@@ -544,7 +545,8 @@ def test_bous_bil():
     for i in range(n):
         state[i] = i+1
 
-    atom, atomF = fvm.convection(state, nx, ny, nz, dof)
+    discretization = Discretization(nx, ny, nz, dof)
+    atom, atomF = discretization.nonlinear_part(state)
     A = fvm.assemble(atom, nx, ny, nz, dof)
 
     B = read_bous_matrix('bous_bil_%sx%sx%s.txt' % (nx, ny, nz))
@@ -583,7 +585,7 @@ def test_ldc():
     discretization = Discretization(nx, ny, nz, dof)
     atom = discretization.linear_part(Re)
     frc = discretization.boundaries(atom)
-    atomJ, atomF = fvm.convection(state, nx, ny, nz, dof)
+    atomJ, atomF = discretization.nonlinear_part(state)
 
     atomJ += atom
     atomF += atom
@@ -629,7 +631,7 @@ def test_bous():
     discretization = Discretization(nx, ny, nz, dof)
     atom = discretization.linear_part(Re, Ra, Pr)
     frc = discretization.boundaries(atom, 'Rayleigh-Benard')
-    atomJ, atomF = fvm.convection(state, nx, ny, nz, dof)
+    atomJ, atomF = discretization.nonlinear_part(state)
 
     atomJ += atom
     atomF += atom
@@ -673,7 +675,7 @@ def test_ldc8():
     discretization = Discretization(nx, ny, nz, dof)
     atom = discretization.linear_part(Re)
     frc = discretization.boundaries(atom)
-    atomJ, atomF = fvm.convection(state, nx, ny, nz, dof)
+    atomJ, atomF = discretization.nonlinear_part(state)
 
     atomJ += atom
     atomF += atom

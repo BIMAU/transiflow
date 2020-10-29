@@ -9,16 +9,6 @@ class CrsMatrix:
         self.jcoA = jcoA
         self.begA = begA
 
-def convection(state, nx, ny, nz, dof):
-    x = utils.create_uniform_coordinate_vector(nx)
-    y = utils.create_uniform_coordinate_vector(ny)
-    z = utils.create_uniform_coordinate_vector(nz)
-
-    state_mtx = utils.create_state_mtx(state, nx, ny, nz, dof)
-
-    discretization = Discretization(nx, ny, nz, dof)
-    return discretization.convection(state_mtx, x, y, z)
-
 def assemble(atom, nx, ny, nz, dof):
     ''' Assemble the Jacobian. Optimized version of
 

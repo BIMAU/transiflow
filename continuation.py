@@ -25,7 +25,7 @@ class Interface:
         frc = self.discretization.boundaries(atom, self.problem_type)
 
         if Re_in != 0:
-            atomJ, atomF = fvm.convection(state, self.nx, self.ny, self.nz, self.dof)
+            atomJ, atomF = self.discretization.nonlinear_part(state)
             atom += atomF
 
         # FIXME: Check this minus signs
@@ -41,7 +41,7 @@ class Interface:
         self.discretization.boundaries(atom)
 
         if Re_in != 0:
-            atomJ, atomF = fvm.convection(state, self.nx, self.ny, self.nz, self.dof)
+            atomJ, atomF = self.discretization.nonlinear_part(state)
             atom += atomJ
 
         return fvm.assemble(atom, self.nx, self.ny, self.nz, self.dof)

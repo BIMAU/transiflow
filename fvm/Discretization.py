@@ -31,6 +31,15 @@ class Discretization:
 
         return atom
 
+    def nonlinear_part(self, state):
+        x = utils.create_uniform_coordinate_vector(self.nx)
+        y = utils.create_uniform_coordinate_vector(self.ny)
+        z = utils.create_uniform_coordinate_vector(self.nz)
+
+        state_mtx = utils.create_state_mtx(state, self.nx, self.ny, self.nz, self.dof)
+
+        return self.convection(state_mtx, x, y, z)
+
     @staticmethod
     def _problem_type_equals(first, second):
         return first.lower() == second.lower()
