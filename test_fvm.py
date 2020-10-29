@@ -26,8 +26,8 @@ def create_test_problem():
 def test_u_xx():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    derivatives = fvm.Derivatives(nx, ny, nz, dof)
-    atom = derivatives.u_xx(x, y, z)
+    discretization = fvm.Discretization(nx, ny, nz, dof)
+    atom = discretization.u_xx(x, y, z)
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -43,8 +43,8 @@ def test_u_xx():
 def test_v_yy():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    derivatives = fvm.Derivatives(nx, ny, nz, dof)
-    atom =  derivatives.v_yy(x, y, z)
+    discretization = fvm.Discretization(nx, ny, nz, dof)
+    atom =  discretization.v_yy(x, y, z)
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -60,8 +60,8 @@ def test_v_yy():
 def test_w_zz():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    derivatives = fvm.Derivatives(nx, ny, nz, dof)
-    atom =  derivatives.w_zz(x, y, z)
+    discretization = fvm.Discretization(nx, ny, nz, dof)
+    atom =  discretization.w_zz(x, y, z)
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -77,8 +77,8 @@ def test_w_zz():
 def test_u_yy():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    derivatives = fvm.Derivatives(nx, ny, nz, dof)
-    atom =  derivatives.u_yy(x, y, z)
+    discretization = fvm.Discretization(nx, ny, nz, dof)
+    atom =  discretization.u_yy(x, y, z)
 
     for i in range(nx):
         dx = (x[i+1] - x[i-1]) / 2
@@ -94,8 +94,8 @@ def test_u_yy():
 def test_v_xx():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    derivatives = fvm.Derivatives(nx, ny, nz, dof)
-    atom =  derivatives.v_xx(x, y, z)
+    discretization = fvm.Discretization(nx, ny, nz, dof)
+    atom =  discretization.v_xx(x, y, z)
 
     for i in range(nx):
         dx = (x[i] - x[i-2]) / 2
@@ -111,8 +111,8 @@ def test_v_xx():
 def test_w_yy():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    derivatives = fvm.Derivatives(nx, ny, nz, dof)
-    atom =  derivatives.w_yy(x, y, z)
+    discretization = fvm.Discretization(nx, ny, nz, dof)
+    atom =  discretization.w_yy(x, y, z)
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -128,8 +128,8 @@ def test_w_yy():
 def test_u_zz():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    derivatives = fvm.Derivatives(nx, ny, nz, dof)
-    atom =  derivatives.u_zz(x, y, z)
+    discretization = fvm.Discretization(nx, ny, nz, dof)
+    atom =  discretization.u_zz(x, y, z)
 
     for i in range(nx):
         dx = (x[i+1] - x[i-1]) / 2
@@ -145,8 +145,8 @@ def test_u_zz():
 def test_v_zz():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    derivatives = fvm.Derivatives(nx, ny, nz, dof)
-    atom =  derivatives.v_zz(x, y, z)
+    discretization = fvm.Discretization(nx, ny, nz, dof)
+    atom =  discretization.v_zz(x, y, z)
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -162,8 +162,8 @@ def test_v_zz():
 def test_w_xx():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    derivatives = fvm.Derivatives(nx, ny, nz, dof)
-    atom =  derivatives.w_xx(x, y, z)
+    discretization = fvm.Discretization(nx, ny, nz, dof)
+    atom =  discretization.w_xx(x, y, z)
 
     for i in range(nx):
         dx = (x[i] - x[i-2]) / 2
@@ -179,8 +179,8 @@ def test_w_xx():
 def test_p_x():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    derivatives = fvm.Derivatives(nx, ny, nz, dof)
-    atom =  derivatives.p_x(x, y, z)
+    discretization = fvm.Discretization(nx, ny, nz, dof)
+    atom =  discretization.p_x(x, y, z)
 
     for i in range(nx):
         for j in range(ny):
@@ -194,8 +194,8 @@ def test_p_x():
 def test_p_y():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    derivatives = fvm.Derivatives(nx, ny, nz, dof)
-    atom =  derivatives.p_y(x, y, z)
+    discretization = fvm.Discretization(nx, ny, nz, dof)
+    atom =  discretization.p_y(x, y, z)
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -209,8 +209,8 @@ def test_p_y():
 def test_p_z():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    derivatives = fvm.Derivatives(nx, ny, nz, dof)
-    atom =  derivatives.p_z(x, y, z)
+    discretization = fvm.Discretization(nx, ny, nz, dof)
+    atom =  discretization.p_z(x, y, z)
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -224,8 +224,8 @@ def test_p_z():
 def test_u_x():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    derivatives = fvm.Derivatives(nx, ny, nz, dof)
-    atom =  derivatives.u_x(x, y, z)
+    discretization = fvm.Discretization(nx, ny, nz, dof)
+    atom =  discretization.u_x(x, y, z)
 
     for i in range(nx):
         for j in range(ny):
@@ -239,8 +239,8 @@ def test_u_x():
 def test_u_y():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    derivatives = fvm.Derivatives(nx, ny, nz, dof)
-    atom =  derivatives.v_y(x, y, z)
+    discretization = fvm.Discretization(nx, ny, nz, dof)
+    atom =  discretization.v_y(x, y, z)
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -254,8 +254,8 @@ def test_u_y():
 def test_u_z():
     nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    derivatives = fvm.Derivatives(nx, ny, nz, dof)
-    atom =  derivatives.w_z(x, y, z)
+    discretization = fvm.Discretization(nx, ny, nz, dof)
+    atom =  discretization.w_z(x, y, z)
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -267,12 +267,17 @@ def test_u_z():
                 assert atom[i, j, k, 3, 2, 1, 1, 1] == pytest.approx(dy * dx)
 
 def test_MxU():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('Discretization', 'fvm/Discretization.py')
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
     nx, ny, nz, dof, x, y, z = create_test_problem()
     dof = 4
     n = dof * nx * ny * nz
 
     bil = numpy.zeros([nx, ny, nz, 2, dof, dof, 2])
-    convective_term = fvm.ConvectiveTerm(nx, ny, nz)
+    convective_term = module.ConvectiveTerm(nx, ny, nz)
 
     state = numpy.zeros(n)
     for i in range(n):
