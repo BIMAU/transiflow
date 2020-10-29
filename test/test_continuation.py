@@ -1,6 +1,7 @@
 import continuation
 import numpy
-import plot_utils
+
+from fvm import plot_utils
 
 def test_continuation(nx=4, interactive=False):
     dof = 4

@@ -1,5 +1,6 @@
 import continuation
-import plot_utils
+
+from fvm import plot_utils
 
 def gather(x):
     from PyTrilinos import Epetra
