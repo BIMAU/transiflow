@@ -22,12 +22,12 @@ def create_test_problem():
     y = create_coordinate_vector(ny)
     z = create_coordinate_vector(nz)
 
-    return (nx, ny, nz, dof, x, y, z)
+    return ({}, nx, ny, nz, dof, x, y, z)
 
 def test_u_xx():
-    nx, ny, nz, dof, x, y, z = create_test_problem()
+    parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(nx, ny, nz, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof)
     atom = discretization.u_xx(x, y, z)
 
     for i in range(nx):
@@ -42,9 +42,9 @@ def test_u_xx():
                 assert atom[i, j, k, 0, 0, 2, 1, 1] == pytest.approx(1 / dxp1 * dy * dz)
 
 def test_v_yy():
-    nx, ny, nz, dof, x, y, z = create_test_problem()
+    parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(nx, ny, nz, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof)
     atom =  discretization.v_yy(x, y, z)
 
     for i in range(nx):
@@ -59,9 +59,9 @@ def test_v_yy():
                 assert atom[i, j, k, 1, 1, 1, 2, 1] == pytest.approx(1 / dyp1 * dx * dz)
 
 def test_w_zz():
-    nx, ny, nz, dof, x, y, z = create_test_problem()
+    parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(nx, ny, nz, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof)
     atom =  discretization.w_zz(x, y, z)
 
     for i in range(nx):
@@ -76,9 +76,9 @@ def test_w_zz():
                 assert atom[i, j, k, 2, 2, 1, 1, 2] == pytest.approx(1 / dzp1 * dy * dx)
 
 def test_u_yy():
-    nx, ny, nz, dof, x, y, z = create_test_problem()
+    parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(nx, ny, nz, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof)
     atom =  discretization.u_yy(x, y, z)
 
     for i in range(nx):
@@ -93,9 +93,9 @@ def test_u_yy():
                 assert atom[i, j, k, 0, 0, 1, 2, 1] == pytest.approx(1 / dyp1 * dx * dz)
 
 def test_v_xx():
-    nx, ny, nz, dof, x, y, z = create_test_problem()
+    parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(nx, ny, nz, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof)
     atom =  discretization.v_xx(x, y, z)
 
     for i in range(nx):
@@ -110,9 +110,9 @@ def test_v_xx():
                 assert atom[i, j, k, 1, 1, 2, 1, 1] == pytest.approx(1 / dxp1 * dy * dz)
 
 def test_w_yy():
-    nx, ny, nz, dof, x, y, z = create_test_problem()
+    parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(nx, ny, nz, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof)
     atom =  discretization.w_yy(x, y, z)
 
     for i in range(nx):
@@ -127,9 +127,9 @@ def test_w_yy():
                 assert atom[i, j, k, 2, 2, 1, 2, 1] == pytest.approx(1 / dyp1 * dz * dx)
 
 def test_u_zz():
-    nx, ny, nz, dof, x, y, z = create_test_problem()
+    parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(nx, ny, nz, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof)
     atom =  discretization.u_zz(x, y, z)
 
     for i in range(nx):
@@ -144,9 +144,9 @@ def test_u_zz():
                 assert atom[i, j, k, 0, 0, 1, 1, 2] == pytest.approx(1 / dzp1 * dx * dy)
 
 def test_v_zz():
-    nx, ny, nz, dof, x, y, z = create_test_problem()
+    parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(nx, ny, nz, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof)
     atom =  discretization.v_zz(x, y, z)
 
     for i in range(nx):
@@ -161,9 +161,9 @@ def test_v_zz():
                 assert atom[i, j, k, 1, 1, 1, 1, 2] == pytest.approx(1 / dzp1 * dy * dx)
 
 def test_w_xx():
-    nx, ny, nz, dof, x, y, z = create_test_problem()
+    parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(nx, ny, nz, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof)
     atom =  discretization.w_xx(x, y, z)
 
     for i in range(nx):
@@ -178,9 +178,9 @@ def test_w_xx():
                 assert atom[i, j, k, 2, 2, 2, 1, 1] == pytest.approx(1 / dxp1 * dz * dy)
 
 def test_p_x():
-    nx, ny, nz, dof, x, y, z = create_test_problem()
+    parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(nx, ny, nz, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof)
     atom =  discretization.p_x(x, y, z)
 
     for i in range(nx):
@@ -193,9 +193,9 @@ def test_p_x():
                 assert atom[i, j, k, 0, 3, 2, 1, 1] == pytest.approx(dy * dz)
 
 def test_p_y():
-    nx, ny, nz, dof, x, y, z = create_test_problem()
+    parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(nx, ny, nz, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof)
     atom =  discretization.p_y(x, y, z)
 
     for i in range(nx):
@@ -208,9 +208,9 @@ def test_p_y():
                 assert atom[i, j, k, 1, 3, 1, 2, 1] == pytest.approx(dx * dz)
 
 def test_p_z():
-    nx, ny, nz, dof, x, y, z = create_test_problem()
+    parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(nx, ny, nz, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof)
     atom =  discretization.p_z(x, y, z)
 
     for i in range(nx):
@@ -223,9 +223,9 @@ def test_p_z():
                 assert atom[i, j, k, 2, 3, 1, 1, 2] == pytest.approx(dy * dx)
 
 def test_u_x():
-    nx, ny, nz, dof, x, y, z = create_test_problem()
+    parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(nx, ny, nz, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof)
     atom =  discretization.u_x(x, y, z)
 
     for i in range(nx):
@@ -238,9 +238,9 @@ def test_u_x():
                 assert atom[i, j, k, 3, 0, 1, 1, 1] == pytest.approx(dy * dz)
 
 def test_u_y():
-    nx, ny, nz, dof, x, y, z = create_test_problem()
+    parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(nx, ny, nz, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof)
     atom =  discretization.v_y(x, y, z)
 
     for i in range(nx):
@@ -253,9 +253,9 @@ def test_u_y():
                 assert atom[i, j, k, 3, 1, 1, 1, 1] == pytest.approx(dx * dz)
 
 def test_u_z():
-    nx, ny, nz, dof, x, y, z = create_test_problem()
+    parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(nx, ny, nz, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof)
     atom =  discretization.w_z(x, y, z)
 
     for i in range(nx):
@@ -273,7 +273,7 @@ def test_MxU():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
-    nx, ny, nz, dof, x, y, z = create_test_problem()
+    parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
     dof = 4
     n = dof * nx * ny * nz
 
@@ -378,9 +378,10 @@ def test_ldc_lin():
     nz = nx
     dof = 4
     Re = 100
+    parameters = {}
     n = nx * ny * nz * dof
 
-    discretization = Discretization(nx, ny, nz, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof)
     atom = discretization.linear_part(Re)
     A = discretization.jacobian(atom)
 
@@ -410,9 +411,10 @@ def test_bous_lin():
     Re = 1
     Ra = 100
     Pr = 100
+    parameters = {}
     n = nx * ny * nz * dof
 
-    discretization = Discretization(nx, ny, nz, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof)
     atom = discretization.linear_part(Re, Ra, Pr)
     A = discretization.jacobian(atom)
 
@@ -440,9 +442,10 @@ def test_ldc_bnd():
     nz = nx
     dof = 4
     Re = 100
+    parameters = {}
     n = nx * ny * nz * dof
 
-    discretization = Discretization(nx, ny, nz, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof)
     atom = discretization.linear_part(Re)
     discretization.boundaries(atom)
     A = discretization.jacobian(atom)
@@ -473,9 +476,10 @@ def test_bous_bnd():
     Re = 1
     Ra = 100
     Pr = 100
+    parameters = {}
     n = nx * ny * nz * dof
 
-    discretization = Discretization(nx, ny, nz, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof)
     atom = discretization.linear_part(Re, Ra, Pr)
     discretization.boundaries(atom, 'Rayleigh-Benard')
     A = discretization.jacobian(atom)
@@ -503,13 +507,14 @@ def test_ldc_bil():
     ny = nx
     nz = nx
     dof = 4
+    parameters = {}
     n = nx * ny * nz * dof
 
     state = numpy.zeros(n)
     for i in range(n):
         state[i] = i+1
 
-    discretization = Discretization(nx, ny, nz, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof)
     atom, atomF = discretization.nonlinear_part(state)
     A = discretization.jacobian(atom)
 
@@ -539,13 +544,14 @@ def test_bous_bil():
     ny = nx
     nz = nx
     dof = 5
+    parameters = {}
     n = nx * ny * nz * dof
 
     state = numpy.zeros(n)
     for i in range(n):
         state[i] = i+1
 
-    discretization = Discretization(nx, ny, nz, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof)
     atom, atomF = discretization.nonlinear_part(state)
     A = discretization.jacobian(atom)
 
@@ -576,13 +582,14 @@ def test_ldc():
     nz = nx
     dof = 4
     Re = 100
+    parameters = {}
     n = nx * ny * nz * dof
 
     state = numpy.zeros(n)
     for i in range(n):
         state[i] = i+1
 
-    discretization = Discretization(nx, ny, nz, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof)
     atom = discretization.linear_part(Re)
     frc = discretization.boundaries(atom)
     atomJ, atomF = discretization.nonlinear_part(state)
@@ -622,13 +629,14 @@ def test_bous():
     Re = 1
     Ra = 100
     Pr = 100
+    parameters = {}
     n = nx * ny * nz * dof
 
     state = numpy.zeros(n)
     for i in range(n):
         state[i] = i+1
 
-    discretization = Discretization(nx, ny, nz, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof)
     atom = discretization.linear_part(Re, Ra, Pr)
     frc = discretization.boundaries(atom, 'Rayleigh-Benard')
     atomJ, atomF = discretization.nonlinear_part(state)
@@ -666,13 +674,14 @@ def test_ldc8():
     nz = nx
     dof = 4
     Re = 100
+    parameters = {}
     n = nx * ny * nz * dof
 
     state = numpy.zeros(n)
     for i in range(n):
         state[i] = i+1
 
-    discretization = Discretization(nx, ny, nz, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof)
     atom = discretization.linear_part(Re)
     frc = discretization.boundaries(atom)
     atomJ, atomF = discretization.nonlinear_part(state)

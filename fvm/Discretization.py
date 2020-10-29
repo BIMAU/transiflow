@@ -6,11 +6,12 @@ from fvm import CrsMatrix
 
 class Discretization:
 
-    def __init__(self, nx, ny, nz, dof):
+    def __init__(self, parameters, nx, ny, nz, dof):
         self.nx = nx
         self.ny = ny
         self.nz = nz
         self.dof = dof
+        self.parameters = parameters
 
     def linear_part(self, Re, Ra=0, Pr=0):
         x = utils.create_uniform_coordinate_vector(self.nx)

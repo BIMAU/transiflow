@@ -5,13 +5,13 @@ from scipy.sparse import linalg
 from fvm import Discretization
 
 class Interface:
-    def __init__(self, nx, ny, nz, dof, problem_type='Lid-driven cavity'):
+    def __init__(self, parameters, nx, ny, nz, dof, problem_type='Lid-driven cavity'):
         self.nx = nx
         self.ny = ny
         self.nz = nz
         self.dof = dof
         self.problem_type = problem_type
-        self.discretization = Discretization(nx, ny, nz, dof)
+        self.discretization = Discretization(parameters, nx, ny, nz, dof)
 
     def rhs(self, state, Re_in):
         if Re_in == 0:

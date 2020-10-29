@@ -34,8 +34,8 @@ def sub2ind(nx, ny, nz, dof, i, j, k, var):
     return ((k *ny + j) * nx + i) * dof + var
 
 class Interface(continuation.Interface):
-    def __init__(self, comm, params, nx, ny, nz, dof):
-        continuation.Interface.__init__(self, nx, ny, nz, dof)
+    def __init__(self, comm, parameters, nx, ny, nz, dof):
+        continuation.Interface.__init__(self, parameters, nx, ny, nz, dof)
 
         self.nx_global = nx
         self.ny_global = ny
@@ -45,18 +45,18 @@ class Interface(continuation.Interface):
 
         HYMLS.Tools.InitializeIO(self.comm);
 
-        self.params = params
-        problem_params = self.params.sublist('Problem')
-        problem_params.set('nx', self.nx_global)
-        problem_params.set('ny', self.ny_global)
-        problem_params.set('nz', self.nz_global)
-        problem_params.set('Equations', 'Stokes-C')
+        self.parameters = parameters
+        problem_parameters = self.parameters.sublist('Problem')
+        problem_parameters.set('nx', self.nx_global)
+        problem_parameters.set('ny', self.ny_global)
+        problem_parameters.set('nz', self.nz_global)
+        problem_parameters.set('Equations', 'Stokes-C')
 
-        solver_params = self.params.sublist('Solver')
-        solver_params.set('Initial Vector', 'Zero')
+        solver_parameters = self.parameters.sublist('Solver')
+        solver_parameters.set('Initial Vector', 'Zero')
 
-        prec_params = self.params.sublist('Preconditioner')
-        prec_params.set('Partitioner', 'Skew Cartesian')
+        prec_parameters = self.parameters.sublist('Preconditioner')
+        prec_parameters.set('Partitioner', 'Skew Cartesian')
 
         self.partition_domain()
         self.map = self.create_map()
@@ -64,7 +64,7 @@ class Interface(continuation.Interface):
         self.assembly_map = self.create_map(True)
         self.assembly_importer = Epetra.Import(self.assembly_map, self.map)
 
-        partitioner = HYMLS.SkewCartesianPartitioner(self.params, self.comm)
+        partitioner = HYMLS.SkewCartesianPartitioner(self.parameters, self.comm)
         partitioner.Partition()
 
         self.solve_map = partitioner.Map()
@@ -233,11 +233,11 @@ class Interface(continuation.Interface):
         rhs_sol.Import(rhs, self.solve_importer, Epetra.Insert)
         x_sol = Vector(rhs_sol)
 
-        preconditioner = HYMLS.Preconditioner(jac, self.params)
+        preconditioner = HYMLS.Preconditioner(jac, self.parameters)
         preconditioner.Initialize()
         preconditioner.Compute()
 
-        solver = HYMLS.Solver(jac, preconditioner, self.params)
+        solver = HYMLS.Solver(jac, preconditioner, self.parameters)
         solver.ApplyInverse(rhs_sol, x_sol)
 
         x = Vector(rhs)
