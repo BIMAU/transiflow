@@ -21,6 +21,6 @@ def create_state_vec(state_mtx, nx, ny, nz, dof):
                     row += 1
     return state
 
-def create_uniform_coordinate_vector(nx):
-    dx = 1 / nx
-    return numpy.roll(numpy.arange(-dx, 1+2*dx, dx), -2)
+def create_uniform_coordinate_vector(start, end, nx):
+    dx = (end - start) / nx
+    return numpy.roll(numpy.arange(start - dx, end + 2 * dx, dx), -2)
