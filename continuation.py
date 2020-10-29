@@ -29,7 +29,7 @@ class Interface:
             atom += atomF
 
         # FIXME: Check this minus signs
-        return -fvm.rhs(state, atom, self.nx, self.ny, self.nz, self.dof) + frc
+        return -self.discretization.rhs(state, atom) + frc
 
     def jacobian(self, state, Re_in):
         if Re_in == 0:

@@ -591,7 +591,7 @@ def test_ldc():
     atomF += atom
 
     A = fvm.assemble(atomJ, nx, ny, nz, dof)
-    rhs = fvm.rhs(state, atomF, nx, ny, nz, dof) - frc
+    rhs = discretization.rhs(state, atomF) - frc
 
     B = read_matrix('ldc_%sx%sx%s.txt' % (nx, ny, nz))
     rhs_B = read_vector('ldc_rhs_%sx%sx%s.txt' % (nx, ny, nz))
@@ -637,7 +637,7 @@ def test_bous():
     atomF += atom
 
     A = fvm.assemble(atomJ, nx, ny, nz, dof)
-    rhs = fvm.rhs(state, atomF, nx, ny, nz, dof) - frc
+    rhs = discretization.rhs(state, atomF) - frc
 
     B = read_bous_matrix('bous_%sx%sx%s.txt' % (nx, ny, nz))
     rhs_B = read_bous_vector('bous_rhs_%sx%sx%s.txt' % (nx, ny, nz))
@@ -681,7 +681,7 @@ def test_ldc8():
     atomF += atom
 
     A = fvm.assemble(atomJ, nx, ny, nz, dof)
-    rhs = fvm.rhs(state, atomF, nx, ny, nz, dof) - frc
+    rhs = discretization.rhs(state, atomF) - frc
 
     if not os.path.isfile('ldc_%sx%sx%s.txt' % (nx, ny, nz)):
         return

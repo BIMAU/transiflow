@@ -1,7 +1,6 @@
 import numpy
 
 from fvm import Discretization
-from fvm import utils
 
 class CrsMatrix:
     def __init__(self, coA=None, jcoA=None, begA=None):
@@ -57,38 +56,3 @@ def assemble(atom, nx, ny, nz, dof):
                     row += 1
                     begA[row] = idx
     return CrsMatrix(coA, jcoA, begA)
-
-def rhs(state, atom, nx, ny, nz, dof):
-    ''' Assemble the right-hand side. Optimized version of
-
-    for k in range(nz):
-        for j in range(ny):
-            for i in range(nx):
-                for d1 in range(dof):
-                    for z in range(3):
-                        for y in range(3):
-                            for x in range(3):
-                                for d2 in range(dof):
-                                    if abs(atom[i, j, k, d1, d2, x, y, z]) > 1e-14:
-                                        offset = row + (x-1) * dof + (y-1) * nx * dof + (z-1) * nx * ny * dof + d2 - d1
-                                        out[row] -= atom[i, j, k, d1, d2, x, y, z] * state[offset]
-                    row += 1
-    '''
-
-    row = 0
-    n = nx * ny * nz * dof
-
-    # Put the state in shifted matrix form
-    state_mtx = numpy.zeros([nx+2, ny+2, nz+2, dof])
-    state_mtx[1:nx+1, 1:ny+1, 1:nz+1, :] = utils.create_state_mtx(state, nx, ny, nz, dof)
-
-    # Add up all contributions without iterating over the domain
-    out_mtx = numpy.zeros([nx, ny, nz, dof])
-    for k in range(3):
-        for j in range(3):
-            for i in range(3):
-                for d1 in range(dof):
-                    for d2 in range(dof):
-                        out_mtx[:, :, :, d1] -= atom[:, :, :, d1, d2, i, j, k] * state_mtx[i:(i+nx), j:(j+ny), k:(k+nz), d2]
-
-    return utils.create_state_vec(out_mtx, nx, ny, nz, dof)

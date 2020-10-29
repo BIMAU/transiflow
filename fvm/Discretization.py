@@ -40,6 +40,41 @@ class Discretization:
 
         return self.convection(state_mtx, x, y, z)
 
+    def rhs(self, state, atom):
+        ''' Assemble the right-hand side. Optimized version of
+
+        for k in range(nz):
+            for j in range(ny):
+                for i in range(nx):
+                    for d1 in range(dof):
+                        for z in range(3):
+                            for y in range(3):
+                                for x in range(3):
+                                    for d2 in range(dof):
+                                        if abs(atom[i, j, k, d1, d2, x, y, z]) > 1e-14:
+                                            offset = row + (x-1) * dof + (y-1) * nx * dof + (z-1) * nx * ny * dof + d2 - d1
+                                            out[row] -= atom[i, j, k, d1, d2, x, y, z] * state[offset]
+                        row += 1
+        '''
+
+        row = 0
+        n = self.nx * self.ny * self.nz * self.dof
+
+        # Put the state in shifted matrix form
+        state_mtx = numpy.zeros([self.nx+2, self.ny+2, self.nz+2, self.dof])
+        state_mtx[1:self.nx+1, 1:self.ny+1, 1:self.nz+1, :] = utils.create_state_mtx(state, self.nx, self.ny, self.nz, self.dof)
+
+        # Add up all contributions without iterating over the domain
+        out_mtx = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        for k in range(3):
+            for j in range(3):
+                for i in range(3):
+                    for d1 in range(self.dof):
+                        for d2 in range(self.dof):
+                            out_mtx[:, :, :, d1] -= atom[:, :, :, d1, d2, i, j, k] * state_mtx[i:(i+self.nx), j:(j+self.ny), k:(k+self.nz), d2]
+
+        return utils.create_state_vec(out_mtx, self.nx, self.ny, self.nz, self.dof)
+
     @staticmethod
     def _problem_type_equals(first, second):
         return first.lower() == second.lower()
