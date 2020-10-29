@@ -16,7 +16,7 @@ def gather(x):
 
 def test_HYMLS(nx=4, interactive=False):
     try:
-        import HYMLSInterface
+        from fvm import HYMLSInterface
         from PyTrilinos import Epetra
         from PyTrilinos import Teuchos
     except ImportError:
@@ -59,7 +59,7 @@ def test_HYMLS(nx=4, interactive=False):
 
 def test_HYMLS_2D(nx=8, interactive=False):
     try:
-        import HYMLSInterface
+        from fvm import HYMLSInterface
         from PyTrilinos import Epetra
         from PyTrilinos import Teuchos
     except ImportError:
