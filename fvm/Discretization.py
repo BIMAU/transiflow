@@ -44,7 +44,7 @@ class Discretization:
             atom += Ra * self.forward_average_T_z(self.x, self.y, self.z)
 
         if Pr:
-            atom += 1 / Pr * (self.T_xx(self.x, self.y, self.z) + self.T_yy(self.x, self.y, self.z) + self.T_zz(self.x, self.y, self.z))
+            atom += 1 / Pr * (self.T_xx() + self.T_yy() + self.T_zz())
             atom += 1 / Pr * self.backward_average_w_z(self.x, self.y, self.z)
 
         return atom
@@ -320,28 +320,28 @@ class Discretization:
         atom[2] = 1 / dxp1 * dy * dz
         atom[1] = -atom[0] - atom[2]
 
-    def T_xx(self, x, y, z):
+    def T_xx(self):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._T_xx(atom[i, j, k, 4, 4, :, 1, 1], i, j, k, x, y, z)
+                    Discretization._T_xx(atom[i, j, k, 4, 4, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
-    def T_yy(self, x, y, z):
+    def T_yy(self):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._T_xx(atom[i, j, k, 4, 4, 1, :, 1], j, i, k, y, x, z)
+                    Discretization._T_xx(atom[i, j, k, 4, 4, 1, :, 1], j, i, k, self.y, self.x, self.z)
         return atom
 
-    def T_zz(self, x, y, z):
+    def T_zz(self):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._T_xx(atom[i, j, k, 4, 4, 1, 1, :], k, j, i, z, y, x)
+                    Discretization._T_xx(atom[i, j, k, 4, 4, 1, 1, :], k, j, i, self.z, self.y, self.x)
         return atom
 
     @staticmethod

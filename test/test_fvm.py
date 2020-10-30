@@ -16,7 +16,7 @@ def create_test_problem():
     nx = 5
     ny = 3
     nz = 2
-    dof = 4
+    dof = 5
 
     x = create_coordinate_vector(nx)
     y = create_coordinate_vector(ny)
@@ -176,6 +176,57 @@ def test_w_xx():
                 print(i, j, k)
                 assert atom[i, j, k, 2, 2, 0, 1, 1] == pytest.approx(1 / dx * dz * dy)
                 assert atom[i, j, k, 2, 2, 2, 1, 1] == pytest.approx(1 / dxp1 * dz * dy)
+
+def test_T_xx():
+    parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
+
+    discretization = Discretization(parameters, nx, ny, nz, dof, x, y, z)
+    atom = discretization.T_xx()
+
+    for i in range(nx):
+        dx = (x[i] - x[i-2]) / 2
+        dxp1 = (x[i+1] - x[i-1]) /  2
+        for j in range(ny):
+            dy = y[j] - y[j-1]
+            for k in range(nz):
+                dz = z[k] - z[k-1]
+                print(i, j, k)
+                assert atom[i, j, k, 4, 4, 0, 1, 1] == pytest.approx(1 / dx * dy * dz)
+                assert atom[i, j, k, 4, 4, 2, 1, 1] == pytest.approx(1 / dxp1 * dy * dz)
+
+def test_T_yy():
+    parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
+
+    discretization = Discretization(parameters, nx, ny, nz, dof, x, y, z)
+    atom = discretization.T_yy()
+
+    for i in range(nx):
+        dx = x[i] - x[i-1]
+        for j in range(ny):
+            dy = (y[j] - y[j-2]) / 2
+            dyp1 = (y[j+1] - y[j-1]) /  2
+            for k in range(nz):
+                dz = z[k] - z[k-1]
+                print(i, j, k)
+                assert atom[i, j, k, 4, 4, 1, 0, 1] == pytest.approx(1 / dy * dx * dz)
+                assert atom[i, j, k, 4, 4, 1, 2, 1] == pytest.approx(1 / dyp1 * dx * dz)
+
+def test_T_zz():
+    parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
+
+    discretization = Discretization(parameters, nx, ny, nz, dof, x, y, z)
+    atom = discretization.T_zz()
+
+    for i in range(nx):
+        dx = x[i] - x[i-1]
+        for j in range(ny):
+            dy = y[j] - y[j-1]
+            for k in range(nz):
+                dz = (z[k] - z[k-2]) / 2
+                dzp1 = (z[k+1] - z[k-1]) /  2
+                print(i, j, k)
+                assert atom[i, j, k, 4, 4, 1, 1, 0] == pytest.approx(1 / dz * dy * dx)
+                assert atom[i, j, k, 4, 4, 1, 1, 2] == pytest.approx(1 / dzp1 * dy * dx)
 
 def test_p_x():
     parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
