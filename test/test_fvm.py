@@ -231,8 +231,8 @@ def test_T_zz():
 def test_p_x():
     parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(parameters, nx, ny, nz, dof)
-    atom =  discretization.p_x(x, y, z)
+    discretization = Discretization(parameters, nx, ny, nz, dof, x, y, z)
+    atom =  discretization.p_x()
 
     for i in range(nx):
         for j in range(ny):
@@ -246,8 +246,8 @@ def test_p_x():
 def test_p_y():
     parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(parameters, nx, ny, nz, dof)
-    atom =  discretization.p_y(x, y, z)
+    discretization = Discretization(parameters, nx, ny, nz, dof, x, y, z)
+    atom =  discretization.p_y()
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -261,8 +261,8 @@ def test_p_y():
 def test_p_z():
     parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(parameters, nx, ny, nz, dof)
-    atom =  discretization.p_z(x, y, z)
+    discretization = Discretization(parameters, nx, ny, nz, dof, x, y, z)
+    atom =  discretization.p_z()
 
     for i in range(nx):
         dx = x[i] - x[i-1]

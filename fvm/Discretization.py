@@ -37,7 +37,7 @@ class Discretization:
         atom = 1 / Re * (self.u_xx() + self.u_yy() + self.u_zz() \
                       +  self.v_xx() + self.v_yy() + self.v_zz() \
                       +  self.w_xx() + self.w_yy() + self.w_zz()) \
-            - (self.p_x(self.x, self.y, self.z) + self.p_y(self.x, self.y, self.z) + self.p_z(self.x, self.y, self.z)) \
+            - (self.p_x() + self.p_y() + self.p_z()) \
             + self.div(self.x, self.y, self.z)
 
         if Ra:
@@ -355,28 +355,28 @@ class Discretization:
         atom[2] = dy * dz
         atom[1] = -atom[2]
 
-    def p_x(self, x, y, z):
+    def p_x(self):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._forward_u_x(atom[i, j, k, 0, 3, :, 1, 1], i, j, k, x, y, z)
+                    Discretization._forward_u_x(atom[i, j, k, 0, 3, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
-    def p_y(self, x, y, z):
+    def p_y(self):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._forward_u_x(atom[i, j, k, 1, 3, 1, :, 1], j, i, k, y, x, z)
+                    Discretization._forward_u_x(atom[i, j, k, 1, 3, 1, :, 1], j, i, k, self.y, self.x, self.z)
         return atom
 
-    def p_z(self, x, y, z):
+    def p_z(self):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._forward_u_x(atom[i, j, k, 2, 3, 1, 1, :], k, j, i, z, y, x)
+                    Discretization._forward_u_x(atom[i, j, k, 2, 3, 1, 1, :], k, j, i, self.z, self.y, self.x)
         return atom
 
     @staticmethod
