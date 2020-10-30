@@ -329,7 +329,7 @@ def test_MxU():
     n = dof * nx * ny * nz
 
     bil = numpy.zeros([nx, ny, nz, 2, dof, dof, 2])
-    convective_term = module.ConvectiveTerm(nx, ny, nz)
+    convective_term = module.ConvectiveTerm(nx, ny, nz, x, y, z)
 
     state = numpy.zeros(n)
     for i in range(n):
