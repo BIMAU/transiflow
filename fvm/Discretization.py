@@ -41,11 +41,11 @@ class Discretization:
             + self.div()
 
         if Ra:
-            atom += Ra * self.forward_average_T_z(self.x, self.y, self.z)
+            atom += Ra * self.forward_average_T_z()
 
         if Pr:
             atom += 1 / Pr * (self.T_xx() + self.T_yy() + self.T_zz())
-            atom += 1 / Pr * self.backward_average_w_z(self.x, self.y, self.z)
+            atom += 1 / Pr * self.backward_average_w_z()
 
         return atom
 
@@ -452,12 +452,12 @@ class Discretization:
         atom[1] = dx * dy * dz / 2
         atom[2] = atom[1]
 
-    def forward_average_T_z(self, x, y, z):
+    def forward_average_T_z(self):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._forward_average_x(atom[i, j, k, 2, 4, 1, 1, :], k, j, i, z, y, x)
+                    Discretization._forward_average_x(atom[i, j, k, 2, 4, 1, 1, :], k, j, i, self.z, self.y, self.x)
         return atom
 
     @staticmethod
@@ -473,12 +473,12 @@ class Discretization:
         atom[0] = dx * dy * dz / 2
         atom[1] = atom[0]
 
-    def backward_average_w_z(self, x, y, z):
+    def backward_average_w_z(self):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._backward_average_x(atom[i, j, k, 4, 2, 1, 1, :], k, j, i, z, y, x)
+                    Discretization._backward_average_x(atom[i, j, k, 4, 2, 1, 1, :], k, j, i, self.z, self.y, self.x)
         return atom
 
     @staticmethod
