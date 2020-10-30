@@ -38,7 +38,7 @@ class Discretization:
                       +  self.v_xx() + self.v_yy() + self.v_zz() \
                       +  self.w_xx() + self.w_yy() + self.w_zz()) \
             - (self.p_x() + self.p_y() + self.p_z()) \
-            + self.div(self.x, self.y, self.z)
+            + self.div()
 
         if Ra:
             atom += Ra * self.forward_average_T_z(self.x, self.y, self.z)
@@ -390,28 +390,28 @@ class Discretization:
         atom[1] = dy * dz
         atom[0] = -atom[1]
 
-    def u_x(self, x, y, z):
+    def u_x(self):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._backward_u_x(atom[i, j, k, 3, 0, :, 1, 1], i, j, k, x, y, z)
+                    Discretization._backward_u_x(atom[i, j, k, 3, 0, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
-    def v_y(self, x, y, z):
+    def v_y(self):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._backward_u_x(atom[i, j, k, 3, 1, 1, :, 1], j, i, k, y, x, z)
+                    Discretization._backward_u_x(atom[i, j, k, 3, 1, 1, :, 1], j, i, k, self.y, self.x, self.z)
         return atom
 
-    def w_z(self, x, y, z):
+    def w_z(self):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._backward_u_x(atom[i, j, k, 3, 2, 1, 1, :], k, j, i, z, y, x)
+                    Discretization._backward_u_x(atom[i, j, k, 3, 2, 1, 1, :], k, j, i, self.z, self.y, self.x)
         return atom
 
     @staticmethod
@@ -436,8 +436,8 @@ class Discretization:
         atom[1] = dx * dy
         atom[0] = -atom[1]
 
-    def div(self, x, y, z):
-        return self.u_x(x, y, z) + self.v_y(x, y, z) + self.w_z(x, y, z)
+    def div(self):
+        return self.u_x() + self.v_y() + self.w_z()
 
     @staticmethod
     def _forward_average_x(atom, i, j, k, x, y, z):
