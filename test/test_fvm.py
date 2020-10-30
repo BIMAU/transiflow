@@ -27,8 +27,8 @@ def create_test_problem():
 def test_u_xx():
     parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(parameters, nx, ny, nz, dof)
-    atom = discretization.u_xx(x, y, z)
+    discretization = Discretization(parameters, nx, ny, nz, dof, x, y, z)
+    atom = discretization.u_xx()
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -44,8 +44,8 @@ def test_u_xx():
 def test_v_yy():
     parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(parameters, nx, ny, nz, dof)
-    atom =  discretization.v_yy(x, y, z)
+    discretization = Discretization(parameters, nx, ny, nz, dof, x, y, z)
+    atom =  discretization.v_yy()
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -61,8 +61,8 @@ def test_v_yy():
 def test_w_zz():
     parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(parameters, nx, ny, nz, dof)
-    atom =  discretization.w_zz(x, y, z)
+    discretization = Discretization(parameters, nx, ny, nz, dof, x, y, z)
+    atom =  discretization.w_zz()
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -78,8 +78,8 @@ def test_w_zz():
 def test_u_yy():
     parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(parameters, nx, ny, nz, dof)
-    atom =  discretization.u_yy(x, y, z)
+    discretization = Discretization(parameters, nx, ny, nz, dof, x, y, z)
+    atom =  discretization.u_yy()
 
     for i in range(nx):
         dx = (x[i+1] - x[i-1]) / 2
@@ -95,8 +95,8 @@ def test_u_yy():
 def test_v_xx():
     parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(parameters, nx, ny, nz, dof)
-    atom =  discretization.v_xx(x, y, z)
+    discretization = Discretization(parameters, nx, ny, nz, dof, x, y, z)
+    atom =  discretization.v_xx()
 
     for i in range(nx):
         dx = (x[i] - x[i-2]) / 2
@@ -112,8 +112,8 @@ def test_v_xx():
 def test_w_yy():
     parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(parameters, nx, ny, nz, dof)
-    atom =  discretization.w_yy(x, y, z)
+    discretization = Discretization(parameters, nx, ny, nz, dof, x, y, z)
+    atom =  discretization.w_yy()
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -129,8 +129,8 @@ def test_w_yy():
 def test_u_zz():
     parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(parameters, nx, ny, nz, dof)
-    atom =  discretization.u_zz(x, y, z)
+    discretization = Discretization(parameters, nx, ny, nz, dof, x, y, z)
+    atom =  discretization.u_zz()
 
     for i in range(nx):
         dx = (x[i+1] - x[i-1]) / 2
@@ -146,8 +146,8 @@ def test_u_zz():
 def test_v_zz():
     parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(parameters, nx, ny, nz, dof)
-    atom =  discretization.v_zz(x, y, z)
+    discretization = Discretization(parameters, nx, ny, nz, dof, x, y, z)
+    atom =  discretization.v_zz()
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -163,8 +163,8 @@ def test_v_zz():
 def test_w_xx():
     parameters, nx, ny, nz, dof, x, y, z = create_test_problem()
 
-    discretization = Discretization(parameters, nx, ny, nz, dof)
-    atom =  discretization.w_xx(x, y, z)
+    discretization = Discretization(parameters, nx, ny, nz, dof, x, y, z)
+    atom =  discretization.w_xx()
 
     for i in range(nx):
         dx = (x[i] - x[i-2]) / 2

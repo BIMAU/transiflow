@@ -34,9 +34,9 @@ class Discretization:
         if Re == 0:
             Re = 1
 
-        atom = 1 / Re * (self.u_xx(self.x, self.y, self.z) + self.u_yy(self.x, self.y, self.z) + self.u_zz(self.x, self.y, self.z) \
-                      +  self.v_xx(self.x, self.y, self.z) + self.v_yy(self.x, self.y, self.z) + self.v_zz(self.x, self.y, self.z) \
-                      +  self.w_xx(self.x, self.y, self.z) + self.w_yy(self.x, self.y, self.z) + self.w_zz(self.x, self.y, self.z)) \
+        atom = 1 / Re * (self.u_xx() + self.u_yy() + self.u_zz() \
+                      +  self.v_xx() + self.v_yy() + self.v_zz() \
+                      +  self.w_xx() + self.w_yy() + self.w_zz()) \
             - (self.p_x(self.x, self.y, self.z) + self.p_y(self.x, self.y, self.z) + self.p_z(self.x, self.y, self.z)) \
             + self.div(self.x, self.y, self.z)
 
@@ -200,28 +200,28 @@ class Discretization:
         atom[2] = 1 / dxp1 * dy * dz
         atom[1] = -atom[0] - atom[2]
 
-    def u_xx(self, x, y, z):
+    def u_xx(self):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._u_xx(atom[i, j, k, 0, 0, :, 1, 1], i, j, k, x, y, z)
+                    Discretization._u_xx(atom[i, j, k, 0, 0, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
-    def v_yy(self, x, y, z):
+    def v_yy(self):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._u_xx(atom[i, j, k, 1, 1, 1, :, 1], j, i, k, y, x, z)
+                    Discretization._u_xx(atom[i, j, k, 1, 1, 1, :, 1], j, i, k, self.y, self.x, self.z)
         return atom
 
-    def w_zz(self, x, y, z):
+    def w_zz(self):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._u_xx(atom[i, j, k, 2, 2, 1, 1, :], k, j, i, z, y, x)
+                    Discretization._u_xx(atom[i, j, k, 2, 2, 1, 1, :], k, j, i, self.z, self.y, self.x)
         return atom
 
     @staticmethod
@@ -240,28 +240,28 @@ class Discretization:
         atom[2] = 1 / dyp1 * dx * dz
         atom[1] = -atom[0] - atom[2]
 
-    def u_yy(self, x, y, z):
+    def u_yy(self):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._u_yy(atom[i, j, k, 0, 0, 1, :, 1], i, j, k, x, y, z)
+                    Discretization._u_yy(atom[i, j, k, 0, 0, 1, :, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
-    def v_xx(self, x, y, z):
+    def v_xx(self):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._u_yy(atom[i, j, k, 1, 1, :, 1, 1], j, i, k, y, x, z)
+                    Discretization._u_yy(atom[i, j, k, 1, 1, :, 1, 1], j, i, k, self.y, self.x, self.z)
         return atom
 
-    def w_yy(self, x, y, z):
+    def w_yy(self):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._u_yy(atom[i, j, k, 2, 2, 1, :, 1], k, j, i, z, y, x)
+                    Discretization._u_yy(atom[i, j, k, 2, 2, 1, :, 1], k, j, i, self.z, self.y, self.x)
         return atom
 
     @staticmethod
@@ -280,28 +280,28 @@ class Discretization:
         atom[2] = 1 / dzp1 * dx * dy
         atom[1] = -atom[0] - atom[2]
 
-    def u_zz(self, x, y, z):
+    def u_zz(self):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._u_zz(atom[i, j, k, 0, 0, 1, 1, :], i, j, k, x, y, z)
+                    Discretization._u_zz(atom[i, j, k, 0, 0, 1, 1, :], i, j, k, self.x, self.y, self.z)
         return atom
 
-    def v_zz(self, x, y, z):
+    def v_zz(self):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._u_zz(atom[i, j, k, 1, 1, 1, 1, :], j, i, k, y, x, z)
+                    Discretization._u_zz(atom[i, j, k, 1, 1, 1, 1, :], j, i, k, self.y, self.x, self.z)
         return atom
 
-    def w_xx(self, x, y, z):
+    def w_xx(self):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._u_zz(atom[i, j, k, 2, 2, :, 1, 1], k, j, i, z, y, x)
+                    Discretization._u_zz(atom[i, j, k, 2, 2, :, 1, 1], k, j, i, self.z, self.y, self.x)
         return atom
 
     @staticmethod
