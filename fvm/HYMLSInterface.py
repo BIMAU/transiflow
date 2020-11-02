@@ -88,9 +88,6 @@ class Interface(fvm.Interface):
         self.nz = self.nz_local
         self.discretization = fvm.Discretization(self.parameters, self.nx_local, self.ny_local, self.nz_local, self.dof, x, y, z)
 
-        print(self.nx_local)
-        print(self.ny_local)
-
     def partition_domain(self):
         rmin = 1e100
 

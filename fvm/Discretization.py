@@ -19,14 +19,18 @@ class Discretization:
         self.y = utils.create_uniform_coordinate_vector(0, 1, self.ny) if y is None else y
         self.z = utils.create_uniform_coordinate_vector(0, 1, self.nz) if z is None else z
 
+        self.frc = None
+        self.atom = None
+        self.recompute_linear_part = True
+
     def set_parameter(self, name, value):
         self.parameters[name] = value
+        self.recompute_linear_part = True
 
     def get_parameter(self, name, default=0):
         return self.parameters.get(name, default)
 
     def linear_part(self):
-
         Re = self.get_parameter('Reynolds Number')
         Ra = self.get_parameter('Rayleigh Number')
         Pr = self.get_parameter('Prandtl Number')
@@ -59,22 +63,26 @@ class Discretization:
         return self.convection(state_mtx)
 
     def rhs(self, state):
-        atom = self.linear_part()
-        frc = self.boundaries(atom)
+        if self.recompute_linear_part:
+            self.atom = self.linear_part()
+            self.frc = self.boundaries(self.atom)
+            self.recompute_linear_part = False
 
         atomJ, atomF = self.nonlinear_part(state)
-        atom += atomF
+        atomF += self.atom
 
-        return self.assemble_rhs(state, atom) + frc
+        return self.assemble_rhs(state, atomF) + self.frc
 
     def jacobian(self, state):
-        atom = self.linear_part()
-        self.boundaries(atom)
+        if self.recompute_linear_part:
+            self.atom = self.linear_part()
+            self.frc = self.boundaries(self.atom)
+            self.recompute_linear_part = False
 
         atomJ, atomF = self.nonlinear_part(state)
-        atom += atomJ
+        atomJ += self.atom
 
-        return self.assemble_jacobian(atom)
+        return self.assemble_jacobian(atomJ)
 
     def assemble_rhs(self, state, atom):
         ''' Assemble the right-hand side. Optimized version of
