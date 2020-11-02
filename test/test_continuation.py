@@ -13,15 +13,15 @@ def test_continuation(nx=4, interactive=False):
     parameters = {'Reynolds Number': 0}
     interface = Interface(parameters, nx, ny, nz, dof)
 
-    continuation = Continuation()
+    continuation = Continuation(interface)
 
     x0 = numpy.zeros(dof * nx * ny * nz)
-    x0 = continuation.newton(interface, x0)
+    x0 = continuation.newton(x0)
 
     target = 100
     ds = 100
     maxit = 20
-    x = continuation.continuation(interface, x0, 'Reynolds Number', target, ds, maxit)
+    x = continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)
 
     assert numpy.linalg.norm(x) > 0
 
@@ -42,15 +42,15 @@ def test_continuation_2D(nx=8, interactive=False):
     parameters = {'Reynolds Number': 0}
     interface = Interface(parameters, nx, ny, nz, dof)
 
-    continuation = Continuation()
+    continuation = Continuation(interface)
 
     x0 = numpy.zeros(dof * nx * ny * nz)
-    x0 = continuation.newton(interface, x0)
+    x0 = continuation.newton(x0)
 
     target = 2000
     ds = 100
     maxit = 20
-    x = continuation.continuation(interface, x0, 'Reynolds Number', target, ds, maxit)
+    x = continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)
 
     assert numpy.linalg.norm(x) > 0
 

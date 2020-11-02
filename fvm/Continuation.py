@@ -5,12 +5,15 @@ def norm(x):
 
 class Continuation:
 
-    def newton(self, interface, x0, tol=1.e-7, maxit=1000):
+    def __init__(self, interface):
+        self.interface = interface
+
+    def newton(self, x0, tol=1.e-7, maxit=1000):
         x = x0
         for k in range(maxit):
-            fval = interface.rhs(x)
-            jac = interface.jacobian(x)
-            dx = interface.solve(jac, -fval)
+            fval = self.interface.rhs(x)
+            jac = self.interface.jacobian(x)
+            dx = self.interface.solve(jac, -fval)
 
             x = x + dx
 
@@ -21,7 +24,7 @@ class Continuation:
 
         return x
 
-    def newtoncorrector(self, interface, parameter_name, ds, x, x0, l, l0, tol):
+    def newtoncorrector(self, parameter_name, ds, x, x0, l, l0, tol):
         # Set some parameters
         maxit = 100
         zeta = 1 / len(x)
@@ -30,18 +33,18 @@ class Continuation:
         # Do the main iteration
         for k in range(maxit):
             # Compute F amd F_mu (RHS of 2.2.9)
-            interface.set_parameter(parameter_name, l + delta)
-            dflval = interface.rhs(x)
-            interface.set_parameter(parameter_name, l)
-            fval = interface.rhs(x)
+            self.interface.set_parameter(parameter_name, l + delta)
+            dflval = self.interface.rhs(x)
+            self.interface.set_parameter(parameter_name, l)
+            fval = self.interface.rhs(x)
             dflval = (dflval - fval) / delta
 
             # Compute the jacobian at x
-            jac = interface.jacobian(x)
+            jac = self.interface.jacobian(x)
 
             # Solve twice with F_x (2.2.9)
-            z1 = interface.solve(jac, -fval)
-            z2 = interface.solve(jac, dflval)
+            z1 = self.interface.solve(jac, -fval)
+            z2 = self.interface.solve(jac, dflval)
 
             # Compute r (2.2.8)
             diff = x - x0
@@ -64,20 +67,20 @@ class Continuation:
 
         print('No convergence achieved by Newton corrector')
 
-    def continuation(self, interface, x0, parameter_name, target, ds, maxit):
+    def continuation(self, x0, parameter_name, target, ds, maxit):
         x = x0
 
         # Get the initial tangent (2.2.5 - 2.2.7). 'l' is called mu in Erik's thesis.
         delta = 1
-        l = interface.get_parameter(parameter_name)
-        fval = interface.rhs(x)
-        interface.set_parameter(parameter_name, l + delta)
-        dl = (interface.rhs(x) - fval) / delta
-        interface.set_parameter(parameter_name, l)
+        l = self.interface.get_parameter(parameter_name)
+        fval = self.interface.rhs(x)
+        self.interface.set_parameter(parameter_name, l + delta)
+        dl = (self.interface.rhs(x) - fval) / delta
+        self.interface.set_parameter(parameter_name, l)
 
         # Compute the jacobian at x and solve with it (2.2.5)
-        jac = interface.jacobian(x)
-        dx = -interface.solve(jac, dl)
+        jac = self.interface.jacobian(x)
+        dx = -self.interface.solve(jac, dl)
 
         # Scaling of the initial tangent (2.2.7)
         dl = 1
@@ -99,7 +102,7 @@ class Continuation:
             x = x0 + ds * dx0
 
             # Corrector (2.2.9 and onward)
-            x2, l2 = self.newtoncorrector(interface, parameter_name, ds, x, x0, l, l0, 1e-4)
+            x2, l2 = self.newtoncorrector(parameter_name, ds, x, x0, l, l0, 1e-4)
 
             print("%s: %f" % (parameter_name, l2))
 
@@ -107,8 +110,8 @@ class Continuation:
                 # Converge onto the end point (we usually go past it, so we
                 # use Newton to converge)
                 l = target
-                interface.set_parameter(parameter_name, l)
-                x = self.newton(interface, x, 1e-4)
+                self.interface.set_parameter(parameter_name, l)
+                x = self.newton(x, 1e-4)
 
                 return x
 
