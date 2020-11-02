@@ -18,23 +18,10 @@ class Interface:
         return self.discretization.get_parameter(name)
 
     def rhs(self, state):
-        atom = self.discretization.linear_part()
-        frc = self.discretization.boundaries(atom)
-
-        atomJ, atomF = self.discretization.nonlinear_part(state)
-        atom += atomF
-
-        # FIXME: Check this minus signs
-        return -self.discretization.rhs(state, atom) + frc
+        return self.discretization.rhs(state)
 
     def jacobian(self, state):
-        atom = self.discretization.linear_part()
-        self.discretization.boundaries(atom)
-
-        atomJ, atomF = self.discretization.nonlinear_part(state)
-        atom += atomJ
-
-        return self.discretization.jacobian(atom)
+        return self.discretization.jacobian(state)
 
     def solve(self, jac, rhs):
         coA = []

@@ -58,7 +58,25 @@ class Discretization:
 
         return self.convection(state_mtx)
 
-    def rhs(self, state, atom):
+    def rhs(self, state):
+        atom = self.linear_part()
+        frc = self.boundaries(atom)
+
+        atomJ, atomF = self.nonlinear_part(state)
+        atom += atomF
+
+        return self.assemble_rhs(state, atom) + frc
+
+    def jacobian(self, state):
+        atom = self.linear_part()
+        self.boundaries(atom)
+
+        atomJ, atomF = self.nonlinear_part(state)
+        atom += atomJ
+
+        return self.assemble_jacobian(atom)
+
+    def assemble_rhs(self, state, atom):
         ''' Assemble the right-hand side. Optimized version of
 
         for k in range(nz):
@@ -89,11 +107,11 @@ class Discretization:
                 for i in range(3):
                     for d1 in range(self.dof):
                         for d2 in range(self.dof):
-                            out_mtx[:, :, :, d1] -= atom[:, :, :, d1, d2, i, j, k] * state_mtx[i:(i+self.nx), j:(j+self.ny), k:(k+self.nz), d2]
+                            out_mtx[:, :, :, d1] += atom[:, :, :, d1, d2, i, j, k] * state_mtx[i:(i+self.nx), j:(j+self.ny), k:(k+self.nz), d2]
 
         return utils.create_state_vec(out_mtx, self.nx, self.ny, self.nz, self.dof)
 
-    def jacobian(self, atom):
+    def assemble_jacobian(self, atom):
         ''' Assemble the Jacobian. Optimized version of
 
         for k in range(nz):

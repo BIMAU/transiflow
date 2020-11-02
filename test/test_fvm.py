@@ -433,7 +433,7 @@ def test_ldc_lin():
 
     discretization = Discretization(parameters, nx, ny, nz, dof)
     atom = discretization.linear_part()
-    A = discretization.jacobian(atom)
+    A = discretization.assemble_jacobian(atom)
 
     B = read_matrix('ldc_lin_%sx%sx%s.txt' % (nx, ny, nz))
 
@@ -463,7 +463,7 @@ def test_bous_lin():
 
     discretization = Discretization(parameters, nx, ny, nz, dof)
     atom = discretization.linear_part()
-    A = discretization.jacobian(atom)
+    A = discretization.assemble_jacobian(atom)
 
     B = read_bous_matrix('bous_lin_%sx%sx%s.txt' % (nx, ny, nz))
 
@@ -494,7 +494,7 @@ def test_ldc_bnd():
     discretization = Discretization(parameters, nx, ny, nz, dof)
     atom = discretization.linear_part()
     discretization.boundaries(atom)
-    A = discretization.jacobian(atom)
+    A = discretization.assemble_jacobian(atom)
 
     B = read_matrix('ldc_bnd_%sx%sx%s.txt' % (nx, ny, nz))
 
@@ -525,7 +525,7 @@ def test_bous_bnd():
     discretization = Discretization(parameters, nx, ny, nz, dof)
     atom = discretization.linear_part()
     discretization.boundaries(atom)
-    A = discretization.jacobian(atom)
+    A = discretization.assemble_jacobian(atom)
 
     B = read_bous_matrix('bous_bnd_%sx%sx%s.txt' % (nx, ny, nz))
 
@@ -559,7 +559,7 @@ def test_ldc_bil():
 
     discretization = Discretization(parameters, nx, ny, nz, dof)
     atom, atomF = discretization.nonlinear_part(state)
-    A = discretization.jacobian(atom)
+    A = discretization.assemble_jacobian(atom)
 
     B = read_matrix('ldc_bil_%sx%sx%s.txt' % (nx, ny, nz))
 
@@ -596,7 +596,7 @@ def test_bous_bil():
 
     discretization = Discretization(parameters, nx, ny, nz, dof)
     atom, atomF = discretization.nonlinear_part(state)
-    A = discretization.jacobian(atom)
+    A = discretization.assemble_jacobian(atom)
 
     B = read_bous_matrix('bous_bil_%sx%sx%s.txt' % (nx, ny, nz))
 
@@ -632,15 +632,8 @@ def test_ldc():
         state[i] = i+1
 
     discretization = Discretization(parameters, nx, ny, nz, dof)
-    atom = discretization.linear_part()
-    frc = discretization.boundaries(atom)
-    atomJ, atomF = discretization.nonlinear_part(state)
-
-    atomJ += atom
-    atomF += atom
-
-    A = discretization.jacobian(atomJ)
-    rhs = discretization.rhs(state, atomF) - frc
+    A = discretization.jacobian(state)
+    rhs = discretization.rhs(state)
 
     B = read_matrix('ldc_%sx%sx%s.txt' % (nx, ny, nz))
     rhs_B = read_vector('ldc_rhs_%sx%sx%s.txt' % (nx, ny, nz))
@@ -661,7 +654,7 @@ def test_ldc():
             assert A.jcoA[j] == B.jcoA[j]
             assert A.coA[j] == pytest.approx(B.coA[j])
 
-        assert rhs_B[i] == pytest.approx(-rhs[i])
+        assert rhs_B[i] == pytest.approx(rhs[i])
 
 def test_bous():
     nx = 4
@@ -676,15 +669,8 @@ def test_bous():
         state[i] = i+1
 
     discretization = Discretization(parameters, nx, ny, nz, dof)
-    atom = discretization.linear_part()
-    frc = discretization.boundaries(atom)
-    atomJ, atomF = discretization.nonlinear_part(state)
-
-    atomJ += atom
-    atomF += atom
-
-    A = discretization.jacobian(atomJ)
-    rhs = discretization.rhs(state, atomF) - frc
+    A = discretization.jacobian(state)
+    rhs = discretization.rhs(state)
 
     B = read_bous_matrix('bous_%sx%sx%s.txt' % (nx, ny, nz))
     rhs_B = read_bous_vector('bous_rhs_%sx%sx%s.txt' % (nx, ny, nz))
@@ -705,7 +691,7 @@ def test_bous():
             assert A.jcoA[j] == B.jcoA[j]
             assert A.coA[j] == pytest.approx(B.coA[j])
 
-        assert rhs_B[i] == pytest.approx(-rhs[i])
+        assert rhs_B[i] == pytest.approx(rhs[i])
 
 def test_ldc8():
     nx = 8
@@ -720,15 +706,8 @@ def test_ldc8():
         state[i] = i+1
 
     discretization = Discretization(parameters, nx, ny, nz, dof)
-    atom = discretization.linear_part()
-    frc = discretization.boundaries(atom)
-    atomJ, atomF = discretization.nonlinear_part(state)
-
-    atomJ += atom
-    atomF += atom
-
-    A = discretization.jacobian(atomJ)
-    rhs = discretization.rhs(state, atomF) - frc
+    A = discretization.jacobian(state)
+    rhs = discretization.rhs(state)
 
     if not os.path.isfile('ldc_%sx%sx%s.txt' % (nx, ny, nz)):
         return
@@ -752,7 +731,7 @@ def test_ldc8():
             assert A.jcoA[j] == B.jcoA[j]
             assert A.coA[j] == pytest.approx(B.coA[j])
 
-        assert rhs_B[i] == pytest.approx(-rhs[i])
+        assert rhs_B[i] == pytest.approx(rhs[i])
 
 if __name__ == '__main__':
     test_full()
