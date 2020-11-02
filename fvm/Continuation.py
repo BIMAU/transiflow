@@ -27,14 +27,12 @@ def newtoncorrector(interface, parameter_name, ds, x, x0, l, l0, tol):
 
     # Do the main iteration
     for k in range(maxit):
-        # Set the parameter value and compute F (RHS of 2.2.9)
+        # Compute F amd F_mu (RHS of 2.2.9)
+        interface.set_parameter(parameter_name, l + delta)
+        dflval = interface.rhs(x)
         interface.set_parameter(parameter_name, l)
         fval = interface.rhs(x)
-
-        # Compute F_mu (bottom part of the RHS of 2.2.9)
-        interface.set_parameter(parameter_name, l + delta)
-        dflval = (interface.rhs(x) - fval) / delta
-        interface.set_parameter(parameter_name, l)
+        dflval = (dflval - fval) / delta
 
         # Compute the jacobian at x
         jac = interface.jacobian(x)
