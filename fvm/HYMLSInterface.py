@@ -56,8 +56,22 @@ class Interface(fvm.Interface):
         solver_parameters = self.parameters.sublist('Solver')
         solver_parameters.set('Initial Vector', 'Zero')
 
+        interative_solver_parameters = solver_parameters.sublist('Iterative Solver')
+        interative_solver_parameters.get('Maximum Iterations', 1000)
+        interative_solver_parameters.get('Maximum Restarts', 5)
+        interative_solver_parameters.get('Flexible Gmres', False)
+        interative_solver_parameters.get('Convergence Tolerance', 1e-8)
+        interative_solver_parameters.get('Output Frequency', 1)
+        interative_solver_parameters.get('Show Maximum Residual Norm Only', False)
+
         prec_parameters = self.parameters.sublist('Preconditioner')
         prec_parameters.set('Partitioner', 'Skew Cartesian')
+        prec_parameters.get('Separator Length', 8)
+        prec_parameters.get('Coarsening Factor', 2)
+        prec_parameters.get('Number of Levels', 1)
+
+        coarse_solver_parameters = prec_parameters.sublist('Coarse Solver')
+        coarse_solver_parameters.get("amesos: solver type", "Amesos_Superludist")
 
         self.partition_domain()
         self.map = self.create_map()
