@@ -8,7 +8,7 @@ def newton(interface, x0, tol=1.e-7, maxit=1000):
     for k in range(maxit):
         fval = interface.rhs(x)
         jac = interface.jacobian(x)
-        dx = -interface.solve(jac, fval)
+        dx = interface.solve(jac, -fval)
 
         x = x + dx
 
@@ -38,7 +38,7 @@ def newtoncorrector(interface, parameter_name, ds, x, x0, l, l0, tol):
         jac = interface.jacobian(x)
 
         # Solve twice with F_x (2.2.9)
-        z1 = -interface.solve(jac, fval)
+        z1 = interface.solve(jac, -fval)
         z2 = interface.solve(jac, dflval)
 
         # Compute r (2.2.8)
