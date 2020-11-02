@@ -25,14 +25,14 @@ def test_HYMLS(nx=4, interactive=False):
     ny = nx
     nz = nx
 
-    params = Teuchos.ParameterList()
-    params.set('Reynolds Number', 0)
+    parameters = Teuchos.ParameterList()
+    parameters.set('Reynolds Number', 0)
 
     comm = Epetra.PyComm()
-    interface = HYMLSInterface.Interface(comm, params, nx, ny, nz, dof)
+    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dof)
     m = interface.map
 
-    continuation = Continuation(interface)
+    continuation = Continuation(interface, parameters)
 
     x0 = HYMLSInterface.Vector(m)
     x0.PutScalar(0.0)
@@ -67,14 +67,14 @@ def test_HYMLS_2D(nx=8, interactive=False):
     ny = nx
     nz = 1
 
-    params = Teuchos.ParameterList()
-    params.set('Reynolds Number', 0)
+    parameters = Teuchos.ParameterList()
+    parameters.set('Reynolds Number', 0)
 
     comm = Epetra.PyComm()
-    interface = HYMLSInterface.Interface(comm, params, nx, ny, nz, dof)
+    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dof)
     m = interface.map
 
-    continuation = Continuation(interface)
+    continuation = Continuation(interface, parameters)
 
     x0 = HYMLSInterface.Vector(m)
     x0.PutScalar(0.0)

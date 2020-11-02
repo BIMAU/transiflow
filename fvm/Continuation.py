@@ -5,8 +5,9 @@ def norm(x):
 
 class Continuation:
 
-    def __init__(self, interface):
+    def __init__(self, interface, parameters):
         self.interface = interface
+        self.parameters = parameters
 
     def newton(self, x0, tol=1.e-7, maxit=1000):
         x = x0
@@ -42,19 +43,23 @@ class Continuation:
             # Compute the jacobian at x
             jac = self.interface.jacobian(x)
 
-            # Solve twice with F_x (2.2.9)
-            z1 = self.interface.solve(jac, -fval)
-            z2 = self.interface.solve(jac, dflval)
-
             # Compute r (2.2.8)
             diff = x - x0
             rnp1 = zeta*diff.dot(diff) + (1-zeta)*(l-l0)**2 - ds**2
 
-            # Compute dl (2.2.13)
-            dl = (-rnp1 - 2*zeta*diff.dot(z1)) / (2*(1-zeta)*(l-l0) - 2*zeta*diff.dot(z2))
+            if self.parameters.get("Bordered Solver", False):
+                # Solve the entire bordered system in one go (2.2.9)
+                dx, dl = self.interface.solve(jac, -fval, -rnp1, dflval, 2*zeta*diff, 2*(1-zeta)*(l-l0))
+            else:
+                # Solve twice with F_x (2.2.9)
+                z1 = self.interface.solve(jac, -fval)
+                z2 = self.interface.solve(jac, dflval)
 
-            # Compute dx (2.2.12)
-            dx = z1 - dl*z2
+                # Compute dl (2.2.13)
+                dl = (-rnp1 - 2*zeta*diff.dot(z1)) / (2*(1-zeta)*(l-l0) - 2*zeta*diff.dot(z2))
+
+                # Compute dx (2.2.12)
+                dx = z1 - dl*z2
 
             # Compute a new x and l (2.2.10 - 2.2.11)
             x = x + dx

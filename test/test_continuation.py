@@ -13,7 +13,7 @@ def test_continuation(nx=4, interactive=False):
     parameters = {'Reynolds Number': 0}
     interface = Interface(parameters, nx, ny, nz, dof)
 
-    continuation = Continuation(interface)
+    continuation = Continuation(interface, parameters)
 
     x0 = numpy.zeros(dof * nx * ny * nz)
     x0 = continuation.newton(x0)
@@ -42,7 +42,7 @@ def test_continuation_2D(nx=8, interactive=False):
     parameters = {'Reynolds Number': 0}
     interface = Interface(parameters, nx, ny, nz, dof)
 
-    continuation = Continuation(interface)
+    continuation = Continuation(interface, parameters)
 
     x0 = numpy.zeros(dof * nx * ny * nz)
     x0 = continuation.newton(x0)
