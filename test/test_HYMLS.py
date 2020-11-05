@@ -27,6 +27,7 @@ def test_HYMLS(nx=4, interactive=False):
 
     parameters = Teuchos.ParameterList()
     parameters.set('Reynolds Number', 0)
+    parameters.set('Bordered Solver', True)
 
     comm = Epetra.PyComm()
     interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dof)
@@ -69,6 +70,7 @@ def test_HYMLS_2D(nx=8, interactive=False):
 
     parameters = Teuchos.ParameterList()
     parameters.set('Reynolds Number', 0)
+    parameters.set('Bordered Solver', True)
 
     comm = Epetra.PyComm()
     interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dof)
@@ -99,4 +101,4 @@ def test_HYMLS_2D(nx=8, interactive=False):
 
 if __name__ == '__main__':
     # test_HYMLS(8, True)
-    test_HYMLS_2D(8, True)
+    test_HYMLS_2D(16, True)

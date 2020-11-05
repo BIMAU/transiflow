@@ -33,6 +33,10 @@ def ind2sub(nx, ny, nz, idx, dof=1):
 def sub2ind(nx, ny, nz, dof, i, j, k, var):
     return ((k *ny + j) * nx + i) * dof + var
 
+def set_default_parameter(parameterlist, name, value):
+    if name not in parameterlist:
+        parameterlist[name] = value
+
 class Interface(fvm.Interface):
     def __init__(self, comm, parameters, nx, ny, nz, dof):
         fvm.Interface.__init__(self,parameters, nx, ny, nz, dof)
@@ -56,22 +60,22 @@ class Interface(fvm.Interface):
         solver_parameters = self.parameters.sublist('Solver')
         solver_parameters.set('Initial Vector', 'Zero')
 
-        interative_solver_parameters = solver_parameters.sublist('Iterative Solver')
-        interative_solver_parameters.get('Maximum Iterations', 1000)
-        interative_solver_parameters.get('Maximum Restarts', 5)
-        interative_solver_parameters.get('Flexible Gmres', False)
-        interative_solver_parameters.get('Convergence Tolerance', 1e-8)
-        interative_solver_parameters.get('Output Frequency', 1)
-        interative_solver_parameters.get('Show Maximum Residual Norm Only', False)
+        iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
+        set_default_parameter(iterative_solver_parameters, 'Maximum Iterations', 1000)
+        set_default_parameter(iterative_solver_parameters, 'Maximum Restarts', 5)
+        set_default_parameter(iterative_solver_parameters, 'Flexible Gmres', False)
+        set_default_parameter(iterative_solver_parameters, 'Convergence Tolerance', 1e-8)
+        set_default_parameter(iterative_solver_parameters, 'Output Frequency', 1)
+        set_default_parameter(iterative_solver_parameters, 'Show Maximum Residual Norm Only', False)
 
         prec_parameters = self.parameters.sublist('Preconditioner')
         prec_parameters.set('Partitioner', 'Skew Cartesian')
-        prec_parameters.get('Separator Length', 8)
-        prec_parameters.get('Coarsening Factor', 2)
-        prec_parameters.get('Number of Levels', 1)
+        set_default_parameter(prec_parameters, 'Separator Length', 8)
+        set_default_parameter(prec_parameters, 'Coarsening Factor', 2)
+        set_default_parameter(prec_parameters, 'Number of Levels', 1)
 
         coarse_solver_parameters = prec_parameters.sublist('Coarse Solver')
-        coarse_solver_parameters.get("amesos: solver type", "Amesos_Superludist")
+        set_default_parameter(coarse_solver_parameters, "amesos: solver type", "Amesos_Superludist")
 
         self.partition_domain()
         self.map = self.create_map()
@@ -255,19 +259,48 @@ class Interface(fvm.Interface):
 
         return x
 
-    def solve(self, jac, rhs):
+    def solve(self, jac, rhs, rhs2=None, V=None, W=None, C=None):
         rhs_sol = Vector(self.solve_map)
         rhs_sol.Import(rhs, self.solve_importer, Epetra.Insert)
+
         x_sol = Vector(rhs_sol)
 
         preconditioner = HYMLS.Preconditioner(jac, self.parameters)
         preconditioner.Initialize()
+
+        if rhs2:
+            rhs2_sol = Epetra.SerialDenseMatrix(1, 1)
+            rhs2_sol[0, 0] = rhs2
+
+            x2_sol = Epetra.SerialDenseMatrix(1, 1)
+
+            V_sol = Vector(self.solve_map)
+            V_sol.Import(V, self.solve_importer, Epetra.Insert)
+
+            W_sol = Vector(self.solve_map)
+            W_sol.Import(W, self.solve_importer, Epetra.Insert)
+
+            C_sol = Epetra.SerialDenseMatrix(1, 1)
+            C_sol[0, 0] = C
+
+        solver = HYMLS.BorderedSolver(jac, preconditioner, self.parameters)
+
+        if rhs2:
+            solver.SetBorder(V_sol, W_sol, C_sol)
+
         preconditioner.Compute()
 
-        solver = HYMLS.Solver(jac, preconditioner, self.parameters)
-        solver.ApplyInverse(rhs_sol, x_sol)
+        if rhs2:
+            solver.ApplyInverse(rhs_sol, rhs2_sol, x_sol, x2_sol)
+
+            x2 = x2_sol[0, 0]
+        else:
+            solver.ApplyInverse(rhs_sol, x_sol)
 
         x = Vector(rhs)
         x.Export(x_sol, self.solve_importer, Epetra.Insert)
+
+        if rhs2:
+            return x, x2
 
         return x

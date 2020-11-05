@@ -33,7 +33,7 @@ class Continuation:
 
         # Do the main iteration
         for k in range(maxit):
-            # Compute F amd F_mu (RHS of 2.2.9)
+            # Compute F and F_mu (RHS of 2.2.9)
             self.interface.set_parameter(parameter_name, l + delta)
             dflval = self.interface.rhs(x)
             self.interface.set_parameter(parameter_name, l)
