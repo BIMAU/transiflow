@@ -70,7 +70,7 @@ class Interface(fvm.Interface):
 
         prec_parameters = self.parameters.sublist('Preconditioner')
         prec_parameters.set('Partitioner', 'Skew Cartesian')
-        set_default_parameter(prec_parameters, 'Separator Length', 8)
+        set_default_parameter(prec_parameters, 'Separator Length', min(8, self.nx_global))
         set_default_parameter(prec_parameters, 'Coarsening Factor', 2)
         set_default_parameter(prec_parameters, 'Number of Levels', 1)
 
@@ -268,7 +268,7 @@ class Interface(fvm.Interface):
         preconditioner = HYMLS.Preconditioner(jac, self.parameters)
         preconditioner.Initialize()
 
-        if rhs2:
+        if rhs2 is not None:
             rhs2_sol = Epetra.SerialDenseMatrix(1, 1)
             rhs2_sol[0, 0] = rhs2
 
@@ -285,12 +285,12 @@ class Interface(fvm.Interface):
 
         solver = HYMLS.BorderedSolver(jac, preconditioner, self.parameters)
 
-        if rhs2:
+        if rhs2 is not None:
             solver.SetBorder(V_sol, W_sol, C_sol)
 
         preconditioner.Compute()
 
-        if rhs2:
+        if rhs2 is not None:
             solver.ApplyInverse(rhs_sol, rhs2_sol, x_sol, x2_sol)
 
             x2 = x2_sol[0, 0]
@@ -300,7 +300,7 @@ class Interface(fvm.Interface):
         x = Vector(rhs)
         x.Export(x_sol, self.solve_importer, Epetra.Insert)
 
-        if rhs2:
+        if rhs2 is not None:
             return x, x2
 
         return x
