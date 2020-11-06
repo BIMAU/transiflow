@@ -1,6 +1,8 @@
 from PyTrilinos import Epetra
 from PyTrilinos import Amesos
 
+import copy
+
 import fvm
 
 import HYMLS
@@ -105,6 +107,28 @@ class Interface(fvm.Interface):
         self.ny = self.ny_local
         self.nz = self.nz_local
         self.discretization = fvm.Discretization(self.parameters, self.nx_local, self.ny_local, self.nz_local, self.dof, x, y, z)
+
+        self.jac = None
+        self.initialize()
+
+    def initialize(self):
+        ''' Initialize the Jacobian and the preconditioner, but make sure the nonlinear part is also nonzero
+        so we can replace all values later, rather than insert them'''
+
+        # Backup the original parameters and put model parameters to 1
+        original_parameters = self.parameters
+        self.parameters = copy.copy(self.parameters)
+        self.parameters['Reynolds Number'] = 1
+        self.parameters['Rayleigh Number'] = 1
+        self.parameters['Prandtl Number'] = 1
+
+        # Generate a Jacobian with a random state
+        x = Vector(self.map)
+        x.Random()
+        jac = self.jacobian(x)
+
+        # Put back the original parameters
+        self.parameters = original_parameters
 
     def partition_domain(self):
         rmin = 1e100
@@ -213,18 +237,24 @@ class Interface(fvm.Interface):
         state_ass = Vector(self.assembly_map)
         state_ass.Import(state, self.assembly_importer, Epetra.Insert)
 
-        jac = fvm.Interface.jacobian(self, state_ass)
+        local_jac = fvm.Interface.jacobian(self, state_ass)
 
-        A = Epetra.FECrsMatrix(Epetra.Copy, self.solve_map, 27)
-        for i in range(len(jac.begA)-1):
+        if self.jac is None:
+            self.jac = Epetra.FECrsMatrix(Epetra.Copy, self.solve_map, 27)
+        else:
+            self.jac.PutScalar(0.0);
+
+        for i in range(len(local_jac.begA)-1):
             if self.is_ghost(i):
                 continue
             row = self.assembly_map.GID64(i)
-            for j in range(jac.begA[i], jac.begA[i+1]):
-                A.InsertGlobalValue(row, self.assembly_map.GID64(jac.jcoA[j]), jac.coA[j])
-        A.GlobalAssemble(True, Epetra.Insert)
+            for j in range(local_jac.begA[i], local_jac.begA[i+1]):
+                # __setitem__ automatically calls ReplaceGlobalValues if the matrix is filled,
+                # InsertGlobalValues otherwise
+                self.jac[row, self.assembly_map.GID64(local_jac.jcoA[j])] = local_jac.coA[j]
+        self.jac.GlobalAssemble(True, Epetra.Insert)
 
-        return A
+        return self.jac
 
     def rhs(self, state):
         state_ass = Vector(self.assembly_map)
