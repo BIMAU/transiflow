@@ -130,6 +130,8 @@ class Interface(fvm.Interface):
         self.preconditioner = HYMLS.Preconditioner(jac, self.parameters)
         self.preconditioner.Initialize()
 
+        self.solver = HYMLS.BorderedSolver(self.jac, self.preconditioner, self.parameters)
+
         # Put back the original parameters
         self.parameters = original_parameters
 
@@ -313,19 +315,17 @@ class Interface(fvm.Interface):
             C_sol = Epetra.SerialDenseMatrix(1, 1)
             C_sol[0, 0] = C
 
-        solver = HYMLS.BorderedSolver(jac, self.preconditioner, self.parameters)
-
         if rhs2 is not None:
-            solver.SetBorder(V_sol, W_sol, C_sol)
+            self.solver.SetBorder(V_sol, W_sol, C_sol)
 
         self.preconditioner.Compute()
 
         if rhs2 is not None:
-            solver.ApplyInverse(rhs_sol, rhs2_sol, x_sol, x2_sol)
+            self.solver.ApplyInverse(rhs_sol, rhs2_sol, x_sol, x2_sol)
 
             x2 = x2_sol[0, 0]
         else:
-            solver.ApplyInverse(rhs_sol, x_sol)
+            self.solver.ApplyInverse(rhs_sol, x_sol)
 
         x = Vector(rhs)
         x.Export(x_sol, self.solve_importer, Epetra.Insert)
