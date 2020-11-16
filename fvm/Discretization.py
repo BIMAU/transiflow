@@ -7,12 +7,13 @@ from fvm import CrsMatrix
 
 class Discretization:
 
-    def __init__(self, parameters, nx, ny, nz, dof, x=None, y=None, z=None):
+    def __init__(self, parameters, nx, ny, nz, dim, dof, x=None, y=None, z=None):
         self.parameters = copy.copy(parameters)
 
         self.nx = nx
         self.ny = ny
         self.nz = nz
+        self.dim = dim
         self.dof = dof
 
         self.x = utils.create_uniform_coordinate_vector(0, 1, self.nx) if x is None else x

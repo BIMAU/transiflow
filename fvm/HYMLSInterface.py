@@ -106,7 +106,7 @@ class Interface(fvm.Interface):
         self.nx = self.nx_local
         self.ny = self.ny_local
         self.nz = self.nz_local
-        self.discretization = fvm.Discretization(self.parameters, self.nx_local, self.ny_local, self.nz_local, self.dof, x, y, z)
+        self.discretization = fvm.Discretization(self.parameters, self.nx_local, self.ny_local, self.nz_local, self.dim, self.dof, x, y, z)
 
         self.jac = None
         self.initialize()

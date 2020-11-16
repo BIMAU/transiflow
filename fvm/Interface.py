@@ -10,7 +10,7 @@ class Interface:
         self.nz = nz
         self.dim = dim
         self.dof = dof
-        self.discretization = Discretization(parameters, nx, ny, nz, dof)
+        self.discretization = Discretization(parameters, nx, ny, nz, dim, dof)
 
     def set_parameter(self, name, value):
         self.discretization.set_parameter(name, value)
