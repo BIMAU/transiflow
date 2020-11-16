@@ -4,10 +4,11 @@ from scipy.sparse import linalg
 from fvm import Discretization
 
 class Interface:
-    def __init__(self, parameters, nx, ny, nz, dof):
+    def __init__(self, parameters, nx, ny, nz, dim, dof):
         self.nx = nx
         self.ny = ny
         self.nz = nz
+        self.dim = dim
         self.dof = dof
         self.discretization = Discretization(parameters, nx, ny, nz, dof)
 

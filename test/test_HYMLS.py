@@ -21,6 +21,7 @@ def test_HYMLS(nx=4, interactive=False):
     except ImportError:
         return
 
+    dim = 3
     dof = 4
     ny = nx
     nz = nx
@@ -30,7 +31,7 @@ def test_HYMLS(nx=4, interactive=False):
     parameters.set('Bordered Solver', True)
 
     comm = Epetra.PyComm()
-    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dof)
+    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
     m = interface.map
 
     continuation = Continuation(interface, parameters)
@@ -64,6 +65,7 @@ def test_HYMLS_2D(nx=8, interactive=False):
     except ImportError:
         return
 
+    dim = 3
     dof = 4
     ny = nx
     nz = 1
@@ -73,7 +75,7 @@ def test_HYMLS_2D(nx=8, interactive=False):
     parameters.set('Bordered Solver', True)
 
     comm = Epetra.PyComm()
-    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dof)
+    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
     m = interface.map
 
     continuation = Continuation(interface, parameters)

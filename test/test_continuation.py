@@ -5,13 +5,14 @@ from fvm import plot_utils
 from fvm import Interface
 
 def test_continuation(nx=4, interactive=False):
+    dim = 3
     dof = 4
     ny = nx
     nz = nx
     n = dof * nx * ny * nz
 
     parameters = {'Reynolds Number': 0}
-    interface = Interface(parameters, nx, ny, nz, dof)
+    interface = Interface(parameters, nx, ny, nz, dim, dof)
 
     continuation = Continuation(interface, parameters)
 
@@ -34,13 +35,14 @@ def test_continuation(nx=4, interactive=False):
     plot_utils.plot_state(x[:,ny//2,:,0], x[:,ny//2,:,2], nx, nz)
 
 def test_continuation_2D(nx=8, interactive=False):
+    dim = 3
     dof = 4
     ny = nx
     nz = 1
     n = dof * nx * ny * nz
 
     parameters = {'Reynolds Number': 0}
-    interface = Interface(parameters, nx, ny, nz, dof)
+    interface = Interface(parameters, nx, ny, nz, dim, dof)
 
     continuation = Continuation(interface, parameters)
 

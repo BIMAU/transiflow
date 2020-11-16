@@ -40,8 +40,8 @@ def set_default_parameter(parameterlist, name, value):
         parameterlist[name] = value
 
 class Interface(fvm.Interface):
-    def __init__(self, comm, parameters, nx, ny, nz, dof):
-        fvm.Interface.__init__(self,parameters, nx, ny, nz, dof)
+    def __init__(self, comm, parameters, nx, ny, nz, dim, dof):
+        fvm.Interface.__init__(self,parameters, nx, ny, nz, dim, dof)
 
         self.nx_global = nx
         self.ny_global = ny
