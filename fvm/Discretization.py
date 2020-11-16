@@ -18,6 +18,8 @@ class Discretization:
 
         self.x = utils.create_uniform_coordinate_vector(0, 1, self.nx) if x is None else x
         self.y = utils.create_uniform_coordinate_vector(0, 1, self.ny) if y is None else y
+
+        # TODO: Maybe force this if dim = 2?
         self.z = utils.create_uniform_coordinate_vector(0, 1, self.nz) if z is None else z
 
         self.frc = None
@@ -32,6 +34,33 @@ class Discretization:
         return self.parameters.get(name, default)
 
     def linear_part(self):
+        if self.dim == 2:
+            return self._linear_part_2D()
+        return self._linear_part_3D()
+
+    def _linear_part_2D(self):
+        Re = self.get_parameter('Reynolds Number')
+        Ra = self.get_parameter('Rayleigh Number')
+        Pr = self.get_parameter('Prandtl Number')
+
+        if Re == 0:
+            Re = 1
+
+        atom = 1 / Re * (self.u_xx() + self.u_yy() \
+                      +  self.v_xx() + self.v_yy()) \
+            - (self.p_x() + self.p_y()) \
+            + self.div()
+
+        if Ra and self.dof > 3:
+            atom += Ra * self.forward_average_T_y()
+
+        if Pr and self.dof > 3:
+            atom += 1 / Pr * (self.T_xx() + self.T_yy())
+            atom += 1 / Pr * self.backward_average_v_y()
+
+        return atom
+
+    def _linear_part_3D(self):
         Re = self.get_parameter('Reynolds Number')
         Ra = self.get_parameter('Rayleigh Number')
         Pr = self.get_parameter('Prandtl Number')
@@ -479,6 +508,14 @@ class Discretization:
         atom[1] = dx * dy * dz / 2
         atom[2] = atom[1]
 
+    def forward_average_T_y(self):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
+                    Discretization._forward_average_x(atom[i, j, k, 1, 4, 1, :, 1], j, i, k, self.y, self.x, self.z)
+        return atom
+
     def forward_average_T_z(self):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
@@ -499,6 +536,14 @@ class Discretization:
         # forward average
         atom[0] = dx * dy * dz / 2
         atom[1] = atom[0]
+
+    def backward_average_v_y(self):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
+                    Discretization._backward_average_x(atom[i, j, k, 4, 1, 1, :, 1], j, i, k, self.y, self.x, self.z)
+        return atom
 
     def backward_average_w_z(self):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
