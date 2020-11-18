@@ -326,11 +326,12 @@ def test_MxU():
     spec.loader.exec_module(module)
 
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
+    dim = 3
     dof = 4
     n = dof * nx * ny * nz
 
     bil = numpy.zeros([nx, ny, nz, 2, dof, dof, 2])
-    convective_term = module.ConvectiveTerm(nx, ny, nz, x, y, z)
+    convective_term = module.ConvectiveTerm(nx, ny, nz, dim, x, y, z)
 
     state = numpy.zeros(n)
     for i in range(n):
