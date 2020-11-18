@@ -218,25 +218,31 @@ class Discretization:
             else:
                 boundary_conditions.dirichlet_north(atom)
             boundary_conditions.dirichlet_south(atom)
-            if self.nz > 1:
-                frc += boundary_conditions.moving_lid_top(atom, 1)
-            else:
-                boundary_conditions.dirichlet_top(atom)
-            boundary_conditions.dirichlet_bottom(atom)
+            if self.dim > 2:
+                if self.nz > 1:
+                    frc += boundary_conditions.moving_lid_top(atom, 1)
+                else:
+                    boundary_conditions.dirichlet_top(atom)
+                boundary_conditions.dirichlet_bottom(atom)
         elif Discretization._problem_type_equals(problem_type, 'Rayleigh-Benard'):
             frc += boundary_conditions.heatflux_east(atom, 0)
             frc += boundary_conditions.heatflux_west(atom, 0)
-            frc += boundary_conditions.heatflux_north(atom, 0)
-            frc += boundary_conditions.heatflux_south(atom, 0)
-            boundary_conditions.dirichlet_top(atom)
-            boundary_conditions.dirichlet_bottom(atom)
+            if self.dim == 2:
+                boundary_conditions.dirichlet_north(atom)
+                boundary_conditions.dirichlet_south(atom)
+            else:
+                frc += boundary_conditions.heatflux_north(atom, 0)
+                frc += boundary_conditions.heatflux_south(atom, 0)
+                boundary_conditions.dirichlet_top(atom)
+                boundary_conditions.dirichlet_bottom(atom)
         elif Discretization._problem_type_equals(problem_type, 'Differentially heated cavity'):
             frc += boundary_conditions.temperature_east(atom, -1/2)
             frc += boundary_conditions.temperature_west(atom, 1/2)
             frc += boundary_conditions.heatflux_north(atom, 0)
             frc += boundary_conditions.heatflux_south(atom, 0)
-            frc += boundary_conditions.heatflux_top(atom, 0)
-            frc += boundary_conditions.heatflux_bottom(atom, 0)
+            if self.dim > 2:
+                frc += boundary_conditions.heatflux_top(atom, 0)
+                frc += boundary_conditions.heatflux_bottom(atom, 0)
         else:
             raise Exception('Invalid problem type %s' % problem_type)
 
