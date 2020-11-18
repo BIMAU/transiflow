@@ -271,18 +271,18 @@ class Interface(fvm.Interface):
         rhs.Export(rhs_ass, self.assembly_importer, Epetra.Zero)
         return rhs
 
-    def dirtect_solve(self, jac, rhs):
+    def direct_solve(self, jac, rhs):
         A = Epetra.CrsMatrix(Epetra.Copy, self.map, 27)
         for i in range(len(jac.begA)-1):
-            if i == 3:
+            if i == self.dim:
                 A[i, i] = -1
                 continue
             for j in range(jac.begA[i], jac.begA[i+1]):
-                if jac.jcoA[j] != 3:
+                if jac.jcoA[j] != self.dim:
                     A[i, jac.jcoA[j]] = jac.coA[j]
         A.FillComplete()
 
-        rhs[3] = 0
+        rhs[self.dim] = 0
         x = Vector(rhs)
 
         problem = Epetra.LinearProblem(A, x, rhs)

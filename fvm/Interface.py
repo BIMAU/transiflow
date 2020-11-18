@@ -29,18 +29,18 @@ class Interface:
         jcoA = []
         begA = [0]
         for i in range(len(jac.begA)-1):
-            if i == 3:
+            if i == self.dim:
                 begA.append(begA[i]+1)
                 coA.append(-1)
                 jcoA.append(i)
                 continue
             for j in range(jac.begA[i], jac.begA[i+1]):
-                if jac.jcoA[j] != 3:
+                if jac.jcoA[j] != self.dim:
                     coA.append(jac.coA[j])
                     jcoA.append(jac.jcoA[j])
             begA.append(len(coA))
 
-        rhs[3] = 0
+        rhs[self.dim] = 0
 
         A = sparse.csr_matrix((coA, jcoA, begA))
         x = linalg.spsolve(A, rhs)
