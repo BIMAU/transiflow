@@ -495,6 +495,8 @@ class Discretization:
         atom[0] = -atom[1]
 
     def div(self):
+        if self.dim == 2:
+            return self.u_x() + self.v_y()
         return self.u_x() + self.v_y() + self.w_z()
 
     @staticmethod
