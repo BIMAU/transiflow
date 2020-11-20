@@ -140,6 +140,14 @@ class Discretization:
         state_mtx = numpy.zeros([self.nx+2, self.ny+2, self.nz+2, self.dof])
         state_mtx[1:self.nx+1, 1:self.ny+1, 1:self.nz+1, :] = utils.create_state_mtx(state, self.nx, self.ny, self.nz, self.dof)
 
+        # Add extra borders for periodic boundary conditions
+        state_mtx[0, 1:self.ny+1, 1:self.nz+1, :] = state_mtx[self.nx, 1:self.ny+1, 1:self.nz+1, :]
+        state_mtx[self.nx+1, 1:self.ny+1, 1:self.nz+1, :] = state_mtx[1, 1:self.ny+1, 1:self.nz+1, :]
+        state_mtx[1:self.nx+1, 0, 1:self.nz+1, :] = state_mtx[1:self.nx+1, self.ny, 1:self.nz+1, :]
+        state_mtx[1:self.nx+1, self.ny+1, 1:self.nz+1, :] = state_mtx[1:self.nx+1, 1, 1:self.nz+1, :]
+        state_mtx[1:self.nx+1, 1:self.ny+1, 0, :] = state_mtx[1:self.nx+1, 1:self.ny+1, self.nz, :]
+        state_mtx[1:self.nx+1, 1:self.ny+1, self.nz+1, :] = state_mtx[1:self.nx+1, 1:self.ny+1, 1, :]
+
         # Add up all contributions without iterating over the domain
         out_mtx = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
         for k in range(3):
