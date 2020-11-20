@@ -201,7 +201,9 @@ class Discretization:
                     for d1 in range(self.dof):
                         for config in configs:
                             if abs(atom[i, j, k, d1, config[0], config[1], config[2], config[3]]) > 1e-14:
-                                jcoA[idx] = row + (config[1]-1) * self.dof + (config[2]-1) * self.nx * self.dof + (config[3]-1) * self.nx * self.ny * self.dof + config[0] - d1
+                                jcoA[idx] = ((i + config[1] - 1) % self.nx) * self.dof \
+                                          + ((j + config[2] - 1) % self.ny) * self.nx * self.dof + \
+                                          + ((k + config[3] - 1) % self.nz) * self.nx * self.ny * self.dof + config[0]
                                 coA[idx] = atom[i, j, k, d1, config[0], config[1], config[2], config[3]]
                                 idx += 1
                         row += 1
