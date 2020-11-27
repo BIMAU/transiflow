@@ -255,7 +255,7 @@ class Discretization:
             frc += boundary_conditions.temperature_west(atom, 1/2)
             frc += boundary_conditions.heatflux_north(atom, 0)
             frc += boundary_conditions.heatflux_south(atom, 0)
-            if self.dim > 2:
+            if self.dim > 2 and self.nz > 1:
                 frc += boundary_conditions.heatflux_top(atom, 0)
                 frc += boundary_conditions.heatflux_bottom(atom, 0)
         else:
