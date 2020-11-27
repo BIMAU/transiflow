@@ -75,11 +75,18 @@ class Discretization:
             + self.div()
 
         if Ra and self.dof > 4:
-            atom += Ra * self.forward_average_T_z()
+            if self.nz > 1:
+                atom += Ra * self.forward_average_T_z()
+            else:
+                atom += Ra * self.forward_average_T_y()
 
         if Pr and self.dof > 4:
-            atom += 1 / Pr * (self.T_xx() + self.T_yy() + self.T_zz())
-            atom += 1 / Pr * self.backward_average_w_z()
+            if self.nz > 1:
+                atom += 1 / Pr * (self.T_xx() + self.T_yy() + self.T_zz())
+                atom += 1 / Pr * self.backward_average_w_z()
+            else:
+                atom += 1 / Pr * (self.T_xx() + self.T_yy() + self.T_zz())
+                atom += 1 / Pr * self.backward_average_v_y()
 
         return atom
 
