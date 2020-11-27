@@ -247,7 +247,7 @@ class Discretization:
             else:
                 frc += boundary_conditions.heatflux_north(atom, 0)
                 frc += boundary_conditions.heatflux_south(atom, 0)
-            if self.dim > 2:
+            if self.dim > 2 and self.nz > 1:
                 boundary_conditions.dirichlet_top(atom)
                 boundary_conditions.dirichlet_bottom(atom)
         elif Discretization._problem_type_equals(problem_type, 'Differentially heated cavity'):
