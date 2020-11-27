@@ -215,7 +215,7 @@ class Discretization:
         return first.lower() == second.lower()
 
     def boundaries(self, atom):
-        boundary_conditions = BoundaryConditions(self.nx, self.ny, self.nz, self.dof, self.x, self.y, self.z)
+        boundary_conditions = BoundaryConditions(self.nx, self.ny, self.nz, self.dim, self.dof, self.x, self.y, self.z)
         problem_type = self.get_parameter('Problem Type', 'Lid-driven cavity')
 
         frc = numpy.zeros(self.nx * self.ny * self.nz * self.dof)
@@ -237,12 +237,13 @@ class Discretization:
         elif Discretization._problem_type_equals(problem_type, 'Rayleigh-Benard'):
             frc += boundary_conditions.heatflux_east(atom, 0)
             frc += boundary_conditions.heatflux_west(atom, 0)
-            if self.dim == 2:
+            if self.dim == 2 or self.nz <= 1:
                 boundary_conditions.dirichlet_north(atom)
                 boundary_conditions.dirichlet_south(atom)
             else:
                 frc += boundary_conditions.heatflux_north(atom, 0)
                 frc += boundary_conditions.heatflux_south(atom, 0)
+            if self.dim > 2:
                 boundary_conditions.dirichlet_top(atom)
                 boundary_conditions.dirichlet_bottom(atom)
         elif Discretization._problem_type_equals(problem_type, 'Differentially heated cavity'):
