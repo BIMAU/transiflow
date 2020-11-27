@@ -235,11 +235,8 @@ class Discretization:
             else:
                 boundary_conditions.dirichlet_north(atom)
             boundary_conditions.dirichlet_south(atom)
-            if self.dim > 2:
-                if self.nz > 1:
-                    frc += boundary_conditions.moving_lid_top(atom, 1)
-                else:
-                    boundary_conditions.dirichlet_top(atom)
+            if self.dim > 2 and self.nz > 1:
+                frc += boundary_conditions.moving_lid_top(atom, 1)
                 boundary_conditions.dirichlet_bottom(atom)
         elif Discretization._problem_type_equals(problem_type, 'Rayleigh-Benard'):
             frc += boundary_conditions.heatflux_east(atom, 0)

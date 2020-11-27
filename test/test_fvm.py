@@ -737,18 +737,8 @@ def test_ldc_2D():
         state1[i] = i+1
 
     discretization = Discretization(parameters, nx, ny, nz, dim, dof1)
-    atom1 = discretization.linear_part()
-
-    boundary_conditions = BoundaryConditions(nx, ny, nz, dim, dof1, discretization.x, discretization.y, discretization.z)
-    boundary_conditions.dirichlet_east(atom1)
-    boundary_conditions.dirichlet_west(atom1)
-    frc1 = boundary_conditions.moving_lid_north(atom1, 1)
-    boundary_conditions.dirichlet_south(atom1)
-
-    atomJ, atomF = discretization.nonlinear_part(state1)
-
-    A1 = discretization.assemble_jacobian(atomJ + atom1)
-    rhs1 = discretization.assemble_rhs(state1, atomF + atom1) + frc1
+    A1 = discretization.jacobian(state1)
+    rhs1 = discretization.rhs(state1)
 
     dim = 2
     dof2 = 3
