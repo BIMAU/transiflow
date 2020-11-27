@@ -4,6 +4,7 @@ import pytest
 
 from fvm import CrsMatrix
 from fvm import Discretization
+from fvm import BoundaryConditions
 
 def create_coordinate_vector(nx):
     dx = 1 / (nx + 1)
@@ -721,6 +722,67 @@ def test_ldc():
             assert A.coA[j] == pytest.approx(B.coA[j])
 
         assert rhs_B[i] == pytest.approx(rhs[i])
+
+def test_ldc_2D():
+    nx = 4
+    ny = nx
+    nz = 1
+    dim = 3
+    dof1 = 4
+    parameters = {'Reynolds Number': 100}
+    n = nx * ny * nz * dof1
+
+    state1 = numpy.zeros(n)
+    for i in range(n):
+        state1[i] = i+1
+
+    discretization = Discretization(parameters, nx, ny, nz, dim, dof1)
+    atom1 = discretization.linear_part()
+
+    boundary_conditions = BoundaryConditions(nx, ny, nz, dof1, discretization.x, discretization.y, discretization.z)
+    boundary_conditions.dirichlet_east(atom1)
+    boundary_conditions.dirichlet_west(atom1)
+    frc1 = boundary_conditions.moving_lid_north(atom1, 1)
+    boundary_conditions.dirichlet_south(atom1)
+
+    atomJ, atomF = discretization.nonlinear_part(state1)
+
+    A1 = discretization.assemble_jacobian(atomJ + atom1)
+    rhs1 = discretization.assemble_rhs(state1, atomF + atom1) + frc1
+
+    dim = 2
+    dof2 = 3
+    n = nx * ny * nz * dof2
+
+    state2 = numpy.zeros(n)
+    for i in range(n):
+        state2[i] = state1[i + (i + 1) // dof2]
+
+    discretization = Discretization(parameters, nx, ny, nz, dim, dof2)
+    A2 = discretization.jacobian(state2)
+    rhs2 = discretization.rhs(state2)
+
+    for i in range(n):
+        print(i)
+
+        i1 = i + (i + 1) // dof2
+
+        print('Expected:')
+        print(A1.jcoA[A1.begA[i1]:A1.begA[i1+1]])
+        print(A1.coA[A1.begA[i1]:A1.begA[i1+1]])
+
+        print('Got:')
+        print(A2.jcoA[A2.begA[i]:A2.begA[i+1]])
+        print(A2.coA[A2.begA[i]:A2.begA[i+1]])
+
+        assert A1.begA[i1+1] - A1.begA[i1] == A2.begA[i+1] - A2.begA[i]
+        for j in range(A2.begA[i+1] - A2.begA[i]):
+            j1 = A1.begA[i1] + j
+            j2 = A2.begA[i] + j
+            assert A1.jcoA[j1] == A2.jcoA[j2] + (A2.jcoA[j2] + 1) // dof2
+            assert A1.coA[j1] == pytest.approx(A2.coA[j2])
+
+        assert rhs2[i] == pytest.approx(rhs1[i1])
 
 def test_bous():
     nx = 4
