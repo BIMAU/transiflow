@@ -50,8 +50,6 @@ def continuation_semi_2D(nx=4, interactive=False):
     x0 = numpy.zeros(dof * nx * ny * nz)
     x0 = continuation.newton(x0)
 
-    print(x0)
-
     target = 2000
     ds = 100
     maxit = 20
@@ -81,8 +79,6 @@ def continuation_2D(nx=4, interactive=False):
 
     x0 = numpy.zeros(dof * nx * ny * nz)
     x0 = continuation.newton(x0)
-
-    print(x0)
 
     target = 2000
     ds = 100
