@@ -50,13 +50,15 @@ class Interface(fvm.Interface):
 
         self.comm = comm
 
-        HYMLS.Tools.InitializeIO(self.comm);
+        HYMLS.Tools.InitializeIO(self.comm)
 
         self.parameters = parameters
         problem_parameters = self.parameters.sublist('Problem')
         problem_parameters.set('nx', self.nx_global)
         problem_parameters.set('ny', self.ny_global)
         problem_parameters.set('nz', self.nz_global)
+        problem_parameters.set('Dimension', self.dim)
+        problem_parameters.set('Degrees of Freedom', self.dof)
         problem_parameters.set('Equations', 'Stokes-C')
 
         solver_parameters = self.parameters.sublist('Solver')
