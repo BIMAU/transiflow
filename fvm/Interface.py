@@ -43,8 +43,13 @@ class Interface:
                     jcoA.append(jac.jcoA[j])
             begA.append(len(coA))
 
-        rhs[self.dim] = 0
-
         A = sparse.csr_matrix((coA, jcoA, begA))
-        x = linalg.spsolve(A, rhs)
+        if len(rhs.shape) < 2:
+            rhs[self.dim] = 0
+            x = linalg.spsolve(A, rhs)
+        else:
+            x = rhs.copy()
+            rhs[self.dim, :] = 0
+            for i in range(x.shape[1]):
+                x[:, i] = linalg.spsolve(A, rhs[:, i])
         return x
