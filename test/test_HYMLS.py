@@ -1,3 +1,5 @@
+import pytest
+
 from fvm import Continuation
 from fvm import plot_utils
 
@@ -19,7 +21,7 @@ def test_HYMLS(nx=4, interactive=False):
         from PyTrilinos import Epetra
         from PyTrilinos import Teuchos
     except ImportError:
-        return
+        pytest.skip("HYMLS not found")
 
     dim = 3
     dof = 4
@@ -63,7 +65,7 @@ def test_HYMLS_2D(nx=8, interactive=False):
         from PyTrilinos import Epetra
         from PyTrilinos import Teuchos
     except ImportError:
-        return
+        pytest.skip("HYMLS not found")
 
     dim = 3
     dof = 4
