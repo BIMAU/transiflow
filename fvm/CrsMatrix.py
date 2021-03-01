@@ -8,6 +8,11 @@ class CrsMatrix:
 
         self.compress()
 
+    def _get_n(self):
+        return len(self.begA) - 1
+
+    n = property(_get_n)
+
     def compress(self):
         ''' Remove zeros and merge duplicate entries, which may occur in the case of periodic
         boundary conditions.'''
@@ -16,7 +21,7 @@ class CrsMatrix:
         for i in range(len(self.begA) - 1):
             unique_indices, inverse_indices = numpy.unique(self.jcoA[beg:self.begA[i+1]], return_inverse=True)
 
-            values = numpy.zeros(len(unique_indices))
+            values = numpy.zeros(len(unique_indices), dtype=self.coA.dtype)
             for orig_idx, inverse_idx in enumerate(inverse_indices):
                 values[inverse_idx] += self.coA[beg + orig_idx]
 
