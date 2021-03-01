@@ -111,6 +111,7 @@ class Interface(fvm.Interface):
         self.discretization = fvm.Discretization(self.parameters, self.nx_local, self.ny_local, self.nz_local, self.dim, self.dof, x, y, z)
 
         self.jac = None
+        self.mass = None
         self.initialize()
 
     def initialize(self):
@@ -240,6 +241,16 @@ class Interface(fvm.Interface):
 
         return Epetra.Map(-1, local_elements[0:pos], 0, self.comm)
 
+    def rhs(self, state):
+        state_ass = Vector(self.assembly_map)
+        state_ass.Import(state, self.assembly_importer, Epetra.Insert)
+
+        rhs = fvm.Interface.rhs(self, state_ass)
+        rhs_ass = Vector(Epetra.Copy, self.assembly_map, rhs)
+        rhs = Vector(self.map)
+        rhs.Export(rhs_ass, self.assembly_importer, Epetra.Zero)
+        return rhs
+
     def jacobian(self, state):
         state_ass = Vector(self.assembly_map)
         state_ass.Import(state, self.assembly_importer, Epetra.Insert)
@@ -263,15 +274,25 @@ class Interface(fvm.Interface):
 
         return self.jac
 
-    def rhs(self, state):
-        state_ass = Vector(self.assembly_map)
-        state_ass.Import(state, self.assembly_importer, Epetra.Insert)
+    def mass_matrix(self):
+        local_mass = fvm.Interface.mass_matrix(self)
 
-        rhs = fvm.Interface.rhs(self, state_ass)
-        rhs_ass = Vector(Epetra.Copy, self.assembly_map, rhs)
-        rhs = Vector(self.map)
-        rhs.Export(rhs_ass, self.assembly_importer, Epetra.Zero)
-        return rhs
+        if self.mass is None:
+            self.mass = Epetra.FECrsMatrix(Epetra.Copy, self.solve_map, 1)
+        else:
+            self.mass.PutScalar(0.0);
+
+        for i in range(len(local_mass.begA)-1):
+            if self.is_ghost(i):
+                continue
+            row = self.assembly_map.GID64(i)
+            for j in range(local_mass.begA[i], local_mass.begA[i+1]):
+                # __setitem__ automatically calls ReplaceGlobalValues if the matrix is filled,
+                # InsertGlobalValues otherwise
+                self.mass[row, self.assembly_map.GID64(local_mass.jcoA[j])] = local_mass.coA[j]
+        self.mass.GlobalAssemble(True, Epetra.Insert)
+
+        return self.mass
 
     def direct_solve(self, jac, rhs):
         A = Epetra.CrsMatrix(Epetra.Copy, self.map, 27)

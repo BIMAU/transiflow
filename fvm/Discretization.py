@@ -123,6 +123,12 @@ class Discretization:
 
         return self.assemble_jacobian(atomJ)
 
+    def mass_matrix(self):
+        atom = self.mass_x() + self.mass_y()
+        if self.dim == 3:
+            atom += self.mass_z()
+        return self.assemble_mass_matrix(atom)
+
     def assemble_rhs(self, state, atom):
         ''' Assemble the right-hand side. Optimized version of
 
@@ -213,6 +219,28 @@ class Discretization:
                                           + ((k + config[3] - 1) % self.nz) * self.nx * self.ny * self.dof + config[0]
                                 coA[idx] = atom[i, j, k, d1, config[0], config[1], config[2], config[3]]
                                 idx += 1
+                        row += 1
+                        begA[row] = idx
+        return CrsMatrix(coA, jcoA, begA)
+
+    def assemble_mass_matrix(self, atom):
+        ''' Assemble the mass matrix.'''
+
+        row = 0
+        idx = 0
+        n = self.nx * self.ny * self.nz * self.dof
+        coA = numpy.zeros(n)
+        jcoA = numpy.zeros(n, dtype=int)
+        begA = numpy.zeros(n+1, dtype=int)
+
+        for k in range(self.nz):
+            for j in range(self.ny):
+                for i in range(self.nx):
+                    for d1 in range(self.dof):
+                        if abs(atom[i, j, k, d1]) > 1e-14:
+                            jcoA[idx] = (i + (j + k * self.ny) * self.nx) * self.dof + d1
+                            coA[idx] = atom[i, j, k, d1]
+                            idx += 1
                         row += 1
                         begA[row] = idx
         return CrsMatrix(coA, jcoA, begA)
@@ -576,6 +604,41 @@ class Discretization:
             for j in range(self.ny):
                 for k in range(self.nz):
                     Discretization._backward_average_x(atom[i, j, k, self.dim+1, 2, 1, 1, :], k, j, i, self.z, self.y, self.x)
+        return atom
+
+    @staticmethod
+    def _mass_x(atom, i, j, k, x, y, z):
+        # volume size in the x direction
+        dx = (x[i+1] - x[i-1]) / 2
+        # volume size in the y direction
+        dy = y[j] - y[j-1]
+        # volume size in the z direction
+        dz = z[k] - z[k-1]
+
+        atom[0] = dx * dy * dz
+
+    def mass_x(self):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
+                    Discretization._mass_x(atom[i, j, k, 0:1], i, j, k, self.x, self.y, self.z)
+        return atom
+
+    def mass_y(self):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
+                    Discretization._mass_x(atom[i, j, k, 1:2], j, i, k, self.y, self.x, self.z)
+        return atom
+
+    def mass_z(self):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
+                    Discretization._mass_x(atom[i, j, k, 2:3], k, j, i, self.z, self.y, self.x)
         return atom
 
     @staticmethod

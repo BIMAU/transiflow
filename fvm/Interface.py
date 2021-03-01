@@ -24,6 +24,9 @@ class Interface:
     def jacobian(self, state):
         return self.discretization.jacobian(state)
 
+    def mass_matrix(self):
+        return self.discretization.mass_matrix()
+
     def solve(self, jac, rhs):
         coA = []
         jcoA = []
