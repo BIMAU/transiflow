@@ -338,8 +338,9 @@ class Interface(fvm.Interface):
             C_sol = Epetra.SerialDenseMatrix(1, 1)
             C_sol[0, 0] = C
 
-        if rhs2 is not None:
             self.solver.SetBorder(V_sol, W_sol, C_sol)
+        else:
+            self.solver.UnsetBorder()
 
         self.preconditioner.Compute()
 
