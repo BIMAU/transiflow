@@ -1,3 +1,5 @@
+import numpy
+
 from scipy import sparse
 from scipy.sparse import linalg
 
@@ -28,20 +30,24 @@ class Interface:
         return self.discretization.mass_matrix()
 
     def solve(self, jac, rhs):
-        coA = []
-        jcoA = []
-        begA = [0]
+        coA = numpy.zeros(jac.begA[-1], dtype=jac.coA.dtype)
+        jcoA = numpy.zeros(jac.begA[-1], dtype=int)
+        begA = numpy.zeros(len(jac.begA), dtype=int)
+
+        idx = 0
         for i in range(len(jac.begA)-1):
             if i == self.dim:
-                begA.append(begA[i]+1)
-                coA.append(-1)
-                jcoA.append(i)
+                coA[idx] = -1.0
+                jcoA[idx] = i
+                idx += 1
+                begA[i+1] = idx
                 continue
             for j in range(jac.begA[i], jac.begA[i+1]):
                 if jac.jcoA[j] != self.dim:
-                    coA.append(jac.coA[j])
-                    jcoA.append(jac.jcoA[j])
-            begA.append(len(coA))
+                    coA[idx] = jac.coA[j]
+                    jcoA[idx] = jac.jcoA[j]
+                    idx += 1
+            begA[i+1] = idx
 
         A = sparse.csr_matrix((coA, jcoA, begA))
         if len(rhs.shape) < 2:
