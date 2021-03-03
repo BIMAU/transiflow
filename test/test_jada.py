@@ -64,16 +64,13 @@ def x(interface):
 def check_eigenvalues(A_op, B_op, eigs, v, num_evs, tol):
     from jadapy.utils import norm
 
-    A_mat = A_op.mat.todense()
-    B_mat = B_op.mat.todense()
-
     idx = range(len(eigs))
     idx = numpy.array(sorted(idx, key=lambda i: abs(eigs[i])))
 
     for i in range(num_evs):
         j = idx[i]
-        assert norm(A_mat @ v[:, j]) > tol
-        assert_allclose(norm(A_mat @ v[:, j] - eigs[j] * B_mat @ v[:, j]), 0, rtol=0, atol=tol)
+        assert norm(A_op @ v[:, j]) > tol
+        assert_allclose(norm(A_op @ v[:, j] - B_op @ v[:, j] * eigs[j]), 0, rtol=0, atol=tol)
 
 @pytest.fixture(scope='module')
 def arpack_eigs(interface, x, num_evs, tol, atol):
