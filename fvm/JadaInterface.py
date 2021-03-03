@@ -9,7 +9,7 @@ from scipy import sparse
 class JadaOp:
     def __init__(self, mat):
         self.mat = sparse.csr_matrix((mat.coA, mat.jcoA, mat.begA), shape=(mat.n, mat.n))
-        self.dtype = numpy.dtype('D')
+        self.dtype = mat.coA.dtype
         self.shape = (mat.n, mat.n)
 
     def matvec(self, x):
