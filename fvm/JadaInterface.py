@@ -8,6 +8,7 @@ from scipy import sparse
 
 class JadaOp:
     def __init__(self, mat):
+        self.fvm_mat = mat
         self.mat = sparse.csr_matrix((mat.coA, mat.jcoA, mat.begA), shape=(mat.n, mat.n))
         self.dtype = mat.coA.dtype
         self.shape = (mat.n, mat.n)
@@ -42,12 +43,11 @@ class JadaPrecOp(object):
         return self.op.proj(self.interface.solve(crs_mat, rhs))
 
 class JadaInterface(NumPyInterface.NumPyInterface):
-    def __init__(self, interface, x, *args):
+    def __init__(self, interface, jac_op, mass_op, *args):
         super().__init__(*args)
         self.interface = interface
-        self.jac = self.interface.jacobian(x)
-        self.jac_op = JadaOp(self.jac)
-        self.mass_op = JadaOp(self.interface.mass_matrix())
+        self.jac_op = jac_op
+        self.mass_op = mass_op
 
     # def solve(self, op, x, tol):
     #     out = x.copy()
