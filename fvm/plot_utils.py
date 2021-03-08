@@ -1,7 +1,7 @@
 import numpy
 import matplotlib.pyplot as plt
 
-from fvm.utils import create_state_mtx
+from fvm.utils import create_state_mtx # noqa: F401
 
 def plot_state(u, v, nx, ny):
     psi = numpy.zeros([nx, ny])

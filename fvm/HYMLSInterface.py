@@ -33,7 +33,7 @@ def ind2sub(nx, ny, nz, idx, dof=1):
     return (i, j, k, var)
 
 def sub2ind(nx, ny, nz, dof, i, j, k, var):
-    return ((k *ny + j) * nx + i) * dof + var
+    return ((k * ny + j) * nx + i) * dof + var
 
 def set_default_parameter(parameterlist, name, value):
     if name not in parameterlist:
@@ -41,7 +41,7 @@ def set_default_parameter(parameterlist, name, value):
 
 class Interface(fvm.Interface):
     def __init__(self, comm, parameters, nx, ny, nz, dim, dof):
-        fvm.Interface.__init__(self,parameters, nx, ny, nz, dim, dof)
+        fvm.Interface.__init__(self, parameters, nx, ny, nz, dim, dof)
 
         self.nx_global = nx
         self.ny_global = ny
@@ -108,7 +108,8 @@ class Interface(fvm.Interface):
         self.nx = self.nx_local
         self.ny = self.ny_local
         self.nz = self.nz_local
-        self.discretization = fvm.Discretization(self.parameters, self.nx_local, self.ny_local, self.nz_local, self.dim, self.dof, x, y, z)
+        self.discretization = fvm.Discretization(self.parameters, self.nx_local, self.ny_local, self.nz_local,
+                                                 self.dim, self.dof, x, y, z)
 
         self.jac = None
         self.mass = None
@@ -175,7 +176,8 @@ class Interface(fvm.Interface):
                         found = True
 
         if not found:
-            raise Exception('Could not split %dx%dx%d domain in %d parts.' % (self.nx_global, self.ny_global, self.nz_global, nparts))
+            raise Exception('Could not split %dx%dx%d domain in %d parts.' % (self.nx_global, self.ny_global,
+                                                                              self.nz_global, nparts))
 
         self.pidx, self.pidy, self.pidz, _ = ind2sub(self.npx, self.npy, self.npz, pid)
 
@@ -260,7 +262,7 @@ class Interface(fvm.Interface):
         if self.jac is None:
             self.jac = Epetra.FECrsMatrix(Epetra.Copy, self.solve_map, 27)
         else:
-            self.jac.PutScalar(0.0);
+            self.jac.PutScalar(0.0)
 
         for i in range(len(local_jac.begA)-1):
             if self.is_ghost(i):
@@ -280,7 +282,7 @@ class Interface(fvm.Interface):
         if self.mass is None:
             self.mass = Epetra.FECrsMatrix(Epetra.Copy, self.solve_map, 1)
         else:
-            self.mass.PutScalar(0.0);
+            self.mass.PutScalar(0.0)
 
         for i in range(len(local_mass.begA)-1):
             if self.is_ghost(i):

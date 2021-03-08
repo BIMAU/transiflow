@@ -4,7 +4,6 @@ import pytest
 
 from fvm import CrsMatrix
 from fvm import Discretization
-from fvm import BoundaryConditions
 
 def create_coordinate_vector(nx):
     dx = 1 / (nx + 1)
@@ -47,7 +46,7 @@ def test_v_yy():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
 
     discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
-    atom =  discretization.v_yy()
+    atom = discretization.v_yy()
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -64,7 +63,7 @@ def test_w_zz():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
 
     discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
-    atom =  discretization.w_zz()
+    atom = discretization.w_zz()
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -81,7 +80,7 @@ def test_u_yy():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
 
     discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
-    atom =  discretization.u_yy()
+    atom = discretization.u_yy()
 
     for i in range(nx):
         dx = (x[i+1] - x[i-1]) / 2
@@ -98,7 +97,7 @@ def test_v_xx():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
 
     discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
-    atom =  discretization.v_xx()
+    atom = discretization.v_xx()
 
     for i in range(nx):
         dx = (x[i] - x[i-2]) / 2
@@ -115,7 +114,7 @@ def test_w_yy():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
 
     discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
-    atom =  discretization.w_yy()
+    atom = discretization.w_yy()
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -132,7 +131,7 @@ def test_u_zz():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
 
     discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
-    atom =  discretization.u_zz()
+    atom = discretization.u_zz()
 
     for i in range(nx):
         dx = (x[i+1] - x[i-1]) / 2
@@ -149,7 +148,7 @@ def test_v_zz():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
 
     discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
-    atom =  discretization.v_zz()
+    atom = discretization.v_zz()
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -166,7 +165,7 @@ def test_w_xx():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
 
     discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
-    atom =  discretization.w_xx()
+    atom = discretization.w_xx()
 
     for i in range(nx):
         dx = (x[i] - x[i-2]) / 2
@@ -187,7 +186,7 @@ def test_T_xx():
 
     for i in range(nx):
         dx = (x[i] - x[i-2]) / 2
-        dxp1 = (x[i+1] - x[i-1]) /  2
+        dxp1 = (x[i+1] - x[i-1]) / 2
         for j in range(ny):
             dy = y[j] - y[j-1]
             for k in range(nz):
@@ -206,7 +205,7 @@ def test_T_yy():
         dx = x[i] - x[i-1]
         for j in range(ny):
             dy = (y[j] - y[j-2]) / 2
-            dyp1 = (y[j+1] - y[j-1]) /  2
+            dyp1 = (y[j+1] - y[j-1]) / 2
             for k in range(nz):
                 dz = z[k] - z[k-1]
                 print(i, j, k)
@@ -225,7 +224,7 @@ def test_T_zz():
             dy = y[j] - y[j-1]
             for k in range(nz):
                 dz = (z[k] - z[k-2]) / 2
-                dzp1 = (z[k+1] - z[k-1]) /  2
+                dzp1 = (z[k+1] - z[k-1]) / 2
                 print(i, j, k)
                 assert atom[i, j, k, 4, 4, 1, 1, 0] == pytest.approx(1 / dz * dy * dx)
                 assert atom[i, j, k, 4, 4, 1, 1, 2] == pytest.approx(1 / dzp1 * dy * dx)
@@ -234,7 +233,7 @@ def test_p_x():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
 
     discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
-    atom =  discretization.p_x()
+    atom = discretization.p_x()
 
     for i in range(nx):
         for j in range(ny):
@@ -249,7 +248,7 @@ def test_p_y():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
 
     discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
-    atom =  discretization.p_y()
+    atom = discretization.p_y()
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -264,7 +263,7 @@ def test_p_z():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
 
     discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
-    atom =  discretization.p_z()
+    atom = discretization.p_z()
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -279,7 +278,7 @@ def test_u_x():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
 
     discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
-    atom =  discretization.u_x()
+    atom = discretization.u_x()
 
     for i in range(nx):
         for j in range(ny):
@@ -294,7 +293,7 @@ def test_u_y():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
 
     discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
-    atom =  discretization.v_y()
+    atom = discretization.v_y()
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -309,7 +308,7 @@ def test_u_z():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
 
     discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
-    atom =  discretization.w_z()
+    atom = discretization.w_z()
 
     for i in range(nx):
         dx = x[i] - x[i-1]
@@ -355,7 +354,7 @@ def test_MxU():
                 if i < nx-1:
                     average += state[i * dof + j * dof * nx + k * dof * nx * ny] / 2
                 if i > 0:
-                     average += state[(i-1) * dof + j * dof * nx + k * dof * nx * ny] / 2
+                    average += state[(i-1) * dof + j * dof * nx + k * dof * nx * ny] / 2
                 print(i, j, k)
                 assert averages[i, j, k, 0, 0] == average
 
@@ -411,8 +410,6 @@ def read_vector(fname):
 
     dirname = os.path.dirname(__file__)
     with open(os.path.join(dirname, fname), 'r') as f:
-        rows = []
-        idx = 0
         for i in f.readlines():
             vec = numpy.append(vec, float(i.strip()))
     return vec
@@ -443,9 +440,9 @@ def assemble_jacobian(atom, nx, ny, nz, dof):
                             for x in range(3):
                                 for d2 in range(dof):
                                     if abs(atom[i, j, k, d1, d2, x, y, z]) > 1e-14:
-                                       jcoA[idx] = row + (x-1) * dof + (y-1) * nx * dof + (z-1) * nx * ny * dof + d2 - d1
-                                       coA[idx] = atom[i, j, k, d1, d2, x, y, z]
-                                       idx += 1
+                                        jcoA[idx] = row + (x-1) * dof + (y-1) * nx * dof + (z-1) * nx * ny * dof + d2 - d1
+                                        coA[idx] = atom[i, j, k, d1, d2, x, y, z]
+                                        idx += 1
                     row += 1
                     begA[row] = idx
 
@@ -480,7 +477,7 @@ def test_ldc_lin():
         assert B.begA[i+1] - B.begA[i] == A.begA[i+1] - A.begA[i]
         for j in range(B.begA[i], B.begA[i+1]):
             assert B.jcoA[j] == A.jcoA[j]
-            assert B.coA[j]  == A.coA[j]
+            assert B.coA[j] == A.coA[j]
 
 def test_bous_lin():
     nx = 4
@@ -904,5 +901,6 @@ def test_ldc8():
 
         assert rhs_B[i] == pytest.approx(rhs[i])
 
+
 if __name__ == '__main__':
-    test_full()
+    test_ldc8()

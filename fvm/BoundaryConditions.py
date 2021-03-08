@@ -98,7 +98,8 @@ class BoundaryConditions:
 
     def heatflux_east(self, atom, heatflux):
         '''T[i+1] - T[i] = h * Tbc, h = (x[i+1] - x[i-1]) / 2'''
-        frc = self._constant_forcing_east(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, - heatflux * (self.x[self.nx+1] - self.x[self.nx-1]) / 2)
+        frc = self._constant_forcing_east(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1,
+                                          -heatflux * (self.x[self.nx+1] - self.x[self.nx-1]) / 2)
 
         atom[self.nx-1, :, :, self.dim+1, self.dim+1, 1, :, :] += 2 * atom[self.nx-1, :, :, self.dim+1, self.dim+1, 2, :, :]
         self.dirichlet_east(atom)
@@ -107,7 +108,8 @@ class BoundaryConditions:
 
     def heatflux_west(self, atom, heatflux):
         '''T[i] - T[i-1] = h * Tbc, h = (x[i] - x[i-2]) / 2 (west boundary does not start at x = 0)'''
-        frc = self._constant_forcing_west(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, - heatflux * (self.x[0] - self.x[-2]) / 2)
+        frc = self._constant_forcing_west(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1,
+                                          -heatflux * (self.x[0] - self.x[-2]) / 2)
 
         atom[0, :, :, self.dim+1, self.dim+1, 1, :, :] += 2 * atom[0, :, :, self.dim+1, self.dim+1, 0, :, :]
         self.dirichlet_west(atom)
@@ -116,7 +118,8 @@ class BoundaryConditions:
 
     def heatflux_north(self, atom, heatflux):
         '''T[j+1] - T[j] = h * Tbc, h = (y[j+1] - y[j-1]) / 2'''
-        frc = self._constant_forcing_north(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, - heatflux * (self.y[self.nx+1] - self.y[self.nx-1]) / 2)
+        frc = self._constant_forcing_north(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1,
+                                           -heatflux * (self.y[self.nx+1] - self.y[self.nx-1]) / 2)
 
         atom[:, self.ny-1, :, self.dim+1, self.dim+1, :, 1, :] += 2 * atom[:, self.ny-1, :, self.dim+1, self.dim+1, :, 2, :]
         self.dirichlet_north(atom)
@@ -125,7 +128,8 @@ class BoundaryConditions:
 
     def heatflux_south(self, atom, heatflux):
         '''T[j] - T[j-1] = h * Tbc, h = (y[j] - y[j-2]) / 2 (south boundary does not start at y = 0)'''
-        frc = self._constant_forcing_south(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, - heatflux * (self.y[0] - self.y[-2]) / 2)
+        frc = self._constant_forcing_south(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1,
+                                           -heatflux * (self.y[0] - self.y[-2]) / 2)
 
         atom[:, 0, :, self.dim+1, self.dim+1, :, 1, :] += 2 * atom[:, 0, :, self.dim+1, self.dim+1, :, 0, :]
         self.dirichlet_south(atom)
@@ -134,7 +138,8 @@ class BoundaryConditions:
 
     def heatflux_top(self, atom, heatflux):
         '''T[k+1] - T[k] = h * Tbc, h = (z[k+1] - z[k-1]) / 2'''
-        frc = self._constant_forcing_top(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, - heatflux * (self.z[self.nx+1] - self.z[self.nx-1]) / 2)
+        frc = self._constant_forcing_top(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1,
+                                         -heatflux * (self.z[self.nx+1] - self.z[self.nx-1]) / 2)
 
         atom[:, :, self.nz-1, self.dim+1, self.dim+1, :, :, 1] += 2 * atom[:, :, self.nz-1, self.dim+1, self.dim+1, :, :, 2]
         self.dirichlet_top(atom)
@@ -143,7 +148,8 @@ class BoundaryConditions:
 
     def heatflux_bottom(self, atom, heatflux):
         '''T[k] - T[k-1] = h * Tbc, h = (z[k] - z[k-2]) / 2 (bottom boundary does not start at z = 0)'''
-        frc = self._constant_forcing_bottom(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, - heatflux * (self.z[0] - self.z[-2]) / 2)
+        frc = self._constant_forcing_bottom(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1,
+                                            -heatflux * (self.z[0] - self.z[-2]) / 2)
 
         atom[:, :, 0, self.dim+1, self.dim+1, :, :, 1] += 2 * atom[:, :, 0, self.dim+1, self.dim+1, :, :, 0]
         self.dirichlet_bottom(atom)

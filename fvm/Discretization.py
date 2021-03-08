@@ -46,8 +46,8 @@ class Discretization:
         if Re == 0:
             Re = 1
 
-        atom = 1 / Re * (self.u_xx() + self.u_yy() \
-                      +  self.v_xx() + self.v_yy()) \
+        atom = 1 / Re * (self.u_xx() + self.u_yy()
+                         + self.v_xx() + self.v_yy()) \
             - (self.p_x() + self.p_y()) \
             + self.div()
 
@@ -68,9 +68,9 @@ class Discretization:
         if Re == 0:
             Re = 1
 
-        atom = 1 / Re * (self.u_xx() + self.u_yy() + self.u_zz() \
-                      +  self.v_xx() + self.v_yy() + self.v_zz() \
-                      +  self.w_xx() + self.w_yy() + self.w_zz()) \
+        atom = 1 / Re * (self.u_xx() + self.u_yy() + self.u_zz()
+                         + self.v_xx() + self.v_yy() + self.v_zz()
+                         + self.w_xx() + self.w_yy() + self.w_zz()) \
             - (self.p_x() + self.p_y() + self.p_z()) \
             + self.div()
 
@@ -146,12 +146,10 @@ class Discretization:
                         row += 1
         '''
 
-        row = 0
-        n = self.nx * self.ny * self.nz * self.dof
-
         # Put the state in shifted matrix form
         state_mtx = numpy.zeros([self.nx+2, self.ny+2, self.nz+2, self.dof])
-        state_mtx[1:self.nx+1, 1:self.ny+1, 1:self.nz+1, :] = utils.create_state_mtx(state, self.nx, self.ny, self.nz, self.dof)
+        state_mtx[1:self.nx+1, 1:self.ny+1, 1:self.nz+1, :] = utils.create_state_mtx(
+            state, self.nx, self.ny, self.nz, self.dof)
 
         # Add extra borders for periodic boundary conditions
         state_mtx[0, 1:self.ny+1, 1:self.nz+1, :] = state_mtx[self.nx, 1:self.ny+1, 1:self.nz+1, :]
@@ -168,7 +166,8 @@ class Discretization:
                 for i in range(3):
                     for d1 in range(self.dof):
                         for d2 in range(self.dof):
-                            out_mtx[:, :, :, d1] += atom[:, :, :, d1, d2, i, j, k] * state_mtx[i:(i+self.nx), j:(j+self.ny), k:(k+self.nz), d2]
+                            out_mtx[:, :, :, d1] += atom[:, :, :, d1, d2, i, j, k] \
+                                * state_mtx[i:(i+self.nx), j:(j+self.ny), k:(k+self.nz), d2]
 
         return utils.create_state_vec(out_mtx, self.nx, self.ny, self.nz, self.dof)
 
@@ -215,8 +214,8 @@ class Discretization:
                         for config in configs:
                             if abs(atom[i, j, k, d1, config[0], config[1], config[2], config[3]]) > 1e-14:
                                 jcoA[idx] = ((i + config[1] - 1) % self.nx) * self.dof \
-                                          + ((j + config[2] - 1) % self.ny) * self.nx * self.dof + \
-                                          + ((k + config[3] - 1) % self.nz) * self.nx * self.ny * self.dof + config[0]
+                                    + ((j + config[2] - 1) % self.ny) * self.nx * self.dof + \
+                                    + ((k + config[3] - 1) % self.nz) * self.nx * self.ny * self.dof + config[0]
                                 coA[idx] = atom[i, j, k, d1, config[0], config[1], config[2], config[3]]
                                 idx += 1
                         row += 1
@@ -814,8 +813,10 @@ class Discretization:
         convective_term.backward_average_y(bil[:, :, :, :, 1, :, :], averages[:, :, :, 1, :], state[:, :, :, 1]) # tMyV
 
         if self.dof > self.dim+1:
-            convective_term.forward_average_x(bil[:, :, :, :, self.dim+1, :, :], averages[:, :, :, self.dim+1, :], state[:, :, :, self.dim+1]) # tMxT
-            convective_term.forward_average_y(bil[:, :, :, :, self.dim+1, :, :], averages[:, :, :, self.dim+1, :], state[:, :, :, self.dim+1]) # tMyT
+            convective_term.forward_average_x(bil[:, :, :, :, self.dim+1, :, :], averages[:, :, :, self.dim+1, :],
+                                              state[:, :, :, self.dim+1]) # tMxT
+            convective_term.forward_average_y(bil[:, :, :, :, self.dim+1, :, :], averages[:, :, :, self.dim+1, :],
+                                              state[:, :, :, self.dim+1]) # tMyT
             convective_term.value_u(bil[:, :, :, :, :, self.dim+1, :], averages[:, :, :, :, self.dim+1], state)
             convective_term.value_v(bil[:, :, :, :, :, self.dim+1, :], averages[:, :, :, :, self.dim+1], state)
 
@@ -866,9 +867,12 @@ class Discretization:
         convective_term.backward_average_z(bil[:, :, :, :, 2, :, :], averages[:, :, :, 2, :], state[:, :, :, 2]) # tMzW
 
         if self.dof > self.dim+1:
-            convective_term.forward_average_x(bil[:, :, :, :, self.dim+1, :, :], averages[:, :, :, self.dim+1, :], state[:, :, :, self.dim+1]) # tMxT
-            convective_term.forward_average_y(bil[:, :, :, :, self.dim+1, :, :], averages[:, :, :, self.dim+1, :], state[:, :, :, self.dim+1]) # tMyT
-            convective_term.forward_average_z(bil[:, :, :, :, self.dim+1, :, :], averages[:, :, :, self.dim+1, :], state[:, :, :, self.dim+1]) # tMzT
+            convective_term.forward_average_x(bil[:, :, :, :, self.dim+1, :, :], averages[:, :, :, self.dim+1, :],
+                                              state[:, :, :, self.dim+1]) # tMxT
+            convective_term.forward_average_y(bil[:, :, :, :, self.dim+1, :, :], averages[:, :, :, self.dim+1, :],
+                                              state[:, :, :, self.dim+1]) # tMyT
+            convective_term.forward_average_z(bil[:, :, :, :, self.dim+1, :, :], averages[:, :, :, self.dim+1, :],
+                                              state[:, :, :, self.dim+1]) # tMzT
             convective_term.value_u(bil[:, :, :, :, :, self.dim+1, :], averages[:, :, :, :, self.dim+1], state)
             convective_term.value_v(bil[:, :, :, :, :, self.dim+1, :], averages[:, :, :, :, self.dim+1], state)
             convective_term.value_w(bil[:, :, :, :, :, self.dim+1, :], averages[:, :, :, :, self.dim+1], state)

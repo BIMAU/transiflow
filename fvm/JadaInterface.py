@@ -1,5 +1,3 @@
-import numpy
-
 from fvm import CrsMatrix
 
 from jadapy import NumPyInterface
