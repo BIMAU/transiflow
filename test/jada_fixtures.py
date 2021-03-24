@@ -33,7 +33,7 @@ def num_evs():
     return 9
 
 @pytest.fixture(scope='module')
-def interface(nx):
+def numpy_interface(nx):
     dim = 2
     dof = 3
     ny = nx
@@ -45,11 +45,11 @@ def interface(nx):
     return interface
 
 @pytest.fixture(scope='module')
-def x(interface):
-    n = interface.dof * interface.nx * interface.ny * interface.nz
+def numpy_x(numpy_interface):
+    n = numpy_interface.dof * numpy_interface.nx * numpy_interface.ny * numpy_interface.nz
 
     parameters = {}
-    continuation = Continuation(interface, parameters)
+    continuation = Continuation(numpy_interface, parameters)
 
     x0 = numpy.zeros(n)
     x0 = continuation.newton(x0)
@@ -71,11 +71,11 @@ def check_eigenvalues(A_op, B_op, eigs, v, num_evs, tol):
         assert_allclose(norm(A_op @ v[:, j] - B_op @ v[:, j] * eigs[j]), 0, rtol=0, atol=tol)
 
 @pytest.fixture(scope='module')
-def arpack_eigs(interface, x, num_evs, tol, atol):
+def arpack_eigs(numpy_interface, numpy_x, num_evs, tol, atol):
     from fvm import JadaInterface
 
-    A_op = JadaInterface.JadaOp(interface.jacobian(x))
-    B_op = JadaInterface.JadaOp(interface.mass_matrix())
+    A_op = JadaInterface.JadaOp(numpy_interface.jacobian(numpy_x))
+    B_op = JadaInterface.JadaOp(numpy_interface.mass_matrix())
 
     # A_mat = A_op.mat.todense()
     # B_mat = B_op.mat.todense()
@@ -86,3 +86,11 @@ def arpack_eigs(interface, x, num_evs, tol, atol):
     check_eigenvalues(A_op, B_op, eigs, v, num_evs, atol)
     eigs = numpy.array(sorted(eigs, key=lambda x: abs(x)))
     return eigs[:num_evs]
+
+@pytest.fixture(scope='module')
+def interface(numpy_interface):
+    return numpy_interface
+
+@pytest.fixture(scope='module')
+def x(numpy_x):
+    return numpy_x

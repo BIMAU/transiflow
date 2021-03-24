@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 
 # Import common fixtures
 from test.jada_fixtures import * # noqa: F401, F403
+from test.jada_fixtures import check_eigenvalues
 
 @pytest.fixture(autouse=True, scope='module')
 def import_test():
@@ -14,17 +15,6 @@ def import_test():
         from fvm import JadaInterface # noqa: F401
     except ImportError:
         pytest.skip('jadapy not found')
-
-def check_eigenvalues(A_op, B_op, eigs, v, num_evs, tol):
-    from jadapy.utils import norm
-
-    idx = range(len(eigs))
-    idx = numpy.array(sorted(idx, key=lambda i: abs(eigs[i])))
-
-    for i in range(num_evs):
-        j = idx[i]
-        assert norm(A_op @ v[:, j]) > tol
-        assert_allclose(norm(A_op @ v[:, j] - B_op @ v[:, j] * eigs[j]), 0, rtol=0, atol=tol)
 
 def test_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
     from fvm import JadaInterface
