@@ -2,8 +2,23 @@ import copy
 
 import HYMLS
 
+from PyTrilinos import Epetra
+
 from jadapy import EpetraInterface
 from jadapy import ComplexEpetraInterface
+
+class JadaHYMLSPrecOp(EpetraInterface.Operator):
+    def __init__(self, op, prec):
+        super().__init__(op)
+        self.prec = prec
+
+    def ApplyInverse(self, x, y):
+        self.prec.ApplyInverse(x, y)
+
+        # Create a view here because this is an Epetra.MultiVector.
+        z = EpetraInterface.Vector(Epetra.View, y, 0, y.NumVectors())
+        z = self.op.proj(z)
+        return y.Update(1.0, z, 0.0)
 
 class JadaHYMLSInterface(EpetraInterface.EpetraInterface):
 
@@ -30,7 +45,8 @@ class JadaHYMLSInterface(EpetraInterface.EpetraInterface):
 
         epetra_op = EpetraInterface.Operator(op)
         if self.preconditioned_solve:
-            solver = HYMLS.Solver(epetra_op, self.interface.preconditioner, self.parameters)
+            epetra_precop = JadaHYMLSPrecOp(op, self.interface.preconditioner)
+            solver = HYMLS.Solver(epetra_op, epetra_precop, self.parameters)
         else:
             solver = HYMLS.Solver(epetra_op, epetra_op, self.parameters)
         solver.ApplyInverse(rhs, out)
@@ -41,6 +57,24 @@ class JadaHYMLSInterface(EpetraInterface.EpetraInterface):
         out = EpetraInterface.Vector(x)
         self.interface.preconditioner.ApplyInverse(x, out)
         return out
+
+class ComplexJadaHYMLSPrecOp(EpetraInterface.Operator):
+    def __init__(self, op, prec):
+        super().__init__(op)
+        self.prec = prec
+
+    def ApplyInverse(self, x, y):
+        self.prec.ApplyInverse(x, y)
+
+        assert x.NumVectors() == 2
+        # Create a view here because this is an Epetra.MultiVector.
+        y = EpetraInterface.Vector(Epetra.View, y, 0, y.NumVectors())
+        y = ComplexEpetraInterface.ComplexVector(y[:, 0], y[:, 1])
+
+        z = self.op.proj(y)
+        y *= 0.0
+        y += z
+        return 0
 
 class ComplexJadaHYMLSInterface(ComplexEpetraInterface.ComplexEpetraInterface):
 
@@ -67,7 +101,8 @@ class ComplexJadaHYMLSInterface(ComplexEpetraInterface.ComplexEpetraInterface):
 
         epetra_op = ComplexEpetraInterface.Operator(op)
         if self.preconditioned_solve:
-            solver = HYMLS.Solver(epetra_op, self.interface.preconditioner, self.parameters)
+            epetra_precop = ComplexJadaHYMLSPrecOp(op, self.interface.preconditioner)
+            solver = HYMLS.Solver(epetra_op, epetra_precop, self.parameters)
         else:
             solver = HYMLS.Solver(epetra_op, epetra_op, self.parameters)
         solver.ApplyInverse(x, y)

@@ -9,7 +9,6 @@ from fvm import Continuation
 
 # Import common fixtures
 from test.jada_fixtures import * # noqa: F401, F403
-from test.jada_fixtures import check_eigenvalues
 
 @pytest.fixture(autouse=True, scope='module')
 def import_test():
@@ -69,7 +68,7 @@ def test_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=Fals
     mass_op = EpetraInterface.CrsMatrix(interface.mass_matrix())
     jada_interface = JadaHYMLSInterface.JadaHYMLSInterface(interface.map, interface, preconditioned_solve=False)
 
-    alpha, beta = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[10, 20],
+    alpha, beta = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[20, 40],
                             interface=jada_interface, prec=jada_interface.prec)
     jdqz_eigs = numpy.array(sorted(alpha / beta, key=lambda x: abs(x)))
 
@@ -95,7 +94,7 @@ def test_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactiv
     mass_op = EpetraInterface.CrsMatrix(interface.mass_matrix())
     jada_interface = JadaHYMLSInterface.JadaHYMLSInterface(interface.map, interface, preconditioned_solve=True)
 
-    alpha, beta = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[10, 20],
+    alpha, beta = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[20, 40],
                             interface=jada_interface)
     jdqz_eigs = numpy.array(sorted(alpha / beta, key=lambda x: abs(x)))
 
@@ -121,7 +120,7 @@ def test_complex_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interact
     mass_op = ComplexEpetraInterface.CrsMatrix(interface.mass_matrix())
     jada_interface = JadaHYMLSInterface.ComplexJadaHYMLSInterface(interface.map, interface, preconditioned_solve=False)
 
-    alpha, beta = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[10, 20],
+    alpha, beta = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[20, 40],
                             interface=jada_interface, prec=jada_interface.prec)
     jdqz_eigs = numpy.array(sorted(alpha / beta, key=lambda x: abs(x)))
 
@@ -147,7 +146,7 @@ def test_complex_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, in
     mass_op = ComplexEpetraInterface.CrsMatrix(interface.mass_matrix())
     jada_interface = JadaHYMLSInterface.ComplexJadaHYMLSInterface(interface.map, interface, preconditioned_solve=True)
 
-    alpha, beta = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[10, 20],
+    alpha, beta = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[20, 40],
                             interface=jada_interface)
     jdqz_eigs = numpy.array(sorted(alpha / beta, key=lambda x: abs(x)))
 
@@ -173,7 +172,7 @@ def test_bordered_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, i
     mass_op = EpetraInterface.CrsMatrix(interface.mass_matrix())
     jada_interface = JadaHYMLSInterface.BorderedJadaHYMLSInterface(interface.map, interface)
 
-    alpha, beta = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[10, 20],
+    alpha, beta = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[20, 40],
                             interface=jada_interface)
     jdqz_eigs = numpy.array(sorted(alpha / beta, key=lambda x: abs(x)))
 

@@ -18,7 +18,7 @@ def import_test():
 
 @pytest.fixture(scope='module')
 def nx():
-    return 4
+    return 6
 
 @pytest.fixture(scope='module')
 def tol():
@@ -30,7 +30,7 @@ def atol(tol):
 
 @pytest.fixture(scope='module')
 def num_evs():
-    return 9
+    return 10
 
 @pytest.fixture(scope='module')
 def numpy_interface(nx):

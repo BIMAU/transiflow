@@ -27,6 +27,7 @@ def test_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
 
     alpha, beta = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[10, 20], target=0.1)
     jdqz_eigs = numpy.array(sorted(alpha / beta, key=lambda x: abs(x)))
+    jdqz_eigs = jdqz_eigs[:num_evs]
 
     assert_allclose(jdqz_eigs.real, arpack_eigs.real, rtol=0, atol=atol)
     assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
@@ -77,6 +78,7 @@ def test_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=Fals
                                return_eigenvectors=True, prec=jada_interface.prec)
 
     jdqz_eigs = numpy.array(sorted(alpha / beta, key=lambda x: abs(x)))
+    jdqz_eigs = jdqz_eigs[:num_evs]
 
     assert_allclose(jdqz_eigs.real, arpack_eigs.real, rtol=0, atol=atol)
     assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
