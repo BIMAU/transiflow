@@ -85,3 +85,52 @@ class ComplexJadaHYMLSInterface(ComplexEpetraInterface.ComplexEpetraInterface):
 
         out = ComplexEpetraInterface.ComplexVector(z[:, 0], z[:, 1])
         return out
+
+class ShiftedOperator(object):
+    def __init__(self, op):
+        self.A = op.A
+        self.B = op.B
+        self.prec = op.prec
+        self.Q = op.Q
+        self.Z = op.Z
+        self.Y = op.Y
+        self.H = op.H
+        self.alpha = op.alpha
+        self.beta = op.beta
+
+        self.dtype = self.Q.dtype
+        self.shape = self.A.shape
+
+    def matvec(self, x):
+        return (self.A @ x) * self.beta - (self.B @ x) * self.alpha
+
+class BorderedJadaHYMLSInterface(EpetraInterface.EpetraInterface):
+
+    def __init__(self, map, interface, *args, **kwargs):
+        super().__init__(map)
+        self.interface = interface
+        self.parameters = copy.copy(interface.parameters)
+
+    def solve(self, op, rhs, tol, maxit):
+        solver_parameters = self.parameters.sublist('Solver')
+
+        iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
+        iterative_solver_parameters.set('Convergence Tolerance', tol)
+        iterative_solver_parameters.set('Maximum Iterations', maxit)
+
+        if rhs.shape[1] == 2:
+            solver_parameters.set('Complex', True)
+        else:
+            solver_parameters.set('Complex', False)
+        solver_parameters.set('Use Bordering', True)
+
+        out = EpetraInterface.Vector(rhs)
+
+        epetra_op = EpetraInterface.Operator(ShiftedOperator(op))
+        solver = HYMLS.Solver(epetra_op, self.interface.preconditioner, self.parameters)
+        solver.SetBorder(op.Z, op.Q)
+        self.interface.preconditioner.Compute()
+        solver.ApplyInverse(rhs, out)
+        solver.UnsetBorder()
+
+        return out

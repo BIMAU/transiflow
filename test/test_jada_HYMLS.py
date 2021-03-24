@@ -160,3 +160,29 @@ def test_complex_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, in
     fig, ax = plt.subplots()
     ax.scatter(jdqz_eigs.real, jdqz_eigs.imag, marker='+')
     plt.show()
+
+def test_bordered_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
+    from fvm import JadaHYMLSInterface
+
+    from jadapy import EpetraInterface
+    from jadapy import jdqz
+
+    numpy.random.seed(1234)
+
+    jac_op = EpetraInterface.CrsMatrix(interface.jacobian(x))
+    mass_op = EpetraInterface.CrsMatrix(interface.mass_matrix())
+    jada_interface = JadaHYMLSInterface.BorderedJadaHYMLSInterface(interface.map, interface)
+
+    alpha, beta = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[10, 20],
+                            interface=jada_interface)
+    jdqz_eigs = numpy.array(sorted(alpha / beta, key=lambda x: abs(x)))
+
+    assert_allclose(jdqz_eigs.real, arpack_eigs.real, rtol=0, atol=atol)
+    assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
+
+    if not interactive:
+        return x
+
+    fig, ax = plt.subplots()
+    ax.scatter(jdqz_eigs.real, jdqz_eigs.imag, marker='+')
+    plt.show()
