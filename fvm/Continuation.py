@@ -16,7 +16,7 @@ class Continuation:
             jac = self.interface.jacobian(x)
             dx = self.interface.solve(jac, -fval)
 
-            x = x + dx
+            x += dx
 
             dxnorm = norm(dx)
             if dxnorm < tol:
@@ -62,8 +62,8 @@ class Continuation:
                 dx = z1 - dmu * z2
 
             # Compute a new x and mu (2.2.10 - 2.2.11)
-            x = x + dx
-            mu = mu + dmu
+            x += dx
+            mu += dmu
 
             dxnorm = norm(dx)
             if dxnorm < tol:
@@ -91,11 +91,8 @@ class Continuation:
         dmu = 1
         zeta = 1 / len(x)
         nrm = sqrt(zeta * dx.dot(dx) + dmu ** 2)
-        dmu = dmu / nrm
-        dx = dx / nrm
-
-        dmu0 = dmu
-        dx0 = dx
+        dmu /= nrm
+        dx /= nrm
 
         # Perform the continuation
         for j in range(maxit):
@@ -103,15 +100,15 @@ class Continuation:
             x0 = x
 
             # Predictor (2.2.3)
-            mu = mu0 + ds * dmu0
-            x = x0 + ds * dx0
+            mu = mu0 + ds * dmu
+            x = x0 + ds * dx
 
             # Corrector (2.2.9 and onward)
-            x2, mu2 = self.newtoncorrector(parameter_name, ds, x, x0, mu, mu0, 1e-4)
+            x, mu = self.newtoncorrector(parameter_name, ds, x, x0, mu, mu0, 1e-4)
 
-            print("%s: %f" % (parameter_name, mu2))
+            print("%s: %f" % (parameter_name, mu))
 
-            if (mu2 >= target and mu0 < target) or (mu2 <= target and mu0 > target):
+            if (mu >= target and mu0 < target) or (mu <= target and mu0 > target):
                 # Converge onto the end point (we usually go past it, so we
                 # use Newton to converge)
                 mu = target
@@ -121,16 +118,14 @@ class Continuation:
                 return x
 
             # Set the new values computed by the corrector
-            dmu = mu2 - mu0
-            mu = mu2
-            dx = x2 - x0
-            x = x2
+            dmu = mu - mu0
+            dx = x - x0
 
             if abs(dmu) < 1e-10:
                 return
 
             # Compute the tangent (2.2.4)
-            dx0 = dx / ds
-            dmu0 = dmu / ds
+            dx /= ds
+            dmu /= ds
 
         return x
