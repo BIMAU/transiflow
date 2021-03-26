@@ -1,3 +1,5 @@
+import sys
+
 from math import sqrt
 
 def norm(x):
@@ -9,23 +11,39 @@ class Continuation:
         self.interface = interface
         self.parameters = parameters
 
-    def newton(self, x0, tol=1.e-7, maxit=1000):
+    def newton(self, x0, tol=1.e-7, maxit=1000, residual_check='F', verbose=False):
         x = x0
         for k in range(maxit):
             fval = self.interface.rhs(x)
+
+            if residual_check == 'F' or verbose:
+                fnorm = norm(fval)
+
+            if residual_check == 'F' and fnorm < tol:
+                print('Newton converged in %d iterations with ||F||=%e' % (k, fnorm))
+                sys.stdout.flush()
+                break
+
             jac = self.interface.jacobian(x)
             dx = self.interface.solve(jac, -fval)
 
             x += dx
 
-            dxnorm = norm(dx)
-            if dxnorm < tol:
-                print('Newton converged in %d steps with norm %e' % (k, dxnorm))
+            if residual_check != 'F' or verbose:
+                dxnorm = norm(dx)
+
+            if residual_check != 'F' and dxnorm < tol:
+                print('Newton converged in %d iterations with ||dx||=%e' % (k, dxnorm))
+                sys.stdout.flush()
                 break
+
+            if verbose:
+                print('Newton status at iteration %d: ||F||=%e, ||dx||=%e' % (k, fnorm, dxnorm))
+                sys.stdout.flush()
 
         return x
 
-    def newtoncorrector(self, parameter_name, ds, x, x0, mu, mu0, tol):
+    def newtoncorrector(self, parameter_name, ds, x, x0, mu, mu0, tol, residual_check='F', verbose=False):
         # Set some parameters
         maxit = 100
         zeta = 1 / len(x)
@@ -39,6 +57,14 @@ class Continuation:
             self.interface.set_parameter(parameter_name, mu)
             fval = self.interface.rhs(x)
             dflval = (dflval - fval) / delta
+
+            if residual_check == 'F' or verbose:
+                fnorm = norm(fval)
+
+            if residual_check == 'F' and fnorm < tol:
+                print('Newton corrector converged in %d iterations with ||F||=%e' % (k, fnorm))
+                sys.stdout.flush()
+                break
 
             # Compute the jacobian at x
             jac = self.interface.jacobian(x)
@@ -65,14 +91,21 @@ class Continuation:
             x += dx
             mu += dmu
 
-            dxnorm = norm(dx)
-            if dxnorm < tol:
-                print('Newton corrector converged in %d steps with norm %e' % (k, dxnorm))
-                return (x, mu)
+            if residual_check != 'F' or verbose:
+                dxnorm = norm(dx)
 
-        print('No convergence achieved by Newton corrector')
+            if residual_check != 'F' and dxnorm < tol:
+                print('Newton corrector converged in %d iterations with ||dx||=%e' % (k, dxnorm))
+                sys.stdout.flush()
+                break
 
-    def continuation(self, x0, parameter_name, target, ds, maxit):
+            if verbose:
+                print('Newton corrector status at iteration %d: ||F||=%e, ||dx||=%e' % (k, fnorm, dxnorm))
+                sys.stdout.flush()
+
+        return x, mu
+
+    def continuation(self, x0, parameter_name, target, ds, maxit, residual_check='F', verbose=False):
         x = x0
 
         # Get the initial tangent (2.2.5 - 2.2.7).
@@ -104,7 +137,8 @@ class Continuation:
             x = x0 + ds * dx
 
             # Corrector (2.2.9 and onward)
-            x, mu = self.newtoncorrector(parameter_name, ds, x, x0, mu, mu0, 1e-4)
+            x, mu = self.newtoncorrector(parameter_name, ds, x, x0, mu, mu0, 1e-4,
+                                         residual_check=residual_check, verbose=verbose)
 
             print("%s: %f" % (parameter_name, mu))
 
@@ -113,7 +147,7 @@ class Continuation:
                 # use Newton to converge)
                 mu = target
                 self.interface.set_parameter(parameter_name, mu)
-                x = self.newton(x, 1e-4)
+                x = self.newton(x, 1e-4, residual_check=residual_check, verbose=verbose)
 
                 return x
 
