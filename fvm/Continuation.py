@@ -11,6 +11,11 @@ class Continuation:
         self.interface = interface
         self.parameters = parameters
 
+        self.newton_iterations = 0
+        self.optimal_newton_iterations = 3
+        self.min_step_size = 100
+        self.max_step_size = 500
+
     def newton(self, x0, tol=1.e-7, maxit=1000):
         residual_check = self.parameters.get('Residual Check', 'F')
         verbose = self.parameters.get('Verbose', False)
@@ -43,6 +48,8 @@ class Continuation:
             if verbose:
                 print('Newton status at iteration %d: ||F||=%e, ||dx||=%e' % (k, fnorm, dxnorm))
                 sys.stdout.flush()
+
+        self.newton_iterations = k
 
         return x
 
@@ -109,7 +116,19 @@ class Continuation:
                 print('Newton corrector status at iteration %d: ||F||=%e, ||dx||=%e' % (k, fnorm, dxnorm))
                 sys.stdout.flush()
 
+        self.newton_iterations = k
+
         return x, mu
+
+    def adjust_step_size(self, ds):
+        ''' Step size control, see [Seydel p 188.] '''
+
+        factor = self.optimal_newton_iterations / max(self.newton_iterations, 1)
+        factor = min(max(factor, 0.5), 2.0)
+
+        ds *= factor
+
+        return min(max(ds, self.min_step_size), self.max_step_size)
 
     def continuation(self, x0, parameter_name, target, ds, maxit, verbose=False):
         x = x0
@@ -166,5 +185,7 @@ class Continuation:
             # Compute the tangent (2.2.4)
             dx /= ds
             dmu /= ds
+
+            ds = self.adjust_step_size(ds)
 
         return x
