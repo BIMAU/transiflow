@@ -11,7 +11,10 @@ class Continuation:
         self.interface = interface
         self.parameters = parameters
 
-    def newton(self, x0, tol=1.e-7, maxit=1000, residual_check='F', verbose=False):
+    def newton(self, x0, tol=1.e-7, maxit=1000):
+        residual_check = self.parameters.get('Residual Check', 'F')
+        verbose = self.parameters.get('Verbose', False)
+
         x = x0
         for k in range(maxit):
             fval = self.interface.rhs(x)
@@ -43,7 +46,10 @@ class Continuation:
 
         return x
 
-    def newtoncorrector(self, parameter_name, ds, x, x0, mu, mu0, tol, residual_check='F', verbose=False):
+    def newtoncorrector(self, parameter_name, ds, x, x0, mu, mu0, tol):
+        residual_check = self.parameters.get('Residual Check', 'F')
+        verbose = self.parameters.get('Verbose', False)
+
         # Set some parameters
         maxit = 100
         zeta = 1 / len(x)
@@ -105,7 +111,7 @@ class Continuation:
 
         return x, mu
 
-    def continuation(self, x0, parameter_name, target, ds, maxit, residual_check='F', verbose=False):
+    def continuation(self, x0, parameter_name, target, ds, maxit, verbose=False):
         x = x0
 
         # Get the initial tangent (2.2.5 - 2.2.7).
@@ -137,8 +143,7 @@ class Continuation:
             x = x0 + ds * dx
 
             # Corrector (2.2.9 and onward)
-            x, mu = self.newtoncorrector(parameter_name, ds, x, x0, mu, mu0, 1e-4,
-                                         residual_check=residual_check, verbose=verbose)
+            x, mu = self.newtoncorrector(parameter_name, ds, x, x0, mu, mu0, 1e-4)
 
             print("%s: %f" % (parameter_name, mu))
 
@@ -147,7 +152,7 @@ class Continuation:
                 # use Newton to converge)
                 mu = target
                 self.interface.set_parameter(parameter_name, mu)
-                x = self.newton(x, 1e-4, residual_check=residual_check, verbose=verbose)
+                x = self.newton(x, 1e-4)
 
                 return x
 
