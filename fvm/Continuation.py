@@ -165,6 +165,7 @@ class Continuation:
             x, mu = self.newtoncorrector(parameter_name, ds, x, x0, mu, mu0, 1e-4)
 
             print("%s: %f" % (parameter_name, mu))
+            sys.stdout.flush()
 
             if (mu >= target and mu0 < target) or (mu <= target and mu0 > target):
                 # Converge onto the end point (we usually go past it, so we
