@@ -34,7 +34,7 @@ class JadaHYMLSInterface(EpetraInterface.EpetraInterface):
 
         iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
         iterative_solver_parameters.set('Convergence Tolerance', tol)
-        iterative_solver_parameters.set('Maximum Iterations', maxit)
+        # iterative_solver_parameters.set('Maximum Iterations', maxit)
 
         if rhs.shape[1] == 2:
             solver_parameters.set('Complex', True)
@@ -90,7 +90,7 @@ class ComplexJadaHYMLSInterface(ComplexEpetraInterface.ComplexEpetraInterface):
 
         iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
         iterative_solver_parameters.set('Convergence Tolerance', tol)
-        iterative_solver_parameters.set('Maximum Iterations', maxit)
+        # iterative_solver_parameters.set('Maximum Iterations', maxit)
 
         solver_parameters.set('Complex', True)
 
@@ -151,7 +151,7 @@ class BorderedJadaHYMLSInterface(EpetraInterface.EpetraInterface):
 
         iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
         iterative_solver_parameters.set('Convergence Tolerance', tol)
-        iterative_solver_parameters.set('Maximum Iterations', maxit)
+        # iterative_solver_parameters.set('Maximum Iterations', maxit)
 
         if rhs.shape[1] == 2:
             solver_parameters.set('Complex', True)
