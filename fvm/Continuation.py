@@ -171,7 +171,7 @@ class Continuation:
                 # use Newton to converge)
                 mu = target
                 self.interface.set_parameter(parameter_name, mu)
-                x = self.newton(x, 1e-4)
+                x = self.newton(x, 1e-8)
 
                 return x
 
