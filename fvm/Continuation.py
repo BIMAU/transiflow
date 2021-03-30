@@ -12,9 +12,9 @@ class Continuation:
         self.parameters = parameters
 
         self.newton_iterations = 0
-        self.optimal_newton_iterations = 3
-        self.min_step_size = 100
-        self.max_step_size = 500
+        self.optimal_newton_iterations = self.parameters.get('Optimal Newton Iterations', 3)
+        self.min_step_size = self.parameters.get('Minimum Step Size', 100)
+        self.max_step_size = self.parameters.get('Maximum Step Size', 2000)
 
     def newton(self, x0, tol=1.e-7, maxit=1000):
         residual_check = self.parameters.get('Residual Check', 'F')
