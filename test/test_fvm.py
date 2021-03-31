@@ -2,6 +2,7 @@ import os
 import numpy
 import pytest
 
+from fvm import utils
 from fvm import CrsMatrix
 from fvm import Discretization
 
@@ -24,6 +25,19 @@ def create_test_problem():
     z = create_coordinate_vector(nz)
 
     return ({}, nx, ny, nz, dim, dof, x, y, z)
+
+def test_uniform_grid():
+    nx = 5
+    dx = 1 / nx
+    x = utils.create_uniform_coordinate_vector(0, 1, nx)
+    for i in range(nx):
+        assert x[i] == pytest.approx((i + 1) * dx)
+
+def test_stretched_grid():
+    nx = 5
+    x = utils.create_stretched_coordinate_vector(0, 1, nx, 1.5)
+    assert x[0] > 0
+    assert x[nx-1] == pytest.approx(1)
 
 def test_u_xx():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()

@@ -3,6 +3,7 @@ import numpy
 from fvm import Continuation
 from fvm import plot_utils
 from fvm import Interface
+from fvm import utils
 
 def test_continuation(nx=4, interactive=False):
     dim = 3
@@ -91,6 +92,38 @@ def continuation_2D(nx=4, interactive=False):
     x = plot_utils.create_state_mtx(x, nx, ny, nz, dof)
     plot_utils.plot_state(x[:, :, 0, 0], x[:, :, 0, 1], nx, ny)
 
+def test_continuation_2D_stretched(nx=4, interactive=False):
+    dim = 2
+    dof = 3
+    ny = nx
+    nz = 1
+
+    xpos = utils.create_stretched_coordinate_vector(0, 1, nx, 1.5)
+    ypos = utils.create_stretched_coordinate_vector(0, 1, ny, 1.5)
+
+    parameters = {'Reynolds Number': 0}
+    interface = Interface(parameters, nx, ny, nz, dim, dof, xpos, ypos)
+
+    continuation = Continuation(interface, parameters)
+
+    x0 = numpy.zeros(dof * nx * ny * nz)
+    x0 = continuation.newton(x0)
+
+    target = 2000
+    ds = 100
+    maxit = 20
+    x = continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)
+
+    assert numpy.linalg.norm(x) > 0
+
+    if not interactive:
+        return x
+
+    print(x)
+
+    x = plot_utils.create_state_mtx(x, nx, ny, nz, dof)
+    plot_utils.plot_state(x[:, :, 0, 0], x[:, :, 0, 1], nx, ny, xpos[:-3], ypos[:-3])
+
 def test_continuation_2D_equals():
     x1 = continuation_2D()
     x2 = continuation_semi_2D()
@@ -105,4 +138,5 @@ def test_continuation_2D_equals():
 
 if __name__ == '__main__':
     # test_continuation(8, False)
-    continuation_2D(16, True)
+    # continuation_2D(16, True)
+    test_continuation_2D_stretched(32, True)

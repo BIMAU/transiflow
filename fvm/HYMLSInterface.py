@@ -40,7 +40,7 @@ def set_default_parameter(parameterlist, name, value):
         parameterlist[name] = value
 
 class Interface(fvm.Interface):
-    def __init__(self, comm, parameters, nx, ny, nz, dim, dof):
+    def __init__(self, comm, parameters, nx, ny, nz, dim, dof, x=None, y=None, z=None):
         fvm.Interface.__init__(self, parameters, nx, ny, nz, dim, dof)
 
         self.nx_global = nx
@@ -94,15 +94,22 @@ class Interface(fvm.Interface):
         self.solve_importer = Epetra.Import(self.solve_map, self.map)
 
         # Create local coordinate vectors
-        x = fvm.utils.create_uniform_coordinate_vector(self.nx_offset / self.nx_global,
-                                                       (self.nx_offset + self.nx_local) / self.nx_global,
-                                                       self.nx_local)
-        y = fvm.utils.create_uniform_coordinate_vector(self.ny_offset / self.ny_global,
-                                                       (self.ny_offset + self.ny_local) / self.ny_global,
-                                                       self.ny_local)
-        z = fvm.utils.create_uniform_coordinate_vector(self.nz_offset / self.nz_global,
-                                                       (self.nz_offset + self.nz_local) / self.nz_global,
-                                                       self.nz_local)
+        nx_start = self.nx_offset / self.nx_global
+        nx_end = nx_start + self.nx_local / self.nx_global
+        ny_start = self.ny_offset / self.ny_global
+        ny_end = ny_start + self.ny_local / self.ny_global
+        nz_start = self.nz_offset / self.nz_global
+        nz_end = nz_start + self.nz_local / self.nz_global
+
+        if self.parameters.get('Grid Stretching', False):
+            sigma = self.parameters.get('Grid Stretching Factor', 1.5)
+            x = fvm.utils.create_stretched_coordinate_vector(nx_start, nx_end, self.nx_local, sigma) if x is None else x
+            y = fvm.utils.create_stretched_coordinate_vector(ny_start, ny_end, self.ny_local, sigma) if y is None else y
+            z = fvm.utils.create_stretched_coordinate_vector(nz_start, nz_end, self.nz_local, sigma) if z is None else z
+        else:
+            x = fvm.utils.create_uniform_coordinate_vector(nx_start, nx_end, self.nx_local) if x is None else x
+            y = fvm.utils.create_uniform_coordinate_vector(ny_start, ny_end, self.ny_local) if y is None else y
+            z = fvm.utils.create_uniform_coordinate_vector(nz_start, nz_end, self.nz_local) if z is None else z
 
         # Re-initialize the fvm.Interface parameters
         self.nx = self.nx_local

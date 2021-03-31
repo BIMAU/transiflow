@@ -24,3 +24,7 @@ def create_state_vec(state_mtx, nx, ny, nz, dof):
 def create_uniform_coordinate_vector(start, end, nx):
     dx = (end - start) / nx
     return numpy.roll(numpy.arange(start - dx, end + 2 * dx, dx), -2)
+
+def create_stretched_coordinate_vector(start, end, nx, sigma):
+    x = create_uniform_coordinate_vector(start, end, nx)
+    return 0.5 * (1 + numpy.tanh(2 * sigma * (x - 0.5)) / numpy.tanh(sigma))
