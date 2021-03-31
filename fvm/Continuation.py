@@ -13,7 +13,8 @@ class Continuation:
 
         self.newton_iterations = 0
         self.optimal_newton_iterations = self.parameters.get('Optimal Newton Iterations', 3)
-        self.min_step_size = self.parameters.get('Minimum Step Size', 100)
+
+        self.min_step_size = self.parameters.get('Minimum Step Size', 10)
         self.max_step_size = self.parameters.get('Maximum Step Size', 2000)
 
     def newton(self, x0, tol=1.e-7, maxit=1000):
@@ -58,12 +59,15 @@ class Continuation:
         verbose = self.parameters.get('Verbose', False)
 
         # Set some parameters
-        maxit = 100
+        maxit = self.parameters.get('Maximum Newton Iterations', 10)
         zeta = 1 / len(x)
         delta = 1
 
+        self.newton_iterations = 0
+
         # Do the main iteration
         for k in range(maxit):
+
             # Compute F and F_mu (RHS of 2.2.9)
             self.interface.set_parameter(parameter_name, mu + delta)
             dflval = self.interface.rhs(x)
@@ -104,6 +108,8 @@ class Continuation:
             x += dx
             mu += dmu
 
+            self.newton_iterations += 1
+
             if residual_check != 'F' or verbose:
                 dxnorm = norm(dx)
 
@@ -116,7 +122,9 @@ class Continuation:
                 print('Newton corrector status at iteration %d: ||F||=%e, ||dx||=%e' % (k, fnorm, dxnorm))
                 sys.stdout.flush()
 
-        self.newton_iterations = k
+        if self.newton_iterations == maxit:
+            print('Newton did not converge. Adjusting step size and trying again')
+            return x0, mu0
 
         return x, mu
 
@@ -163,6 +171,15 @@ class Continuation:
 
             # Corrector (2.2.9 and onward)
             x, mu = self.newtoncorrector(parameter_name, ds, x, x0, mu, mu0, 1e-4)
+
+            if mu == mu0:
+                # No convergence was achieved, adjusting the step size
+                prev_ds = ds
+                ds = self.adjust_step_size(ds)
+                if prev_ds == ds:
+                    raise Exception('Newton cannot achieve convergence')
+
+                continue
 
             print("%s: %f" % (parameter_name, mu))
             sys.stdout.flush()
