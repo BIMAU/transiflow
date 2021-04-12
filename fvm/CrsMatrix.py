@@ -33,3 +33,10 @@ class CrsMatrix:
 
             beg = self.begA[i+1]
             self.begA[i+1] = idx
+
+    def __matmul__(self, x):
+        b = numpy.zeros(self.n, dtype=x.dtype)
+        for i in range(self.n):
+            for j in range(self.begA[i], self.begA[i+1]):
+                b[i] += self.coA[j] * x[self.jcoA[j]]
+        return b

@@ -10,13 +10,13 @@ def create_coordinate_vector(nx):
     dx = 1 / (nx + 1)
     a = []
     for i in range(nx+3):
-        a.append(-dx + dx**i)
+        a.append(-dx + dx * 1.2 ** i)
     return numpy.roll(a, -2)
 
 def create_test_problem():
-    nx = 5
-    ny = 3
-    nz = 2
+    nx = 13
+    ny = 7
+    nz = 5
     dim = 3
     dof = 5
 
@@ -371,6 +371,64 @@ def test_MxU():
                     average += state[(i-1) * dof + j * dof * nx + k * dof * nx * ny] / 2
                 print(i, j, k)
                 assert averages[i, j, k, 0, 0] == average
+
+def test_jac_consistency():
+    parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
+
+    n = dof * nx * ny * nz
+    state = numpy.random.random(n)
+    pert = numpy.random.random(n)
+
+    discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
+    A = discretization.jacobian(state)
+    rhs = discretization.rhs(state)
+
+    for i in range(3, 12):
+        eps = 10 ** -i
+        eps2 = max(eps, 10 ** (-14+i))
+        rhs2 = discretization.rhs(state + eps * pert)
+        assert numpy.linalg.norm((rhs2 - rhs) / eps - A @ pert) < eps2
+
+def test_jac_consistency_uniform():
+    parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
+
+    nz = 1
+    dim = 2
+    dof = 3
+    n = dof * nx * ny * nz
+    state = numpy.random.random(n)
+    pert = numpy.random.random(n)
+
+    discretization = Discretization(parameters, nx, ny, nz, dim, dof)
+    A = discretization.jacobian(state)
+    rhs = discretization.rhs(state)
+
+    for i in range(3, 12):
+        eps = 10 ** -i
+        eps2 = max(eps, 10 ** (-14+i))
+        rhs2 = discretization.rhs(state + eps * pert)
+        assert numpy.linalg.norm((rhs2 - rhs) / eps - A @ pert) < eps2
+
+def test_jac_consistency_stretched():
+    parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
+
+    x = utils.create_stretched_coordinate_vector(0, 1, nx, 1.5)
+    y = utils.create_stretched_coordinate_vector(0, 1, ny, 1.5)
+    z = utils.create_stretched_coordinate_vector(0, 1, nz, 1.5)
+
+    n = dof * nx * ny * nz
+    state = numpy.random.random(n)
+    pert = numpy.random.random(n)
+
+    discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
+    A = discretization.jacobian(state)
+    rhs = discretization.rhs(state)
+
+    for i in range(3, 12):
+        eps = 10 ** -i
+        eps2 = max(eps, 10 ** (-14+i))
+        rhs2 = discretization.rhs(state + eps * pert)
+        assert numpy.linalg.norm((rhs2 - rhs) / eps - A @ pert) < eps2
 
 def read_matrix(fname):
     A = CrsMatrix([], [], [0])

@@ -66,7 +66,8 @@ class Interface(fvm.Interface):
 
         iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
         set_default_parameter(iterative_solver_parameters, 'Maximum Iterations', 1000)
-        set_default_parameter(iterative_solver_parameters, 'Maximum Restarts', 5)
+        set_default_parameter(iterative_solver_parameters, 'Maximum Restarts', 20)
+        set_default_parameter(iterative_solver_parameters, 'Num Blocks', 100)
         set_default_parameter(iterative_solver_parameters, 'Flexible Gmres', False)
         set_default_parameter(iterative_solver_parameters, 'Convergence Tolerance', 1e-8)
         set_default_parameter(iterative_solver_parameters, 'Output Frequency', 1)

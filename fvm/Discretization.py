@@ -940,30 +940,63 @@ class ConvectiveTerm:
         averages[1:self.nx, :, :, 0] += 1/2 * state[0:self.nx-1, :, :]
         averages[0:self.nx-1, :, :, 0] += 1/2 * state[0:self.nx-1, :, :]
 
+    def _forward_average_x(self, averages, state, i):
+        # distance between u[i] and u[i-1]
+        dxmh = self.x[i] - self.x[i-1]
+        # distance between u[i+1] and u[i]
+        dxph = self.x[i+1] - self.x[i]
+        # distance between v[i+1] and v[i]
+        dx = (self.x[i+1] - self.x[i-1]) / 2
+
+        averages[i, :, :, 0] += 1/2 * state[i, :, :] * dxmh / dx
+        averages[i, :, :, 0] += 1/2 * state[i+1, :, :] * dxph / dx
+
     def forward_average_x(self, bil, averages, state):
         bil[:, :, :, 0, 0, 1:3] = 1/2
-        averages[0:self.nx-1, :, :, 0] += 1/2 * state[0:self.nx-1, :, :]
-        averages[0:self.nx-1, :, :, 0] += 1/2 * state[1:self.nx, :, :]
+        for i in range(self.nx-1):
+            self._forward_average_x(averages, state, i)
 
     def backward_average_y(self, bil, averages, state):
         bil[:, :, :, 0, 1, 0:2] = 1/2
         averages[:, 1:self.ny, :, 1] += 1/2 * state[:, 0:self.ny-1, :]
         averages[:, 0:self.ny-1, :, 1] += 1/2 * state[:, 0:self.ny-1, :]
 
+    def _forward_average_y(self, averages, state, j):
+        # distance between v[j] and v[j-1]
+        dymh = self.y[j] - self.y[j-1]
+        # distance between v[j+1] and v[j]
+        dyph = self.y[j+1] - self.y[j]
+        # distance between u[j+1] and u[j]
+        dy = (self.y[j+1] - self.y[j-1]) / 2
+
+        averages[:, j, :, 1] += 1/2 * state[:, j, :] * dymh / dy
+        averages[:, j, :, 1] += 1/2 * state[:, j+1, :] * dyph / dy
+
     def forward_average_y(self, bil, averages, state):
         bil[:, :, :, 0, 1, 1:3] = 1/2
-        averages[:, 0:self.ny-1, :, 1] += 1/2 * state[:, 0:self.ny-1, :]
-        averages[:, 0:self.ny-1, :, 1] += 1/2 * state[:, 1:self.ny, :]
+        for j in range(self.ny-1):
+            self._forward_average_y(averages, state, j)
 
     def backward_average_z(self, bil, averages, state):
         bil[:, :, :, 0, 2, 0:2] = 1/2
         averages[:, :, 1:self.nz, 2] += 1/2 * state[:, :, 0:self.nz-1]
         averages[:, :, 0:self.nz-1, 2] += 1/2 * state[:, :, 0:self.nz-1]
 
+    def _forward_average_z(self, averages, state, k):
+        # distance between w[k] and w[k-1]
+        dzmh = self.z[k] - self.z[k-1]
+        # distance between w[k+2] and w[k+1]
+        dzph = self.z[k+1] - self.z[k]
+        # distance between u[k+1] and u[k]
+        dz = (self.z[k+1] - self.z[k-1]) / 2
+
+        averages[:, :, k, 2] += 1/2 * state[:, :, k] * dzmh / dz
+        averages[:, :, k, 2] += 1/2 * state[:, :, k+1] * dzph / dz
+
     def forward_average_z(self, bil, averages, state):
         bil[:, :, :, 0, 2, 1:3] = 1/2
-        averages[:, :, 0:self.nz-1, 2] += 1/2 * state[:, :, 0:self.nz-1]
-        averages[:, :, 0:self.nz-1, 2] += 1/2 * state[:, :, 1:self.nz]
+        for k in range(self.nz-1):
+            self._forward_average_z(averages, state, k)
 
     def value_u(self, bil, averages, state):
         bil[:, :, :, 0, 0, 1] = 1

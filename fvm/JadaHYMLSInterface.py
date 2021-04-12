@@ -33,7 +33,7 @@ class JadaHYMLSInterface(EpetraInterface.EpetraInterface):
         solver_parameters = self.parameters.sublist('Solver')
 
         iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
-        iterative_solver_parameters.set('Convergence Tolerance', tol)
+        iterative_solver_parameters.set('Convergence Tolerance', tol if maxit > 1 else 1e-3)
         # iterative_solver_parameters.set('Maximum Iterations', maxit)
 
         if rhs.shape[1] == 2:
@@ -89,7 +89,7 @@ class ComplexJadaHYMLSInterface(ComplexEpetraInterface.ComplexEpetraInterface):
         solver_parameters = self.parameters.sublist('Solver')
 
         iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
-        iterative_solver_parameters.set('Convergence Tolerance', tol)
+        iterative_solver_parameters.set('Convergence Tolerance', tol if maxit > 1 else 1e-3)
         # iterative_solver_parameters.set('Maximum Iterations', maxit)
 
         solver_parameters.set('Complex', True)
@@ -146,11 +146,13 @@ class BorderedJadaHYMLSInterface(EpetraInterface.EpetraInterface):
         self.interface = interface
         self.parameters = copy.copy(interface.parameters)
 
+        self.preconditioned_solve = kwargs.get('preconditioned_solve', True)
+
     def solve(self, op, rhs, tol, maxit):
         solver_parameters = self.parameters.sublist('Solver')
 
         iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
-        iterative_solver_parameters.set('Convergence Tolerance', tol)
+        iterative_solver_parameters.set('Convergence Tolerance', tol if maxit > 1 else 1e-3)
         # iterative_solver_parameters.set('Maximum Iterations', maxit)
 
         if rhs.shape[1] == 2:
@@ -162,10 +164,76 @@ class BorderedJadaHYMLSInterface(EpetraInterface.EpetraInterface):
         out = EpetraInterface.Vector(rhs)
 
         epetra_op = EpetraInterface.Operator(ShiftedOperator(op))
-        solver = HYMLS.Solver(epetra_op, self.interface.preconditioner, self.parameters)
-        solver.SetBorder(op.Z, op.Q)
-        self.interface.preconditioner.Compute()
-        solver.ApplyInverse(rhs, out)
-        solver.UnsetBorder()
+        if self.preconditioned_solve:
+            solver = HYMLS.Solver(epetra_op, self.interface.preconditioner, self.parameters)
+            solver.SetBorder(op.Z, op.Q)
+            self.interface.preconditioner.Compute()
+            solver.ApplyInverse(rhs, out)
+            solver.UnsetBorder()
+        else:
+            raise Exception('Not implemented')
 
+        return out
+
+    def prec(self, x, *args):
+        out = EpetraInterface.Vector(x)
+        self.interface.preconditioner.ApplyInverse(x, out)
+        return out
+
+class ComplexBorderedJadaHYMLSInterface(ComplexEpetraInterface.ComplexEpetraInterface):
+
+    def __init__(self, map, interface, *args, **kwargs):
+        super().__init__(map)
+        self.interface = interface
+        self.parameters = copy.copy(interface.parameters)
+
+        self.preconditioned_solve = kwargs.get('preconditioned_solve', True)
+
+    def solve(self, op, rhs, tol, maxit):
+        solver_parameters = self.parameters.sublist('Solver')
+
+        iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
+        iterative_solver_parameters.set('Convergence Tolerance', tol if maxit > 1 else 1e-3)
+        # iterative_solver_parameters.set('Maximum Iterations', maxit)
+
+        solver_parameters.set('Complex', True)
+        solver_parameters.set('Use Bordering', True)
+
+        x = EpetraInterface.Vector(rhs.real.Map(), 2)
+        y = EpetraInterface.Vector(rhs.real.Map(), 2)
+        x[:, 0] = rhs.real
+        x[:, 1] = rhs.imag
+
+        m = op.Q.real.NumVectors()
+
+        Q = EpetraInterface.Vector(rhs.real.Map(), m * 2)
+        Q[:, 0:m] = op.Q.real
+        Q[:, m:2*m] = op.Q.imag
+
+        Z = EpetraInterface.Vector(rhs.real.Map(), m * 2)
+        Z[:, 0:m] = op.Z.real
+        Z[:, m:2*m] = op.Z.imag
+
+        epetra_op = ComplexEpetraInterface.Operator(ShiftedOperator(op))
+        if self.preconditioned_solve:
+            solver = HYMLS.Solver(epetra_op, self.interface.preconditioner, self.parameters)
+            solver.SetBorder(Z, Q)
+            self.interface.preconditioner.Compute()
+            solver.ApplyInverse(x, y)
+            solver.UnsetBorder()
+        else:
+            raise Exception('Not implemented')
+
+        out = ComplexEpetraInterface.ComplexVector(y[:, 0], y[:, 1])
+        return out
+
+    def prec(self, x, *args):
+        y = EpetraInterface.Vector(x.real.Map(), 2)
+        z = EpetraInterface.Vector(x.real.Map(), 2)
+        y[:, 0] = x.real
+        y[:, 1] = x.imag
+
+        self.interface.preconditioner.ApplyInverse(y, z)
+
+        out = ComplexEpetraInterface.ComplexVector(z[:, 0], z[:, 1])
         return out
