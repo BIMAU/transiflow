@@ -40,3 +40,10 @@ class CrsMatrix:
             for j in range(self.begA[i], self.begA[i+1]):
                 b[i] += self.coA[j] * x[self.jcoA[j]]
         return b
+
+    def __str__(self):
+        out = ''
+        for i in range(self.n):
+            for j in range(self.begA[i], self.begA[i+1]):
+                out += '%5d %5d %e\n' % (i, self.jcoA[j], self.coA[j])
+        return out

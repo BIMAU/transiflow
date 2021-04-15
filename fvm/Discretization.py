@@ -673,7 +673,7 @@ class Discretization:
                         atomJ[idx[0], idx[1], idx[2]] -= coef1 * coef2
 
     @staticmethod
-    def _convection_u_v(atomJ, atomF, averages, bil, varU, varV, dim, nx, i):
+    def _convection_u_v(atomJ, atomF, averages, weighted_averages, bil, varU, varV, dim, nx, i):
         for d1 in range(3):
             i2 = i + d1 - 1
 
@@ -681,7 +681,7 @@ class Discretization:
             if not numpy.any(v_x):
                 continue
 
-            coef1 = averages[i2, :, :, varU, varV] * v_x
+            coef1 = weighted_averages[i2, :, :, varU, varV] * v_x
             for d2 in range(3):
                 coef2 = bil[i2, :, :, 0, varV, varU, d2]
                 if numpy.any(coef2):
@@ -692,7 +692,7 @@ class Discretization:
 
             coef1 = averages[i2, :, :, varV, varU] * v_x
             for d2 in range(3):
-                coef2 = bil[i2, :, :, 0, varU, varV, d2]
+                coef2 = bil[i2, :, :, 2, varU, varV, d2]
                 if numpy.any(coef2):
                     idx = [1, 1, 1]
                     idx[varU] += d1 - 1
@@ -700,7 +700,7 @@ class Discretization:
                     atomJ[i, :, :, varV, varU, idx[0], idx[1], idx[2]] -= coef1 * coef2
 
     @staticmethod
-    def _convection_v_u(atomJ, atomF, averages, bil, varV, varU, dim, ny, j):
+    def _convection_v_u(atomJ, atomF, averages, weighted_averages, bil, varV, varU, dim, ny, j):
         for d1 in range(3):
             j2 = j + d1 - 1
 
@@ -708,7 +708,7 @@ class Discretization:
             if not numpy.any(u_y):
                 continue
 
-            coef1 = averages[:, j2, :, varV, varU] * u_y
+            coef1 = weighted_averages[:, j2, :, varV, varU] * u_y
             for d2 in range(3):
                 coef2 = bil[:, j2, :, 0, varU, varV, d2]
                 if numpy.any(coef2):
@@ -719,7 +719,7 @@ class Discretization:
 
             coef1 = averages[:, j2, :, varU, varV] * u_y
             for d2 in range(3):
-                coef2 = bil[:, j2, :, 0, varV, varU, d2]
+                coef2 = bil[:, j2, :, 2, varV, varU, d2]
                 if numpy.any(coef2):
                     idx = [1, 1, 1]
                     idx[varV] += d1 - 1
@@ -727,7 +727,7 @@ class Discretization:
                     atomJ[:, j, :, varU, varV, idx[0], idx[1], idx[2]] -= coef1 * coef2
 
     @staticmethod
-    def _convection_w_u(atomJ, atomF, averages, bil, varW, varU, dim, nz, k):
+    def _convection_w_u(atomJ, atomF, averages, weighted_averages, bil, varW, varU, dim, nz, k):
         for d1 in range(3):
             k2 = k + d1 - 1
 
@@ -735,7 +735,7 @@ class Discretization:
             if not numpy.any(u_z):
                 continue
 
-            coef1 = averages[:, :, k2, varW, varU] * u_z
+            coef1 = weighted_averages[:, :, k2, varW, varU] * u_z
             for d2 in range(3):
                 coef2 = bil[:, :, k2, 0, varU, varW, d2]
                 if numpy.any(coef2):
@@ -746,79 +746,86 @@ class Discretization:
 
             coef1 = averages[:, :, k2, varU, varW] * u_z
             for d2 in range(3):
-                coef2 = bil[:, :, k2, 0, varW, varU, d2]
+                coef2 = bil[:, :, k2, 2, varW, varU, d2]
                 if numpy.any(coef2):
                     idx = [1, 1, 1]
                     idx[varW] += d1 - 1
                     idx[varU if varU < dim else varW] += d2 - 1
                     atomJ[:, :, k, varU, varW, idx[0], idx[1], idx[2]] -= coef1 * coef2
 
-    def convection_u_u(self, atomJ, atomF, averages, bil):
+    def convection_u_u(self, atomJ, atomF, averages, weighted_averages, bil):
         for i in range(self.nx):
-            Discretization._convection_u_v(atomJ, atomF, averages, bil, 0, 0, self.dim, self.nx, i)
+            Discretization._convection_u_v(atomJ, atomF, averages, weighted_averages, bil, 0, 0, self.dim, self.nx, i)
 
-    def convection_v_u(self, atomJ, atomF, averages, bil):
+    def convection_v_u(self, atomJ, atomF, averages, weighted_averages, bil):
         for j in range(self.ny):
-            Discretization._convection_v_u(atomJ, atomF, averages, bil, 1, 0, self.dim, self.ny, j)
+            Discretization._convection_v_u(atomJ, atomF, averages, weighted_averages, bil, 1, 0, self.dim, self.ny, j)
 
-    def convection_w_u(self, atomJ, atomF, averages, bil):
+    def convection_w_u(self, atomJ, atomF, averages, weighted_averages, bil):
         for k in range(self.nz):
-            Discretization._convection_w_u(atomJ, atomF, averages, bil, 2, 0, self.dim, self.nz, k)
+            Discretization._convection_w_u(atomJ, atomF, averages, weighted_averages, bil, 2, 0, self.dim, self.nz, k)
 
-    def convection_u_v(self, atomJ, atomF, averages, bil):
+    def convection_u_v(self, atomJ, atomF, averages, weighted_averages, bil):
         for i in range(self.nx):
-            Discretization._convection_u_v(atomJ, atomF, averages, bil, 0, 1, self.dim, self.nx, i)
+            Discretization._convection_u_v(atomJ, atomF, averages, weighted_averages, bil, 0, 1, self.dim, self.nx, i)
 
-    def convection_v_v(self, atomJ, atomF, averages, bil):
+    def convection_v_v(self, atomJ, atomF, averages, weighted_averages, bil):
         for j in range(self.ny):
-            Discretization._convection_v_u(atomJ, atomF, averages, bil, 1, 1, self.dim, self.ny, j)
+            Discretization._convection_v_u(atomJ, atomF, averages, weighted_averages, bil, 1, 1, self.dim, self.ny, j)
 
-    def convection_w_v(self, atomJ, atomF, averages, bil):
+    def convection_w_v(self, atomJ, atomF, averages, weighted_averages, bil):
         for k in range(self.nz):
-            Discretization._convection_w_u(atomJ, atomF, averages, bil, 2, 1, self.dim, self.nz, k)
+            Discretization._convection_w_u(atomJ, atomF, averages, weighted_averages, bil, 2, 1, self.dim, self.nz, k)
 
-    def convection_u_w(self, atomJ, atomF, averages, bil):
+    def convection_u_w(self, atomJ, atomF, averages, weighted_averages, bil):
         for i in range(self.nx):
-            Discretization._convection_u_v(atomJ, atomF, averages, bil, 0, 2, self.dim, self.nx, i)
+            Discretization._convection_u_v(atomJ, atomF, averages, weighted_averages, bil, 0, 2, self.dim, self.nx, i)
 
-    def convection_v_w(self, atomJ, atomF, averages, bil):
+    def convection_v_w(self, atomJ, atomF, averages, weighted_averages, bil):
         for j in range(self.ny):
-            Discretization._convection_v_u(atomJ, atomF, averages, bil, 1, 2, self.dim, self.ny, j)
+            Discretization._convection_v_u(atomJ, atomF, averages, weighted_averages, bil, 1, 2, self.dim, self.ny, j)
 
-    def convection_w_w(self, atomJ, atomF, averages, bil):
+    def convection_w_w(self, atomJ, atomF, averages, weighted_averages, bil):
         for k in range(self.nz):
-            Discretization._convection_w_u(atomJ, atomF, averages, bil, 2, 2, self.dim, self.nz, k)
+            Discretization._convection_w_u(atomJ, atomF, averages, weighted_averages, bil, 2, 2, self.dim, self.nz, k)
 
-    def convection_T_u(self, atomJ, atomF, averages, bil):
+    def convection_T_u(self, atomJ, atomF, averages, weighted_averages, bil):
         for i in range(self.nx):
-            Discretization._convection_u_v(atomJ, atomF, averages, bil, 0, self.dim+1, self.dim, self.nx, i)
+            Discretization._convection_u_v(atomJ, atomF, averages, weighted_averages, bil, 0, self.dim+1, self.dim, self.nx, i)
 
-    def convection_T_v(self, atomJ, atomF, averages, bil):
+    def convection_T_v(self, atomJ, atomF, averages, weighted_averages, bil):
         for j in range(self.ny):
-            Discretization._convection_v_u(atomJ, atomF, averages, bil, 1, self.dim+1, self.dim, self.ny, j)
+            Discretization._convection_v_u(atomJ, atomF, averages, weighted_averages, bil, 1, self.dim+1, self.dim, self.ny, j)
 
-    def convection_T_w(self, atomJ, atomF, averages, bil):
+    def convection_T_w(self, atomJ, atomF, averages, weighted_averages, bil):
         for k in range(self.nz):
-            Discretization._convection_w_u(atomJ, atomF, averages, bil, 2, self.dim+1, self.dim, self.nz, k)
+            Discretization._convection_w_u(atomJ, atomF, averages, weighted_averages, bil, 2, self.dim+1, self.dim, self.nz, k)
 
     def convection_2D(self, state):
-        bil = numpy.zeros([self.nx, self.ny, self.nz, 2, self.dof, self.dof, 3])
+        bil = numpy.zeros([self.nx, self.ny, self.nz, 3, self.dof, self.dof, 3])
         averages = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof])
+        weighted_averages = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof])
 
         convective_term = ConvectiveTerm(self.nx, self.ny, self.nz, self.dim, self.x, self.y, self.z)
 
-        convective_term.backward_average_x(bil[:, :, :, :, 0, :, :], averages[:, :, :, 0, :], state[:, :, :, 0]) # tMxU
-        convective_term.forward_average_x(bil[:, :, :, :, 1, :, :], averages[:, :, :, 1, :], state[:, :, :, 1]) # tMxV
-        convective_term.forward_average_y(bil[:, :, :, :, 0, :, :], averages[:, :, :, 0, :], state[:, :, :, 0]) # tMyU
-        convective_term.backward_average_y(bil[:, :, :, :, 1, :, :], averages[:, :, :, 1, :], state[:, :, :, 1]) # tMyV
+        convective_term.backward_average_x(bil[:, :, :, :, 0, :, :], averages[:, :, :, 0, :],
+                                           weighted_averages[:, :, :, 0, :], state[:, :, :, 0]) # tMxU
+        convective_term.forward_average_x(bil[:, :, :, :, 1, :, :], averages[:, :, :, 1, :],
+                                          weighted_averages[:, :, :, 1, :], state[:, :, :, 1]) # tMxV
+        convective_term.forward_average_y(bil[:, :, :, :, 0, :, :], averages[:, :, :, 0, :],
+                                          weighted_averages[:, :, :, 0, :], state[:, :, :, 0]) # tMyU
+        convective_term.backward_average_y(bil[:, :, :, :, 1, :, :], averages[:, :, :, 1, :],
+                                           weighted_averages[:, :, :, 1, :], state[:, :, :, 1]) # tMyV
 
         if self.dof > self.dim+1:
             convective_term.forward_average_x(bil[:, :, :, :, self.dim+1, :, :], averages[:, :, :, self.dim+1, :],
-                                              state[:, :, :, self.dim+1]) # tMxT
+                                              weighted_averages[:, :, :, self.dim+1, :], state[:, :, :, self.dim+1]) # tMxT
             convective_term.forward_average_y(bil[:, :, :, :, self.dim+1, :, :], averages[:, :, :, self.dim+1, :],
-                                              state[:, :, :, self.dim+1]) # tMyT
-            convective_term.value_u(bil[:, :, :, :, :, self.dim+1, :], averages[:, :, :, :, self.dim+1], state)
-            convective_term.value_v(bil[:, :, :, :, :, self.dim+1, :], averages[:, :, :, :, self.dim+1], state)
+                                              weighted_averages[:, :, :, self.dim+1, :], state[:, :, :, self.dim+1]) # tMyT
+            convective_term.value_u(bil[:, :, :, :, :, self.dim+1, :], averages[:, :, :, :, self.dim+1],
+                                    weighted_averages[:, :, :, :, self.dim+1], state)
+            convective_term.value_v(bil[:, :, :, :, :, self.dim+1, :], averages[:, :, :, :, self.dim+1],
+                                    weighted_averages[:, :, :, :, self.dim+1], state)
 
         convective_term.u_x(bil) # tMxUMxU
         convective_term.u_y(bil) # tMxVMyU
@@ -837,45 +844,58 @@ class Discretization:
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
 
-        self.convection_u_u(atomJ, atomF, averages, bil)
-        self.convection_u_v(atomJ, atomF, averages, bil)
-        self.convection_v_u(atomJ, atomF, averages, bil)
-        self.convection_v_v(atomJ, atomF, averages, bil)
+        self.convection_u_u(atomJ, atomF, averages, weighted_averages, bil)
+        self.convection_u_v(atomJ, atomF, averages, weighted_averages, bil)
+        self.convection_v_u(atomJ, atomF, averages, weighted_averages, bil)
+        self.convection_v_v(atomJ, atomF, averages, weighted_averages, bil)
 
         if self.dof > self.dim + 1:
-            self.convection_T_u(atomJ, atomF, averages, bil)
-            self.convection_T_v(atomJ, atomF, averages, bil)
+            self.convection_T_u(atomJ, atomF, averages, weighted_averages, bil)
+            self.convection_T_v(atomJ, atomF, averages, weighted_averages, bil)
 
         atomJ += atomF
 
         return (atomJ, atomF)
 
     def convection_3D(self, state):
-        bil = numpy.zeros([self.nx, self.ny, self.nz, 2, self.dof, self.dof, 3])
+        bil = numpy.zeros([self.nx, self.ny, self.nz, 3, self.dof, self.dof, 3])
         averages = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof])
+        weighted_averages = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof])
 
         convective_term = ConvectiveTerm(self.nx, self.ny, self.nz, self.dim, self.x, self.y, self.z)
 
-        convective_term.backward_average_x(bil[:, :, :, :, 0, :, :], averages[:, :, :, 0, :], state[:, :, :, 0]) # tMxU
-        convective_term.forward_average_x(bil[:, :, :, :, 1, :, :], averages[:, :, :, 1, :], state[:, :, :, 1]) # tMxV
-        convective_term.forward_average_x(bil[:, :, :, :, 2, :, :], averages[:, :, :, 2, :], state[:, :, :, 2]) # tMxW
-        convective_term.forward_average_y(bil[:, :, :, :, 0, :, :], averages[:, :, :, 0, :], state[:, :, :, 0]) # tMyU
-        convective_term.backward_average_y(bil[:, :, :, :, 1, :, :], averages[:, :, :, 1, :], state[:, :, :, 1]) # tMyV
-        convective_term.forward_average_y(bil[:, :, :, :, 2, :, :], averages[:, :, :, 2, :], state[:, :, :, 2]) # tMyW
-        convective_term.forward_average_z(bil[:, :, :, :, 0, :, :], averages[:, :, :, 0, :], state[:, :, :, 0]) # tMzU
-        convective_term.forward_average_z(bil[:, :, :, :, 1, :, :], averages[:, :, :, 1, :], state[:, :, :, 1]) # tMzV
-        convective_term.backward_average_z(bil[:, :, :, :, 2, :, :], averages[:, :, :, 2, :], state[:, :, :, 2]) # tMzW
+        convective_term.backward_average_x(bil[:, :, :, :, 0, :, :], averages[:, :, :, 0, :],
+                                           weighted_averages[:, :, :, 0, :], state[:, :, :, 0]) # tMxU
+        convective_term.forward_average_x(bil[:, :, :, :, 1, :, :], averages[:, :, :, 1, :],
+                                          weighted_averages[:, :, :, 1, :], state[:, :, :, 1]) # tMxV
+        convective_term.forward_average_x(bil[:, :, :, :, 2, :, :], averages[:, :, :, 2, :],
+                                          weighted_averages[:, :, :, 2, :], state[:, :, :, 2]) # tMxW
+        convective_term.forward_average_y(bil[:, :, :, :, 0, :, :], averages[:, :, :, 0, :],
+                                          weighted_averages[:, :, :, 0, :], state[:, :, :, 0]) # tMyU
+        convective_term.backward_average_y(bil[:, :, :, :, 1, :, :], averages[:, :, :, 1, :],
+                                           weighted_averages[:, :, :, 1, :], state[:, :, :, 1]) # tMyV
+        convective_term.forward_average_y(bil[:, :, :, :, 2, :, :], averages[:, :, :, 2, :],
+                                          weighted_averages[:, :, :, 2, :], state[:, :, :, 2]) # tMyW
+        convective_term.forward_average_z(bil[:, :, :, :, 0, :, :], averages[:, :, :, 0, :],
+                                          weighted_averages[:, :, :, 0, :], state[:, :, :, 0]) # tMzU
+        convective_term.forward_average_z(bil[:, :, :, :, 1, :, :], averages[:, :, :, 1, :],
+                                          weighted_averages[:, :, :, 1, :], state[:, :, :, 1]) # tMzV
+        convective_term.backward_average_z(bil[:, :, :, :, 2, :, :], averages[:, :, :, 2, :],
+                                           weighted_averages[:, :, :, 2, :], state[:, :, :, 2]) # tMzW
 
         if self.dof > self.dim+1:
             convective_term.forward_average_x(bil[:, :, :, :, self.dim+1, :, :], averages[:, :, :, self.dim+1, :],
-                                              state[:, :, :, self.dim+1]) # tMxT
+                                              weighted_averages[:, :, :, self.dim+1, :], state[:, :, :, self.dim+1]) # tMxT
             convective_term.forward_average_y(bil[:, :, :, :, self.dim+1, :, :], averages[:, :, :, self.dim+1, :],
-                                              state[:, :, :, self.dim+1]) # tMyT
+                                              weighted_averages[:, :, :, self.dim+1, :], state[:, :, :, self.dim+1]) # tMyT
             convective_term.forward_average_z(bil[:, :, :, :, self.dim+1, :, :], averages[:, :, :, self.dim+1, :],
-                                              state[:, :, :, self.dim+1]) # tMzT
-            convective_term.value_u(bil[:, :, :, :, :, self.dim+1, :], averages[:, :, :, :, self.dim+1], state)
-            convective_term.value_v(bil[:, :, :, :, :, self.dim+1, :], averages[:, :, :, :, self.dim+1], state)
-            convective_term.value_w(bil[:, :, :, :, :, self.dim+1, :], averages[:, :, :, :, self.dim+1], state)
+                                              weighted_averages[:, :, :, self.dim+1, :], state[:, :, :, self.dim+1]) # tMzT
+            convective_term.value_u(bil[:, :, :, :, :, self.dim+1, :], averages[:, :, :, :, self.dim+1],
+                                    weighted_averages[:, :, :, :, self.dim+1], state)
+            convective_term.value_v(bil[:, :, :, :, :, self.dim+1, :], averages[:, :, :, :, self.dim+1],
+                                    weighted_averages[:, :, :, :, self.dim+1], state)
+            convective_term.value_w(bil[:, :, :, :, :, self.dim+1, :], averages[:, :, :, :, self.dim+1],
+                                    weighted_averages[:, :, :, :, self.dim+1], state)
 
         convective_term.u_x(bil) # tMxUMxU
         convective_term.u_y(bil) # tMxVMyU
@@ -902,20 +922,20 @@ class Discretization:
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
 
-        self.convection_u_u(atomJ, atomF, averages, bil)
-        self.convection_u_v(atomJ, atomF, averages, bil)
-        self.convection_u_w(atomJ, atomF, averages, bil)
-        self.convection_v_u(atomJ, atomF, averages, bil)
-        self.convection_v_v(atomJ, atomF, averages, bil)
-        self.convection_v_w(atomJ, atomF, averages, bil)
-        self.convection_w_u(atomJ, atomF, averages, bil)
-        self.convection_w_v(atomJ, atomF, averages, bil)
-        self.convection_w_w(atomJ, atomF, averages, bil)
+        self.convection_u_u(atomJ, atomF, averages, weighted_averages, bil)
+        self.convection_u_v(atomJ, atomF, averages, weighted_averages, bil)
+        self.convection_u_w(atomJ, atomF, averages, weighted_averages, bil)
+        self.convection_v_u(atomJ, atomF, averages, weighted_averages, bil)
+        self.convection_v_v(atomJ, atomF, averages, weighted_averages, bil)
+        self.convection_v_w(atomJ, atomF, averages, weighted_averages, bil)
+        self.convection_w_u(atomJ, atomF, averages, weighted_averages, bil)
+        self.convection_w_v(atomJ, atomF, averages, weighted_averages, bil)
+        self.convection_w_w(atomJ, atomF, averages, weighted_averages, bil)
 
         if self.dof > self.dim + 1:
-            self.convection_T_u(atomJ, atomF, averages, bil)
-            self.convection_T_v(atomJ, atomF, averages, bil)
-            self.convection_T_w(atomJ, atomF, averages, bil)
+            self.convection_T_u(atomJ, atomF, averages, weighted_averages, bil)
+            self.convection_T_v(atomJ, atomF, averages, weighted_averages, bil)
+            self.convection_T_w(atomJ, atomF, averages, weighted_averages, bil)
 
         atomJ += atomF
 
@@ -935,12 +955,16 @@ class ConvectiveTerm:
         self.y = y
         self.z = z
 
-    def backward_average_x(self, bil, averages, state):
+    def backward_average_x(self, bil, averages, weighted_averages, state):
         bil[:, :, :, 0, 0, 0:2] = 1/2
+        bil[:, :, :, 2, 0, 0:2] = 1/2
+
         averages[1:self.nx, :, :, 0] += 1/2 * state[0:self.nx-1, :, :]
         averages[0:self.nx-1, :, :, 0] += 1/2 * state[0:self.nx-1, :, :]
 
-    def _forward_average_x(self, averages, state, i):
+        weighted_averages[:, :, :, 0] = averages[:, :, :, 0]
+
+    def _forward_average_x(self, bil, averages, state, i):
         # distance between u[i] and u[i-1]
         dxmh = self.x[i] - self.x[i-1]
         # distance between u[i+1] and u[i]
@@ -948,20 +972,31 @@ class ConvectiveTerm:
         # distance between v[i+1] and v[i]
         dx = (self.x[i+1] - self.x[i-1]) / 2
 
+        bil[i, :, :, 2, 0, 1] += 1/2 * dxmh / dx
+        bil[i, :, :, 2, 0, 2] += 1/2 * dxph / dx
+
         averages[i, :, :, 0] += 1/2 * state[i, :, :] * dxmh / dx
         averages[i, :, :, 0] += 1/2 * state[i+1, :, :] * dxph / dx
 
-    def forward_average_x(self, bil, averages, state):
+    def forward_average_x(self, bil, averages, weighted_averages, state):
         bil[:, :, :, 0, 0, 1:3] = 1/2
-        for i in range(self.nx-1):
-            self._forward_average_x(averages, state, i)
 
-    def backward_average_y(self, bil, averages, state):
+        averages[0:self.nx-1, :, :, 0] += 1/2 * state[0:self.nx-1, :, :]
+        averages[0:self.nx-1, :, :, 0] += 1/2 * state[1:self.nx, :, :]
+
+        for i in range(self.nx-1):
+            self._forward_average_x(bil, weighted_averages, state, i)
+
+    def backward_average_y(self, bil, averages, weighted_averages, state):
         bil[:, :, :, 0, 1, 0:2] = 1/2
+        bil[:, :, :, 2, 1, 0:2] = 1/2
+
         averages[:, 1:self.ny, :, 1] += 1/2 * state[:, 0:self.ny-1, :]
         averages[:, 0:self.ny-1, :, 1] += 1/2 * state[:, 0:self.ny-1, :]
 
-    def _forward_average_y(self, averages, state, j):
+        weighted_averages[:, :, :, 1] = averages[:, :, :, 1]
+
+    def _forward_average_y(self, bil, averages, state, j):
         # distance between v[j] and v[j-1]
         dymh = self.y[j] - self.y[j-1]
         # distance between v[j+1] and v[j]
@@ -969,20 +1004,31 @@ class ConvectiveTerm:
         # distance between u[j+1] and u[j]
         dy = (self.y[j+1] - self.y[j-1]) / 2
 
+        bil[:, j, :, 2, 1, 1] += 1/2 * dymh / dy
+        bil[:, j, :, 2, 1, 2] += 1/2 * dyph / dy
+
         averages[:, j, :, 1] += 1/2 * state[:, j, :] * dymh / dy
         averages[:, j, :, 1] += 1/2 * state[:, j+1, :] * dyph / dy
 
-    def forward_average_y(self, bil, averages, state):
+    def forward_average_y(self, bil, averages, weighted_averages, state):
         bil[:, :, :, 0, 1, 1:3] = 1/2
-        for j in range(self.ny-1):
-            self._forward_average_y(averages, state, j)
 
-    def backward_average_z(self, bil, averages, state):
+        averages[:, 0:self.ny-1, :, 1] += 1/2 * state[:, 0:self.ny-1, :]
+        averages[:, 0:self.ny-1, :, 1] += 1/2 * state[:, 1:self.ny, :]
+
+        for j in range(self.ny-1):
+            self._forward_average_y(bil, weighted_averages, state, j)
+
+    def backward_average_z(self, bil, averages, weighted_averages, state):
         bil[:, :, :, 0, 2, 0:2] = 1/2
+        bil[:, :, :, 2, 2, 0:2] = 1/2
+
         averages[:, :, 1:self.nz, 2] += 1/2 * state[:, :, 0:self.nz-1]
         averages[:, :, 0:self.nz-1, 2] += 1/2 * state[:, :, 0:self.nz-1]
 
-    def _forward_average_z(self, averages, state, k):
+        weighted_averages[:, :, :, 2] = averages[:, :, :, 2]
+
+    def _forward_average_z(self, bil, averages, state, k):
         # distance between w[k] and w[k-1]
         dzmh = self.z[k] - self.z[k-1]
         # distance between w[k+2] and w[k+1]
@@ -990,25 +1036,38 @@ class ConvectiveTerm:
         # distance between u[k+1] and u[k]
         dz = (self.z[k+1] - self.z[k-1]) / 2
 
+        bil[:, :, k, 2, 2, 1] += 1/2 * dzmh / dz
+        bil[:, :, k, 2, 2, 2] += 1/2 * dzph / dz
+
         averages[:, :, k, 2] += 1/2 * state[:, :, k] * dzmh / dz
         averages[:, :, k, 2] += 1/2 * state[:, :, k+1] * dzph / dz
 
-    def forward_average_z(self, bil, averages, state):
+    def forward_average_z(self, bil, averages, weighted_averages, state):
         bil[:, :, :, 0, 2, 1:3] = 1/2
+
+        averages[:, :, 0:self.nz-1, 2] += 1/2 * state[:, :, 0:self.nz-1]
+        averages[:, :, 0:self.nz-1, 2] += 1/2 * state[:, :, 1:self.nz]
+
         for k in range(self.nz-1):
-            self._forward_average_z(averages, state, k)
+            self._forward_average_z(bil, weighted_averages, state, k)
 
-    def value_u(self, bil, averages, state):
+    def value_u(self, bil, averages, weighted_averages, state):
         bil[:, :, :, 0, 0, 1] = 1
+        bil[:, :, :, 2, 0, 1] = 1
         averages[0:self.nx-1, :, :, 0] = state[0:self.nx-1, :, :, 0]
+        weighted_averages[:, :, :, 0] = averages[:, :, :, 0]
 
-    def value_v(self, bil, averages, state):
+    def value_v(self, bil, averages, weighted_averages, state):
         bil[:, :, :, 0, 1, 1] = 1
+        bil[:, :, :, 2, 1, 1] = 1
         averages[:, 0:self.ny-1, :, 1] = state[:, 0:self.ny-1, :, 1]
+        weighted_averages[:, :, :, 1] = averages[:, :, :, 1]
 
-    def value_w(self, bil, averages, state):
+    def value_w(self, bil, averages, weighted_averages, state):
         bil[:, :, :, 0, 2, 1] = 1
+        bil[:, :, :, 2, 2, 1] = 1
         averages[:, :, 0:self.nz-1, 2] = state[:, :, 0:self.nz-1, 2]
+        weighted_averages[:, :, :, 2] = averages[:, :, :, 2]
 
     def u_x(self, bil):
         for i in range(self.nx):
@@ -1084,27 +1143,42 @@ class ConvectiveTerm:
 
     def dirichlet_east(self, bil):
         tmp = numpy.copy(bil[self.nx-1, :, :, 0, 0, 0, 0])
-        bil[self.nx-1, :, :, 0, 0, :, :] = 0
+        tmp2 = numpy.copy(bil[self.nx-1, :, :, 2, 0, 0, 0])
         bil[self.nx-1, :, :, :, :, 0, :] = 0
+        bil[self.nx-1, :, :, 0, 0, :, :] = 0
         bil[self.nx-1, :, :, 0, 0, 0, 0] = tmp
+
+        bil[self.nx-1, :, :, 2, 0, :, :] = 0
+        bil[self.nx-1, :, :, 2, 0, 0, 0] = tmp2
 
     def dirichlet_west(self, bil):
         bil[0, :, :, 0, 0, :, 0] = 0
+        bil[0, :, :, 2, 0, :, 0] = 0
 
     def dirichlet_north(self, bil):
         tmp = numpy.copy(bil[:, self.ny-1, :, 0, 1, 1, 0])
-        bil[:, self.ny-1, :, 0, 1, :, :] = 0
+        tmp2 = numpy.copy(bil[:, self.ny-1, :, 2, 1, 1, 0])
         bil[:, self.ny-1, :, :, :, 1, :] = 0
+        bil[:, self.ny-1, :, 0, 1, :, :] = 0
         bil[:, self.ny-1, :, 0, 1, 1, 0] = tmp
+
+        bil[:, self.ny-1, :, 2, 1, :, :] = 0
+        bil[:, self.ny-1, :, 2, 1, 1, 0] = tmp2
 
     def dirichlet_south(self, bil):
         bil[:, 0, :, 0, 1, :, 0] = 0
+        bil[:, 0, :, 2, 1, :, 0] = 0
 
     def dirichlet_top(self, bil):
         tmp = numpy.copy(bil[:, :, self.nz-1, 0, 2, 2, 0])
-        bil[:, :, self.nz-1, 0, 2, :, :] = 0
+        tmp2 = numpy.copy(bil[:, :, self.nz-1, 2, 2, 2, 0])
         bil[:, :, self.nz-1, :, :, 2, :] = 0
+        bil[:, :, self.nz-1, 0, 2, :, :] = 0
         bil[:, :, self.nz-1, 0, 2, 2, 0] = tmp
 
+        bil[:, :, self.nz-1, 2, 2, :, :] = 0
+        bil[:, :, self.nz-1, 2, 2, 2, 0] = tmp2
+
     def dirichlet_bottom(self, bil):
-        bil[:, :, 0, :, 2, :, 0] = 0
+        bil[:, :, 0, 0, 2, :, 0] = 0
+        bil[:, :, 0, 2, 2, :, 0] = 0

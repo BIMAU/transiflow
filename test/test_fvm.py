@@ -24,7 +24,9 @@ def create_test_problem():
     y = create_coordinate_vector(ny)
     z = create_coordinate_vector(nz)
 
-    return ({}, nx, ny, nz, dim, dof, x, y, z)
+    parameters = {'Reynolds Number': 100}
+
+    return (parameters, nx, ny, nz, dim, dof, x, y, z)
 
 def test_uniform_grid():
     nx = 5
@@ -344,7 +346,7 @@ def test_MxU():
     dof = 4
     n = dof * nx * ny * nz
 
-    bil = numpy.zeros([nx, ny, nz, 2, dof, dof, 2])
+    bil = numpy.zeros([nx, ny, nz, 3, dof, dof, 2])
     convective_term = module.ConvectiveTerm(nx, ny, nz, dim, x, y, z)
 
     state = numpy.zeros(n)
@@ -359,7 +361,9 @@ def test_MxU():
                     state_mtx[i, j, k, d] = state[d + i * dof + j * dof * nx + k * dof * nx * ny]
 
     averages = numpy.zeros([nx, ny, nz, 3, 3])
-    convective_term.backward_average_x(bil[:, :, :, :, :, 0, :], averages[:, :, :, :, 0], state_mtx[:, :, :, 0])
+    weighted_averages = numpy.zeros([nx, ny, nz, 3, 3])
+    convective_term.backward_average_x(bil[:, :, :, :, :, 0, :], averages[:, :, :, :, 0],
+                                       weighted_averages[:, :, :, :, 0], state_mtx[:, :, :, 0])
 
     for i in range(nx):
         for j in range(ny):
