@@ -1031,7 +1031,7 @@ class ConvectiveTerm:
     def _forward_average_z(self, bil, averages, state, k):
         # distance between w[k] and w[k-1]
         dzmh = self.z[k] - self.z[k-1]
-        # distance between w[k+2] and w[k+1]
+        # distance between w[k+1] and w[k]
         dzph = self.z[k+1] - self.z[k]
         # distance between u[k+1] and u[k]
         dz = (self.z[k+1] - self.z[k-1]) / 2
