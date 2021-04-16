@@ -677,7 +677,7 @@ class Discretization:
         for d1 in range(3):
             i2 = i + d1 - 1
 
-            v_x = bil[i, :, :, 1, varU, varV, d1]
+            v_x = bil[i, :, :, 2, varU, varV, d1]
             if not numpy.any(v_x):
                 continue
 
@@ -692,7 +692,7 @@ class Discretization:
 
             coef1 = averages[i2, :, :, varV, varU] * v_x
             for d2 in range(3):
-                coef2 = bil[i2, :, :, 2, varU, varV, d2]
+                coef2 = bil[i2, :, :, 1, varU, varV, d2]
                 if numpy.any(coef2):
                     idx = [1, 1, 1]
                     idx[varU] += d1 - 1
@@ -704,7 +704,7 @@ class Discretization:
         for d1 in range(3):
             j2 = j + d1 - 1
 
-            u_y = bil[:, j, :, 1, varV, varU, d1]
+            u_y = bil[:, j, :, 2, varV, varU, d1]
             if not numpy.any(u_y):
                 continue
 
@@ -719,7 +719,7 @@ class Discretization:
 
             coef1 = averages[:, j2, :, varU, varV] * u_y
             for d2 in range(3):
-                coef2 = bil[:, j2, :, 2, varV, varU, d2]
+                coef2 = bil[:, j2, :, 1, varV, varU, d2]
                 if numpy.any(coef2):
                     idx = [1, 1, 1]
                     idx[varV] += d1 - 1
@@ -731,7 +731,7 @@ class Discretization:
         for d1 in range(3):
             k2 = k + d1 - 1
 
-            u_z = bil[:, :, k, 1, varW, varU, d1]
+            u_z = bil[:, :, k, 2, varW, varU, d1]
             if not numpy.any(u_z):
                 continue
 
@@ -746,7 +746,7 @@ class Discretization:
 
             coef1 = averages[:, :, k2, varU, varW] * u_z
             for d2 in range(3):
-                coef2 = bil[:, :, k2, 2, varW, varU, d2]
+                coef2 = bil[:, :, k2, 1, varW, varU, d2]
                 if numpy.any(coef2):
                     idx = [1, 1, 1]
                     idx[varW] += d1 - 1
@@ -957,7 +957,7 @@ class ConvectiveTerm:
 
     def backward_average_x(self, bil, averages, weighted_averages, state):
         bil[:, :, :, 0, 0, 0:2] = 1/2
-        bil[:, :, :, 2, 0, 0:2] = 1/2
+        bil[:, :, :, 1, 0, 0:2] = 1/2
 
         averages[1:self.nx, :, :, 0] += 1/2 * state[0:self.nx-1, :, :]
         averages[0:self.nx-1, :, :, 0] += 1/2 * state[0:self.nx-1, :, :]
@@ -972,8 +972,8 @@ class ConvectiveTerm:
         # distance between v[i+1] and v[i]
         dx = (self.x[i+1] - self.x[i-1]) / 2
 
-        bil[i, :, :, 2, 0, 1] += 1/2 * dxmh / dx
-        bil[i, :, :, 2, 0, 2] += 1/2 * dxph / dx
+        bil[i, :, :, 1, 0, 1] += 1/2 * dxmh / dx
+        bil[i, :, :, 1, 0, 2] += 1/2 * dxph / dx
 
         averages[i, :, :, 0] += 1/2 * state[i, :, :] * dxmh / dx
         averages[i, :, :, 0] += 1/2 * state[i+1, :, :] * dxph / dx
@@ -989,7 +989,7 @@ class ConvectiveTerm:
 
     def backward_average_y(self, bil, averages, weighted_averages, state):
         bil[:, :, :, 0, 1, 0:2] = 1/2
-        bil[:, :, :, 2, 1, 0:2] = 1/2
+        bil[:, :, :, 1, 1, 0:2] = 1/2
 
         averages[:, 1:self.ny, :, 1] += 1/2 * state[:, 0:self.ny-1, :]
         averages[:, 0:self.ny-1, :, 1] += 1/2 * state[:, 0:self.ny-1, :]
@@ -1004,8 +1004,8 @@ class ConvectiveTerm:
         # distance between u[j+1] and u[j]
         dy = (self.y[j+1] - self.y[j-1]) / 2
 
-        bil[:, j, :, 2, 1, 1] += 1/2 * dymh / dy
-        bil[:, j, :, 2, 1, 2] += 1/2 * dyph / dy
+        bil[:, j, :, 1, 1, 1] += 1/2 * dymh / dy
+        bil[:, j, :, 1, 1, 2] += 1/2 * dyph / dy
 
         averages[:, j, :, 1] += 1/2 * state[:, j, :] * dymh / dy
         averages[:, j, :, 1] += 1/2 * state[:, j+1, :] * dyph / dy
@@ -1021,7 +1021,7 @@ class ConvectiveTerm:
 
     def backward_average_z(self, bil, averages, weighted_averages, state):
         bil[:, :, :, 0, 2, 0:2] = 1/2
-        bil[:, :, :, 2, 2, 0:2] = 1/2
+        bil[:, :, :, 1, 2, 0:2] = 1/2
 
         averages[:, :, 1:self.nz, 2] += 1/2 * state[:, :, 0:self.nz-1]
         averages[:, :, 0:self.nz-1, 2] += 1/2 * state[:, :, 0:self.nz-1]
@@ -1036,8 +1036,8 @@ class ConvectiveTerm:
         # distance between u[k+1] and u[k]
         dz = (self.z[k+1] - self.z[k-1]) / 2
 
-        bil[:, :, k, 2, 2, 1] += 1/2 * dzmh / dz
-        bil[:, :, k, 2, 2, 2] += 1/2 * dzph / dz
+        bil[:, :, k, 1, 2, 1] += 1/2 * dzmh / dz
+        bil[:, :, k, 1, 2, 2] += 1/2 * dzph / dz
 
         averages[:, :, k, 2] += 1/2 * state[:, :, k] * dzmh / dz
         averages[:, :, k, 2] += 1/2 * state[:, :, k+1] * dzph / dz
@@ -1053,19 +1053,19 @@ class ConvectiveTerm:
 
     def value_u(self, bil, averages, weighted_averages, state):
         bil[:, :, :, 0, 0, 1] = 1
-        bil[:, :, :, 2, 0, 1] = 1
+        bil[:, :, :, 1, 0, 1] = 1
         averages[0:self.nx-1, :, :, 0] = state[0:self.nx-1, :, :, 0]
         weighted_averages[:, :, :, 0] = averages[:, :, :, 0]
 
     def value_v(self, bil, averages, weighted_averages, state):
         bil[:, :, :, 0, 1, 1] = 1
-        bil[:, :, :, 2, 1, 1] = 1
+        bil[:, :, :, 1, 1, 1] = 1
         averages[:, 0:self.ny-1, :, 1] = state[:, 0:self.ny-1, :, 1]
         weighted_averages[:, :, :, 1] = averages[:, :, :, 1]
 
     def value_w(self, bil, averages, weighted_averages, state):
         bil[:, :, :, 0, 2, 1] = 1
-        bil[:, :, :, 2, 2, 1] = 1
+        bil[:, :, :, 1, 2, 1] = 1
         averages[:, :, 0:self.nz-1, 2] = state[:, :, 0:self.nz-1, 2]
         weighted_averages[:, :, :, 2] = averages[:, :, :, 2]
 
@@ -1073,112 +1073,109 @@ class ConvectiveTerm:
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._forward_u_x(bil[i, j, k, 1, 0, 0, :], i, j, k, self.x, self.y, self.z)
+                    Discretization._forward_u_x(bil[i, j, k, 2, 0, 0, :], i, j, k, self.x, self.y, self.z)
 
     def v_y(self, bil):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._forward_u_x(bil[i, j, k, 1, 1, 1, :], j, i, k, self.y, self.x, self.z)
+                    Discretization._forward_u_x(bil[i, j, k, 2, 1, 1, :], j, i, k, self.y, self.x, self.z)
 
     def w_z(self, bil):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._forward_u_x(bil[i, j, k, 1, 2, 2, :], k, j, i, self.z, self.y, self.x)
+                    Discretization._forward_u_x(bil[i, j, k, 2, 2, 2, :], k, j, i, self.z, self.y, self.x)
 
     def u_y(self, bil):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._backward_u_y(bil[i, j, k, 1, 1, 0, :], i, j, k, self.x, self.y, self.z)
+                    Discretization._backward_u_y(bil[i, j, k, 2, 1, 0, :], i, j, k, self.x, self.y, self.z)
 
     def v_x(self, bil):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._backward_u_y(bil[i, j, k, 1, 0, 1, :], j, i, k, self.y, self.x, self.z)
+                    Discretization._backward_u_y(bil[i, j, k, 2, 0, 1, :], j, i, k, self.y, self.x, self.z)
 
     def w_y(self, bil):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._backward_u_y(bil[i, j, k, 1, 1, 2, :], k, j, i, self.z, self.y, self.x)
+                    Discretization._backward_u_y(bil[i, j, k, 2, 1, 2, :], k, j, i, self.z, self.y, self.x)
 
     def u_z(self, bil):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._backward_u_z(bil[i, j, k, 1, 2, 0, :], i, j, k, self.x, self.y, self.z)
+                    Discretization._backward_u_z(bil[i, j, k, 2, 2, 0, :], i, j, k, self.x, self.y, self.z)
 
     def v_z(self, bil):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._backward_u_z(bil[i, j, k, 1, 2, 1, :], j, i, k, self.y, self.x, self.z)
+                    Discretization._backward_u_z(bil[i, j, k, 2, 2, 1, :], j, i, k, self.y, self.x, self.z)
 
     def w_x(self, bil):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._backward_u_z(bil[i, j, k, 1, 0, 2, :], k, j, i, self.z, self.y, self.x)
+                    Discretization._backward_u_z(bil[i, j, k, 2, 0, 2, :], k, j, i, self.z, self.y, self.x)
 
     def T_x(self, bil):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._backward_u_x(bil[i, j, k, 1, 0, self.dim+1, :], i, j, k, self.x, self.y, self.z)
+                    Discretization._backward_u_x(bil[i, j, k, 2, 0, self.dim+1, :], i, j, k, self.x, self.y, self.z)
 
     def T_y(self, bil):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._backward_u_x(bil[i, j, k, 1, 1, self.dim+1, :], j, i, k, self.y, self.x, self.z)
+                    Discretization._backward_u_x(bil[i, j, k, 2, 1, self.dim+1, :], j, i, k, self.y, self.x, self.z)
 
     def T_z(self, bil):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._backward_u_x(bil[i, j, k, 1, 2, self.dim+1, :], k, j, i, self.z, self.y, self.x)
+                    Discretization._backward_u_x(bil[i, j, k, 2, 2, self.dim+1, :], k, j, i, self.z, self.y, self.x)
 
     def dirichlet_east(self, bil):
         tmp = numpy.copy(bil[self.nx-1, :, :, 0, 0, 0, 0])
-        tmp2 = numpy.copy(bil[self.nx-1, :, :, 2, 0, 0, 0])
+        tmp2 = numpy.copy(bil[self.nx-1, :, :, 1, 0, 0, 0])
         bil[self.nx-1, :, :, :, :, 0, :] = 0
         bil[self.nx-1, :, :, 0, 0, :, :] = 0
         bil[self.nx-1, :, :, 0, 0, 0, 0] = tmp
 
-        bil[self.nx-1, :, :, 2, 0, :, :] = 0
-        bil[self.nx-1, :, :, 2, 0, 0, 0] = tmp2
+        bil[self.nx-1, :, :, 1, 0, :, :] = 0
+        bil[self.nx-1, :, :, 1, 0, 0, 0] = tmp2
 
     def dirichlet_west(self, bil):
-        bil[0, :, :, 0, 0, :, 0] = 0
-        bil[0, :, :, 2, 0, :, 0] = 0
+        bil[0, :, :, :, 0, :, 0] = 0
 
     def dirichlet_north(self, bil):
         tmp = numpy.copy(bil[:, self.ny-1, :, 0, 1, 1, 0])
-        tmp2 = numpy.copy(bil[:, self.ny-1, :, 2, 1, 1, 0])
+        tmp2 = numpy.copy(bil[:, self.ny-1, :, 1, 1, 1, 0])
         bil[:, self.ny-1, :, :, :, 1, :] = 0
         bil[:, self.ny-1, :, 0, 1, :, :] = 0
         bil[:, self.ny-1, :, 0, 1, 1, 0] = tmp
 
-        bil[:, self.ny-1, :, 2, 1, :, :] = 0
-        bil[:, self.ny-1, :, 2, 1, 1, 0] = tmp2
+        bil[:, self.ny-1, :, 1, 1, :, :] = 0
+        bil[:, self.ny-1, :, 1, 1, 1, 0] = tmp2
 
     def dirichlet_south(self, bil):
-        bil[:, 0, :, 0, 1, :, 0] = 0
-        bil[:, 0, :, 2, 1, :, 0] = 0
+        bil[:, 0, :, :, 1, :, 0] = 0
 
     def dirichlet_top(self, bil):
         tmp = numpy.copy(bil[:, :, self.nz-1, 0, 2, 2, 0])
-        tmp2 = numpy.copy(bil[:, :, self.nz-1, 2, 2, 2, 0])
+        tmp2 = numpy.copy(bil[:, :, self.nz-1, 1, 2, 2, 0])
         bil[:, :, self.nz-1, :, :, 2, :] = 0
         bil[:, :, self.nz-1, 0, 2, :, :] = 0
         bil[:, :, self.nz-1, 0, 2, 2, 0] = tmp
 
-        bil[:, :, self.nz-1, 2, 2, :, :] = 0
-        bil[:, :, self.nz-1, 2, 2, 2, 0] = tmp2
+        bil[:, :, self.nz-1, 1, 2, :, :] = 0
+        bil[:, :, self.nz-1, 1, 2, 2, 0] = tmp2
 
     def dirichlet_bottom(self, bil):
-        bil[:, :, 0, 0, 2, :, 0] = 0
-        bil[:, :, 0, 2, 2, :, 0] = 0
+        bil[:, :, 0, :, 2, :, 0] = 0
