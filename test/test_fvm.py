@@ -376,6 +376,76 @@ def test_MxU():
                 print(i, j, k)
                 assert averages[i, j, k, 0, 0] == average
 
+def check_divfree(discretization, state):
+    A = discretization.jacobian(state)
+    x = A @ state
+    for i in range(len(state)):
+        if i % discretization.dof == discretization.dim:
+            assert abs(x[i]) < 1e-14
+
+def make_divfree(discretization, state):
+    A = discretization.jacobian(state)
+    p = numpy.zeros((A.n, A.n // discretization.dof))
+
+    for i in range(A.n):
+        if i % discretization.dof == discretization.dim:
+            for j in range(A.begA[i], A.begA[i+1]):
+                p[A.jcoA[j], i // discretization.dof] = A.coA[j]
+
+    state -= p @ numpy.linalg.solve(p.conj().T @ p, p.conj().T @ state)
+
+    check_divfree(discretization, state)
+
+    return state
+
+def create_divfree_state(discretization):
+    n = discretization.dof * discretization.nx * discretization.ny * discretization.nz
+    state = numpy.random.random(n)
+    return make_divfree(discretization, state)
+
+def test_bilin():
+    parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
+
+    discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
+    state = create_divfree_state(discretization)
+
+    atomJ, atomF = discretization.nonlinear_part(state)
+    A = discretization.assemble_jacobian(atomF)
+
+    for i in range(A.n):
+        for j in range(A.begA[i], A.begA[i+1]):
+            assert i != A.jcoA[j]
+
+def test_bilin_uniform():
+    parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
+
+    discretization = Discretization(parameters, nx, ny, nz, dim, dof)
+    state = create_divfree_state(discretization)
+
+    atomJ, atomF = discretization.nonlinear_part(state)
+    A = discretization.assemble_jacobian(atomF)
+
+    for i in range(A.n):
+        for j in range(A.begA[i], A.begA[i+1]):
+            assert i != A.jcoA[j]
+
+def test_bilin_stretched():
+    parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
+
+    x = utils.create_stretched_coordinate_vector(0, 1, nx, 1.5)
+    y = utils.create_stretched_coordinate_vector(0, 1, ny, 1.5)
+    z = utils.create_stretched_coordinate_vector(0, 1, nz, 1.5)
+
+    discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
+    state = create_divfree_state(discretization)
+
+    atomJ, atomF = discretization.nonlinear_part(state)
+    A = discretization.assemble_jacobian(atomF)
+
+    for i in range(A.n):
+        for j in range(A.begA[i], A.begA[i+1]):
+            assert i != A.jcoA[j]
+
 def test_jac_consistency():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
 
