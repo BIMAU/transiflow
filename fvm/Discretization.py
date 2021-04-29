@@ -257,26 +257,26 @@ class Discretization:
         if Discretization._problem_type_equals(problem_type, 'Lid-driven cavity'):
             boundary_conditions.no_slip_east(atom)
             boundary_conditions.no_slip_west(atom)
-            if self.nz <= 1:
-                frc += boundary_conditions.moving_lid_north(atom, 1)
-            else:
-                boundary_conditions.no_slip_north(atom)
             boundary_conditions.no_slip_south(atom)
-            if self.dim > 2 and self.nz > 1:
-                frc += boundary_conditions.moving_lid_top(atom, 1)
-                boundary_conditions.no_slip_bottom(atom)
+            if self.dim == 2 or self.nz <= 1:
+                frc += boundary_conditions.moving_lid_north(atom, 1)
+                return frc
+
+            boundary_conditions.no_slip_north(atom)
+            boundary_conditions.no_slip_bottom(atom)
+            frc += boundary_conditions.moving_lid_top(atom, 1)
         elif Discretization._problem_type_equals(problem_type, 'Rayleigh-Benard'):
             frc += boundary_conditions.heatflux_east(atom, 0)
             frc += boundary_conditions.heatflux_west(atom, 0)
             if self.dim == 2 or self.nz <= 1:
                 boundary_conditions.no_slip_north(atom)
                 boundary_conditions.no_slip_south(atom)
-            else:
-                frc += boundary_conditions.heatflux_north(atom, 0)
-                frc += boundary_conditions.heatflux_south(atom, 0)
-            if self.dim > 2 and self.nz > 1:
-                boundary_conditions.no_slip_top(atom)
-                boundary_conditions.no_slip_bottom(atom)
+                return frc
+
+            frc += boundary_conditions.heatflux_north(atom, 0)
+            frc += boundary_conditions.heatflux_south(atom, 0)
+            boundary_conditions.no_slip_top(atom)
+            boundary_conditions.no_slip_bottom(atom)
         elif Discretization._problem_type_equals(problem_type, 'Differentially heated cavity'):
             frc += boundary_conditions.temperature_east(atom, -1/2)
             frc += boundary_conditions.temperature_west(atom, 1/2)
