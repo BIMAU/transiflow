@@ -81,16 +81,48 @@ class BoundaryConditions:
     def temperature_east(self, atom, temperature):
         '''T[i] + T[i+1] = 2 * Tb'''
         frc = self._constant_forcing_east(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, 2 * temperature)
-
-        self.no_slip_east(atom)
+        atom[self.nx-1, :, :, self.dim+1, self.dim+1, 1, :, :] -= atom[self.nx-1, :, :, self.dim+1, self.dim+1, 2, :, :]
+        atom[self.nx-1, :, :, self.dim+1, self.dim+1, 2, :, :] = 0
 
         return frc
 
     def temperature_west(self, atom, temperature):
         '''T[i] + T[i-1] = 2 * Tb'''
         frc = self._constant_forcing_west(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, 2 * temperature)
+        atom[0, :, :, self.dim+1, self.dim+1, 1, :, :] -= atom[0, :, :, self.dim+1, self.dim+1, 0, :, :]
+        atom[0, :, :, self.dim+1, self.dim+1, 0, :, :] = 0
 
-        self.no_slip_west(atom)
+        return frc
+
+    def temperature_north(self, atom, temperature):
+        '''T[j] + T[j+1] = 2 * Tb'''
+        frc = self._constant_forcing_north(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, 2 * temperature)
+        atom[:, self.ny-1, :, self.dim+1, self.dim+1, :, 1, :] -= atom[:, self.ny-1, :, self.dim+1, self.dim+1, :, 2, :]
+        atom[:, self.ny-1, :, self.dim+1, self.dim+1, :, 2, :] = 0
+
+        return frc
+
+    def temperature_south(self, atom, temperature):
+        '''T[j] + T[j-1] = 2 * Tb'''
+        frc = self._constant_forcing_south(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, 2 * temperature)
+        atom[:, 0, :, self.dim+1, self.dim+1, :, 1, :] -= atom[:, 0, :, self.dim+1, self.dim+1, :, 0, :]
+        atom[:, 0, :, self.dim+1, self.dim+1, :, 0, :] = 0
+
+        return frc
+
+    def temperature_top(self, atom, temperature):
+        '''T[k] + T[k+1] = 2 * Tb'''
+        frc = self._constant_forcing_top(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, 2 * temperature)
+        atom[:, :, self.nz-1, self.dim+1, self.dim+1, :, :, 1] -= atom[:, :, self.nz-1, self.dim+1, self.dim+1, :, :, 2]
+        atom[:, :, self.nz-1, self.dim+1, self.dim+1, :, :, 2] = 0
+
+        return frc
+
+    def temperature_bottom(self, atom, temperature):
+        '''T[k] + T[k-1] = 2 * Tb'''
+        frc = self._constant_forcing_bottom(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, 2 * temperature)
+        atom[:, :, 0, self.dim+1, self.dim+1, :, :, 1] -= atom[:, :, 0, self.dim+1, self.dim+1, :, :, 0]
+        atom[:, :, 0, self.dim+1, self.dim+1, :, :, 0] = 0
 
         return frc
 
