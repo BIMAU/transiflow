@@ -255,28 +255,28 @@ class Discretization:
         frc = numpy.zeros(self.nx * self.ny * self.nz * self.dof)
 
         if Discretization._problem_type_equals(problem_type, 'Lid-driven cavity'):
-            boundary_conditions.dirichlet_east(atom)
-            boundary_conditions.dirichlet_west(atom)
+            boundary_conditions.no_slip_east(atom)
+            boundary_conditions.no_slip_west(atom)
             if self.nz <= 1:
                 frc += boundary_conditions.moving_lid_north(atom, 1)
             else:
-                boundary_conditions.dirichlet_north(atom)
-            boundary_conditions.dirichlet_south(atom)
+                boundary_conditions.no_slip_north(atom)
+            boundary_conditions.no_slip_south(atom)
             if self.dim > 2 and self.nz > 1:
                 frc += boundary_conditions.moving_lid_top(atom, 1)
-                boundary_conditions.dirichlet_bottom(atom)
+                boundary_conditions.no_slip_bottom(atom)
         elif Discretization._problem_type_equals(problem_type, 'Rayleigh-Benard'):
             frc += boundary_conditions.heatflux_east(atom, 0)
             frc += boundary_conditions.heatflux_west(atom, 0)
             if self.dim == 2 or self.nz <= 1:
-                boundary_conditions.dirichlet_north(atom)
-                boundary_conditions.dirichlet_south(atom)
+                boundary_conditions.no_slip_north(atom)
+                boundary_conditions.no_slip_south(atom)
             else:
                 frc += boundary_conditions.heatflux_north(atom, 0)
                 frc += boundary_conditions.heatflux_south(atom, 0)
             if self.dim > 2 and self.nz > 1:
-                boundary_conditions.dirichlet_top(atom)
-                boundary_conditions.dirichlet_bottom(atom)
+                boundary_conditions.no_slip_top(atom)
+                boundary_conditions.no_slip_bottom(atom)
         elif Discretization._problem_type_equals(problem_type, 'Differentially heated cavity'):
             frc += boundary_conditions.temperature_east(atom, -1/2)
             frc += boundary_conditions.temperature_west(atom, 1/2)
@@ -836,10 +836,10 @@ class Discretization:
             convective_term.T_x(bil)
             convective_term.T_y(bil)
 
-        convective_term.dirichlet_east(bil)
-        convective_term.dirichlet_west(bil)
-        convective_term.dirichlet_north(bil)
-        convective_term.dirichlet_south(bil)
+        convective_term.boundary_east(bil)
+        convective_term.boundary_west(bil)
+        convective_term.boundary_north(bil)
+        convective_term.boundary_south(bil)
 
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
@@ -912,12 +912,12 @@ class Discretization:
             convective_term.T_y(bil)
             convective_term.T_z(bil)
 
-        convective_term.dirichlet_east(bil)
-        convective_term.dirichlet_west(bil)
-        convective_term.dirichlet_north(bil)
-        convective_term.dirichlet_south(bil)
-        convective_term.dirichlet_top(bil)
-        convective_term.dirichlet_bottom(bil)
+        convective_term.boundary_east(bil)
+        convective_term.boundary_west(bil)
+        convective_term.boundary_north(bil)
+        convective_term.boundary_south(bil)
+        convective_term.boundary_top(bil)
+        convective_term.boundary_bottom(bil)
 
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
@@ -1141,7 +1141,7 @@ class ConvectiveTerm:
                 for k in range(self.nz):
                     Discretization._backward_u_x(bil[i, j, k, 2, 2, self.dim+1, :], k, j, i, self.z, self.y, self.x)
 
-    def dirichlet_east(self, bil):
+    def boundary_east(self, bil):
         tmp = numpy.copy(bil[self.nx-1, :, :, 0, 0, 0, 0])
         tmp2 = numpy.copy(bil[self.nx-1, :, :, 1, 0, 0, 0])
         bil[self.nx-1, :, :, :, :, 0, :] = 0
@@ -1151,10 +1151,10 @@ class ConvectiveTerm:
         bil[self.nx-1, :, :, 1, 0, :, :] = 0
         bil[self.nx-1, :, :, 1, 0, 0, 0] = tmp2
 
-    def dirichlet_west(self, bil):
+    def boundary_west(self, bil):
         bil[0, :, :, :, 0, :, 0] = 0
 
-    def dirichlet_north(self, bil):
+    def boundary_north(self, bil):
         tmp = numpy.copy(bil[:, self.ny-1, :, 0, 1, 1, 0])
         tmp2 = numpy.copy(bil[:, self.ny-1, :, 1, 1, 1, 0])
         bil[:, self.ny-1, :, :, :, 1, :] = 0
@@ -1164,10 +1164,10 @@ class ConvectiveTerm:
         bil[:, self.ny-1, :, 1, 1, :, :] = 0
         bil[:, self.ny-1, :, 1, 1, 1, 0] = tmp2
 
-    def dirichlet_south(self, bil):
+    def boundary_south(self, bil):
         bil[:, 0, :, :, 1, :, 0] = 0
 
-    def dirichlet_top(self, bil):
+    def boundary_top(self, bil):
         tmp = numpy.copy(bil[:, :, self.nz-1, 0, 2, 2, 0])
         tmp2 = numpy.copy(bil[:, :, self.nz-1, 1, 2, 2, 0])
         bil[:, :, self.nz-1, :, :, 2, :] = 0
@@ -1177,5 +1177,5 @@ class ConvectiveTerm:
         bil[:, :, self.nz-1, 1, 2, :, :] = 0
         bil[:, :, self.nz-1, 1, 2, 2, 0] = tmp2
 
-    def dirichlet_bottom(self, bil):
+    def boundary_bottom(self, bil):
         bil[:, :, 0, :, 2, :, 0] = 0
