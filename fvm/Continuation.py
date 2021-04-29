@@ -191,6 +191,9 @@ class Continuation:
                 self.interface.set_parameter(parameter_name, mu)
                 x = self.newton(x, 1e-8)
 
+                print("%s: %f" % (parameter_name, mu))
+                sys.stdout.flush()
+
                 return x
 
             # Set the new values computed by the corrector
