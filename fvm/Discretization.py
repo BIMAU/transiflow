@@ -127,6 +127,8 @@ class Discretization:
         atom = self.mass_x() + self.mass_y()
         if self.dim == 3:
             atom += self.mass_z()
+        if self.dof > self.dim + 1:
+            atom += self.mass_T()
         return self.assemble_mass_matrix(atom)
 
     def assemble_rhs(self, state, atom):
@@ -654,6 +656,25 @@ class Discretization:
             for j in range(self.ny):
                 for k in range(self.nz):
                     Discretization._mass_x(atom[i, j, k, 2:3], k, j, i, self.z, self.y, self.x)
+        return atom
+
+    @staticmethod
+    def _mass_T(atom, i, j, k, x, y, z):
+        # volume size in the x direction
+        dx = x[i] - x[i-1]
+        # volume size in the y direction
+        dy = y[j] - y[j-1]
+        # volume size in the z direction
+        dz = z[k] - z[k-1]
+
+        atom[0] = dx * dy * dz
+
+    def mass_T(self):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
+                    Discretization._mass_T(atom[i, j, k, self.dim+1:self.dim+2], i, j, k, self.x, self.y, self.z)
         return atom
 
     @staticmethod
