@@ -59,5 +59,5 @@ pip install -r requirements.txt
 
 Now one should be able to run an example.
 ```
-python example/ldc.py
+python examples/ldc.py
 ```
