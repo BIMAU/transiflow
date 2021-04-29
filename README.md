@@ -66,3 +66,11 @@ And one can run the example with
 ```
 PYTHONPATH=. python examples/ldc.py
 ```
+
+If the example fails with
+```
+ldc.py:64: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+  plt.show()
+```
+this means that [tkinter](https://docs.python.org/3/library/tkinter.html) is not available.
+You can either just save the image to the disk, or install e.g. `python3-tk` or `python3-matplotlib` on Debian-based Linux distributions.
