@@ -133,8 +133,8 @@ class BoundaryConditions:
         h = self.x[self.nx] - self.x[self.nx-2]
         frc = self._constant_forcing_east(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, -heatflux * h / 2)
 
-        atom[self.nx-1, :, :, self.dim+1, self.dim+1, 1, :, :] += 2 * atom[self.nx-1, :, :, self.dim+1, self.dim+1, 2, :, :]
-        self.no_slip_east(atom)
+        atom[self.nx-1, :, :, self.dim+1, self.dim+1, 1, :, :] += atom[self.nx-1, :, :, self.dim+1, self.dim+1, 2, :, :]
+        atom[self.nx-1, :, :, self.dim+1, self.dim+1, 2, :, :] = 0
 
         return frc
 
@@ -143,8 +143,8 @@ class BoundaryConditions:
         h = self.x[0] - self.x[-2]
         frc = self._constant_forcing_west(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, -heatflux * h / 2)
 
-        atom[0, :, :, self.dim+1, self.dim+1, 1, :, :] += 2 * atom[0, :, :, self.dim+1, self.dim+1, 0, :, :]
-        self.no_slip_west(atom)
+        atom[0, :, :, self.dim+1, self.dim+1, 1, :, :] += atom[0, :, :, self.dim+1, self.dim+1, 0, :, :]
+        atom[0, :, :, self.dim+1, self.dim+1, 0, :, :] = 0
 
         return frc
 
@@ -153,8 +153,8 @@ class BoundaryConditions:
         h = self.y[self.ny] - self.y[self.ny-2]
         frc = self._constant_forcing_north(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, -heatflux * h / 2)
 
-        atom[:, self.ny-1, :, self.dim+1, self.dim+1, :, 1, :] += 2 * atom[:, self.ny-1, :, self.dim+1, self.dim+1, :, 2, :]
-        self.no_slip_north(atom)
+        atom[:, self.ny-1, :, self.dim+1, self.dim+1, :, 1, :] += atom[:, self.ny-1, :, self.dim+1, self.dim+1, :, 2, :]
+        atom[:, self.ny-1, :, self.dim+1, self.dim+1, :, 2, :] = 0
 
         return frc
 
@@ -163,8 +163,8 @@ class BoundaryConditions:
         h = self.y[0] - self.y[-2]
         frc = self._constant_forcing_south(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, -heatflux * h / 2)
 
-        atom[:, 0, :, self.dim+1, self.dim+1, :, 1, :] += 2 * atom[:, 0, :, self.dim+1, self.dim+1, :, 0, :]
-        self.no_slip_south(atom)
+        atom[:, 0, :, self.dim+1, self.dim+1, :, 1, :] += atom[:, 0, :, self.dim+1, self.dim+1, :, 0, :]
+        atom[:, 0, :, self.dim+1, self.dim+1, :, 0, :] = 0
 
         return frc
 
@@ -173,8 +173,8 @@ class BoundaryConditions:
         h = self.z[self.nz] - self.z[self.nz-2]
         frc = self._constant_forcing_top(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, -heatflux * h / 2)
 
-        atom[:, :, self.nz-1, self.dim+1, self.dim+1, :, :, 1] += 2 * atom[:, :, self.nz-1, self.dim+1, self.dim+1, :, :, 2]
-        self.no_slip_top(atom)
+        atom[:, :, self.nz-1, self.dim+1, self.dim+1, :, :, 1] += atom[:, :, self.nz-1, self.dim+1, self.dim+1, :, :, 2]
+        atom[:, :, self.nz-1, self.dim+1, self.dim+1, :, :, 2] = 0
 
         return frc
 
@@ -183,8 +183,8 @@ class BoundaryConditions:
         h = self.z[0] - self.z[-2]
         frc = self._constant_forcing_bottom(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, -heatflux * h / 2)
 
-        atom[:, :, 0, self.dim+1, self.dim+1, :, :, 1] += 2 * atom[:, :, 0, self.dim+1, self.dim+1, :, :, 0]
-        self.no_slip_bottom(atom)
+        atom[:, :, 0, self.dim+1, self.dim+1, :, :, 1] += atom[:, :, 0, self.dim+1, self.dim+1, :, :, 0]
+        atom[:, :, 0, self.dim+1, self.dim+1, :, :, 0] = 0
 
         return frc
 
