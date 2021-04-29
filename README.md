@@ -52,12 +52,17 @@ pip install .
 ```
 
 This will also install all of the requirements.
+Now one should be able to run an example.
+```
+python examples/ldc.py
+```
+
 If one does not want to install fvm, but instead just wants to run it from the source directory, one can install the requirements by running
 ```
 pip install -r requirements.txt
 ```
 
-Now one should be able to run an example.
+And one can run the example with
 ```
-python examples/ldc.py
+PYTHONPATH=. python examples/ldc.py
 ```
