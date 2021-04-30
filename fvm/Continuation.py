@@ -138,8 +138,20 @@ class Continuation:
 
         return min(max(ds, self.min_step_size), self.max_step_size)
 
+    def converge(self, parameter_name, x, mu, dx, dmu, target, ds, maxit):
+        ''' Converge onto the target value '''
+
+        for j in range(maxit):
+            ds = 1 / dmu * (target - mu)
+            x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, target, ds)
+
+            if abs(target - mu) < 1e-8:
+                break
+        return x, mu
+
     def step(self, parameter_name, x, mu, dx, dmu, target, ds):
         ''' Perform one step of the continuation '''
+
         mu0 = mu
         x0 = x
 
@@ -173,8 +185,6 @@ class Continuation:
         dx /= ds
         dmu /= ds
 
-        ds = self.adjust_step_size(ds)
-
         return x, mu, dx, dmu, ds
 
     def continuation(self, x0, parameter_name, target, ds, maxit, verbose=False):
@@ -206,15 +216,11 @@ class Continuation:
             x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, target, ds)
 
             if (mu >= target and mu0 < target) or (mu <= target and mu0 > target):
-                # Converge onto the end point (we usually go past it, so we
-                # use Newton to converge)
-                mu = target
-                self.interface.set_parameter(parameter_name, mu)
-                x = self.newton(x, 1e-8)
-
-                print("%s: %f" % (parameter_name, mu))
-                sys.stdout.flush()
+                # Converge onto the end point
+                x, mu = self.converge(parameter_name, x, mu, dx, dmu, target, ds, maxit)
 
                 return x
+
+            ds = self.adjust_step_size(ds)
 
         return x
