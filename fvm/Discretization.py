@@ -16,11 +16,27 @@ class Discretization:
         self.dim = dim
         self.dof = dof
 
-        self.x = utils.create_uniform_coordinate_vector(0, 1, self.nx) if x is None else x
-        self.y = utils.create_uniform_coordinate_vector(0, 1, self.ny) if y is None else y
+        if 'Grid Stretching Factor' in self.parameters.keys():
+            self.x = utils.create_stretched_coordinate_vector(
+                self.parameters.get('xmin', 0.0), self.parameters.get('xmax', 1.0), self.nx,
+                self.parameters.get('Grid Stretching Factor', 1.5)) if x is None else x
+            self.y = utils.create_stretched_coordinate_vector(
+                self.parameters.get('ymin', 0.0), self.parameters.get('ymax', 1.0), self.ny,
+                self.parameters.get('Grid Stretching Factor', 1.5)) if y is None else y
 
-        # TODO: Maybe force this if dim = 2?
-        self.z = utils.create_uniform_coordinate_vector(0, 1, self.nz) if z is None else z
+            # TODO: Maybe force this if dim = 2?
+            self.z = utils.create_stretched_coordinate_vector(
+                self.parameters.get('zmin', 0.0), self.parameters.get('zmax', 1.0), self.nz,
+                self.parameters.get('Grid Stretching Factor', 1.5)) if z is None else z
+        else:
+            self.x = utils.create_uniform_coordinate_vector(
+                self.parameters.get('xmin', 0.0), self.parameters.get('xmax', 1.0), self.nx) if x is None else x
+            self.y = utils.create_uniform_coordinate_vector(
+                self.parameters.get('ymin', 0.0), self.parameters.get('ymax', 1.0), self.ny) if y is None else y
+
+            # TODO: Maybe force this if dim = 2?
+            self.z = utils.create_uniform_coordinate_vector(
+                self.parameters.get('zmin', 0.0), self.parameters.get('zmax', 1.0), self.nz) if z is None else z
 
         self.frc = None
         self.atom = None

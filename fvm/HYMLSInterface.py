@@ -95,22 +95,27 @@ class Interface(fvm.Interface):
         self.solve_importer = Epetra.Import(self.solve_map, self.map)
 
         # Create local coordinate vectors
-        nx_start = self.nx_offset / self.nx_global
-        nx_end = nx_start + self.nx_local / self.nx_global
-        ny_start = self.ny_offset / self.ny_global
-        ny_end = ny_start + self.ny_local / self.ny_global
-        nz_start = self.nz_offset / self.nz_global
-        nz_end = nz_start + self.nz_local / self.nz_global
+        x_length = self.parameters.get('xmax', 1.0) - self.parameters.get('xmin', 0.0)
+        x_start = self.parameters.get('xmin', 0.0) + self.nx_offset / self.nx_global * x_length
+        x_end = x_start + self.nx_local / self.nx_global * x_length
+
+        y_length = self.parameters.get('ymax', 1.0) - self.parameters.get('ymin', 0.0)
+        y_start = self.parameters.get('ymin', 0.0) + self.ny_offset / self.ny_global * y_length
+        y_end = y_start + self.ny_local / self.ny_global * y_length
+
+        z_length = self.parameters.get('zmax', 1.0) - self.parameters.get('zmin', 0.0)
+        z_start = self.parameters.get('zmin', 0.0) + self.nz_offset / self.nz_global * z_length
+        z_end = z_start + self.nz_local / self.nz_global * z_length
 
         if self.parameters.get('Grid Stretching', False):
             sigma = self.parameters.get('Grid Stretching Factor', 1.5)
-            x = fvm.utils.create_stretched_coordinate_vector(nx_start, nx_end, self.nx_local, sigma) if x is None else x
-            y = fvm.utils.create_stretched_coordinate_vector(ny_start, ny_end, self.ny_local, sigma) if y is None else y
-            z = fvm.utils.create_stretched_coordinate_vector(nz_start, nz_end, self.nz_local, sigma) if z is None else z
+            x = fvm.utils.create_stretched_coordinate_vector(x_start, x_end, self.nx_local, sigma) if x is None else x
+            y = fvm.utils.create_stretched_coordinate_vector(y_start, y_end, self.ny_local, sigma) if y is None else y
+            z = fvm.utils.create_stretched_coordinate_vector(z_start, z_end, self.nz_local, sigma) if z is None else z
         else:
-            x = fvm.utils.create_uniform_coordinate_vector(nx_start, nx_end, self.nx_local) if x is None else x
-            y = fvm.utils.create_uniform_coordinate_vector(ny_start, ny_end, self.ny_local) if y is None else y
-            z = fvm.utils.create_uniform_coordinate_vector(nz_start, nz_end, self.nz_local) if z is None else z
+            x = fvm.utils.create_uniform_coordinate_vector(x_start, x_end, self.nx_local) if x is None else x
+            y = fvm.utils.create_uniform_coordinate_vector(y_start, y_end, self.ny_local) if y is None else y
+            z = fvm.utils.create_uniform_coordinate_vector(z_start, z_end, self.nz_local) if z is None else z
 
         # Re-initialize the fvm.Interface parameters
         self.nx = self.nx_local
