@@ -141,15 +141,17 @@ class Continuation:
     def converge(self, parameter_name, x, mu, dx, dmu, target, ds, maxit):
         ''' Converge onto the target value '''
 
+        tol = self.parameters.get('Destionation Tolerance', 1e-8)
+
         for j in range(maxit):
             ds = 1 / dmu * (target - mu)
-            x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, target, ds)
+            x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, target, ds, tol)
 
-            if abs(target - mu) < 1e-8:
+            if abs(target - mu) < tol:
                 break
         return x, mu
 
-    def step(self, parameter_name, x, mu, dx, dmu, target, ds):
+    def step(self, parameter_name, x, mu, dx, dmu, target, ds, tol):
         ''' Perform one step of the continuation '''
 
         mu0 = mu
@@ -160,7 +162,7 @@ class Continuation:
         x = x0 + ds * dx
 
         # Corrector (2.2.9 and onward)
-        x, mu = self.newtoncorrector(parameter_name, ds, x, x0, mu, mu0, 1e-4)
+        x, mu = self.newtoncorrector(parameter_name, ds, x, x0, mu, mu0, tol)
 
         if mu == mu0:
             # No convergence was achieved, adjusting the step size
@@ -209,11 +211,13 @@ class Continuation:
         dmu /= nrm
         dx /= nrm
 
+        tol = self.parameters.get('Newton Tolerance', 1e-4)
+
         # Perform the continuation
         for j in range(maxit):
             mu0 = mu
 
-            x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, target, ds)
+            x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, target, ds, tol)
 
             if (mu >= target and mu0 < target) or (mu <= target and mu0 > target):
                 # Converge onto the end point
