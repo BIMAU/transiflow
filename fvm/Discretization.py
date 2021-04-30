@@ -57,7 +57,6 @@ class Discretization:
     def _linear_part_2D(self):
         Re = self.get_parameter('Reynolds Number')
         Ra = self.get_parameter('Rayleigh Number')
-        Pr = self.get_parameter('Prandtl Number')
 
         if Re == 0:
             Re = 1
@@ -67,19 +66,15 @@ class Discretization:
             - (self.p_x() + self.p_y()) \
             + self.div()
 
-        if Ra and self.dof > 3:
+        if self.dof > 3:
+            atom += self.T_xx() + self.T_yy()
             atom += Ra * self.forward_average_T_y()
-
-        if Pr and self.dof > 3:
-            atom += 1 / Pr * (self.T_xx() + self.T_yy())
-            atom += 1 / Pr * self.backward_average_v_y()
 
         return atom
 
     def _linear_part_3D(self):
         Re = self.get_parameter('Reynolds Number')
         Ra = self.get_parameter('Rayleigh Number')
-        Pr = self.get_parameter('Prandtl Number')
 
         if Re == 0:
             Re = 1
@@ -90,19 +85,12 @@ class Discretization:
             - (self.p_x() + self.p_y() + self.p_z()) \
             + self.div()
 
-        if Ra and self.dof > 4:
+        if self.dof > 4:
+            atom += self.T_xx() + self.T_yy() + self.T_zz()
             if self.nz > 1:
                 atom += Ra * self.forward_average_T_z()
             else:
                 atom += Ra * self.forward_average_T_y()
-
-        if Pr and self.dof > 4:
-            if self.nz > 1:
-                atom += 1 / Pr * (self.T_xx() + self.T_yy() + self.T_zz())
-                atom += 1 / Pr * self.backward_average_w_z()
-            else:
-                atom += 1 / Pr * (self.T_xx() + self.T_yy() + self.T_zz())
-                atom += 1 / Pr * self.backward_average_v_y()
 
         return atom
 
@@ -144,6 +132,8 @@ class Discretization:
         if self.dim == 3:
             atom += self.mass_z()
         if self.dof > self.dim + 1:
+            Pr = self.get_parameter('Prandtl Number', 1.0)
+            atom /= Pr
             atom += self.mass_T()
         return self.assemble_mass_matrix(atom)
 
@@ -292,7 +282,10 @@ class Discretization:
             boundary_conditions.no_slip_west(atom)
 
             if self.dim == 2 or self.nz <= 1:
-                boundary_conditions.no_slip_north(atom)
+                Bi = self.get_parameter('Biot Number')
+                frc += boundary_conditions.heatflux_north(atom, 0, Bi)
+                frc += boundary_conditions.temperature_south(atom, 1)
+                boundary_conditions.free_slip_north(atom)
                 boundary_conditions.no_slip_south(atom)
                 return frc
 
@@ -301,6 +294,8 @@ class Discretization:
             boundary_conditions.no_slip_north(atom)
             boundary_conditions.no_slip_south(atom)
 
+            frc += boundary_conditions.temperature_top(atom, 0)
+            frc += boundary_conditions.temperature_bottom(atom, 0)
             boundary_conditions.no_slip_top(atom)
             boundary_conditions.no_slip_bottom(atom)
         elif Discretization._problem_type_equals(problem_type, 'Differentially heated cavity'):
@@ -446,9 +441,9 @@ class Discretization:
 
     @staticmethod
     def _T_xx(atom, i, j, k, x, y, z):
-        # distance between u[i] and u[i-1]
+        # distance between T[i] and T[i-1]
         dx = (x[i] - x[i-2]) / 2
-        # distance between u[i+1] and u[i]
+        # distance between T[i+1] and T[i]
         dxp1 = (x[i+1] - x[i-1]) / 2
         # volume size in the y direction
         dy = y[j] - y[j-1]
@@ -903,6 +898,10 @@ class Discretization:
         self.convection_v_v(atomJ, atomF, averages, weighted_averages, bil)
 
         if self.dof > self.dim + 1:
+            Pr = self.get_parameter('Prandtl Number', 1.0)
+            atomJ /= Pr
+            atomF /= Pr
+
             self.convection_T_u(atomJ, atomF, averages, weighted_averages, bil)
             self.convection_T_v(atomJ, atomF, averages, weighted_averages, bil)
 
@@ -986,6 +985,10 @@ class Discretization:
         self.convection_w_w(atomJ, atomF, averages, weighted_averages, bil)
 
         if self.dof > self.dim + 1:
+            Pr = self.get_parameter('Prandtl Number', 1.0)
+            atomJ /= Pr
+            atomF /= Pr
+
             self.convection_T_u(atomJ, atomF, averages, weighted_averages, bil)
             self.convection_T_v(atomJ, atomF, averages, weighted_averages, bil)
             self.convection_T_w(atomJ, atomF, averages, weighted_averages, bil)
