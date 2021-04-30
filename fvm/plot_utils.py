@@ -4,7 +4,7 @@ from scipy import integrate
 
 from fvm.utils import create_state_mtx # noqa: F401
 
-def plot_state(u, v, nx, ny, x=None, y=None):
+def plot_velocity_magnitude(u, v, nx, ny, x=None, y=None):
     psi = numpy.zeros([nx, ny])
 
     for i in range(nx):
@@ -32,7 +32,7 @@ def plot_state(u, v, nx, ny, x=None, y=None):
 
     plt.show()
 
-def plot_stream(u, v, nx, ny, x=None, y=None):
+def plot_streamfunction(u, v, nx, ny, x=None, y=None):
     if x is None:
         x = numpy.arange(1/nx, 1+1/nx, 1/nx)
         y = numpy.arange(1/ny, 1+1/ny, 1/ny)

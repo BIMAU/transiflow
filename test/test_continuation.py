@@ -32,7 +32,7 @@ def test_continuation(nx=4, interactive=False):
     print(x)
 
     x = plot_utils.create_state_mtx(x, nx, ny, nz, dof)
-    plot_utils.plot_state(x[:, ny // 2, :, 0], x[:, ny // 2, :, 2], nx, nz)
+    plot_utils.plot_velocity_magnitude(x[:, ny // 2, :, 0], x[:, ny // 2, :, 2], nx, nz)
 
 def continuation_semi_2D(nx=4, interactive=False):
     dim = 3
@@ -61,7 +61,7 @@ def continuation_semi_2D(nx=4, interactive=False):
     print(x)
 
     x = plot_utils.create_state_mtx(x, nx, ny, nz, dof)
-    plot_utils.plot_state(x[:, :, 0, 0], x[:, :, 0, 1], nx, ny)
+    plot_utils.plot_velocity_magnitude(x[:, :, 0, 0], x[:, :, 0, 1], nx, ny)
 
 def continuation_2D(nx=4, interactive=False):
     dim = 2
@@ -90,7 +90,7 @@ def continuation_2D(nx=4, interactive=False):
     print(x)
 
     x = plot_utils.create_state_mtx(x, nx, ny, nz, dof)
-    plot_utils.plot_state(x[:, :, 0, 0], x[:, :, 0, 1], nx, ny)
+    plot_utils.plot_velocity_magnitude(x[:, :, 0, 0], x[:, :, 0, 1], nx, ny)
 
 def test_continuation_2D_stretched(nx=4, interactive=False):
     dim = 2
@@ -122,7 +122,7 @@ def test_continuation_2D_stretched(nx=4, interactive=False):
     print(x)
 
     x = plot_utils.create_state_mtx(x, nx, ny, nz, dof)
-    plot_utils.plot_state(x[:, :, 0, 0], x[:, :, 0, 1], nx, ny, xpos[:-3], ypos[:-3])
+    plot_utils.plot_velocity_magnitude(x[:, :, 0, 0], x[:, :, 0, 1], nx, ny, xpos[:-3], ypos[:-3])
 
 def test_continuation_2D_equals():
     x1 = continuation_2D()
