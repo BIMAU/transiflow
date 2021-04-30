@@ -126,6 +126,8 @@ class BoundaryConditions:
 
         return frc
 
+# TODO: These methods are untested with nonzero heatflux and stretched grids
+
     def temperature_east(self, atom, temperature):
         '''T[i] + T[i+1] = 2 * Tb'''
         frc = self._constant_forcing_east(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, 2 * temperature)
@@ -174,64 +176,83 @@ class BoundaryConditions:
 
         return frc
 
-# TODO: These methods are untested with nonzero heatflux
+    def heatflux_east(self, atom, heatflux, biot=0.0):
+        '''T[i+1] - T[i] + h * Bi * (T[i+1] + T[i]) / 2 = h * Tbc, h = (x[i+1] - x[i-1]) / 2'''
+        h = (self.x[self.nx] - self.x[self.nx-2]) / 2
 
-    def heatflux_east(self, atom, heatflux):
-        '''T[i+1] - T[i] = h * Tbc, h = (x[i+1] - x[i-1]) / 2'''
-        h = self.x[self.nx] - self.x[self.nx-2]
-        frc = self._constant_forcing_east(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, -heatflux * h / 2)
+        c = 1 + h * biot / 2
+        frc = self._constant_forcing_east(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, -heatflux * h / c)
 
-        atom[self.nx-1, :, :, self.dim+1, self.dim+1, 1, :, :] += atom[self.nx-1, :, :, self.dim+1, self.dim+1, 2, :, :]
+        c = (1 - h * biot / 2) / c
+        atom[self.nx-1, :, :, self.dim+1, self.dim+1, 1, :, :] += c * atom[self.nx-1, :, :, self.dim+1, self.dim+1, 2, :, :]
         atom[self.nx-1, :, :, self.dim+1, self.dim+1, 2, :, :] = 0
 
         return frc
 
-    def heatflux_west(self, atom, heatflux):
-        '''T[i] - T[i-1] = h * Tbc, h = (x[i] - x[i-2]) / 2 (west boundary does not start at x = 0)'''
-        h = self.x[0] - self.x[-2]
-        frc = self._constant_forcing_west(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, -heatflux * h / 2)
+    def heatflux_west(self, atom, heatflux, biot=0.0):
+        '''T[i] - T[i-1] + h * Bi * (T[i] + T[i-1]) / 2 = h * Tbc, h = (x[i] - x[i-2]) / 2
+        (west boundary does not start at x = 0)'''
+        h = (self.x[0] - self.x[-2]) / 2
 
-        atom[0, :, :, self.dim+1, self.dim+1, 1, :, :] += atom[0, :, :, self.dim+1, self.dim+1, 0, :, :]
+        c = 1 - h * biot / 2
+        frc = self._constant_forcing_west(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, -heatflux * h / c)
+
+        c = (1 + h * biot / 2) / c
+        atom[0, :, :, self.dim+1, self.dim+1, 1, :, :] += c * atom[0, :, :, self.dim+1, self.dim+1, 0, :, :]
         atom[0, :, :, self.dim+1, self.dim+1, 0, :, :] = 0
 
         return frc
 
-    def heatflux_north(self, atom, heatflux):
-        '''T[j+1] - T[j] = h * Tbc, h = (y[j+1] - y[j-1]) / 2'''
-        h = self.y[self.ny] - self.y[self.ny-2]
-        frc = self._constant_forcing_north(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, -heatflux * h / 2)
+    def heatflux_north(self, atom, heatflux, biot=0.0):
+        '''T[j+1] - T[j] + h * Bi * (T[j+1] + T[j]) / 2 = h * Tbc, h = (y[j+1] - y[j-1]) / 2'''
+        h = (self.y[self.ny] - self.y[self.ny-2]) / 2
 
-        atom[:, self.ny-1, :, self.dim+1, self.dim+1, :, 1, :] += atom[:, self.ny-1, :, self.dim+1, self.dim+1, :, 2, :]
+        c = 1 + h * biot / 2
+        frc = self._constant_forcing_north(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, -heatflux * h / c)
+
+        c = (1 - h * biot / 2) / c
+        atom[:, self.ny-1, :, self.dim+1, self.dim+1, :, 1, :] += c * atom[:, self.ny-1, :, self.dim+1, self.dim+1, :, 2, :]
         atom[:, self.ny-1, :, self.dim+1, self.dim+1, :, 2, :] = 0
 
         return frc
 
-    def heatflux_south(self, atom, heatflux):
-        '''T[j] - T[j-1] = h * Tbc, h = (y[j] - y[j-2]) / 2 (south boundary does not start at y = 0)'''
-        h = self.y[0] - self.y[-2]
-        frc = self._constant_forcing_south(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, -heatflux * h / 2)
+    def heatflux_south(self, atom, heatflux, biot=0.0):
+        '''T[j] - T[j-1] + h * Bi * (T[j] + T[j-1]) / 2 = h * Tbc, h = (y[j] - y[j-2]) / 2
+        (south boundary does not start at y = 0)'''
+        h = (self.y[0] - self.y[-2]) / 2
 
-        atom[:, 0, :, self.dim+1, self.dim+1, :, 1, :] += atom[:, 0, :, self.dim+1, self.dim+1, :, 0, :]
+        c = 1 - h * biot / 2
+        frc = self._constant_forcing_south(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, -heatflux * h / c)
+
+        c = (1 + h * biot / 2) / c
+        atom[:, 0, :, self.dim+1, self.dim+1, :, 1, :] += c * atom[:, 0, :, self.dim+1, self.dim+1, :, 0, :]
         atom[:, 0, :, self.dim+1, self.dim+1, :, 0, :] = 0
 
         return frc
 
-    def heatflux_top(self, atom, heatflux):
-        '''T[k+1] - T[k] = h * Tbc, h = (z[k+1] - z[k-1]) / 2'''
-        h = self.z[self.nz] - self.z[self.nz-2]
-        frc = self._constant_forcing_top(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, -heatflux * h / 2)
+    def heatflux_top(self, atom, heatflux, biot=0.0):
+        '''T[k+1] - T[k] + h * Bi * (T[k+1] + T[k]) / 2 = h * Tbc, h = (z[k+1] - z[k-1]) / 2'''
+        h = (self.z[self.nz] - self.z[self.nz-2]) / 2
 
-        atom[:, :, self.nz-1, self.dim+1, self.dim+1, :, :, 1] += atom[:, :, self.nz-1, self.dim+1, self.dim+1, :, :, 2]
+        c = 1 + h * biot / 2
+        frc = self._constant_forcing_top(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, -heatflux * h / c)
+
+        c = (1 - h * biot / 2) / c
+        atom[:, :, self.nz-1, self.dim+1, self.dim+1, :, :, 1] += c * atom[:, :, self.nz-1, self.dim+1, self.dim+1, :, :, 2]
         atom[:, :, self.nz-1, self.dim+1, self.dim+1, :, :, 2] = 0
 
         return frc
 
-    def heatflux_bottom(self, atom, heatflux):
-        '''T[k] - T[k-1] = h * Tbc, h = (z[k] - z[k-2]) / 2 (bottom boundary does not start at z = 0)'''
-        h = self.z[0] - self.z[-2]
-        frc = self._constant_forcing_bottom(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, -heatflux * h / 2)
+    def heatflux_bottom(self, atom, heatflux, biot=0.0):
+        '''T[k] - T[k-1] + h * Bi * (T[k] + T[k-1]) / 2 = h * Tbc, h = (z[k] - z[k-2]) / 2
+        (bottom boundary does not start at z = 0)'''
+        h = (self.z[0] - self.z[-2]) / 2
 
-        atom[:, :, 0, self.dim+1, self.dim+1, :, :, 1] += atom[:, :, 0, self.dim+1, self.dim+1, :, :, 0]
+        c = 1 - h * biot / 2
+        frc = self._constant_forcing_bottom(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, -heatflux * h / c)
+
+        c = (1 + h * biot / 2) / c
+        atom[:, :, 0, self.dim+1, self.dim+1, :, :, 1] += c * atom[:, :, 0, self.dim+1, self.dim+1, :, :, 0]
         atom[:, :, 0, self.dim+1, self.dim+1, :, :, 0] = 0
 
         return frc
