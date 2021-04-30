@@ -138,6 +138,45 @@ class Continuation:
 
         return min(max(ds, self.min_step_size), self.max_step_size)
 
+    def step(self, parameter_name, x, mu, dx, dmu, target, ds):
+        ''' Perform one step of the continuation '''
+        mu0 = mu
+        x0 = x
+
+        # Predictor (2.2.3)
+        mu = mu0 + ds * dmu
+        x = x0 + ds * dx
+
+        # Corrector (2.2.9 and onward)
+        x, mu = self.newtoncorrector(parameter_name, ds, x, x0, mu, mu0, 1e-4)
+
+        if mu == mu0:
+            # No convergence was achieved, adjusting the step size
+            prev_ds = ds
+            ds = self.adjust_step_size(ds)
+            if prev_ds == ds:
+                raise Exception('Newton cannot achieve convergence')
+
+            return self.step(parameter_name, x0, mu0, dx, dmu, target, ds)
+
+        print("%s: %f" % (parameter_name, mu))
+        sys.stdout.flush()
+
+        # Set the new values computed by the corrector
+        dmu = mu - mu0
+        dx = x - x0
+
+        if abs(dmu) < 1e-10:
+            raise Exception('dmu too small')
+
+        # Compute the tangent (2.2.4)
+        dx /= ds
+        dmu /= ds
+
+        ds = self.adjust_step_size(ds)
+
+        return x, mu, dx, dmu, ds
+
     def continuation(self, x0, parameter_name, target, ds, maxit, verbose=False):
         x = x0
 
@@ -163,26 +202,8 @@ class Continuation:
         # Perform the continuation
         for j in range(maxit):
             mu0 = mu
-            x0 = x
 
-            # Predictor (2.2.3)
-            mu = mu0 + ds * dmu
-            x = x0 + ds * dx
-
-            # Corrector (2.2.9 and onward)
-            x, mu = self.newtoncorrector(parameter_name, ds, x, x0, mu, mu0, 1e-4)
-
-            if mu == mu0:
-                # No convergence was achieved, adjusting the step size
-                prev_ds = ds
-                ds = self.adjust_step_size(ds)
-                if prev_ds == ds:
-                    raise Exception('Newton cannot achieve convergence')
-
-                continue
-
-            print("%s: %f" % (parameter_name, mu))
-            sys.stdout.flush()
+            x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, target, ds)
 
             if (mu >= target and mu0 < target) or (mu <= target and mu0 > target):
                 # Converge onto the end point (we usually go past it, so we
@@ -195,18 +216,5 @@ class Continuation:
                 sys.stdout.flush()
 
                 return x
-
-            # Set the new values computed by the corrector
-            dmu = mu - mu0
-            dx = x - x0
-
-            if abs(dmu) < 1e-10:
-                return
-
-            # Compute the tangent (2.2.4)
-            dx /= ds
-            dmu /= ds
-
-            ds = self.adjust_step_size(ds)
 
         return x
