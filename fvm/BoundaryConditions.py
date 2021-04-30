@@ -63,6 +63,54 @@ class BoundaryConditions:
         atom[:, :, 0, :, :, :, :, 1] -= atom[:, :, 0, :, :, :, :, 0]
         atom[:, :, 0, :, :, :, :, 0] = 0
 
+    def free_slip_east(self, atom):
+        # At the boundary u[i] = 0, v[i] - v[i+1] = h*V similar for w. So v[i+1] = v[i]+h*V.
+        atom[self.nx-1, :, :, :, :, 1, :, :] += atom[self.nx-1, :, :, :, :, 2, :, :]
+        atom[self.nx-1, :, :, :, 0, 1, :, :] = 0
+        atom[self.nx-1, :, :, 0, :, :, :, :] = 0
+        atom[self.nx-1, :, :, :, :, 2, :, :] = 0
+        atom[self.nx-1, :, :, 0, 0, 1, 1, 1] = -1
+        # TODO: Do we need this?
+        atom[self.nx-2, :, :, 0, 0, 2, :, :] = 0
+
+    def free_slip_west(self, atom):
+        # At the boundary u[i-1] = 0, v[i-1] - v[i] = 0 similar for w. So v[i-1] = v[i].
+        atom[0, :, :, :, 0, 0, :, :] = 0
+        atom[0, :, :, :, :, 1, :, :] += atom[0, :, :, :, :, 0, :, :]
+        atom[0, :, :, :, :, 0, :, :] = 0
+
+    def free_slip_north(self, atom):
+        # At the boundary v[i] = 0, u[i] - u[i+1] = h*U similar for w. So u[i+1] = u[i]+h*U.
+        atom[:, self.ny-1, :, :, :, :, 1, :] += atom[:, self.ny-1, :, :, :, :, 2, :]
+        atom[:, self.ny-1, :, :, 1, :, 1, :] = 0
+        atom[:, self.ny-1, :, 1, :, :, :, :] = 0
+        atom[:, self.ny-1, :, :, :, :, 2, :] = 0
+        atom[:, self.ny-1, :, 1, 1, 1, 1, 1] = -1
+        # TODO: Do we need this?
+        atom[:, self.ny-2, :, 1, 1, :, 2, :] = 0
+
+    def free_slip_south(self, atom):
+        # At the boundary v[i-1] = 0, u[i-1] - u[i] = 0 similar for w. So u[i-1] = u[i].
+        atom[:, 0, :, :, 1, :, 0, :] = 0
+        atom[:, 0, :, :, :, :, 1, :] += atom[:, 0, :, :, :, :, 0, :]
+        atom[:, 0, :, :, :, :, 0, :] = 0
+
+    def free_slip_top(self, atom):
+        # At the boundary w[i] = 0, u[i] - u[i+1] = h*U similar for v. So u[i+1] = u[i]+h*U.
+        atom[:, :, self.nz-1, :, :, :, :, 1] += atom[:, :, self.nz-1, :, :, :, :, 2]
+        atom[:, :, self.nz-1, :, 2, :, :, 1] = 0
+        atom[:, :, self.nz-1, 2, :, :, :, :] = 0
+        atom[:, :, self.nz-1, :, :, :, :, 2] = 0
+        atom[:, :, self.nz-1, 2, 2, 1, 1, 1] = -1
+        # TODO: Do we need this?
+        atom[:, :, self.nz-2, 2, 2, :, :, 2] = 0
+
+    def free_slip_bottom(self, atom):
+        # At the boundary w[i-1] = 0, u[i-1] - u[i] = 0 similar for v. So u[i-1] = u[i].
+        atom[:, :, 0, :, 2, :, :, 0] = 0
+        atom[:, :, 0, :, :, :, :, 1] += atom[:, :, 0, :, :, :, :, 0]
+        atom[:, :, 0, :, :, :, :, 0] = 0
+
     def moving_lid_north(self, atom, velocity):
         frc = self._constant_forcing_north(atom[:, :, :, :, 0, :, :, :], 0, 2 * velocity)
 
