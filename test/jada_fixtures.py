@@ -57,7 +57,7 @@ def numpy_x(numpy_interface):
     target = 2000
     ds = 100
     maxit = 20
-    return continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)
+    return continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)[0]
 
 def check_eigenvalues(A_op, B_op, eigs, v, num_evs, tol):
     from jadapy.utils import norm

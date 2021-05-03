@@ -37,7 +37,7 @@ def main():
     for i, target in enumerate(data_points):
         ds = 100
         maxit = 1000
-        x = continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)
+        x = continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)[0]
         x0 = x
 
         # Compute the eigenvalues of the generalized eigenvalue problem near a target 2.8i

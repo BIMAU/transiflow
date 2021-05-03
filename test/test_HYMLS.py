@@ -46,7 +46,7 @@ def test_HYMLS(nx=4, interactive=False):
     target = 100
     ds = 100
     maxit = 20
-    x = continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)
+    x = continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)[0]
 
     assert x.Norm2() > 0
 
@@ -90,7 +90,7 @@ def test_HYMLS_2D(nx=8, interactive=False):
     target = 2000
     ds = 100
     maxit = 20
-    x = continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)
+    x = continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)[0]
 
     assert x.Norm2() > 0
 
@@ -136,7 +136,7 @@ def test_HYMLS_2D_stretched(nx=8, interactive=False):
     target = 2000
     ds = 100
     maxit = 20
-    x = continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)
+    x = continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)[0]
 
     assert x.Norm2() > 0
 

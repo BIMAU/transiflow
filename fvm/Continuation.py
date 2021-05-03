@@ -1,9 +1,8 @@
 import sys
-
-from math import sqrt
+import numpy
 
 def norm(x):
-    return sqrt(x.dot(x))
+    return numpy.sqrt(x.dot(x))
 
 class Continuation:
 
@@ -126,6 +125,8 @@ class Continuation:
             print('Newton did not converge. Adjusting step size and trying again')
             return x0, mu0
 
+        self.interface.set_parameter(parameter_name, mu)
+
         return x, mu
 
     def adjust_step_size(self, ds):
@@ -138,20 +139,41 @@ class Continuation:
 
         return min(max(ds, self.min_step_size), self.max_step_size)
 
+    def detect_bifurcation(self, parameter_name, x, mu, dx, dmu, eigs, deigs, ds, maxit):
+        ''' Converge onto a bifurcation '''
+
+        tol = self.parameters.get('Destination Tolerance', 1e-8)
+
+        for j in range(maxit):
+            if abs(eigs[0].real) < tol:
+                break
+
+            # Secant method
+            ds = ds / deigs[0].real * -eigs[0].real
+            x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, ds, tol)
+
+            eigs0 = eigs
+            eigs = self.interface.eigs(x)
+            deigs = eigs - eigs0
+
+        return x, mu
+
     def converge(self, parameter_name, x, mu, dx, dmu, target, ds, maxit):
         ''' Converge onto the target value '''
 
-        tol = self.parameters.get('Destionation Tolerance', 1e-8)
+        tol = self.parameters.get('Destination Tolerance', 1e-8)
 
         for j in range(maxit):
-            ds = 1 / dmu * (target - mu)
-            x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, target, ds, tol)
-
             if abs(target - mu) < tol:
                 break
+
+            # Secant method
+            ds = 1 / dmu * (target - mu)
+            x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, ds, tol)
+
         return x, mu
 
-    def step(self, parameter_name, x, mu, dx, dmu, target, ds, tol):
+    def step(self, parameter_name, x, mu, dx, dmu, ds, tol):
         ''' Perform one step of the continuation '''
 
         mu0 = mu
@@ -171,7 +193,7 @@ class Continuation:
             if prev_ds == ds:
                 raise Exception('Newton cannot achieve convergence')
 
-            return self.step(parameter_name, x0, mu0, dx, dmu, target, ds)
+            return self.step(parameter_name, x0, mu0, dx, dmu, ds, tol)
 
         print("%s: %f" % (parameter_name, mu))
         sys.stdout.flush()
@@ -207,9 +229,11 @@ class Continuation:
         # Scaling of the initial tangent (2.2.7)
         dmu = 1
         zeta = 1 / len(x)
-        nrm = sqrt(zeta * dx.dot(dx) + dmu ** 2)
+        nrm = numpy.sqrt(zeta * dx.dot(dx) + dmu ** 2)
         dmu /= nrm
         dx /= nrm
+
+        eigs = None
 
         tol = self.parameters.get('Newton Tolerance', 1e-4)
 
@@ -217,14 +241,24 @@ class Continuation:
         for j in range(maxit):
             mu0 = mu
 
-            x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, target, ds, tol)
+            x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, ds, tol)
 
             if (mu >= target and mu0 < target) or (mu <= target and mu0 > target):
                 # Converge onto the end point
                 x, mu = self.converge(parameter_name, x, mu, dx, dmu, target, ds, maxit)
 
-                return x
+                return x, mu
+
+            if self.parameters.get('Detect Bifurcation Points', False):
+                eigs0 = eigs
+                eigs = self.interface.eigs(x)
+
+                if eigs[0].real > 0:
+                    deigs = eigs - eigs0
+                    x, mu = self.detect_bifurcation(parameter_name, x, mu, dx, dmu, eigs, deigs, ds, maxit)
+
+                    return x, mu
 
             ds = self.adjust_step_size(ds)
 
-        return x
+        return x, mu
