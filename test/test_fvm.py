@@ -35,9 +35,26 @@ def test_uniform_grid():
     for i in range(nx):
         assert x[i] == pytest.approx((i + 1) * dx)
 
+    assert x[-1] == pytest.approx(0)
+    assert x[0] > 0
+    assert x[nx-1] == pytest.approx(1)
+
+def test_shifted_uniform_grid():
+    nx = 5
+    dx = 3 / nx
+    x = utils.create_uniform_coordinate_vector(1, 4, nx)
+    for i in range(nx):
+        assert x[i] == pytest.approx((i + 1) * dx + 1)
+
+    assert x[-1] == pytest.approx(1)
+    assert x[0] > 1
+    assert x[nx-1] == pytest.approx(4)
+
 def test_stretched_grid():
     nx = 5
     x = utils.create_stretched_coordinate_vector(0, 1, nx, 1.5)
+
+    assert x[-1] == pytest.approx(0)
     assert x[0] > 0
     assert x[nx-1] == pytest.approx(1)
 
