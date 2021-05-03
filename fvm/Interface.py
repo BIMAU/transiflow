@@ -14,6 +14,9 @@ class Interface:
         self.dof = dof
         self.discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
 
+        self.parameters = parameters
+        self._subspaces = None
+
     def set_parameter(self, name, value):
         self.discretization.set_parameter(name, value)
 
@@ -59,3 +62,26 @@ class Interface:
             for i in range(x.shape[1]):
                 x[:, i] = linalg.spsolve(A, rhs[:, i])
         return x
+
+    def eigs(self, state):
+        from jadapy import jdqz
+        from fvm.JadaInterface import JadaOp, JadaInterface
+
+        jac_op = JadaOp(self.jacobian(state))
+        mass_op = JadaOp(self.mass_matrix())
+        jada_interface = JadaInterface(self, jac_op, mass_op, jac_op.shape[0], numpy.complex128)
+
+        parameters = self.parameters.get('Eigenvalue Solver', {})
+        target = parameters.get('Target', 0)
+        subspace_dimensions = [parameters.get('Minimum Subspace Dimension', 30),
+                               parameters.get('Maximum Subspace Dimension', 60)]
+        tol = parameters.get('Tolerance', 1e-9)
+        num = parameters.get('Number of Eigenvalues', 5)
+
+        alpha, beta, q, z = jdqz.jdqz(jac_op, mass_op, num, tol=tol, subspace_dimensions=subspace_dimensions, target=target,
+                                      interface=jada_interface, arithmetic='complex', prec=jada_interface.shifted_prec,
+                                      return_subspaces=True, initial_subspaces=self._subspaces)
+
+        self._subspaces = [q, z]
+
+        return numpy.array(sorted(alpha / beta, key=lambda x: -x.real))
