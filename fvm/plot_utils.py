@@ -1,10 +1,13 @@
 import numpy
 import matplotlib.pyplot as plt
-from scipy import integrate
 
+from fvm import utils
 from fvm.utils import create_state_mtx # noqa: F401
 
-def plot_velocity_magnitude(u, v, nx, ny, x=None, y=None):
+def plot_velocity_magnitude(u, v, interface):
+    nx = u.shape[0]
+    ny = u.shape[1]
+
     psi = numpy.zeros([nx, ny])
 
     for i in range(nx):
@@ -17,9 +20,8 @@ def plot_velocity_magnitude(u, v, nx, ny, x=None, y=None):
                 psiv += v[i-1, j]
             psi[i, j] = numpy.linalg.norm([psiu, psiv])
 
-    if x is None:
-        x = numpy.arange(1/nx, 1+1/nx, 1/nx)
-        y = numpy.arange(1/ny, 1+1/ny, 1/ny)
+    x = interface.discretization.x[:-3]
+    y = interface.discretization.y[:-3]
 
     x, y = numpy.meshgrid(x, y)
 
@@ -32,17 +34,11 @@ def plot_velocity_magnitude(u, v, nx, ny, x=None, y=None):
 
     plt.show()
 
-def plot_streamfunction(u, v, nx, ny, x=None, y=None):
-    if x is None:
-        x = numpy.arange(1/nx, 1+1/nx, 1/nx)
-        y = numpy.arange(1/ny, 1+1/ny, 1/ny)
+def plot_streamfunction(u, v, interface):
+    x = interface.discretization.x[:-3]
+    y = interface.discretization.y[:-3]
 
-    x, y = numpy.meshgrid(x, y)
-
-    psiv = integrate.cumtrapz(v.T, x, axis=1, initial=0)
-    psiu = integrate.cumtrapz(u.T, y, axis=0, initial=0)
-
-    psi = ((-psiu + psiv[0]) + (psiv - psiu[:, 0][:, None])) / 2
+    psi = utils.compute_streamfunction(u, v, x, y)
 
     fig1, ax1 = plt.subplots()
     cs = ax1.contourf(x, y, psi, 15)
@@ -53,10 +49,9 @@ def plot_streamfunction(u, v, nx, ny, x=None, y=None):
 
     plt.show()
 
-def plot_value(t, nx, ny, x=None, y=None):
-    if x is None:
-        x = numpy.arange(1/nx, 1+1/nx, 1/nx)
-        y = numpy.arange(1/ny, 1+1/ny, 1/ny)
+def plot_value(t, interface):
+    x = interface.discretization.x[:-3]
+    y = interface.discretization.y[:-3]
 
     x, y = numpy.meshgrid(x, y)
 

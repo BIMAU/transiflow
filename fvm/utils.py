@@ -1,5 +1,7 @@
 import numpy
 
+from scipy import integrate
+
 def create_state_mtx(state, nx, ny, nz, dof):
     state_mtx = numpy.zeros([nx, ny, nz, dof])
     for k in range(nz):
@@ -31,3 +33,11 @@ def create_stretched_coordinate_vector(start, end, nx, sigma):
 
     x = create_uniform_coordinate_vector(start, end, nx)
     return 0.5 * (1 + numpy.tanh(2 * sigma * (x - 0.5)) / numpy.tanh(sigma))
+
+def compute_streamfunction(u, v, x, y):
+    x, y = numpy.meshgrid(x, y)
+
+    psiv = integrate.cumtrapz(v.T, x, axis=1, initial=0)
+    psiu = integrate.cumtrapz(u.T, y, axis=0, initial=0)
+
+    return ((-psiu + psiv[0]) + (psiv - psiu[:, 0][:, None])) / 2

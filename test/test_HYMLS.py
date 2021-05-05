@@ -102,7 +102,7 @@ def test_HYMLS_2D(nx=8, interactive=False):
         print(x)
 
         x = plot_utils.create_velocity_magnitude_mtx(x, nx, ny, nz, dof)
-        plot_utils.plot_velocity_magnitude(x[:, :, 0, 0], x[:, :, 0, 1], nx, ny)
+        plot_utils.plot_velocity_magnitude(x[:, :, 0, 0], x[:, :, 0, 1], interface)
 
 def test_HYMLS_2D_stretched(nx=8, interactive=False):
     try:
@@ -151,7 +151,7 @@ def test_HYMLS_2D_stretched(nx=8, interactive=False):
         ypos = utils.create_stretched_coordinate_vector(0, 1, ny, 1.5)
 
         x = plot_utils.create_velocity_magnitude_mtx(x, nx, ny, nz, dof)
-        plot_utils.plot_velocity_magnitude(x[:, :, 0, 0], x[:, :, 0, 1], nx, ny, xpos[:-3], ypos[:-3])
+        plot_utils.plot_velocity_magnitude(x[:, :, 0, 0], x[:, :, 0, 1], interface)
 
 
 if __name__ == '__main__':
