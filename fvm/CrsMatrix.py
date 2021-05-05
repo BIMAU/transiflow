@@ -1,12 +1,13 @@
 import numpy
 
 class CrsMatrix:
-    def __init__(self, coA=None, jcoA=None, begA=None):
+    def __init__(self, coA=None, jcoA=None, begA=None, compress=True):
         self.coA = coA
         self.jcoA = jcoA
         self.begA = begA
 
-        self.compress()
+        if compress:
+            self.compress()
 
         self.lu = None
 
@@ -49,6 +50,40 @@ class CrsMatrix:
             for i in range(x.shape[1]):
                 x[:, i] = self.solve(rhs[:, i])
         return x
+
+    def __add__(self, B):
+        A = CrsMatrix(self.coA.copy(), self.jcoA.copy(), self.begA.copy(), False)
+        for i in range(self.n):
+            for j in range(B.begA[i], B.begA[i+1]):
+                if abs(B.coA[j]) < 1e-14:
+                    continue
+
+                found = False
+                for k in range(self.begA[i], self.begA[i+1]):
+                    if B.jcoA[j] == self.jcoA[k]:
+                        A.coA[k] += B.coA[j]
+                        found = True
+                        break
+
+                if not found:
+                    raise Exception('A does not contain the pattern of B', i,
+                                    A.jcoA[A.begA[i]:A.begA[i+1]],
+                                    B.jcoA[B.begA[i]:B.begA[i+1]])
+        return A
+
+    def __sub__(self, B):
+        A = CrsMatrix(-B.coA, B.jcoA, B.begA, False)
+        return self + A
+
+    def __mul__(self, x):
+        A = CrsMatrix(self.coA.copy(), self.jcoA.copy(), self.begA.copy(), False)
+        for i in range(self.n):
+            for j in range(self.begA[i], self.begA[i+1]):
+                A.coA[j] *= x
+        return A
+
+    def __truediv__(self, x):
+        return self * (1 / x)
 
     def __matmul__(self, x):
         b = numpy.zeros(self.n, dtype=x.dtype)
