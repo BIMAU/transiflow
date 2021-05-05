@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from fvm import utils
 from fvm.utils import create_state_mtx # noqa: F401
 
-def plot_velocity_magnitude(u, v, interface):
+def plot_velocity_magnitude(u, v, interface=None, x=None, y=None):
     nx = u.shape[0]
     ny = u.shape[1]
 
@@ -20,8 +20,10 @@ def plot_velocity_magnitude(u, v, interface):
                 psiv += v[i-1, j]
             psi[i, j] = numpy.linalg.norm([psiu, psiv])
 
-    x = interface.discretization.x[:-3]
-    y = interface.discretization.y[:-3]
+    if x is None:
+        x = interface.discretization.x[:-3]
+    if y is None:
+        y = interface.discretization.y[:-3]
 
     x, y = numpy.meshgrid(x, y)
 
@@ -34,9 +36,11 @@ def plot_velocity_magnitude(u, v, interface):
 
     plt.show()
 
-def plot_streamfunction(u, v, interface):
-    x = interface.discretization.x[:-3]
-    y = interface.discretization.y[:-3]
+def plot_streamfunction(u, v, interface=None, x=None, y=None):
+    if x is None:
+        x = interface.discretization.x[:-3]
+    if y is None:
+        y = interface.discretization.y[:-3]
 
     psi = utils.compute_streamfunction(u, v, x, y)
 
@@ -49,9 +53,11 @@ def plot_streamfunction(u, v, interface):
 
     plt.show()
 
-def plot_value(t, interface):
-    x = interface.discretization.x[:-3]
-    y = interface.discretization.y[:-3]
+def plot_value(t, interface=None, x=None, y=None):
+    if x is None:
+        x = interface.discretization.x[:-3]
+    if y is None:
+        y = interface.discretization.y[:-3]
 
     x, y = numpy.meshgrid(x, y)
 
