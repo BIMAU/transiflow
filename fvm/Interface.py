@@ -33,35 +33,36 @@ class Interface:
         return self.discretization.mass_matrix()
 
     def solve(self, jac, rhs):
-        coA = numpy.zeros(jac.begA[-1], dtype=jac.coA.dtype)
-        jcoA = numpy.zeros(jac.begA[-1], dtype=int)
-        begA = numpy.zeros(len(jac.begA), dtype=int)
+        if not jac.lu:
+            coA = numpy.zeros(jac.begA[-1], dtype=jac.coA.dtype)
+            jcoA = numpy.zeros(jac.begA[-1], dtype=int)
+            begA = numpy.zeros(len(jac.begA), dtype=int)
 
-        idx = 0
-        for i in range(len(jac.begA)-1):
-            if i == self.dim:
-                coA[idx] = -1.0
-                jcoA[idx] = i
-                idx += 1
-                begA[i+1] = idx
-                continue
-            for j in range(jac.begA[i], jac.begA[i+1]):
-                if jac.jcoA[j] != self.dim:
-                    coA[idx] = jac.coA[j]
-                    jcoA[idx] = jac.jcoA[j]
+            idx = 0
+            for i in range(len(jac.begA)-1):
+                if i == self.dim:
+                    coA[idx] = -1.0
+                    jcoA[idx] = i
                     idx += 1
-            begA[i+1] = idx
+                    begA[i+1] = idx
+                    continue
+                for j in range(jac.begA[i], jac.begA[i+1]):
+                    if jac.jcoA[j] != self.dim:
+                        coA[idx] = jac.coA[j]
+                        jcoA[idx] = jac.jcoA[j]
+                        idx += 1
+                begA[i+1] = idx
 
-        A = sparse.csr_matrix((coA, jcoA, begA))
+            A = sparse.csr_matrix((coA, jcoA, begA))
+
+            jac.lu = linalg.splu(A)
+
         if len(rhs.shape) < 2:
             rhs[self.dim] = 0
-            x = linalg.spsolve(A, rhs)
         else:
-            x = rhs.copy()
             rhs[self.dim, :] = 0
-            for i in range(x.shape[1]):
-                x[:, i] = linalg.spsolve(A, rhs[:, i])
-        return x
+
+        return jac.solve(rhs)
 
     def eigs(self, state, return_eigenvectors=False):
         from jadapy import jdqz

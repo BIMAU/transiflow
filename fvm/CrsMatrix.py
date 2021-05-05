@@ -8,6 +8,8 @@ class CrsMatrix:
 
         self.compress()
 
+        self.lu = None
+
     def _get_n(self):
         return len(self.begA) - 1
 
@@ -33,6 +35,20 @@ class CrsMatrix:
 
             beg = self.begA[i+1]
             self.begA[i+1] = idx
+
+    def solve(self, rhs):
+        if len(rhs.shape) < 2:
+            if self.lu.L.dtype != rhs.dtype and numpy.dtype(rhs.dtype.char.upper()) == rhs.dtype:
+                x = rhs.copy()
+                x.real = self.solve(rhs.real)
+                x.imag = self.solve(rhs.imag)
+            else:
+                x = self.lu.solve(rhs)
+        else:
+            x = rhs.copy()
+            for i in range(x.shape[1]):
+                x[:, i] = self.solve(rhs[:, i])
+        return x
 
     def __matmul__(self, x):
         b = numpy.zeros(self.n, dtype=x.dtype)
