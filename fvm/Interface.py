@@ -53,7 +53,8 @@ class Interface:
                         idx += 1
                 begA[i+1] = idx
 
-            A = sparse.csr_matrix((coA, jcoA, begA))
+            # Convert the matrix to CSC format since splu expects that
+            A = sparse.csr_matrix((coA, jcoA, begA)).tocsc()
 
             jac.lu = linalg.splu(A)
 
