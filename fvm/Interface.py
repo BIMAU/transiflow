@@ -63,7 +63,7 @@ class Interface:
                 x[:, i] = linalg.spsolve(A, rhs[:, i])
         return x
 
-    def eigs(self, state):
+    def eigs(self, state, return_eigenvectors=False):
         from jadapy import jdqz
         from fvm.JadaInterface import JadaOp, JadaInterface
 
@@ -75,13 +75,27 @@ class Interface:
         target = parameters.get('Target', 0)
         subspace_dimensions = [parameters.get('Minimum Subspace Dimension', 30),
                                parameters.get('Maximum Subspace Dimension', 60)]
-        tol = parameters.get('Tolerance', 1e-9)
+        tol = parameters.get('Tolerance', 1e-7)
         num = parameters.get('Number of Eigenvalues', 5)
 
-        alpha, beta, q, z = jdqz.jdqz(jac_op, mass_op, num, tol=tol, subspace_dimensions=subspace_dimensions, target=target,
-                                      interface=jada_interface, arithmetic='complex', prec=jada_interface.shifted_prec,
-                                      return_subspaces=True, initial_subspaces=self._subspaces)
+        result = jdqz.jdqz(jac_op, mass_op, num, tol=tol, subspace_dimensions=subspace_dimensions, target=target,
+                           interface=jada_interface, arithmetic='complex', prec=jada_interface.shifted_prec,
+                           return_eigenvectors=return_eigenvectors, return_subspaces=True,
+                           initial_subspaces=self._subspaces)
 
-        self._subspaces = [q, z]
+        if return_eigenvectors:
+            alpha, beta, v, q, z = result
+            self._subspaces = [q, z]
+            idx = range(len(alpha))
+            idx = sorted(idx, key=lambda i: -(alpha[i] / beta[i]).real)
 
-        return numpy.array(sorted(alpha / beta, key=lambda x: -x.real))
+            w = v.copy()
+            eigs = alpha.copy()
+            for i in range(len(idx)):
+                w[:, i] = v[:, idx[i]]
+                eigs[i] = alpha[idx[i]] / beta[idx[i]]
+            return eigs, w
+        else:
+            alpha, beta, q, z = result
+            self._subspaces = [q, z]
+            return numpy.array(sorted(alpha / beta, key=lambda x: -x.real))
