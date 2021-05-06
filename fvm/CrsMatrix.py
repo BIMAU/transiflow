@@ -52,15 +52,17 @@ class CrsMatrix:
         return x
 
     def __add__(self, B):
-        A = CrsMatrix(self.coA.copy(), self.jcoA.copy(), self.begA.copy(), False)
+        A = CrsMatrix(self.coA[:self.begA[-1]].copy(), self.jcoA[:self.begA[-1]].copy(),
+                      self.begA.copy(), False)
+
         for i in range(self.n):
             for j in range(B.begA[i], B.begA[i+1]):
                 if abs(B.coA[j]) < 1e-14:
                     continue
 
                 found = False
-                for k in range(self.begA[i], self.begA[i+1]):
-                    if B.jcoA[j] == self.jcoA[k]:
+                for k in range(A.begA[i], A.begA[i+1]):
+                    if B.jcoA[j] == A.jcoA[k]:
                         A.coA[k] += B.coA[j]
                         found = True
                         break
@@ -72,13 +74,15 @@ class CrsMatrix:
         return A
 
     def __sub__(self, B):
-        A = CrsMatrix(-B.coA, B.jcoA, B.begA, False)
+        A = CrsMatrix(-B.coA[:B.begA[-1]], B.jcoA[:B.begA[-1]], B.begA, False)
         return self + A
 
     def __mul__(self, x):
-        A = CrsMatrix(self.coA.copy(), self.jcoA.copy(), self.begA.copy(), False)
+        A = CrsMatrix(self.coA[:self.begA[-1]].copy(), self.jcoA[:self.begA[-1]].copy(),
+                      self.begA.copy(), False)
+
         for i in range(self.n):
-            for j in range(self.begA[i], self.begA[i+1]):
+            for j in range(A.begA[i], A.begA[i+1]):
                 A.coA[j] *= x
         return A
 
