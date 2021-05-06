@@ -58,6 +58,10 @@ class JadaInterface(NumPyInterface.NumPyInterface):
         self.preconditioned_solve = kwargs.get('preconditioned_solve', False)
         self.shifted = kwargs.get('shifted', False)
 
+        self._prev_alpha = None
+        self._prev_beta = None
+        self._shifted_matrix = None
+
     def solve(self, op, x, tol, maxit):
         if op.dtype.char != op.dtype.char.upper():
             # Real case
@@ -94,6 +98,14 @@ class JadaInterface(NumPyInterface.NumPyInterface):
         except AttributeError:
             pass
 
+        # Cache previous preconditioners
+        if self._shifted_matrix and \
+           abs(alpha / beta - self._prev_alpha / self._prev_beta) / abs(alpha / beta) < 1e-1:
+            return self.interface.solve(self._shifted_matrix, x)
+
+        self._prev_alpha = alpha
+        self._prev_beta = beta
+
         mat = beta * self.jac_op.mat - alpha * self.mass_op.mat
-        crs_mat = CrsMatrix(mat.data, mat.indices, mat.indptr)
-        return self.interface.solve(crs_mat, x)
+        self._shifted_matrix = CrsMatrix(mat.data, mat.indices, mat.indptr)
+        return self.interface.solve(self._shifted_matrix, x)
