@@ -16,6 +16,16 @@ class CrsMatrix:
 
     n = property(_get_n)
 
+    def _get_shape(self):
+        return (self.n, self.n)
+
+    shape = property(_get_shape)
+
+    def _get_dtype(self):
+        return self.coA.dtype
+
+    dtype = property(_get_dtype)
+
     def compress(self):
         ''' Remove zeros and merge duplicate entries, which may occur in the case of periodic
         boundary conditions.'''
@@ -89,12 +99,15 @@ class CrsMatrix:
     def __truediv__(self, x):
         return self * (1 / x)
 
-    def __matmul__(self, x):
+    def matvec(self, x):
         b = numpy.zeros(self.n, dtype=x.dtype)
         for i in range(self.n):
             for j in range(self.begA[i], self.begA[i+1]):
                 b[i] += self.coA[j] * x[self.jcoA[j]]
         return b
+
+    def __matmul__(self, x):
+        return self.matvec(x)
 
     def __str__(self):
         out = ''

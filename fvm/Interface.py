@@ -15,6 +15,12 @@ class Interface:
         self.discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
 
         self.parameters = parameters
+
+        # Solver caching
+        self._lu = None
+        self._prec = None
+
+        # Eigenvalue solver caching
         self._subspaces = None
 
     def set_parameter(self, name, value):
@@ -33,6 +39,23 @@ class Interface:
         return self.discretization.mass_matrix()
 
     def solve(self, jac, x):
+        rhs = x.copy()
+
+        # Fix one pressure node
+        if len(rhs.shape) < 2:
+            rhs[self.dim] = 0
+        else:
+            rhs[self.dim, :] = 0
+
+        # First try to use an iterative solver with the previous
+        # direct solver as preconditioner
+        if self._prec and jac.dtype == rhs.dtype and jac.dtype == self._prec.dtype and \
+           self.parameters.get('Use Iterative Solver', False):
+            out, info = linalg.gmres(jac, rhs, restart=5, maxiter=1, tol=1e-8, atol=0, M=self._prec)
+            if info == 0:
+                return out
+
+        # Use a direct solver instead
         if not jac.lu:
             coA = numpy.zeros(jac.begA[-1], dtype=jac.coA.dtype)
             jcoA = numpy.zeros(jac.begA[-1], dtype=int)
@@ -58,11 +81,9 @@ class Interface:
 
             jac.lu = linalg.splu(A)
 
-        rhs = x.copy()
-        if len(rhs.shape) < 2:
-            rhs[self.dim] = 0
-        else:
-            rhs[self.dim, :] = 0
+            # Cache the factorization for use in the iterative solver
+            self._lu = jac.lu
+            self._prec = linalg.LinearOperator((jac.n, jac.n), matvec=self._lu.solve, dtype=jac.dtype)
 
         return jac.solve(rhs)
 
