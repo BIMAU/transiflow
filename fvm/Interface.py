@@ -32,7 +32,7 @@ class Interface:
     def mass_matrix(self):
         return self.discretization.mass_matrix()
 
-    def solve(self, jac, rhs):
+    def solve(self, jac, x):
         if not jac.lu:
             coA = numpy.zeros(jac.begA[-1], dtype=jac.coA.dtype)
             jcoA = numpy.zeros(jac.begA[-1], dtype=int)
@@ -58,6 +58,7 @@ class Interface:
 
             jac.lu = linalg.splu(A)
 
+        rhs = x.copy()
         if len(rhs.shape) < 2:
             rhs[self.dim] = 0
         else:

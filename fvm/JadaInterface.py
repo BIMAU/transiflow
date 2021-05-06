@@ -30,8 +30,7 @@ class JadaPrecOp(object):
 
     def matvec(self, x):
         if not self.shifted:
-            rhs = x.copy()
-            return self.op.proj(self.interface.solve(self.op.A.fvm_mat, rhs))
+            return self.op.proj(self.interface.solve(self.op.A.fvm_mat, x))
 
         alpha = self.op.alpha
         beta = self.op.beta
@@ -45,10 +44,9 @@ class JadaPrecOp(object):
         except AttributeError:
             pass
 
-        rhs = x.copy()
         mat = beta * self.op.A.mat - alpha * self.op.B.mat
         crs_mat = CrsMatrix(mat.data, mat.indices, mat.indptr)
-        return self.op.proj(self.interface.solve(crs_mat, rhs))
+        return self.op.proj(self.interface.solve(crs_mat, x))
 
 class JadaInterface(NumPyInterface.NumPyInterface):
     def __init__(self, interface, jac_op, mass_op, *args, **kwargs):
@@ -83,8 +81,7 @@ class JadaInterface(NumPyInterface.NumPyInterface):
         return out
 
     def prec(self, x, *args):
-        rhs = x.copy()
-        return self.interface.solve(self.jac_op.fvm_mat, rhs)
+        return self.interface.solve(self.jac_op.fvm_mat, x)
 
     def shifted_prec(self, x, alpha, beta):
         try:
@@ -97,7 +94,6 @@ class JadaInterface(NumPyInterface.NumPyInterface):
         except AttributeError:
             pass
 
-        rhs = x.copy()
         mat = beta * self.jac_op.mat - alpha * self.mass_op.mat
         crs_mat = CrsMatrix(mat.data, mat.indices, mat.indptr)
-        return self.interface.solve(crs_mat, rhs)
+        return self.interface.solve(crs_mat, x)
