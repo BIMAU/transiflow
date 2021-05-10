@@ -142,7 +142,7 @@ def test_continuation_time_integration(nx=4, interactive=False):
     ny = nx
     nz = 1
 
-    parameters = {'Reynolds Number': 0, 'Verbose': True}
+    parameters = {'Reynolds Number': 0, 'Newton Tolerance': 1e-6}
     interface = Interface(parameters, nx, ny, nz, dim, dof)
 
     continuation = Continuation(interface, parameters)
