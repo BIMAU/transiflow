@@ -4,6 +4,11 @@ import numpy
 def norm(x):
     return numpy.sqrt(x.dot(x))
 
+class Data:
+    def __init__(self):
+        self.mu = []
+        self.value = []
+
 class Continuation:
 
     def __init__(self, interface, parameters):
@@ -219,6 +224,13 @@ class Continuation:
 
         return x, mu, dx, dmu, ds
 
+    def store_data(self, data, x, mu):
+        data.mu.append(mu)
+        if 'Value' in self.parameters:
+            data.value.append(self.parameters['Value'](x))
+        else:
+            data.value.append(x)
+
     def continuation(self, x0, parameter_name, target, ds, maxit, verbose=False):
         x = x0
 
@@ -244,6 +256,8 @@ class Continuation:
         dx /= nrm
 
         eigs = None
+        data = Data()
+        self.store_data(data, x, mu)
 
         # Perform the continuation
         for j in range(maxit):
@@ -251,11 +265,15 @@ class Continuation:
 
             x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, ds)
 
+            self.store_data(data, x, mu)
+
             if (mu >= target and mu0 < target) or (mu <= target and mu0 > target):
                 # Converge onto the end point
                 x, mu = self.converge(parameter_name, x, mu, dx, dmu, target, ds, maxit)
 
-                return x, mu
+                self.store_data(data, x, mu)
+
+                return x, mu, data
 
             if self.parameters.get('Detect Bifurcation Points', False):
                 eigs0 = eigs
@@ -265,8 +283,10 @@ class Continuation:
                     deigs = eigs - eigs0
                     x, mu = self.detect_bifurcation(parameter_name, x, mu, dx, dmu, eigs, deigs, ds, maxit)
 
-                    return x, mu
+                    self.store_data(data, x, mu)
+
+                    return x, mu, data
 
             ds = self.adjust_step_size(ds)
 
-        return x, mu
+        return x, mu, data
