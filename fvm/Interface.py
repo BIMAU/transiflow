@@ -88,7 +88,7 @@ class Interface:
         return jac.solve(rhs)
 
     def eigs(self, state, return_eigenvectors=False):
-        from jadapy import jdqz
+        from jadapy import jdqz, Target
         from fvm.JadaInterface import JadaOp, JadaInterface
 
         jac_op = JadaOp(self.jacobian(state))
@@ -96,10 +96,10 @@ class Interface:
         jada_interface = JadaInterface(self, jac_op, mass_op, jac_op.shape[0], numpy.complex128)
 
         parameters = self.parameters.get('Eigenvalue Solver', {})
-        target = parameters.get('Target', 0)
+        target = parameters.get('Target', Target.LargestRealPart)
         subspace_dimensions = [parameters.get('Minimum Subspace Dimension', 30),
                                parameters.get('Maximum Subspace Dimension', 60)]
-        tol = parameters.get('Tolerance', 1e-7)
+        tol = parameters.get('Tolerance', 1e-9)
         num = parameters.get('Number of Eigenvalues', 5)
 
         result = jdqz.jdqz(jac_op, mass_op, num, tol=tol, subspace_dimensions=subspace_dimensions, target=target,
