@@ -100,6 +100,7 @@ class JadaInterface(NumPyInterface.NumPyInterface):
 
         # Cache previous preconditioners
         if self._shifted_matrix and \
+           abs(alpha) > 1e-10 and abs(beta) > 1e-10 and abs(self._prev_beta) > 1e-10 and \
            abs(alpha / beta - self._prev_alpha / self._prev_beta) / abs(alpha / beta) < 1e-1:
             return self.interface.solve(self._shifted_matrix, x)
 
