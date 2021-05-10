@@ -4,6 +4,11 @@ import numpy
 def norm(x):
     return numpy.sqrt(x.dot(x))
 
+class Data:
+    def __init__(self):
+        self.t = []
+        self.value = []
+
 class TimeIntegration:
     def __init__(self, interface, parameters):
         self.interface = interface
@@ -51,14 +56,27 @@ class TimeIntegration:
 
         return x
 
+    def store_data(self, data, x, t):
+        data.t.append(t)
+        if 'Value' in self.parameters:
+            data.value.append(self.parameters['Value'](x))
+        else:
+            data.value.append(x)
+
     def integration(self, x0, dt, tmax):
         x = x0
         t = 0
+
+        data = Data()
+        self.store_data(data, x, t)
+
         while t < tmax:
             x = self.newton(x, dt)
             t += dt
 
+            self.store_data(data, x, t)
+
             print("t = %f" % t)
             sys.stdout.flush()
 
-        return x
+        return x, t, data
