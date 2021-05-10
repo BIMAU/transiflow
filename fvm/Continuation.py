@@ -136,7 +136,7 @@ class Continuation:
     def adjust_step_size(self, ds):
         ''' Step size control, see [Seydel p 188.] '''
 
-        min_step_size = self.parameters.get('Minimum Step Size', 10)
+        min_step_size = self.parameters.get('Minimum Step Size', 0.01)
         max_step_size = self.parameters.get('Maximum Step Size', 2000)
         optimal_newton_iterations = self.parameters.get('Optimal Newton Iterations', 3)
 

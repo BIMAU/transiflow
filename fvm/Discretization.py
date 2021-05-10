@@ -263,18 +263,19 @@ class Discretization:
         frc = numpy.zeros(self.nx * self.ny * self.nz * self.dof)
 
         if Discretization._problem_type_equals(problem_type, 'Lid-driven cavity'):
+            v = self.get_parameter('Lid Velocity', 1)
             boundary_conditions.no_slip_east(atom)
             boundary_conditions.no_slip_west(atom)
 
             boundary_conditions.no_slip_south(atom)
             if self.dim == 2 or self.nz <= 1:
-                frc += boundary_conditions.moving_lid_north(atom, 1)
+                frc += boundary_conditions.moving_lid_north(atom, v)
                 return frc
 
             boundary_conditions.no_slip_north(atom)
 
             boundary_conditions.no_slip_bottom(atom)
-            frc += boundary_conditions.moving_lid_top(atom, 1)
+            frc += boundary_conditions.moving_lid_top(atom, v)
         elif Discretization._problem_type_equals(problem_type, 'Rayleigh-Benard'):
             frc += boundary_conditions.heatflux_east(atom, 0)
             frc += boundary_conditions.heatflux_west(atom, 0)
