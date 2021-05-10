@@ -229,7 +229,7 @@ class Continuation:
         if 'Value' in self.parameters:
             data.value.append(self.parameters['Value'](x))
         else:
-            data.value.append(x)
+            data.value.append(numpy.NAN)
 
     def continuation(self, x0, parameter_name, target, ds, maxit, verbose=False):
         x = x0

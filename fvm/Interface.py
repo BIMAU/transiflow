@@ -99,7 +99,7 @@ class Interface:
         target = parameters.get('Target', Target.LargestRealPart)
         subspace_dimensions = [parameters.get('Minimum Subspace Dimension', 30),
                                parameters.get('Maximum Subspace Dimension', 60)]
-        tol = parameters.get('Tolerance', 1e-9)
+        tol = parameters.get('Tolerance', 1e-7)
         num = parameters.get('Number of Eigenvalues', 5)
 
         result = jdqz.jdqz(jac_op, mass_op, num, tol=tol, subspace_dimensions=subspace_dimensions, target=target,

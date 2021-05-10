@@ -2,6 +2,7 @@ import numpy
 
 from fvm import Continuation
 from fvm import Interface
+from fvm import utils
 
 from jadapy import jdqz
 
@@ -19,7 +20,13 @@ def main():
     n = dof * nx * ny * nz
 
     # Define the problem
-    parameters = {'Reynolds Number': 1, 'Lid Velocity': 0, 'Problem Type': 'Lid-driven cavity'}
+    parameters = {'Problem Type': 'Lid-driven cavity',
+                  # Problem parametes
+                  'Reynolds Number': 1,
+                  'Lid Velocity': 0,
+                  # Value describes the value that is traced in the continuation
+                  # and time integration methods
+                  'Value': lambda x: utils.create_state_mtx(x, nx, ny, nz, dof)[nx // 2, ny // 4, 0, 0]}
     interface = Interface(parameters, nx, ny, nz, dim, dof)
 
     continuation = Continuation(interface, parameters)

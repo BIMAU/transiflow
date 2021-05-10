@@ -61,7 +61,7 @@ class TimeIntegration:
         if 'Value' in self.parameters:
             data.value.append(self.parameters['Value'](x))
         else:
-            data.value.append(x)
+            data.value.append(numpy.NAN)
 
     def integration(self, x0, dt, tmax):
         x = x0
