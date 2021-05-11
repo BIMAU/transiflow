@@ -231,7 +231,7 @@ class Continuation:
         else:
             data.value.append(numpy.NAN)
 
-    def continuation(self, x0, parameter_name, target, ds, maxit, verbose=False):
+    def continuation(self, x0, parameter_name, target, ds):
         x = x0
 
         # Set some parameters
@@ -258,6 +258,8 @@ class Continuation:
         eigs = None
         data = Data()
         self.store_data(data, x, mu)
+
+        maxit = self.parameters.get('Maximum Iterations', 1000)
 
         # Perform the continuation
         for j in range(maxit):

@@ -53,8 +53,7 @@ def x(interface):
 
     target = 2000
     ds = 100
-    maxit = 20
-    return continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)[0]
+    return continuation.continuation(x0, 'Reynolds Number', target, ds)[0]
 
 def test_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
     from fvm import JadaHYMLSInterface

@@ -33,17 +33,15 @@ def main():
     interface = Interface(parameters, nx, ny, nz, dim, dof)
 
     continuation = Continuation(interface, parameters)
-    maxit = 1000
 
     # Compute an initial guess
     x0 = numpy.zeros(n)
-    x0 = continuation.continuation(x0, 'Lid Velocity', 1, 0.1, maxit)[0]
+    x0 = continuation.continuation(x0, 'Lid Velocity', 1, 0.1)[0]
 
     # Perform an initial continuation to Reynolds number 7000 without detecting bifurcation points
     ds = 100
-    maxit = 1000
     target = 7000
-    x, mu, data1 = continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)
+    x, mu, data1 = continuation.continuation(x0, 'Reynolds Number', target, ds)
     x0 = x
 
     parameters['Newton Tolerance'] = 1e-12
@@ -58,7 +56,7 @@ def main():
 
     # Now detect the bifurcation point
     target = 10000
-    x, mu2, data2 = continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)
+    x, mu2, data2 = continuation.continuation(x0, 'Reynolds Number', target, ds)
     x0 = x
 
     # Compute the unstable branch after the bifurcation
@@ -67,7 +65,7 @@ def main():
 
     target = 10000
     parameters['Newton Tolerance'] = 1e-4
-    x, mu3, data3 = continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)
+    x, mu3, data3 = continuation.continuation(x0, 'Reynolds Number', target, ds)
 
     # Plot a bifurcation diagram
     plt.plot(data1.mu, data1.value)

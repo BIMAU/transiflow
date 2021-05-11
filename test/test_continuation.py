@@ -22,8 +22,7 @@ def test_continuation(nx=4, interactive=False):
 
     target = 100
     ds = 100
-    maxit = 20
-    x = continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)[0]
+    x = continuation.continuation(x0, 'Reynolds Number', target, ds)[0]
 
     assert numpy.linalg.norm(x) > 0
 
@@ -51,8 +50,7 @@ def continuation_semi_2D(nx=4, interactive=False):
 
     target = 2000
     ds = 100
-    maxit = 20
-    x = continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)[0]
+    x = continuation.continuation(x0, 'Reynolds Number', target, ds)[0]
 
     assert numpy.linalg.norm(x) > 0
 
@@ -80,8 +78,7 @@ def continuation_2D(nx=4, interactive=False):
 
     target = 2000
     ds = 100
-    maxit = 20
-    x = continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)[0]
+    x = continuation.continuation(x0, 'Reynolds Number', target, ds)[0]
 
     assert numpy.linalg.norm(x) > 0
 
@@ -123,8 +120,7 @@ def test_continuation_2D_stretched(nx=4, interactive=False):
 
     target = 2000
     ds = 100
-    maxit = 20
-    x = continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)[0]
+    x = continuation.continuation(x0, 'Reynolds Number', target, ds)[0]
 
     assert numpy.linalg.norm(x) > 0
 
@@ -152,8 +148,7 @@ def test_continuation_time_integration(nx=4, interactive=False):
 
     target = 2000
     ds = 100
-    maxit = 20
-    x = continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)[0]
+    x = continuation.continuation(x0, 'Reynolds Number', target, ds)[0]
 
     # Start from a perturbed solution
     x2 = utils.create_state_mtx(x, nx, ny, nz, dof)
