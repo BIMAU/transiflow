@@ -42,10 +42,11 @@ class Interface:
         rhs = x.copy()
 
         # Fix one pressure node
-        if len(rhs.shape) < 2:
-            rhs[self.dim] = 0
-        else:
-            rhs[self.dim, :] = 0
+        if self.dof > self.dim:
+            if len(rhs.shape) < 2:
+                rhs[self.dim] = 0
+            else:
+                rhs[self.dim, :] = 0
 
         # First try to use an iterative solver with the previous
         # direct solver as preconditioner
@@ -57,24 +58,30 @@ class Interface:
 
         # Use a direct solver instead
         if not jac.lu:
-            coA = numpy.zeros(jac.begA[-1], dtype=jac.coA.dtype)
-            jcoA = numpy.zeros(jac.begA[-1], dtype=int)
-            begA = numpy.zeros(len(jac.begA), dtype=int)
+            coA = jac.coA
+            jcoA = jac.jcoA
+            begA = jac.begA
 
-            idx = 0
-            for i in range(len(jac.begA)-1):
-                if i == self.dim:
-                    coA[idx] = -1.0
-                    jcoA[idx] = i
-                    idx += 1
-                    begA[i+1] = idx
-                    continue
-                for j in range(jac.begA[i], jac.begA[i+1]):
-                    if jac.jcoA[j] != self.dim:
-                        coA[idx] = jac.coA[j]
-                        jcoA[idx] = jac.jcoA[j]
+            # Fix one pressure node
+            if self.dof > self.dim:
+                coA = numpy.zeros(jac.begA[-1], dtype=jac.coA.dtype)
+                jcoA = numpy.zeros(jac.begA[-1], dtype=int)
+                begA = numpy.zeros(len(jac.begA), dtype=int)
+
+                idx = 0
+                for i in range(len(jac.begA)-1):
+                    if i == self.dim:
+                        coA[idx] = -1.0
+                        jcoA[idx] = i
                         idx += 1
-                begA[i+1] = idx
+                        begA[i+1] = idx
+                        continue
+                    for j in range(jac.begA[i], jac.begA[i+1]):
+                        if jac.jcoA[j] != self.dim:
+                            coA[idx] = jac.coA[j]
+                            jcoA[idx] = jac.jcoA[j]
+                            idx += 1
+                    begA[i+1] = idx
 
             # Convert the matrix to CSC format since splu expects that
             A = sparse.csr_matrix((coA, jcoA, begA)).tocsc()
