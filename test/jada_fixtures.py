@@ -39,7 +39,7 @@ def numpy_interface(nx):
     ny = nx
     nz = 1
 
-    parameters = {'Reynolds Number': 0}
+    parameters = {}
     interface = Interface(parameters, nx, ny, nz, dim, dof)
 
     return interface
@@ -54,9 +54,10 @@ def numpy_x(numpy_interface):
     x0 = numpy.zeros(n)
     x0 = continuation.newton(x0)
 
+    start = 0
     target = 2000
     ds = 100
-    return continuation.continuation(x0, 'Reynolds Number', target, ds)[0]
+    return continuation.continuation(x0, 'Reynolds Number', start, target, ds)[0]
 
 def check_eigenvalues(A_op, B_op, eigs, v, num_evs, tol):
     from jadapy.utils import norm

@@ -12,7 +12,7 @@ def test_continuation(nx=4, interactive=False):
     ny = nx
     nz = nx
 
-    parameters = {'Reynolds Number': 0}
+    parameters = {}
     interface = Interface(parameters, nx, ny, nz, dim, dof)
 
     continuation = Continuation(interface, parameters)
@@ -20,9 +20,10 @@ def test_continuation(nx=4, interactive=False):
     x0 = numpy.zeros(dof * nx * ny * nz)
     x0 = continuation.newton(x0)
 
+    start = 0
     target = 100
     ds = 100
-    x = continuation.continuation(x0, 'Reynolds Number', target, ds)[0]
+    x = continuation.continuation(x0, 'Reynolds Number', start, target, ds)[0]
 
     assert numpy.linalg.norm(x) > 0
 
@@ -40,7 +41,7 @@ def continuation_semi_2D(nx=4, interactive=False):
     ny = nx
     nz = 1
 
-    parameters = {'Reynolds Number': 0}
+    parameters = {}
     interface = Interface(parameters, nx, ny, nz, dim, dof)
 
     continuation = Continuation(interface, parameters)
@@ -48,9 +49,10 @@ def continuation_semi_2D(nx=4, interactive=False):
     x0 = numpy.zeros(dof * nx * ny * nz)
     x0 = continuation.newton(x0)
 
+    start = 0
     target = 2000
     ds = 100
-    x = continuation.continuation(x0, 'Reynolds Number', target, ds)[0]
+    x = continuation.continuation(x0, 'Reynolds Number', start, target, ds)[0]
 
     assert numpy.linalg.norm(x) > 0
 
@@ -68,7 +70,7 @@ def continuation_2D(nx=4, interactive=False):
     ny = nx
     nz = 1
 
-    parameters = {'Reynolds Number': 0}
+    parameters = {}
     interface = Interface(parameters, nx, ny, nz, dim, dof)
 
     continuation = Continuation(interface, parameters)
@@ -76,9 +78,10 @@ def continuation_2D(nx=4, interactive=False):
     x0 = numpy.zeros(dof * nx * ny * nz)
     x0 = continuation.newton(x0)
 
+    start = 0
     target = 2000
     ds = 100
-    x = continuation.continuation(x0, 'Reynolds Number', target, ds)[0]
+    x = continuation.continuation(x0, 'Reynolds Number', start, target, ds)[0]
 
     assert numpy.linalg.norm(x) > 0
 
@@ -110,7 +113,7 @@ def test_continuation_2D_stretched(nx=4, interactive=False):
     xpos = utils.create_stretched_coordinate_vector(0, 1, nx, 1.5)
     ypos = utils.create_stretched_coordinate_vector(0, 1, ny, 1.5)
 
-    parameters = {'Reynolds Number': 0}
+    parameters = {}
     interface = Interface(parameters, nx, ny, nz, dim, dof, xpos, ypos)
 
     continuation = Continuation(interface, parameters)
@@ -118,9 +121,10 @@ def test_continuation_2D_stretched(nx=4, interactive=False):
     x0 = numpy.zeros(dof * nx * ny * nz)
     x0 = continuation.newton(x0)
 
+    start = 0
     target = 2000
     ds = 100
-    x = continuation.continuation(x0, 'Reynolds Number', target, ds)[0]
+    x = continuation.continuation(x0, 'Reynolds Number', start, target, ds)[0]
 
     assert numpy.linalg.norm(x) > 0
 
@@ -138,7 +142,7 @@ def test_continuation_time_integration(nx=4, interactive=False):
     ny = nx
     nz = 1
 
-    parameters = {'Reynolds Number': 0, 'Newton Tolerance': 1e-6}
+    parameters = {'Newton Tolerance': 1e-6}
     interface = Interface(parameters, nx, ny, nz, dim, dof)
 
     continuation = Continuation(interface, parameters)
@@ -146,9 +150,10 @@ def test_continuation_time_integration(nx=4, interactive=False):
     x0 = numpy.zeros(dof * nx * ny * nz)
     x0 = continuation.newton(x0)
 
+    start = 0
     target = 2000
     ds = 100
-    x = continuation.continuation(x0, 'Reynolds Number', target, ds)[0]
+    x = continuation.continuation(x0, 'Reynolds Number', start, target, ds)[0]
 
     # Start from a perturbed solution
     x2 = utils.create_state_mtx(x, nx, ny, nz, dof)

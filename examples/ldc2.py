@@ -36,13 +36,12 @@ def main():
 
     # Compute an initial guess
     x0 = numpy.zeros(n)
-    x0 = continuation.continuation(x0, 'Lid Velocity', 1, 0.1)[0]
+    x0 = continuation.continuation(x0, 'Lid Velocity', 0, 1, 0.1)[0]
 
     # Perform an initial continuation to Reynolds number 7000 without detecting bifurcation points
     ds = 100
     target = 7000
-    x, mu, data1 = continuation.continuation(x0, 'Reynolds Number', target, ds)
-    x0 = x
+    x, mu, data1 = continuation.continuation(x0, 'Reynolds Number', 0, target, ds)
 
     parameters['Newton Tolerance'] = 1e-12
     parameters['Destination Tolerance'] = 1e-4
@@ -56,8 +55,7 @@ def main():
 
     # Now detect the bifurcation point
     target = 10000
-    x, mu2, data2 = continuation.continuation(x0, 'Reynolds Number', target, ds)
-    x0 = x
+    x2, mu2, data2 = continuation.continuation(x, 'Reynolds Number', mu, target, ds)
 
     # Compute the unstable branch after the bifurcation
     parameters['Detect Bifurcation Points'] = False
@@ -65,7 +63,7 @@ def main():
 
     target = 10000
     parameters['Newton Tolerance'] = 1e-4
-    x, mu3, data3 = continuation.continuation(x0, 'Reynolds Number', target, ds)
+    x3, mu3, data3 = continuation.continuation(x2, 'Reynolds Number', mu2, target, ds)
 
     # Plot a bifurcation diagram
     plt.plot(data1.mu, data1.value)
@@ -75,7 +73,7 @@ def main():
 
     # Add a perturbation based on the eigenvector
     interface.set_parameter('Reynolds Number', mu2)
-    _, v = interface.eigs(x0, True)
+    _, v = interface.eigs(x2, True)
     v = v[:, 0].real
 
     v = plot_utils.create_state_mtx(v, nx, ny, nz, dof)

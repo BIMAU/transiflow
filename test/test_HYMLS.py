@@ -43,10 +43,10 @@ def test_HYMLS(nx=4, interactive=False):
     x0.PutScalar(0.0)
     x0 = continuation.newton(x0)
 
+    start = 0
     target = 100
     ds = 100
-    maxit = 20
-    x = continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)[0]
+    x = continuation.continuation(x0, 'Reynolds Number', start, target, ds)[0]
 
     assert x.Norm2() > 0
 
@@ -87,10 +87,10 @@ def test_HYMLS_2D(nx=8, interactive=False):
     x0.PutScalar(0.0)
     x0 = continuation.newton(x0)
 
+    start = 0
     target = 2000
     ds = 100
-    maxit = 20
-    x = continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)[0]
+    x = continuation.continuation(x0, 'Reynolds Number', start, target, ds)[0]
 
     assert x.Norm2() > 0
 
@@ -133,10 +133,10 @@ def test_HYMLS_2D_stretched(nx=8, interactive=False):
     x0.PutScalar(0.0)
     x0 = continuation.newton(x0)
 
+    start = 0
     target = 2000
     ds = 100
-    maxit = 20
-    x = continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)[0]
+    x = continuation.continuation(x0, 'Reynolds Number', start, target, ds)[0]
 
     assert x.Norm2() > 0
 

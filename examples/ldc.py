@@ -33,7 +33,7 @@ def main():
 
     # Compute an initial guess
     x0 = numpy.zeros(dof * nx * ny * nz)
-    x0 = continuation.continuation(x0, 'Lid Velocity', 1, 0.1)[0]
+    x0 = continuation.continuation(x0, 'Lid Velocity', 0, 1, 0.1)[0]
 
     previous_subspaces = None
 
@@ -41,9 +41,10 @@ def main():
     data_points = range(7000, 11000, 1000)
     eigs = numpy.zeros([len(data_points), 20], dtype=numpy.complex128)
 
+    mu = 1
     for i, target in enumerate(data_points):
         ds = 100
-        x = continuation.continuation(x0, 'Reynolds Number', target, ds)[0]
+        x, mu, _ = continuation.continuation(x0, 'Reynolds Number', mu, target, ds)
         x0 = x
 
         # Compute the eigenvalues of the generalized eigenvalue problem near a target 2.8i

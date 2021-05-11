@@ -51,9 +51,10 @@ def x(interface):
     x0 = HYMLSInterface.Vector(interface.map)
     x0 = continuation.newton(x0)
 
+    start = 0
     target = 2000
     ds = 100
-    return continuation.continuation(x0, 'Reynolds Number', target, ds)[0]
+    return continuation.continuation(x0, 'Reynolds Number', start, target, ds)[0]
 
 def test_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
     from fvm import JadaHYMLSInterface
