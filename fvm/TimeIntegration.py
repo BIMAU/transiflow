@@ -1,8 +1,10 @@
 import sys
 import numpy
 
+from math import sqrt
+
 def norm(x):
-    return numpy.sqrt(x.dot(x))
+    return sqrt(x.dot(x))
 
 class Data:
     def __init__(self):

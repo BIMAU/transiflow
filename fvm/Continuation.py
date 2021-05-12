@@ -1,8 +1,10 @@
 import sys
 import numpy
 
+from math import sqrt
+
 def norm(x):
-    return numpy.sqrt(x.dot(x))
+    return sqrt(x.dot(x))
 
 class Data:
     def __init__(self):
@@ -252,7 +254,7 @@ class Continuation:
 
         # Scaling of the initial tangent (2.2.7)
         dmu = 1
-        nrm = numpy.sqrt(self.zeta * dx.dot(dx) + dmu ** 2)
+        nrm = sqrt(self.zeta * dx.dot(dx) + dmu ** 2)
         dmu /= nrm
         dx /= nrm
 
