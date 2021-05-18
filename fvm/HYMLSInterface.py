@@ -8,6 +8,8 @@ import fvm
 import HYMLS
 
 class Vector(Epetra.Vector):
+    '''Distributed Epetra_Vector with some extra methods added to it for convenience.'''
+
     def __neg__(self):
         v = Vector(self)
         v.Scale(-1.0)
@@ -40,6 +42,17 @@ def set_default_parameter(parameterlist, name, value):
         parameterlist[name] = value
 
 class Interface(fvm.Interface):
+    '''This class defines an interface to the HYMLS backend for the
+    discretization. We use this so we can write higher level methods
+    such as pseudo-arclength continuation without knowing anything
+    about the underlying methods such as the solvers that are present
+    in the backend we are interfacing with.
+
+    The HYMLS backend partitions the domain into Cartesian subdomains,
+    while solving linear systems on skew Cartesian subdomains to deal
+    with the C-grid discretization. The subdomains will be distributed
+    over multiple processors if MPI is used to run the application.'''
+
     def __init__(self, comm, parameters, nx, ny, nz, dim, dof, x=None, y=None, z=None):
         fvm.Interface.__init__(self, parameters, nx, ny, nz, dim, dof)
 
@@ -129,8 +142,9 @@ class Interface(fvm.Interface):
         self.initialize()
 
     def initialize(self):
-        ''' Initialize the Jacobian and the preconditioner, but make sure the nonlinear part is also nonzero
-        so we can replace all values later, rather than insert them'''
+        '''Initialize the Jacobian and the preconditioner, but make sure the
+        nonlinear part is also nonzero so we can replace all values
+        later, rather than insert them.'''
 
         # Backup the original parameters and put model parameters to 1
         original_parameters = self.parameters
@@ -153,6 +167,9 @@ class Interface(fvm.Interface):
         self.parameters = original_parameters
 
     def partition_domain(self):
+        '''Partition the domain into Cartesian subdomains for computing the
+        discretization.'''
+
         rmin = 1e100
 
         self.npx = 1
@@ -221,6 +238,9 @@ class Interface(fvm.Interface):
             self.nz_local += 2
 
     def is_ghost(self, i, j=None, k=None):
+        '''If a node is a ghost node that is used only for computing the
+        discretization and is located outside of an interior boundary.'''
+
         if j is None:
             i, j, k, _ = ind2sub(self.nx_local, self.ny_local, self.nz_local, i, self.dof)
 
@@ -241,6 +261,9 @@ class Interface(fvm.Interface):
         return ghost
 
     def create_map(self, overlapping=False):
+        '''Create a map on which the local discretization domain is defined.
+        The overlapping part is only used for computing the discretization.'''
+
         local_elements = [0] * self.nx_local * self.ny_local * self.nz_local * self.dof
 
         pos = 0
@@ -257,6 +280,9 @@ class Interface(fvm.Interface):
         return Epetra.Map(-1, local_elements[0:pos], 0, self.comm)
 
     def rhs(self, state):
+        '''Right-hand side in M * du / dt = F(u) defined on the
+        non-overlapping discretization domain map.'''
+
         state_ass = Vector(self.assembly_map)
         state_ass.Import(state, self.assembly_importer, Epetra.Insert)
 
@@ -267,6 +293,9 @@ class Interface(fvm.Interface):
         return rhs
 
     def jacobian(self, state):
+        '''Jacobian J of F in M * du / dt = F(u) defined on the
+        domain map used by HYMLS.'''
+
         state_ass = Vector(self.assembly_map)
         state_ass.Import(state, self.assembly_importer, Epetra.Insert)
 
@@ -290,6 +319,9 @@ class Interface(fvm.Interface):
         return self.jac
 
     def mass_matrix(self):
+        '''Matrix M in M * du / dt = F(u) defined on the
+        domain map used by HYMLS.'''
+
         local_mass = fvm.Interface.mass_matrix(self)
 
         if self.mass is None:
@@ -310,6 +342,8 @@ class Interface(fvm.Interface):
         return self.mass
 
     def direct_solve(self, jac, rhs):
+        '''Currently unused direct solver that was used for testing.'''
+
         A = Epetra.CrsMatrix(Epetra.Copy, self.map, 27)
         for i in range(len(jac.begA)-1):
             if i == self.dim:
@@ -333,6 +367,8 @@ class Interface(fvm.Interface):
         return x
 
     def solve(self, jac, rhs, rhs2=None, V=None, W=None, C=None):
+        '''Solve J y = x for y with the possibility of solving a bordered system.'''
+
         rhs_sol = Vector(self.solve_map)
         rhs_sol.Import(rhs, self.solve_importer, Epetra.Insert)
 
