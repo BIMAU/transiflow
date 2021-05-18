@@ -48,7 +48,7 @@ class Interface:
         return self.discretization.jacobian(state)
 
     def mass_matrix(self):
-        '''Matrix M in M * du / dt = F(u).'''
+        '''Mass matrix M in M * du / dt = F(u).'''
         return self.discretization.mass_matrix()
 
     def solve(self, jac, x):

@@ -6,6 +6,55 @@ from fvm import BoundaryConditions
 from fvm import CrsMatrix
 
 class Discretization:
+    '''Finite volume discretization of the incompressible Navier-Stokes
+    equations on a (possibly non-uniform) Arakawa C-grid. Variables
+    are ordered according to
+
+    [u, v, w, p, T, S, u, v, w, p, T, S, u, v, w, p, T, S, ...]
+
+    at positions
+
+    (0, 0, 0), (1, 0, 0), ..., (0, 1, 0), ..., (0, 0, 1), ... .
+
+    Velocities u, v, w, are staggered according to the C-grid
+    definition, pressure p, temperature T and salinity S are defined
+    in the centers of the grid cells. Variables are left out if they
+    are not relevant to the problem. A 2D lid-driven cavity, for
+    instance, only has [u, v, p].
+
+    All discretizations are defined on atoms which for every grid cell
+    define the contributions of neighbouring grid cells. In 3D this
+    means 27 contributions from neighbouring grid cells are defined
+    for every grid cell. For instance
+
+    atom[i, j, k, :, :, 1, 1, 1]
+
+    contains the contribution from the current cell at point (i, j, k) and
+
+    atom[i, j, k, :, :, 1, 0, 1]
+
+    contains the contribution from the cell south of the current one.
+    A discretization of u_xx on a uniform grid in 1D could be defined
+    by
+
+    atom[i, j, k, :, :, 0, 1, 1] =  1 / dx
+    atom[i, j, k, :, :, 1, 1, 1] = -2 / dx
+    atom[i, j, k, :, :, 2, 1, 1] =  1 / dx
+
+    where we note that the mass matrix is also scaled by dx.
+
+    The remaining two indices, denoted by (:, :) above, contain the
+    variable that is being used and the location of the equation that
+    is being discretized. If we work in 2D, and we compute p_x located
+    in the first equation (as in the standard formulation of the
+    incompressible Navier-Stokes equations), then the contribution is
+    stored in
+
+    atom[:, :, :, 0, 2, :, :, :]
+
+    where the 0 comes from the first equation, 2 comes from the pressure.
+
+    '''
 
     def __init__(self, parameters, nx, ny, nz, dim, dof, x=None, y=None, z=None):
         self.parameters = copy.copy(parameters)
@@ -43,18 +92,31 @@ class Discretization:
         self.recompute_linear_part = True
 
     def set_parameter(self, name, value):
+        '''Set a parameter in self.parameters that has to be called to make
+        sure we recompute the linear part of the equation. Changing
+        the value in self.parameters from outside this class will
+        likely result in wrong answers.'''
+
         self.parameters[name] = value
         self.recompute_linear_part = True
 
     def get_parameter(self, name, default=0):
+        '''Get a parameter from self.parameters.'''
+
         return self.parameters.get(name, default)
 
     def linear_part(self):
+        '''Compute the linear part of the equation.'''
+
         if self.dim == 2:
             return self._linear_part_2D()
         return self._linear_part_3D()
 
     def _linear_part_2D(self):
+        '''Compute the linear part of the equation in case the domain is 2D.
+        In case Re = 0 we instead compute the linear part for the Stokes
+        problem.'''
+
         Re = self.get_parameter('Reynolds Number')
         Ra = self.get_parameter('Rayleigh Number')
 
@@ -73,6 +135,10 @@ class Discretization:
         return atom
 
     def _linear_part_3D(self):
+        '''Compute the linear part of the equation in case the domain is 3D.
+        In case Re = 0 we instead compute the linear part for the Stokes
+        problem.'''
+
         Re = self.get_parameter('Reynolds Number')
         Ra = self.get_parameter('Rayleigh Number')
 
@@ -95,6 +161,9 @@ class Discretization:
         return atom
 
     def nonlinear_part(self, state):
+        '''Compute the nonlinear part of the equation. In case Re = 0 this
+        does nothing.'''
+
         state_mtx = utils.create_state_mtx(state, self.nx, self.ny, self.nz, self.dof)
 
         Re = self.get_parameter('Reynolds Number')
@@ -106,6 +175,8 @@ class Discretization:
         return self.convection_3D(state_mtx)
 
     def rhs(self, state):
+        '''Right-hand side in M * du / dt = F(u).'''
+
         if self.recompute_linear_part:
             self.atom = self.linear_part()
             self.frc = self.boundaries(self.atom)
@@ -117,6 +188,8 @@ class Discretization:
         return self.assemble_rhs(state, atomF) + self.frc
 
     def jacobian(self, state):
+        '''Jacobian J of F in M * du / dt = F(u).'''
+
         if self.recompute_linear_part:
             self.atom = self.linear_part()
             self.frc = self.boundaries(self.atom)
@@ -128,6 +201,8 @@ class Discretization:
         return self.assemble_jacobian(atomJ)
 
     def mass_matrix(self):
+        '''Mass matrix M in M * du / dt = F(u).'''
+
         atom = self.mass_x() + self.mass_y()
         if self.dim == 3:
             atom += self.mass_z()
@@ -138,7 +213,7 @@ class Discretization:
         return self.assemble_mass_matrix(atom)
 
     def assemble_rhs(self, state, atom):
-        ''' Assemble the right-hand side. Optimized version of
+        '''Assemble the right-hand side. Optimized version of
 
         for k in range(nz):
             for j in range(ny):
@@ -180,7 +255,7 @@ class Discretization:
         return utils.create_state_vec(out_mtx, self.nx, self.ny, self.nz, self.dof)
 
     def assemble_jacobian(self, atom):
-        ''' Assemble the Jacobian. Optimized version of
+        '''Assemble the Jacobian. Optimized version of
 
         for k in range(nz):
             for j in range(ny):
@@ -231,7 +306,7 @@ class Discretization:
         return CrsMatrix(coA, jcoA, begA)
 
     def assemble_mass_matrix(self, atom):
-        ''' Assemble the mass matrix.'''
+        '''Assemble the mass matrix.'''
 
         row = 0
         idx = 0
@@ -257,6 +332,10 @@ class Discretization:
         return first.lower() == second.lower()
 
     def boundaries(self, atom):
+        '''Compute boundary conditions for the currently defined problem type.'''
+
+        # TODO: Make it possible to interface this from the outside.
+
         boundary_conditions = BoundaryConditions(self.nx, self.ny, self.nz, self.dim, self.dof, self.x, self.y, self.z)
         problem_type = self.get_parameter('Problem Type', 'Lid-driven cavity')
 
@@ -319,6 +398,11 @@ class Discretization:
             raise Exception('Invalid problem type %s' % problem_type)
 
         return frc
+
+    # Below are all of the discretizations of separate parts of
+    # equations that we can solve using FVM. This takes into account
+    # non-uniform grids. New discretizations such as derivatives have
+    # to be implemented in a similar way.
 
     @staticmethod
     def _u_xx(atom, i, j, k, x, y, z):

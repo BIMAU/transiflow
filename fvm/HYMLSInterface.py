@@ -319,7 +319,7 @@ class Interface(fvm.Interface):
         return self.jac
 
     def mass_matrix(self):
-        '''Matrix M in M * du / dt = F(u) defined on the
+        '''Mass matrix M in M * du / dt = F(u) defined on the
         domain map used by HYMLS.'''
 
         local_mass = fvm.Interface.mass_matrix(self)
