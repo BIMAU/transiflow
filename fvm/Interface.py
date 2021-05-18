@@ -6,6 +6,12 @@ from scipy.sparse import linalg
 from fvm import Discretization
 
 class Interface:
+    '''This class defines an interface to the NumPy backend for the
+    discretization. We use this so we can write higher level methods
+    such as pseudo-arclength continuation without knowing anything
+    about the underlying methods such as the solvers that are present
+    in the backend we are interfacing with.'''
+
     def __init__(self, parameters, nx, ny, nz, dim, dof, x=None, y=None, z=None):
         self.nx = nx
         self.ny = ny
@@ -24,21 +30,29 @@ class Interface:
         self._subspaces = None
 
     def set_parameter(self, name, value):
+        '''Set a parameter in self.parameters while also letting the
+        discretization know that we changed a parameter. '''
+
         self.discretization.set_parameter(name, value)
 
     def get_parameter(self, name):
+        '''Get a parameter from self.parameters through the discretization.'''
         return self.discretization.get_parameter(name)
 
     def rhs(self, state):
+        '''Right-hand side in M * du / dt = F(u).'''
         return self.discretization.rhs(state)
 
     def jacobian(self, state):
+        '''Jacobian J of F in M * du / dt = F(u).'''
         return self.discretization.jacobian(state)
 
     def mass_matrix(self):
+        '''Matrix M in M * du / dt = F(u).'''
         return self.discretization.mass_matrix()
 
     def solve(self, jac, x):
+        '''Solve J y = x for y.'''
         rhs = x.copy()
 
         # Fix one pressure node
@@ -95,6 +109,8 @@ class Interface:
         return jac.solve(rhs)
 
     def eigs(self, state, return_eigenvectors=False):
+        '''Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v.'''
+
         from jadapy import jdqz, Target
         from fvm.JadaInterface import JadaOp, JadaInterface
 
