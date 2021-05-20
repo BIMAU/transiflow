@@ -23,6 +23,8 @@ class Vector(Epetra.Vector):
     def dot(self, other):
         return self.Dot(other)
 
+    size = property(Epetra.Vector.GlobalLength)
+
 def ind2sub(nx, ny, nz, idx, dof=1):
     rem = idx
     var = rem % dof
