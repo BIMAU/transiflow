@@ -21,7 +21,7 @@ Given a continuation parameters and a target value, the continuation can be call
     x0 = continuation.newton(x0)
 
     # Perform the continuation. x will be the state at the target Reynolds number.
-    x = continuation.continuation(x0, 'Reynolds Number', target, ds, maxit)
+    x, mu, data = continuation.continuation(x0, 'Reynolds Number', start, target, ds)
 ```
 
 ## Eigenvalue computation
