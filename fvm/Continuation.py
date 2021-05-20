@@ -238,8 +238,8 @@ class Continuation:
         mu = start
 
         # Set some parameters
-        self.delta = 1
-        self.zeta = 1 / len(x)
+        self.delta = self.parameters.get('Delta', 1)
+        self.zeta = 1 / x.size
 
         # Get the initial tangent (2.2.5 - 2.2.7).
         self.interface.set_parameter(parameter_name, mu + self.delta)
