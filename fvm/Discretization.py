@@ -167,7 +167,7 @@ class Discretization:
         state_mtx = utils.create_state_mtx(state, self.nx, self.ny, self.nz, self.dof)
 
         Re = self.get_parameter('Reynolds Number')
-        if Re == 0:
+        if Re == 0 and not self.dof > self.dim:
             state_mtx[:, :, :, :] = 0
 
         if self.dim == 2:
