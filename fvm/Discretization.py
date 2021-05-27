@@ -327,8 +327,8 @@ class Discretization:
                         begA[row] = idx
         return CrsMatrix(coA, jcoA, begA)
 
-    @staticmethod
-    def _problem_type_equals(first, second):
+    def problem_type_equals(self, second):
+        first = self.get_parameter('Problem Type', 'Lid-driven cavity')
         return first.lower() == second.lower()
 
     def boundaries(self, atom):
@@ -337,11 +337,10 @@ class Discretization:
         # TODO: Make it possible to interface this from the outside.
 
         boundary_conditions = BoundaryConditions(self.nx, self.ny, self.nz, self.dim, self.dof, self.x, self.y, self.z)
-        problem_type = self.get_parameter('Problem Type', 'Lid-driven cavity')
 
         frc = numpy.zeros(self.nx * self.ny * self.nz * self.dof)
 
-        if Discretization._problem_type_equals(problem_type, 'Lid-driven cavity'):
+        if self.problem_type_equals('Lid-driven cavity'):
             v = self.get_parameter('Lid Velocity', 1)
             boundary_conditions.no_slip_east(atom)
             boundary_conditions.no_slip_west(atom)
@@ -355,7 +354,7 @@ class Discretization:
 
             boundary_conditions.no_slip_bottom(atom)
             frc += boundary_conditions.moving_lid_top(atom, v)
-        elif Discretization._problem_type_equals(problem_type, 'Rayleigh-Benard'):
+        elif self.problem_type_equals('Rayleigh-Benard'):
             frc += boundary_conditions.heatflux_east(atom, 0)
             frc += boundary_conditions.heatflux_west(atom, 0)
             boundary_conditions.no_slip_east(atom)
@@ -378,7 +377,7 @@ class Discretization:
             frc += boundary_conditions.temperature_bottom(atom, 0)
             boundary_conditions.no_slip_top(atom)
             boundary_conditions.no_slip_bottom(atom)
-        elif Discretization._problem_type_equals(problem_type, 'Differentially heated cavity'):
+        elif self.problem_type_equals('Differentially heated cavity'):
             frc += boundary_conditions.temperature_east(atom, -1/2)
             frc += boundary_conditions.temperature_west(atom, 1/2)
             boundary_conditions.no_slip_east(atom)
@@ -395,7 +394,7 @@ class Discretization:
                 boundary_conditions.no_slip_top(atom)
                 boundary_conditions.no_slip_bottom(atom)
         else:
-            raise Exception('Invalid problem type %s' % problem_type)
+            raise Exception('Invalid problem type %s' % self.get_parameter('Problem Type'))
 
         return frc
 
