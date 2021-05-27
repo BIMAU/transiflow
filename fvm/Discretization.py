@@ -167,7 +167,7 @@ class Discretization:
         state_mtx = utils.create_state_mtx(state, self.nx, self.ny, self.nz, self.dof)
 
         Re = self.get_parameter('Reynolds Number')
-        if Re == 0 and not self.dof > self.dim:
+        if Re == 0 and not self.dof > self.dim + 1:
             state_mtx[:, :, :, :] = 0
 
         if self.dim == 2:
@@ -949,7 +949,7 @@ class Discretization:
         convective_term.backward_average_y(bil[:, :, :, :, 1, :, :], averages[:, :, :, 1, :],
                                            weighted_averages[:, :, :, 1, :], state[:, :, :, 1]) # tMyV
 
-        if self.dof > self.dim+1:
+        if self.dof > self.dim + 1:
             convective_term.forward_average_x(bil[:, :, :, :, self.dim+1, :, :], averages[:, :, :, self.dim+1, :],
                                               weighted_averages[:, :, :, self.dim+1, :], state[:, :, :, self.dim+1]) # tMxT
             convective_term.forward_average_y(bil[:, :, :, :, self.dim+1, :, :], averages[:, :, :, self.dim+1, :],
@@ -1019,7 +1019,7 @@ class Discretization:
         convective_term.backward_average_z(bil[:, :, :, :, 2, :, :], averages[:, :, :, 2, :],
                                            weighted_averages[:, :, :, 2, :], state[:, :, :, 2]) # tMzW
 
-        if self.dof > self.dim+1:
+        if self.dof > self.dim + 1:
             convective_term.forward_average_x(bil[:, :, :, :, self.dim+1, :, :], averages[:, :, :, self.dim+1, :],
                                               weighted_averages[:, :, :, self.dim+1, :], state[:, :, :, self.dim+1]) # tMxT
             convective_term.forward_average_y(bil[:, :, :, :, self.dim+1, :, :], averages[:, :, :, self.dim+1, :],
