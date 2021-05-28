@@ -147,7 +147,13 @@ class Continuation:
 
         ds *= factor
 
-        return numpy.sign(ds) * min(max(abs(ds), min_step_size), max_step_size)
+        ds = numpy.sign(ds) * min(max(abs(ds), min_step_size), max_step_size)
+
+        if self.parameters.get('Verbose', False):
+            print('New stepsize: ds=%e, factor=%e' % (ds, factor))
+            sys.stdout.flush()
+
+        return ds
 
     def detect_bifurcation(self, parameter_name, x, mu, dx, dmu, eigs, deigs, ds, maxit):
         ''' Converge onto a bifurcation '''
