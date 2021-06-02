@@ -81,6 +81,10 @@ class Interface:
 
         # Use a direct solver instead
         if rhs2 is None and (not jac.lu or jac.bordered_lu):
+            self._lu = None
+            self._prec = None
+            jac.lu = None
+
             coA = jac.coA
             jcoA = jac.jcoA
             begA = jac.begA
@@ -116,6 +120,10 @@ class Interface:
             self._lu = jac.lu
             self._prec = linalg.LinearOperator((jac.n, jac.n), matvec=self._lu.solve, dtype=jac.dtype)
         elif rhs2 is not None and (not jac.lu or not jac.bordered_lu):
+            self._lu = None
+            self._prec = None
+            jac.lu = None
+
             coA = numpy.zeros(jac.begA[-1] + 2 * jac.n + 1, dtype=jac.coA.dtype)
             jcoA = numpy.zeros(jac.begA[-1] + 2 * jac.n + 1, dtype=int)
             begA = numpy.zeros(len(jac.begA) + 1, dtype=int)
