@@ -22,6 +22,12 @@ class Interface:
 
         self.parameters = parameters
 
+        # Select one pressure node to fix
+        self.pressure_row = self.dim + (self.nx // min(8, self.nx) - 1) * self.dof \
+            + (self.ny // min(8, self.ny) - 1) * self.nx * self.dof \
+            + (self.nz // min(8, self.nz) - 1) * self.ny * self.nx * self.dof
+        print('Fixing pressure at row %d' % self.pressure_row)
+
         # Solver caching
         self._lu = None
         self._prec = None
@@ -58,9 +64,9 @@ class Interface:
         # Fix one pressure node
         if self.dof > self.dim:
             if len(x.shape) < 2:
-                x[self.dim] = 0
+                x[self.pressure_row] = 0
             else:
-                x[self.dim, :] = 0
+                x[self.pressure_row, :] = 0
 
         # First try to use an iterative solver with the previous
         # direct solver as preconditioner
@@ -87,14 +93,14 @@ class Interface:
 
                 idx = 0
                 for i in range(len(jac.begA)-1):
-                    if i == self.dim:
+                    if i == self.pressure_row:
                         coA[idx] = -1.0
                         jcoA[idx] = i
                         idx += 1
                         begA[i+1] = idx
                         continue
                     for j in range(jac.begA[i], jac.begA[i+1]):
-                        if jac.jcoA[j] != self.dim:
+                        if jac.jcoA[j] != self.pressure_row:
                             coA[idx] = jac.coA[j]
                             jcoA[idx] = jac.jcoA[j]
                             idx += 1
@@ -116,14 +122,14 @@ class Interface:
 
             idx = 0
             for i in range(jac.n):
-                if i == self.dim and self.dof > self.dim:
+                if i == self.pressure_row and self.dof > self.dim:
                     coA[idx] = -1.0
                     jcoA[idx] = i
                     idx += 1
                     begA[i+1] = idx
                     continue
                 for j in range(jac.begA[i], jac.begA[i+1]):
-                    if jac.jcoA[j] != self.dim or not self.dof > self.dim:
+                    if jac.jcoA[j] != self.pressure_row or not self.dof > self.dim:
                         coA[idx] = jac.coA[j]
                         jcoA[idx] = jac.jcoA[j]
                         idx += 1
