@@ -239,13 +239,8 @@ class Continuation:
         else:
             data.value.append(numpy.NAN)
 
-    def continuation(self, x0, parameter_name, start, target, ds):
-        x = x0
-        mu = start
-
-        # Set some parameters
-        self.delta = self.parameters.get('Delta', 1)
-        self.zeta = 1 / x.size
+    def initial_tangent(self, x, parameter_name, mu):
+        ''' Compute the initial tangent '''
 
         # Get the initial tangent (2.2.5 - 2.2.7).
         self.interface.set_parameter(parameter_name, mu + self.delta)
@@ -256,7 +251,18 @@ class Continuation:
 
         # Compute the jacobian at x and solve with it (2.2.5)
         jac = self.interface.jacobian(x)
-        dx = self.interface.solve(jac, -dflval)
+        return self.interface.solve(jac, -dflval)
+
+    def continuation(self, x0, parameter_name, start, target, ds):
+        x = x0
+        mu = start
+
+        # Set some parameters
+        self.delta = self.parameters.get('Delta', 1)
+        self.zeta = 1 / x.size
+
+        # Get the initial tangent (2.2.5 - 2.2.7).
+        dx = self.initial_tangent(x, parameter_name, mu)
 
         # Scaling of the initial tangent (2.2.7)
         dmu = 1
