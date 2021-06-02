@@ -51,27 +51,30 @@ class Interface:
         '''Mass matrix M in M * du / dt = F(u).'''
         return self.discretization.mass_matrix()
 
-    def solve(self, jac, x):
+    def solve(self, jac, rhs, rhs2=None, V=None, W=None, C=None):
         '''Solve J y = x for y.'''
-        rhs = x.copy()
+        x = rhs.copy()
 
         # Fix one pressure node
         if self.dof > self.dim:
-            if len(rhs.shape) < 2:
-                rhs[self.dim] = 0
+            if len(x.shape) < 2:
+                x[self.dim] = 0
             else:
-                rhs[self.dim, :] = 0
+                x[self.dim, :] = 0
 
         # First try to use an iterative solver with the previous
         # direct solver as preconditioner
-        if self._prec and jac.dtype == rhs.dtype and jac.dtype == self._prec.dtype and \
+        if self._prec and jac.dtype == x.dtype and jac.dtype == self._prec.dtype and \
            self.parameters.get('Use Iterative Solver', False):
-            out, info = linalg.gmres(jac, rhs, restart=5, maxiter=1, tol=1e-8, atol=0, M=self._prec)
+            out, info = linalg.gmres(jac, x, restart=5, maxiter=1, tol=1e-8, atol=0, M=self._prec)
             if info == 0:
                 return out
 
+        if rhs2 is not None:
+            x = numpy.append(rhs, rhs2)
+
         # Use a direct solver instead
-        if not jac.lu:
+        if rhs2 is None and (not jac.lu or jac.bordered_lu):
             coA = jac.coA
             jcoA = jac.jcoA
             begA = jac.begA
@@ -101,12 +104,61 @@ class Interface:
             A = sparse.csr_matrix((coA, jcoA, begA)).tocsc()
 
             jac.lu = linalg.splu(A)
+            jac.bordered_lu = False
+
+            # Cache the factorization for use in the iterative solver
+            self._lu = jac.lu
+            self._prec = linalg.LinearOperator((jac.n, jac.n), matvec=self._lu.solve, dtype=jac.dtype)
+        elif rhs2 is not None and (not jac.lu or not jac.bordered_lu):
+            coA = numpy.zeros(jac.begA[-1] + 2 * jac.n + 1, dtype=jac.coA.dtype)
+            jcoA = numpy.zeros(jac.begA[-1] + 2 * jac.n + 1, dtype=int)
+            begA = numpy.zeros(len(jac.begA) + 1, dtype=int)
+
+            idx = 0
+            for i in range(jac.n):
+                if i == self.dim and self.dof > self.dim:
+                    coA[idx] = -1.0
+                    jcoA[idx] = i
+                    idx += 1
+                    begA[i+1] = idx
+                    continue
+                for j in range(jac.begA[i], jac.begA[i+1]):
+                    if jac.jcoA[j] != self.dim or not self.dof > self.dim:
+                        coA[idx] = jac.coA[j]
+                        jcoA[idx] = jac.jcoA[j]
+                        idx += 1
+                coA[idx] = V[i]
+                jcoA[idx] = jac.n
+                idx += 1
+
+                begA[i+1] = idx
+
+            for i in range(jac.n):
+                coA[idx] = W[i]
+                jcoA[idx] = i
+                idx += 1
+
+            coA[idx] = C
+            jcoA[idx] = jac.n
+            idx += 1
+
+            begA[jac.n+1] = idx
+
+            # Convert the matrix to CSC format since splu expects that
+            A = sparse.csr_matrix((coA, jcoA, begA)).tocsc()
+
+            jac.lu = linalg.splu(A)
+            jac.bordered_lu = True
 
             # Cache the factorization for use in the iterative solver
             self._lu = jac.lu
             self._prec = linalg.LinearOperator((jac.n, jac.n), matvec=self._lu.solve, dtype=jac.dtype)
 
-        return jac.solve(rhs)
+        if jac.bordered_lu:
+            y = jac.solve(x)
+            return y[:-1], y[-1]
+
+        return jac.solve(x)
 
     def eigs(self, state, return_eigenvectors=False):
         '''Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v.'''

@@ -10,6 +10,7 @@ class CrsMatrix:
             self.compress()
 
         self.lu = None
+        self.bordered_lu = False
 
     def _get_n(self):
         return len(self.begA) - 1
