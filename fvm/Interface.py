@@ -23,9 +23,7 @@ class Interface:
         self.parameters = parameters
 
         # Select one pressure node to fix
-        self.pressure_row = self.dim + (self.nx // min(8, self.nx) - 1) * self.dof \
-            + (self.ny // min(8, self.ny) - 1) * self.nx * self.dof \
-            + (self.nz // min(8, self.nz) - 1) * self.ny * self.nx * self.dof
+        self.pressure_row = self.dim
         print('Fixing pressure at row %d' % self.pressure_row)
 
         # Solver caching
