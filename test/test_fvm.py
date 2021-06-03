@@ -483,9 +483,6 @@ def test_jac_consistency():
 def test_jac_consistency_uniform():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
 
-    nz = 1
-    dim = 2
-    dof = 3
     n = dof * nx * ny * nz
     state = numpy.random.random(n)
     pert = numpy.random.random(n)
@@ -512,6 +509,49 @@ def test_jac_consistency_stretched():
     pert = numpy.random.random(n)
 
     discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
+    A = discretization.jacobian(state)
+    rhs = discretization.rhs(state)
+
+    for i in range(3, 12):
+        eps = 10 ** -i
+        eps2 = max(eps, 10 ** (-14+i))
+        rhs2 = discretization.rhs(state + eps * pert)
+        assert numpy.linalg.norm((rhs2 - rhs) / eps - A @ pert) < eps2
+
+def test_jac_consistency_uniform_2d():
+    parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
+
+    nz = 1
+    dim = 2
+    dof = 3
+    n = dof * nx * ny * nz
+    state = numpy.random.random(n)
+    pert = numpy.random.random(n)
+
+    discretization = Discretization(parameters, nx, ny, nz, dim, dof)
+    A = discretization.jacobian(state)
+    rhs = discretization.rhs(state)
+
+    for i in range(3, 12):
+        eps = 10 ** -i
+        eps2 = max(eps, 10 ** (-14+i))
+        rhs2 = discretization.rhs(state + eps * pert)
+        assert numpy.linalg.norm((rhs2 - rhs) / eps - A @ pert) < eps2
+
+def test_jac_consistency_stretched_2d():
+    parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
+
+    x = utils.create_stretched_coordinate_vector(0, 1, nx, 1.5)
+    y = utils.create_stretched_coordinate_vector(0, 1, ny, 1.5)
+
+    nz = 1
+    dim = 2
+    dof = 3
+    n = dof * nx * ny * nz
+    state = numpy.random.random(n)
+    pert = numpy.random.random(n)
+
+    discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y)
     A = discretization.jacobian(state)
     rhs = discretization.rhs(state)
 
