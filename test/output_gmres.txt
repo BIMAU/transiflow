@@ -1,0 +1,12 @@
+Mon May 24 20:58:03 2021    output.prof
+
+         1076000349 function calls (1073124896 primitive calls) in 7866.140 seconds
+
+   Random listing order was used
+   List reduced from 193 to 2 due to restriction <'gmres'>
+   List reduced from 2 to 1 due to restriction <1>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+     3078  670.898    0.218 7762.917    2.522 iterative.py:431(gmres)
+
+

@@ -1,0 +1,11 @@
+Mon May 24 20:58:03 2021    output.prof
+
+         1076000349 function calls (1073124896 primitive calls) in 7866.140 seconds
+
+   Random listing order was used
+   List reduced from 193 to 1 due to restriction <'SuperLU'>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+     2526    0.112    0.000    0.112    0.000 {method 'solve' of 'SuperLU' objects}
+
+

@@ -40,7 +40,7 @@ def set_default_parameter(parameterlist, name, value):
         parameterlist[name] = value
 
 class Interface(fvm.Interface):
-    def __init__(self, comm, parameters, nx, ny, nz, dim, dof, x=None, y=None, z=None):
+    def __init__(self, comm, parameters, nx, ny, nz, dim, dof):
         fvm.Interface.__init__(self, parameters, nx, ny, nz, dim, dof)
 
         self.nx_global = nx
@@ -59,22 +59,27 @@ class Interface(fvm.Interface):
         problem_parameters.set('nz', self.nz_global)
         problem_parameters.set('Dimension', self.dim)
         problem_parameters.set('Degrees of Freedom', self.dof)
-        problem_parameters.set('Equations', 'Stokes-C')
+        #TODO wei
+        # problem_parameters.set('Equations', 'Stokes-C')
+        problem_parameters.set('Equations', 'Laplace')
 
         solver_parameters = self.parameters.sublist('Solver')
         solver_parameters.set('Initial Vector', 'Zero')
 
         iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
         set_default_parameter(iterative_solver_parameters, 'Maximum Iterations', 1000)
-        set_default_parameter(iterative_solver_parameters, 'Maximum Restarts', 20)
-        set_default_parameter(iterative_solver_parameters, 'Num Blocks', 100)
+        set_default_parameter(iterative_solver_parameters, 'Maximum Restarts', 5)
         set_default_parameter(iterative_solver_parameters, 'Flexible Gmres', False)
         set_default_parameter(iterative_solver_parameters, 'Convergence Tolerance', 1e-8)
         set_default_parameter(iterative_solver_parameters, 'Output Frequency', 1)
         set_default_parameter(iterative_solver_parameters, 'Show Maximum Residual Norm Only', False)
 
         prec_parameters = self.parameters.sublist('Preconditioner')
-        prec_parameters.set('Partitioner', 'Skew Cartesian')
+
+        #TODO wei
+        # prec_parameters.set('Partitioner', 'Skew Cartesian')
+        prec_parameters.set('Partitioner', 'Cartesian')
+
         set_default_parameter(prec_parameters, 'Separator Length', min(8, self.nx_global))
         set_default_parameter(prec_parameters, 'Coarsening Factor', 2)
         set_default_parameter(prec_parameters, 'Number of Levels', 1)
@@ -95,27 +100,15 @@ class Interface(fvm.Interface):
         self.solve_importer = Epetra.Import(self.solve_map, self.map)
 
         # Create local coordinate vectors
-        x_length = self.parameters.get('xmax', 1.0) - self.parameters.get('xmin', 0.0)
-        x_start = self.parameters.get('xmin', 0.0) + self.nx_offset / self.nx_global * x_length
-        x_end = x_start + self.nx_local / self.nx_global * x_length
-
-        y_length = self.parameters.get('ymax', 1.0) - self.parameters.get('ymin', 0.0)
-        y_start = self.parameters.get('ymin', 0.0) + self.ny_offset / self.ny_global * y_length
-        y_end = y_start + self.ny_local / self.ny_global * y_length
-
-        z_length = self.parameters.get('zmax', 1.0) - self.parameters.get('zmin', 0.0)
-        z_start = self.parameters.get('zmin', 0.0) + self.nz_offset / self.nz_global * z_length
-        z_end = z_start + self.nz_local / self.nz_global * z_length
-
-        if self.parameters.get('Grid Stretching', False):
-            sigma = self.parameters.get('Grid Stretching Factor', 1.5)
-            x = fvm.utils.create_stretched_coordinate_vector(x_start, x_end, self.nx_local, sigma) if x is None else x
-            y = fvm.utils.create_stretched_coordinate_vector(y_start, y_end, self.ny_local, sigma) if y is None else y
-            z = fvm.utils.create_stretched_coordinate_vector(z_start, z_end, self.nz_local, sigma) if z is None else z
-        else:
-            x = fvm.utils.create_uniform_coordinate_vector(x_start, x_end, self.nx_local) if x is None else x
-            y = fvm.utils.create_uniform_coordinate_vector(y_start, y_end, self.ny_local) if y is None else y
-            z = fvm.utils.create_uniform_coordinate_vector(z_start, z_end, self.nz_local) if z is None else z
+        x = fvm.utils.create_uniform_coordinate_vector(self.nx_offset / self.nx_global,
+                                                       (self.nx_offset + self.nx_local) / self.nx_global,
+                                                       self.nx_local)
+        y = fvm.utils.create_uniform_coordinate_vector(self.ny_offset / self.ny_global,
+                                                       (self.ny_offset + self.ny_local) / self.ny_global,
+                                                       self.ny_local)
+        z = fvm.utils.create_uniform_coordinate_vector(self.nz_offset / self.nz_global,
+                                                       (self.nz_offset + self.nz_local) / self.nz_global,
+                                                       self.nz_local)
 
         # Re-initialize the fvm.Interface parameters
         self.nx = self.nx_local

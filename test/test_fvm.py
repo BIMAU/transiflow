@@ -2,21 +2,25 @@ import os
 import numpy
 import pytest
 
-from fvm import utils
+
 from fvm import CrsMatrix
 from fvm import Discretization
+from fvm import utils
+
 
 def create_coordinate_vector(nx):
-    dx = 1 / (nx + 1)
+    dx = 1 / nx
     a = []
     for i in range(nx+3):
-        a.append(-dx + dx * 1.2 ** i)
+        a.append(-dx + dx * 1.2 ** i)  # ?
     return numpy.roll(a, -2)
 
+
+
 def create_test_problem():
-    nx = 13
-    ny = 7
-    nz = 5
+    nx = 5
+    ny = 3
+    nz = 2
     dim = 3
     dof = 5
 
@@ -24,22 +28,21 @@ def create_test_problem():
     y = create_coordinate_vector(ny)
     z = create_coordinate_vector(nz)
 
-    parameters = {'Reynolds Number': 100}
+    return ({}, nx, ny, nz, dim, dof, x, y, z)
+
+def creat_test_problem_Bratu():
+    nx = 512
+    ny = 1
+    nz = 1
+    dim = 1
+    dof = 1
+    x = create_coordinate_vector(nx)
+    y = create_coordinate_vector(ny)
+    z = create_coordinate_vector(nz)
+
+    parameters = {'Problem Type': 'Bratu problem', 'Bratu paremeter': 3}
 
     return (parameters, nx, ny, nz, dim, dof, x, y, z)
-
-def test_uniform_grid():
-    nx = 5
-    dx = 1 / nx
-    x = utils.create_uniform_coordinate_vector(0, 1, nx)
-    for i in range(nx):
-        assert x[i] == pytest.approx((i + 1) * dx)
-
-def test_stretched_grid():
-    nx = 5
-    x = utils.create_stretched_coordinate_vector(0, 1, nx, 1.5)
-    assert x[0] > 0
-    assert x[nx-1] == pytest.approx(1)
 
 def test_u_xx():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
@@ -47,7 +50,7 @@ def test_u_xx():
     discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
     atom = discretization.u_xx()
 
-    for i in range(nx):
+    for i in range(nx-1):
         dx = x[i] - x[i-1]
         dxp1 = x[i+1] - x[i]
         for j in range(ny):
@@ -335,9 +338,10 @@ def test_u_z():
                 assert atom[i, j, k, 3, 2, 1, 1, 0] == pytest.approx(-dy * dx)
                 assert atom[i, j, k, 3, 2, 1, 1, 1] == pytest.approx(dy * dx)
 
+
 def test_MxU():
     import importlib.util
-    spec = importlib.util.spec_from_file_location('Discretization', 'fvm/Discretization.py')
+    spec = importlib.util.spec_from_file_location('Discretization', '/Users/weiqiangguo/Downloads/fvm/fvm/Discretization.py')
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
@@ -346,7 +350,7 @@ def test_MxU():
     dof = 4
     n = dof * nx * ny * nz
 
-    bil = numpy.zeros([nx, ny, nz, 3, dof, dof, 2])
+    bil = numpy.zeros([nx, ny, nz, 2, dof, dof, 2])
     convective_term = module.ConvectiveTerm(nx, ny, nz, dim, x, y, z)
 
     state = numpy.zeros(n)
@@ -361,9 +365,7 @@ def test_MxU():
                     state_mtx[i, j, k, d] = state[d + i * dof + j * dof * nx + k * dof * nx * ny]
 
     averages = numpy.zeros([nx, ny, nz, 3, 3])
-    weighted_averages = numpy.zeros([nx, ny, nz, 3, 3])
-    convective_term.backward_average_x(bil[:, :, :, :, :, 0, :], averages[:, :, :, :, 0],
-                                       weighted_averages[:, :, :, :, 0], state_mtx[:, :, :, 0])
+    convective_term.backward_average_x(bil[:, :, :, :, :, 0, :], averages[:, :, :, :, 0], state_mtx[:, :, :, 0])
 
     for i in range(nx):
         for j in range(ny):
@@ -376,133 +378,6 @@ def test_MxU():
                 print(i, j, k)
                 assert averages[i, j, k, 0, 0] == average
 
-def check_divfree(discretization, state):
-    A = discretization.jacobian(state)
-    x = A @ state
-    for i in range(len(state)):
-        if i % discretization.dof == discretization.dim:
-            assert abs(x[i]) < 1e-14
-
-def make_divfree(discretization, state):
-    A = discretization.jacobian(state)
-    p = numpy.zeros((A.n, A.n // discretization.dof))
-
-    for i in range(A.n):
-        if i % discretization.dof == discretization.dim:
-            for j in range(A.begA[i], A.begA[i+1]):
-                p[A.jcoA[j], i // discretization.dof] = A.coA[j]
-
-    state -= p @ numpy.linalg.solve(p.conj().T @ p, p.conj().T @ state)
-
-    check_divfree(discretization, state)
-
-    return state
-
-def create_divfree_state(discretization):
-    n = discretization.dof * discretization.nx * discretization.ny * discretization.nz
-    state = numpy.random.random(n)
-    return make_divfree(discretization, state)
-
-def test_bilin():
-    parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
-
-    discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
-    state = create_divfree_state(discretization)
-
-    atomJ, atomF = discretization.nonlinear_part(state)
-    A = discretization.assemble_jacobian(atomF)
-
-    for i in range(A.n):
-        for j in range(A.begA[i], A.begA[i+1]):
-            assert i != A.jcoA[j]
-
-def test_bilin_uniform():
-    parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
-
-    discretization = Discretization(parameters, nx, ny, nz, dim, dof)
-    state = create_divfree_state(discretization)
-
-    atomJ, atomF = discretization.nonlinear_part(state)
-    A = discretization.assemble_jacobian(atomF)
-
-    for i in range(A.n):
-        for j in range(A.begA[i], A.begA[i+1]):
-            assert i != A.jcoA[j]
-
-def test_bilin_stretched():
-    parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
-
-    x = utils.create_stretched_coordinate_vector(0, 1, nx, 1.5)
-    y = utils.create_stretched_coordinate_vector(0, 1, ny, 1.5)
-    z = utils.create_stretched_coordinate_vector(0, 1, nz, 1.5)
-
-    discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
-    state = create_divfree_state(discretization)
-
-    atomJ, atomF = discretization.nonlinear_part(state)
-    A = discretization.assemble_jacobian(atomF)
-
-    for i in range(A.n):
-        for j in range(A.begA[i], A.begA[i+1]):
-            assert i != A.jcoA[j]
-
-def test_jac_consistency():
-    parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
-
-    n = dof * nx * ny * nz
-    state = numpy.random.random(n)
-    pert = numpy.random.random(n)
-
-    discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
-    A = discretization.jacobian(state)
-    rhs = discretization.rhs(state)
-
-    for i in range(3, 12):
-        eps = 10 ** -i
-        eps2 = max(eps, 10 ** (-14+i))
-        rhs2 = discretization.rhs(state + eps * pert)
-        assert numpy.linalg.norm((rhs2 - rhs) / eps - A @ pert) < eps2
-
-def test_jac_consistency_uniform():
-    parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
-
-    nz = 1
-    dim = 2
-    dof = 3
-    n = dof * nx * ny * nz
-    state = numpy.random.random(n)
-    pert = numpy.random.random(n)
-
-    discretization = Discretization(parameters, nx, ny, nz, dim, dof)
-    A = discretization.jacobian(state)
-    rhs = discretization.rhs(state)
-
-    for i in range(3, 12):
-        eps = 10 ** -i
-        eps2 = max(eps, 10 ** (-14+i))
-        rhs2 = discretization.rhs(state + eps * pert)
-        assert numpy.linalg.norm((rhs2 - rhs) / eps - A @ pert) < eps2
-
-def test_jac_consistency_stretched():
-    parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
-
-    x = utils.create_stretched_coordinate_vector(0, 1, nx, 1.5)
-    y = utils.create_stretched_coordinate_vector(0, 1, ny, 1.5)
-    z = utils.create_stretched_coordinate_vector(0, 1, nz, 1.5)
-
-    n = dof * nx * ny * nz
-    state = numpy.random.random(n)
-    pert = numpy.random.random(n)
-
-    discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
-    A = discretization.jacobian(state)
-    rhs = discretization.rhs(state)
-
-    for i in range(3, 12):
-        eps = 10 ** -i
-        eps2 = max(eps, 10 ** (-14+i))
-        rhs2 = discretization.rhs(state + eps * pert)
-        assert numpy.linalg.norm((rhs2 - rhs) / eps - A @ pert) < eps2
 
 def read_matrix(fname):
     A = CrsMatrix([], [], [0])
@@ -526,6 +401,7 @@ def read_matrix(fname):
         assert rows == sorted(rows)
 
     return A
+
 
 def read_bous_matrix(fname):
     A = read_matrix(fname)
@@ -551,6 +427,7 @@ def read_bous_matrix(fname):
 
     return B
 
+
 def read_vector(fname):
     vec = numpy.array([])
 
@@ -560,6 +437,7 @@ def read_vector(fname):
             vec = numpy.append(vec, float(i.strip()))
     return vec
 
+
 def read_bous_vector(fname):
     vec = read_vector(fname)
 
@@ -568,6 +446,7 @@ def read_bous_vector(fname):
     for i in range(len(vec)):
         out[i] = vec[i + (i % dof == 3) - (i % dof == 4)]
     return out
+
 
 def assemble_jacobian(atom, nx, ny, nz, dof):
     row = 0
@@ -593,6 +472,7 @@ def assemble_jacobian(atom, nx, ny, nz, dof):
                     begA[row] = idx
 
     return CrsMatrix(coA, jcoA, begA)
+
 
 def test_ldc_lin():
     nx = 4
@@ -625,6 +505,7 @@ def test_ldc_lin():
             assert B.jcoA[j] == A.jcoA[j]
             assert B.coA[j] == A.coA[j]
 
+
 def test_bous_lin():
     nx = 4
     ny = nx
@@ -639,8 +520,6 @@ def test_bous_lin():
     A = assemble_jacobian(atom, nx, ny, nz, dof)
 
     B = read_bous_matrix('bous_lin_%sx%sx%s.txt' % (nx, ny, nz))
-
-    pytest.skip('The Prandtl number is currently applied in a different place')
 
     for i in range(n):
         print(i)
@@ -657,6 +536,7 @@ def test_bous_lin():
         for j in range(B.begA[i], B.begA[i+1]):
             assert B.jcoA[j] == A.jcoA[j]
             assert B.coA[j] == A.coA[j]
+
 
 def test_assemble_jacobian():
     nx = 4
@@ -690,6 +570,7 @@ def test_assemble_jacobian():
             assert B.jcoA[j] == A.jcoA[j]
             assert B.coA[j] == A.coA[j]
 
+
 def test_ldc_bnd():
     nx = 4
     ny = nx
@@ -722,6 +603,7 @@ def test_ldc_bnd():
             assert B.jcoA[j] == A.jcoA[j]
             assert B.coA[j] == A.coA[j]
 
+
 def test_bous_bnd():
     nx = 4
     ny = nx
@@ -738,8 +620,6 @@ def test_bous_bnd():
 
     B = read_bous_matrix('bous_bnd_%sx%sx%s.txt' % (nx, ny, nz))
 
-    pytest.skip('The Prandtl number is currently applied in a different place')
-
     for i in range(n):
         print(i)
 
@@ -755,6 +635,7 @@ def test_bous_bnd():
         for j in range(B.begA[i], B.begA[i+1]):
             assert B.jcoA[j] == A.jcoA[j]
             assert B.coA[j] == pytest.approx(A.coA[j])
+
 
 def test_ldc_bil():
     nx = 4
@@ -794,6 +675,7 @@ def test_ldc_bil():
             assert B.jcoA[j] == A.jcoA[j]
             assert B.coA[j] == A.coA[j]
 
+
 def test_bous_bil():
     nx = 4
     ny = nx
@@ -813,8 +695,6 @@ def test_bous_bil():
 
     B = read_bous_matrix('bous_bil_%sx%sx%s.txt' % (nx, ny, nz))
 
-    pytest.skip('The Prandtl number is currently applied in a different place')
-
     for i in range(n):
         print(i)
 
@@ -833,6 +713,7 @@ def test_bous_bil():
         for j in range(B.begA[i], B.begA[i+1]):
             assert B.jcoA[j] == A.jcoA[j]
             assert B.coA[j] == A.coA[j]
+
 
 def test_ldc():
     nx = 4
@@ -871,6 +752,7 @@ def test_ldc():
             assert A.coA[j] == pytest.approx(B.coA[j])
 
         assert rhs_B[i] == pytest.approx(rhs[i])
+
 
 def test_ldc_2D():
     nx = 4
@@ -923,6 +805,7 @@ def test_ldc_2D():
 
         assert rhs2[i] == pytest.approx(rhs1[i1])
 
+
 def test_bous():
     nx = 4
     ny = nx
@@ -943,8 +826,6 @@ def test_bous():
     B = read_bous_matrix('bous_%sx%sx%s.txt' % (nx, ny, nz))
     rhs_B = read_bous_vector('bous_rhs_%sx%sx%s.txt' % (nx, ny, nz))
 
-    pytest.skip('The Prandtl number is currently applied in a different place')
-
     for i in range(n):
         print(i)
 
@@ -962,6 +843,7 @@ def test_bous():
             assert A.coA[j] == pytest.approx(B.coA[j])
 
         assert rhs_B[i] == pytest.approx(rhs[i])
+
 
 def test_bous_2D():
     nx = 4
@@ -1014,6 +896,7 @@ def test_bous_2D():
 
         assert rhs2[i] == pytest.approx(rhs1[i1])
 
+
 def test_ldc8():
     nx = 8
     ny = nx
@@ -1056,5 +939,31 @@ def test_ldc8():
         assert rhs_B[i] == pytest.approx(rhs[i])
 
 
+def create_1D_test_problem():
+    nx = 1
+    dim = 1
+    dof = 1
+    x = create_coordinate_vector(nx)
+    return ({}, nx, dim, dof, x)
+
+
+# TODO wei (for Bratu problem)
+def test_jac_consistency():
+    parameters, nx, ny, nz, dim, dof, x, y, z = creat_test_problem_Bratu()
+
+    n = dof * nx * ny * nz
+    state = numpy.random.random(n)
+    pert = numpy.random.random(n)
+
+    discretization = Discretization(parameters, nx, ny, nz, dim, dof)
+    A = discretization.jacobian(state)
+    rhs = discretization.rhs(state)
+
+    for i in range(3, 12):
+        eps = 10 ** -i
+        eps2 = max(eps, 10 ** (-14+i))
+        rhs2 = discretization.rhs(state + eps * pert)
+        assert numpy.linalg.norm((rhs2 - rhs) / eps - A @ pert) < eps2 * 1000
+
 if __name__ == '__main__':
-    test_ldc8()
+    test_jac_consistency()

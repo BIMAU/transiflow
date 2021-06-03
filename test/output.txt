@@ -1,0 +1,24 @@
+Wed May 12 19:25:19 2021    output.prof
+
+         2632657 function calls (2597173 primitive calls) in 4.947 seconds
+
+   Random listing order was used
+   List reduced from 229 to 7 due to restriction <'CrsMatrix'>
+   List reduced from 7 to 1 due to restriction <'solve'>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+      983    0.009    0.000    0.179    0.000 CrsMatrix.py:50(solve)
+
+
+Wed May 12 19:25:19 2021    output.prof
+
+         2632657 function calls (2597173 primitive calls) in 4.947 seconds
+
+   Random listing order was used
+   List reduced from 229 to 2 due to restriction <'gmres'>
+   List reduced from 2 to 1 due to restriction <1>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+     3221    0.225    0.000    1.272    0.000 iterative.py:431(gmres)
+
+

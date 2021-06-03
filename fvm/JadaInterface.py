@@ -1,7 +1,5 @@
 from fvm import CrsMatrix
 
-import warnings
-
 from jadapy import NumPyInterface
 
 from scipy import sparse
@@ -29,10 +27,6 @@ class JadaPrecOp(object):
         self.shape = self.op.shape
 
     def matvec(self, x):
-        if not self.shifted:
-            rhs = x.copy()
-            return self.op.proj(self.interface.solve(self.op.A.fvm_mat, rhs))
-
         alpha = self.op.alpha
         beta = self.op.beta
         try:
@@ -45,42 +39,50 @@ class JadaPrecOp(object):
         except AttributeError:
             pass
 
+        if not self.shifted:
+            rhs = x.copy()
+            return self.op.proj(self.interface.solve(self.op.A.fvm_mat, rhs))
+
         rhs = x.copy()
         mat = beta * self.op.A.mat - alpha * self.op.B.mat
         crs_mat = CrsMatrix(mat.data, mat.indices, mat.indptr)
         return self.op.proj(self.interface.solve(crs_mat, rhs))
 
 class JadaInterface(NumPyInterface.NumPyInterface):
-    def __init__(self, interface, jac_op, mass_op, *args, **kwargs):
+    def __init__(self, interface, jac_op, mass_op, *args):
         super().__init__(*args)
         self.interface = interface
         self.jac_op = jac_op
         self.mass_op = mass_op
 
-        self.preconditioned_solve = kwargs.get('preconditioned_solve', False)
-        self.shifted = kwargs.get('shifted', False)
+    # def solve(self, op, x, tol, maxit):
+    #     if op.dtype.char != op.dtype.char.upper():
+    #         # Real case
+    #         if abs(op.alpha.real) < abs(op.alpha.imag):
+    #             op.alpha = op.alpha.imag
+    #         else:
+    #             op.alpha = op.alpha.real
+    #         op.beta = op.beta.real
 
-    def solve(self, op, x, tol, maxit):
-        if op.dtype.char != op.dtype.char.upper():
-            # Real case
-            if abs(op.alpha.real) < abs(op.alpha.imag):
-                op.alpha = op.alpha.imag
-            else:
-                op.alpha = op.alpha.real
-            op.beta = op.beta.real
+    #     out = x.copy()
+    #     for i in range(x.shape[1]):
+    #         out[:, i] , info = sparse.linalg.gmres(op, x[:, i], restart=100, maxiter=10, tol=tol, atol=0,
+    #                                                M=JadaPrecOp(op, self.interface, False))
+    #         if info < 0:
+    #             raise Exception('GMRES returned ' + str(info))
+    #         elif info > 0:
+    #             warnings.warn('GMRES did not converge in ' + str(info) + ' iterations')
+    #     return out
 
-        out = x.copy()
-        for i in range(x.shape[1]):
-            prec_op = None
-            if self.preconditioned_solve:
-                prec_op = JadaPrecOp(op, self.interface, self.shifted)
-
-            out[:, i], info = sparse.linalg.gmres(op, x[:, i], restart=100, maxiter=maxit, tol=tol, atol=0, M=prec_op)
-            if info < 0:
-                raise Exception('GMRES returned ' + str(info))
-            elif info > 0:
-                warnings.warn('GMRES did not converge in ' + str(info) + ' iterations')
-        return out
+    # def solve(self, op, x, tol, maxit):
+    #     out = x.copy()
+    #     for i in range(x.shape[1]):
+    #         out[:, i] , info = sparse.linalg.gmres(op, x[:, i], restart=100, maxiter=10, tol=tol, atol=0)
+    #         if info < 0:
+    #             raise Exception('GMRES returned ' + str(info))
+    #         elif info > 0:
+    #             warnings.warn('GMRES did not converge in ' + str(info) + ' iterations')
+    #     return out
 
     def prec(self, x, *args):
         rhs = x.copy()
