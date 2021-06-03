@@ -296,13 +296,17 @@ class Continuation:
                 eigs0 = eigs
                 eigs = self.interface.eigs(x)
 
-                if eigs[0].real > 0:
+                if eigs0 is not None and numpy.sign(eigs[0].real) != numpy.sign(eigs0[0].real):
                     deigs = eigs - eigs0
                     x, mu = self.detect_bifurcation(parameter_name, x, mu, dx, dmu, eigs, deigs, ds, maxit)
 
                     self.store_data(data, x, mu)
 
                     return x, mu, data
+
+                if eigs0 is None and eigs[0].real > 0:
+                    # We're past the bifurcation already, so go backward
+                    ds = -ds
 
             ds = self.adjust_step_size(ds)
 
