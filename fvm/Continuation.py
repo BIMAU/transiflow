@@ -1,303 +1,187 @@
-import sys
-import numpy
+
 
 from math import sqrt
+import numpy as np
+
 
 def norm(x):
     return sqrt(x.dot(x))
 
-class Data:
-    def __init__(self):
-        self.mu = []
-        self.value = []
+def infinity_norm(x):
+    return max(abs(x))
+
 
 class Continuation:
-
     def __init__(self, interface, parameters):
         self.interface = interface
         self.parameters = parameters
 
-        self.newton_iterations = 0
-        self.delta = None
-        self.zeta = None
-
     def newton(self, x0, tol=1.e-7, maxit=1000):
-        residual_check = self.parameters.get('Residual Check', 'F')
-        verbose = self.parameters.get('Verbose', False)
-
         x = x0
         for k in range(maxit):
             fval = self.interface.rhs(x)
-
-            if residual_check == 'F' or verbose:
-                fnorm = norm(fval)
-
-            if residual_check == 'F' and fnorm < tol:
-                print('Newton converged in %d iterations with ||F||=%e' % (k, fnorm))
-                sys.stdout.flush()
-                break
-
             jac = self.interface.jacobian(x)
             dx = self.interface.solve(jac, -fval)
 
             x = x + dx
 
-            if residual_check != 'F' or verbose:
-                dxnorm = norm(dx)
-
-            if residual_check != 'F' and dxnorm < tol:
-                print('Newton converged in %d iterations with ||dx||=%e' % (k, dxnorm))
-                sys.stdout.flush()
+            dxnorm = norm(dx)
+            if dxnorm < tol:
+                print('Newton converged in %d steps with norm %e' % (k, dxnorm))
                 break
-
-            if verbose:
-                print('Newton status at iteration %d: ||F||=%e, ||dx||=%e' % (k, fnorm, dxnorm))
-                sys.stdout.flush()
-
-        self.newton_iterations = k
 
         return x
 
-    def newtoncorrector(self, parameter_name, ds, x, x0, mu, mu0):
-        residual_check = self.parameters.get('Residual Check', 'F')
-        verbose = self.parameters.get('Verbose', False)
-
+    def newtoncorrector(self, parameter_name, ds, x, x0, mu, mu0, tol):
         # Set some parameters
-        maxit = self.parameters.get('Maximum Newton Iterations', 10)
-        tol = self.parameters.get('Newton Tolerance', 1e-4)
-
-        self.newton_iterations = 0
+        maxit = 10000
+        # zeta = 1 / len(x)
+        zeta = 1
+        delta = 0.1  # changed. It is used to compute F_mu
 
         # Do the main iteration
         for k in range(maxit):
-
             # Compute F and F_mu (RHS of 2.2.9)
-            self.interface.set_parameter(parameter_name, mu + self.delta)
+            self.interface.set_parameter(parameter_name, mu + delta)
             dflval = self.interface.rhs(x)
             self.interface.set_parameter(parameter_name, mu)
             fval = self.interface.rhs(x)
-            dflval = (dflval - fval) / self.delta
-
-            if residual_check == 'F' or verbose:
-                fnorm = norm(fval)
-
-            if residual_check == 'F' and fnorm < tol:
-                print('Newton corrector converged in %d iterations with ||F||=%e' % (k, fnorm))
-                sys.stdout.flush()
-                break
+            dflval = (dflval - fval) / delta
 
             # Compute the jacobian at x
             jac = self.interface.jacobian(x)
 
             # Compute r (2.2.8)
             diff = x - x0
-            rnp1 = self.zeta*diff.dot(diff) + (1 - self.zeta) * (mu - mu0) ** 2 - ds ** 2
+            rnp1 = zeta * diff.dot(diff) + (1 - zeta) * (mu - mu0) ** 2 - ds ** 2
+
+            r_x = -2 * zeta * (x - x0)
+            r_mu = -2 * (1 - zeta) * (mu - mu0)
 
             if self.parameters.get("Bordered Solver", False):
                 # Solve the entire bordered system in one go (2.2.9)
-                dx, dmu = self.interface.solve(jac, -fval, -rnp1, dflval, 2 * self.zeta * diff,
-                                               2 * (1 - self.zeta) * (mu - mu0))
+                # dx, dmu = self.interface.solve(jac, -fval, -rnp1, dflval, 2 * zeta * diff, 2 * (1 - zeta) * (mu - mu0))
+                #TODO dont use hymls, solve bordered system directly
+                res = self.interface.solve_bordered(jac, fval, dflval, r_x, r_mu, rnp1)
+                dx = res[:len(res) - 1]
+                dmu = res[-1]
+
             else:
                 # Solve twice with F_x (2.2.9)
                 z1 = self.interface.solve(jac, -fval)
                 z2 = self.interface.solve(jac, dflval)
 
                 # Compute dmu (2.2.13)
-                dmu = (-rnp1 - 2 * self.zeta * diff.dot(z1)) / (2 * (1 - self.zeta) * (mu - mu0)
-                                                                - 2 * self.zeta * diff.dot(z2))
-
+                # dmu = (-rnp1 - 2 * zeta * diff.dot(z1)) / (2 * (1 - zeta) * (mu - mu0) - 2 * zeta * diff.dot(z2))
+                dmu = (-rnp1 + r_x.dot(z1)) / (-r_mu + r_x.dot(z2))
                 # Compute dx (2.2.12)
                 dx = z1 - dmu * z2
 
             # Compute a new x and mu (2.2.10 - 2.2.11)
-            x += dx
-            mu += dmu
+            x = x + dx
+            mu = mu + dmu
 
-            self.newton_iterations += 1
+            dxnorm = norm(dx)
+            # if max(dmu, dxnorm) < tol:
+            #     print('Newton corrector converged in %d steps with norm %e' % (k, dxnorm))
+            #     return (x, mu)
+            if dxnorm < tol:
+                print('Newton corrector converged in %d steps with norm %e' % (k, dxnorm))
+                num_iterations = k
+                return (x, mu, num_iterations)
 
-            if residual_check != 'F' or verbose:
-                dxnorm = norm(dx)
+        print('No convergence achieved by Newton corrector')
 
-            if residual_check != 'F' and dxnorm < tol:
-                print('Newton corrector converged in %d iterations with ||dx||=%e' % (k, dxnorm))
-                sys.stdout.flush()
-                break
-
-            if verbose:
-                print('Newton corrector status at iteration %d: ||F||=%e, ||dx||=%e' % (k, fnorm, dxnorm))
-                sys.stdout.flush()
-
-        if self.newton_iterations == maxit:
-            print('Newton did not converge. Adjusting step size and trying again')
-            return x0, mu0
-
-        self.interface.set_parameter(parameter_name, mu)
-
-        return x, mu
-
-    def adjust_step_size(self, ds):
-        ''' Step size control, see [Seydel p 188.] '''
-
-        min_step_size = self.parameters.get('Minimum Step Size', 0.01)
-        max_step_size = self.parameters.get('Maximum Step Size', 2000)
-        optimal_newton_iterations = self.parameters.get('Optimal Newton Iterations', 3)
-
-        factor = optimal_newton_iterations / max(self.newton_iterations, 1)
-        factor = min(max(factor, 0.5), 2.0)
-
-        ds *= factor
-
-        ds = numpy.sign(ds) * min(max(abs(ds), min_step_size), max_step_size)
-
-        if self.parameters.get('Verbose', False):
-            print('New stepsize: ds=%e, factor=%e' % (ds, factor))
-            sys.stdout.flush()
-
-        return ds
-
-    def detect_bifurcation(self, parameter_name, x, mu, dx, dmu, eigs, deigs, ds, maxit):
-        ''' Converge onto a bifurcation '''
-
-        tol = self.parameters.get('Destination Tolerance', 1e-8)
-
-        for j in range(maxit):
-            if abs(eigs[0].real) < tol:
-                print("Bifurcation found at %s = %f with eigenvalue %e + %ei" % (
-                    parameter_name, mu, eigs[0].real, eigs[0].imag))
-                sys.stdout.flush()
-                break
-
-            # Secant method
-            ds = ds / deigs[0].real * -eigs[0].real
-            x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, ds)
-
-            eigs0 = eigs
-            eigs = self.interface.eigs(x)
-            deigs = eigs - eigs0
-
-        return x, mu
-
-    def converge(self, parameter_name, x, mu, dx, dmu, target, ds, maxit):
-        ''' Converge onto the target value '''
-
-        tol = self.parameters.get('Destination Tolerance', 1e-8)
-
-        for j in range(maxit):
-            if abs(target - mu) < tol:
-                print("Convergence achieved onto target %s = %f" % (parameter_name, mu))
-                sys.stdout.flush()
-                break
-
-            # Secant method
-            ds = 1 / dmu * (target - mu)
-            x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, ds)
-
-        return x, mu
-
-    def step(self, parameter_name, x, mu, dx, dmu, ds):
-        ''' Perform one step of the continuation '''
-
-        mu0 = mu
-        x0 = x
-
-        # Predictor (2.2.3)
-        mu = mu0 + ds * dmu
-        x = x0 + ds * dx
-
-        # Corrector (2.2.9 and onward)
-        x, mu = self.newtoncorrector(parameter_name, ds, x, x0, mu, mu0)
-
-        if mu == mu0:
-            # No convergence was achieved, adjusting the step size
-            prev_ds = ds
-            ds = self.adjust_step_size(ds)
-            if prev_ds == ds:
-                raise Exception('Newton cannot achieve convergence')
-
-            return self.step(parameter_name, x0, mu0, dx, dmu, ds)
-
-        print("%s: %f" % (parameter_name, mu))
-        sys.stdout.flush()
-
-        # Set the new values computed by the corrector
-        dmu = mu - mu0
-        dx = x - x0
-
-        if abs(dmu) < 1e-10:
-            raise Exception('dmu too small')
-
-        # Compute the tangent (2.2.4)
-        dx /= ds
-        dmu /= ds
-
-        return x, mu, dx, dmu, ds
-
-    def store_data(self, data, x, mu):
-        data.mu.append(mu)
-        if 'Value' in self.parameters:
-            data.value.append(self.parameters['Value'](x))
-        else:
-            data.value.append(numpy.NAN)
-
-    def continuation(self, x0, parameter_name, start, target, ds):
+    def continuation(self, x0, parameter_name, target, ds, maxit):
         x = x0
-        mu = start
-
-        # Set some parameters
-        self.delta = self.parameters.get('Delta', 1)
-        self.zeta = 1 / x.size
 
         # Get the initial tangent (2.2.5 - 2.2.7).
-        self.interface.set_parameter(parameter_name, mu + self.delta)
-        dflval = self.interface.rhs(x)
-        self.interface.set_parameter(parameter_name, mu)
+        delta = 1
+        mu = self.interface.get_parameter(parameter_name)
         fval = self.interface.rhs(x)
-        dflval = (dflval - fval) / self.delta
+        self.interface.set_parameter(parameter_name, mu + delta)
+        dmu = (self.interface.rhs(x) - fval) / delta
+        self.interface.set_parameter(parameter_name, mu)
 
         # Compute the jacobian at x and solve with it (2.2.5)
         jac = self.interface.jacobian(x)
-        dx = self.interface.solve(jac, -dflval)
+        dx = -self.interface.solve(jac, dmu)
 
         # Scaling of the initial tangent (2.2.7)
         dmu = 1
-        nrm = sqrt(self.zeta * dx.dot(dx) + dmu ** 2)
-        dmu /= nrm
-        dx /= nrm
+        zeta = 1
+        nrm = sqrt(zeta * dx.dot(dx) + dmu ** 2)
+        dmu = dmu / nrm
+        dx = dx / nrm
 
-        eigs = None
-        data = Data()
-        self.store_data(data, x, mu)
+        dmu0 = dmu
+        dx0 = dx
 
-        maxit = self.parameters.get('Maximum Iterations', 1000)
+        # TODO wei
+        paras = []
+        u = []
+        u_norm = []
+
+        # see if it passes the corner
+        flag = 0
+
+        C_v = []
+        iterations = []
 
         # Perform the continuation
         for j in range(maxit):
             mu0 = mu
+            x0 = x
 
-            x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, ds)
+            # Predictor (2.2.3)
+            mu = mu0 + ds * dmu0
+            x = x0 + ds * dx0
 
-            self.store_data(data, x, mu)
+            # Corrector (2.2.9 and onward)
+            (x2, mu2, num_iterations) = self.newtoncorrector(parameter_name, ds, x, x0, mu, mu0, 1e-4)
 
-            if (mu >= target and mu0 < target) or (mu <= target and mu0 > target):
-                # Converge onto the end point
-                x, mu = self.converge(parameter_name, x, mu, dx, dmu, target, ds, maxit)
+            print("%s: %f" % (parameter_name, mu2))
 
-                self.store_data(data, x, mu)
+            if flag == 0 and mu2 > 3.5:
+                flag = 1
 
-                return x, mu, data
+            if mu2 > 3.5:
+                C_v.append(mu2)
+                iterations.append(num_iterations)
 
-            if self.parameters.get('Detect Bifurcation Points', False):
-                eigs0 = eigs
-                eigs = self.interface.eigs(x)
+            paras.append(mu2)
+            u.append(x2)
+            u_norm.append(infinity_norm(x2))
 
-                if eigs[0].real > 0:
-                    deigs = eigs - eigs0
-                    x, mu = self.detect_bifurcation(parameter_name, x, mu, dx, dmu, eigs, deigs, ds, maxit)
+            # we need to find an appropriate threshold so that we end up the value in the upper branch that is close to 0
+            if flag == 1 and mu2 < 0.1:
+                return x2, paras, u, u_norm, C_v, iterations
 
-                    self.store_data(data, x, mu)
 
-                    return x, mu, data
 
-            ds = self.adjust_step_size(ds)
+            # if (mu2 >= target and mu0 < target) or (mu2 <= target and mu0 > target):
+            #     # Converge onto the end point (we usually go past it, so we
+            #     # use Newton to converge)
+            #     mu = target
+            #     self.interface.set_parameter(parameter_name, mu)
+            #     x = self.newton(x, 1e-4)
+            #
+            #     return x
 
-        return x, mu, data
+            # Set the new values computed by the corrector
+            dmu = mu2 - mu0
+            mu = mu2
+            dx = x2 - x0
+            x = x2
+
+
+            # when ds is small, dmu is also small, in this case, we cannot use this condition.
+            # if abs(dmu) < 1e-10:
+            if abs(dmu) < ds * 1e-5:
+                return x, paras, u, u_norm, C_v, iterations
+
+            # Compute the tangent (2.2.4)
+            dx0 = dx / ds
+            dmu0 = dmu / ds
+
+        return x, paras, u, u_norm, C_v, iterations

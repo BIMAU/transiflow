@@ -5,20 +5,27 @@ from scipy.sparse import linalg
 
 from fvm import Discretization
 
-class Interface:
-    '''This class defines an interface to the NumPy backend for the
-    discretization. We use this so we can write higher level methods
-    such as pseudo-arclength continuation without knowing anything
-    about the underlying methods such as the solvers that are present
-    in the backend we are interfacing with.'''
 
-    def __init__(self, parameters, nx, ny, nz, dim, dof, x=None, y=None, z=None):
+# see the number of gmres iterations
+class gmres_counter(object):
+    def __init__(self, disp=True):
+        self._disp = disp
+        self.niter = 0
+
+    def __call__(self, rk=None):
+        self.niter += 1
+        if self._disp:
+            print('iter %3i\trk = %s' % (self.niter, str(rk)))
+
+
+class Interface:
+    def __init__(self, parameters, nx, ny, nz, dim, dof):
         self.nx = nx
         self.ny = ny
         self.nz = nz
         self.dim = dim
         self.dof = dof
-        self.discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
+        self.discretization = Discretization(parameters, nx, ny, nz, dim, dof)
 
         self.parameters = parameters
 
@@ -30,29 +37,53 @@ class Interface:
         self._subspaces = None
 
     def set_parameter(self, name, value):
-        '''Set a parameter in self.parameters while also letting the
-        discretization know that we changed a parameter. '''
-
         self.discretization.set_parameter(name, value)
 
     def get_parameter(self, name):
-        '''Get a parameter from self.parameters through the discretization.'''
         return self.discretization.get_parameter(name)
 
     def rhs(self, state):
-        '''Right-hand side in M * du / dt = F(u).'''
         return self.discretization.rhs(state)
 
     def jacobian(self, state):
-        '''Jacobian J of F in M * du / dt = F(u).'''
         return self.discretization.jacobian(state)
 
     def mass_matrix(self):
-        '''Mass matrix M in M * du / dt = F(u).'''
         return self.discretization.mass_matrix()
 
+    # def solve(self, jac, rhs):
+    #     coA = numpy.zeros(jac.begA[-1], dtype=jac.coA.dtype)
+    #     jcoA = numpy.zeros(jac.begA[-1], dtype=int)
+    #     begA = numpy.zeros(len(jac.begA), dtype=int)
+    #
+    #     idx = 0
+    #     for i in range(len(jac.begA)-1):
+    #         if i == self.dim:
+    #             coA[idx] = -1.0
+    #             jcoA[idx] = i
+    #             idx += 1
+    #             begA[i+1] = idx
+    #             continue
+    #         for j in range(jac.begA[i], jac.begA[i+1]):
+    #             if jac.jcoA[j] != self.dim:
+    #                 coA[idx] = jac.coA[j]
+    #                 jcoA[idx] = jac.jcoA[j]
+    #                 idx += 1
+    #         begA[i+1] = idx
+    #
+    #     A = sparse.csr_matrix((coA, jcoA, begA))
+    #     if len(rhs.shape) < 2:
+    #         rhs[self.dim] = 0
+    #         x = linalg.spsolve(A, rhs)
+    #     else:
+    #         x = rhs.copy()
+    #         #rhs[self.dim, :] = 0
+    #         for i in range(x.shape[1]):
+    #             x[:, i] = linalg.spsolve(A, rhs[:, i])
+    #     return x
+
+    # TODO wei
     def solve(self, jac, x):
-        '''Solve J y = x for y.'''
         rhs = x.copy()
 
         # Fix one pressure node
@@ -62,16 +93,8 @@ class Interface:
             else:
                 rhs[self.dim, :] = 0
 
-        # First try to use an iterative solver with the previous
-        # direct solver as preconditioner
-        if self._prec and jac.dtype == rhs.dtype and jac.dtype == self._prec.dtype and \
-           self.parameters.get('Use Iterative Solver', False):
-            out, info = linalg.gmres(jac, rhs, restart=5, maxiter=1, tol=1e-8, atol=0, M=self._prec)
-            if info == 0:
-                return out
-
         # Use a direct solver instead
-        if not jac.lu:
+        if True:
             coA = jac.coA
             jcoA = jac.jcoA
             begA = jac.begA
@@ -83,34 +106,179 @@ class Interface:
                 begA = numpy.zeros(len(jac.begA), dtype=int)
 
                 idx = 0
-                for i in range(len(jac.begA)-1):
+                for i in range(len(jac.begA) - 1):
                     if i == self.dim:
                         coA[idx] = -1.0
                         jcoA[idx] = i
                         idx += 1
-                        begA[i+1] = idx
+                        begA[i + 1] = idx
                         continue
-                    for j in range(jac.begA[i], jac.begA[i+1]):
+                    for j in range(jac.begA[i], jac.begA[i + 1]):
                         if jac.jcoA[j] != self.dim:
                             coA[idx] = jac.coA[j]
                             jcoA[idx] = jac.jcoA[j]
                             idx += 1
-                    begA[i+1] = idx
+                    begA[i + 1] = idx
 
             # Convert the matrix to CSC format since splu expects that
             A = sparse.csr_matrix((coA, jcoA, begA)).tocsc()
 
-            jac.lu = linalg.splu(A)
+            # jac.lu = linalg.splu(A)
 
-            # Cache the factorization for use in the iterative solver
-            self._lu = jac.lu
-            self._prec = linalg.LinearOperator((jac.n, jac.n), matvec=self._lu.solve, dtype=jac.dtype)
+            if self.parameters.get('Use Iterative Solver', False):
+                if self.parameters.get('Use Preconditioner', False):
+                    if self.parameters.get('Use ILU Preconditioner', False):
+                        self._prec = linalg.LinearOperator((jac.n, jac.n), matvec=linalg.spilu(A).solve, dtype=jac.dtype)
 
-        return jac.solve(rhs)
+                    if self._prec and jac.dtype == rhs.dtype and jac.dtype == self._prec.dtype:
+                        out, info = linalg.gmres(A, rhs, M=self._prec, callback=gmres_counter())
+                        if info == 0:
+                            return out
+                else:
+                    out, info = linalg.gmres(A, rhs, callback=gmres_counter())
+                    if info == 0:
+                        return out
+            A_lu = linalg.splu(A)
+
+        return A_lu.solve(rhs)
+
+    def solve_bordered(self, jac, fval, dfval, r_x, r_mu, r):
+        rhs = fval.copy()
+
+        # Fix one pressure node
+        if self.dof > self.dim:
+            if len(rhs.shape) < 2:
+                rhs[self.dim] = 0
+            else:
+                rhs[self.dim, :] = 0
+
+        # Use a direct solver instead
+        if True:
+            coA = jac.coA
+            jcoA = jac.jcoA
+            begA = jac.begA
+
+            # Fix one pressure node
+            if self.dof > self.dim:
+                coA = numpy.zeros(jac.begA[-1], dtype=jac.coA.dtype)
+                jcoA = numpy.zeros(jac.begA[-1], dtype=int)
+                begA = numpy.zeros(len(jac.begA), dtype=int)
+
+                idx = 0
+                for i in range(len(jac.begA) - 1):
+                    if i == self.dim:
+                        coA[idx] = -1.0
+                        jcoA[idx] = i
+                        idx += 1
+                        begA[i + 1] = idx
+                        continue
+                    for j in range(jac.begA[i], jac.begA[i + 1]):
+                        if jac.jcoA[j] != self.dim:
+                            coA[idx] = jac.coA[j]
+                            jcoA[idx] = jac.jcoA[j]
+                            idx += 1
+                    begA[i + 1] = idx
+
+            # Convert the matrix to CSC format since splu expects that
+            A = sparse.csr_matrix((coA, jcoA, begA)).tocsc().toarray()
+
+            a = numpy.concatenate((A, dfval[:, numpy.newaxis]), axis=1)
+            b = numpy.append(r_x, r_mu)
+            A = numpy.concatenate((a, b[:, numpy.newaxis].T), axis=0)
+
+            b = numpy.append(-fval, r)
+
+            A_sparse = sparse.csc_matrix(A)
+            A_lu = linalg.splu(A_sparse)
+            # jac.lu = linalg.splu(A)
+
+            if self.parameters.get('Use Iterative Solver', False):
+                if self.parameters.get('Use Preconditioner', False):
+                    if self.parameters.get('Use LU Preconditioner', False):
+                        self._prec = linalg.LinearOperator((jac.n + 1, jac.n + 1), matvec=linalg.splu(A).solve, dtype=jac.dtype)
+                    elif self.parameters.get('Use ILU Preconditioner', False):
+                        self._prec = linalg.LinearOperator((jac.n + 1, jac.n + 1), matvec=linalg.spilu(A).solve,
+                                                           dtype=jac.dtype)
+
+                    if self._prec and jac.dtype == rhs.dtype and jac.dtype == self._prec.dtype:
+                        out, info = linalg.gmres(A_sparse, b, M=self._prec, callback=gmres_counter())
+                        if info == 0:
+                            return out
+                else:
+                    out, info = linalg.gmres(A_sparse, b, callback=gmres_counter())
+                    if info == 0:
+                        return out
+
+        return A_lu.solve(b)
+    #
+    # def solve(self, jac, x):
+    #     rhs = x.copy()
+    #
+    #     # Fix one pressure node
+    #     if self.dof > self.dim:
+    #         if len(rhs.shape) < 2:
+    #             rhs[self.dim] = 0
+    #         else:
+    #             rhs[self.dim, :] = 0
+    #
+    #     # First try to use an iterative solver with the previous
+    #     # direct solver as preconditioner
+    #     if self._prec and jac.dtype == rhs.dtype and jac.dtype == self._prec.dtype and \
+    #             self.parameters.get('Use Iterative Solver', False):
+    #         out, info = linalg.gmres(jac, rhs, restart=5, maxiter=1, tol=1e-8, atol=0, M=self._prec)
+    #         if info == 0:
+    #             return out
+    #
+    #     # no preconditioner
+    #     # if self._prec and jac.dtype == rhs.dtype and jac.dtype == self._prec.dtype and \
+    #     #         self.parameters.get('Use Iterative Solver', False):
+    #     #     out, info = linalg.gmres(jac, rhs, restart=5, maxiter=1, tol=1e-8, atol=0)
+    #     #     if info == 0:
+    #     #         return out
+    #
+    #     # Use a direct solver instead
+    #     if not jac.lu:
+    #         coA = jac.coA
+    #         jcoA = jac.jcoA
+    #         begA = jac.begA
+    #
+    #         # Fix one pressure node
+    #         if self.dof > self.dim:
+    #             coA = numpy.zeros(jac.begA[-1], dtype=jac.coA.dtype)
+    #             jcoA = numpy.zeros(jac.begA[-1], dtype=int)
+    #             begA = numpy.zeros(len(jac.begA), dtype=int)
+    #
+    #             idx = 0
+    #             for i in range(len(jac.begA) - 1):
+    #                 if i == self.dim:
+    #                     coA[idx] = -1.0
+    #                     jcoA[idx] = i
+    #                     idx += 1
+    #                     begA[i + 1] = idx
+    #                     continue
+    #                 for j in range(jac.begA[i], jac.begA[i + 1]):
+    #                     if jac.jcoA[j] != self.dim:
+    #                         coA[idx] = jac.coA[j]
+    #                         jcoA[idx] = jac.jcoA[j]
+    #                         idx += 1
+    #                 begA[i + 1] = idx
+    #
+    #         # Convert the matrix to CSC format since splu expects that
+    #         A = sparse.csr_matrix((coA, jcoA, begA)).tocsc()
+    #
+    #         jac.lu = linalg.splu(A)
+    #
+    #         # Cache the factorization for use in the iterative solver
+    #         self._lu = jac.lu
+    #         # LU decomposition as the preconditioner
+    #         self._prec = linalg.LinearOperator((jac.n, jac.n), matvec=self._lu.solve, dtype=jac.dtype)
+    #
+    #         # ILU decomposition as the preconditioner
+    #         # self._prec = linalg.LinearOperator((jac.n, jac.n), matvec=linalg.spilu(A).solve, dtype=jac.dtype)
+    #
+    #     return jac.solve(rhs)
 
     def eigs(self, state, return_eigenvectors=False):
-        '''Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v.'''
-
         from jadapy import jdqz, Target
         from fvm.JadaInterface import JadaOp, JadaInterface
 
