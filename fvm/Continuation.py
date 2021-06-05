@@ -68,6 +68,9 @@ class Continuation:
 
         self.newton_iterations = 0
 
+        fnorm = None
+        dxnorm = None
+
         # Do the main iteration
         for k in range(maxit):
 
@@ -79,11 +82,16 @@ class Continuation:
             dflval = (dflval - fval) / self.delta
 
             if residual_check == 'F' or verbose:
+                prev_norm = fnorm
                 fnorm = norm(fval)
 
             if residual_check == 'F' and fnorm < tol:
                 print('Newton corrector converged in %d iterations with ||F||=%e' % (k, fnorm))
                 sys.stdout.flush()
+                break
+
+            if residual_check == 'F' and prev_norm is not None and prev_norm < fnorm:
+                self.newton_iterations = maxit
                 break
 
             # Compute the jacobian at x
@@ -116,6 +124,7 @@ class Continuation:
             self.newton_iterations += 1
 
             if residual_check != 'F' or verbose:
+                prev_norm = dxnorm
                 dxnorm = norm(dx)
 
             if residual_check != 'F' and dxnorm < tol:
@@ -126,6 +135,10 @@ class Continuation:
             if verbose:
                 print('Newton corrector status at iteration %d: ||F||=%e, ||dx||=%e' % (k, fnorm, dxnorm))
                 sys.stdout.flush()
+
+            if residual_check != 'F' and prev_norm is not None and prev_norm < dxnorm:
+                self.newton_iterations = maxit
+                break
 
         if self.newton_iterations == maxit:
             print('Newton did not converge. Adjusting step size and trying again')
