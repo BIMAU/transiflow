@@ -41,3 +41,39 @@ def compute_streamfunction(u, v, x, y):
     psiu = integrate.cumtrapz(u.T, y, axis=0, initial=0)
 
     return ((-psiu + psiv[0]) + (psiv - psiu[:, 0][:, None])) / 2
+
+def get_u_value(state, i, j, k, interface):
+    y = interface.discretization.y
+    nx = interface.discretization.nx
+    ny = interface.discretization.ny
+    nz = interface.discretization.nz
+    dim = interface.discretization.dim
+    dof = interface.discretization.dof
+
+    state_mtx = create_state_mtx(state, nx, ny, nz, dof)
+
+    dy1 = (y[i] - y[i-1]) / 2
+    dy2 = (y[i+1] - y[i]) / 2
+
+    if dim == 2:
+        return (state_mtx[i, j, k, 0] * dy1 + state_mtx[i, j+1, k, 0] * dy2) / (dy1 + dy2)
+
+    raise Exception('Not implemented for 3D')
+
+def get_v_value(state, i, j, k, interface):
+    x = interface.discretization.x
+    nx = interface.discretization.nx
+    ny = interface.discretization.ny
+    nz = interface.discretization.nz
+    dim = interface.discretization.dim
+    dof = interface.discretization.dof
+
+    state_mtx = create_state_mtx(state, nx, ny, nz, dof)
+
+    dx1 = (x[i] - x[i-1]) / 2
+    dx2 = (x[i+1] - x[i]) / 2
+
+    if dim == 2:
+        return (state_mtx[i, j, k, 1] * dx1 + state_mtx[i+1, j, k, 1] * dx2) / (dx1 + dx2)
+
+    raise Exception('Not implemented for 3D')

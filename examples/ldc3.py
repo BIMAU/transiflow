@@ -15,9 +15,6 @@ def main():
     nz = 1
     n = dof * nx * ny * nz
 
-    # Define a point of interest
-    poi = (nx // 2 - 1, ny // 4 - 1)
-
     # Define the problem
     parameters = {'Problem Type': 'Lid-driven cavity',
                   # Problem parameters
@@ -29,12 +26,16 @@ def main():
                   'Maximum Step Size': 500,
                   # Give back extra output (this is also more expensive)
                   'Verbose': True,
-                  # Value describes the value that is traced in the continuation
-                  # and time integration methods
-                  'Value': lambda x: utils.create_state_mtx(x, nx, ny, nz, dof)[poi[0], poi[1], 0, 0],
                   'Theta': 1}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof)
+
+    # Define a point of interest
+    poi = (nx // 2 - 1, ny // 4 - 1)
+
+    # Value describes the value that is traced in the continuation
+    # and time integration methods
+    parameters['Value'] = lambda x: utils.get_u_value(x, poi[0], poi[1], 0, interface)
 
     print('Looking at point ({}, {})'.format(interface.discretization.x[poi[0]],
                                              interface.discretization.y[poi[1]]))
