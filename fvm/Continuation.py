@@ -73,13 +73,9 @@ class Continuation:
 
         # Do the main iteration
         for k in range(maxit):
-
-            # Compute F and F_mu (RHS of 2.2.9)
-            self.interface.set_parameter(parameter_name, mu + self.delta)
-            dflval = self.interface.rhs(x)
+            # Compute F (RHS of 2.2.9)
             self.interface.set_parameter(parameter_name, mu)
             fval = self.interface.rhs(x)
-            dflval = (dflval - fval) / self.delta
 
             if residual_check == 'F' or verbose:
                 prev_norm = fnorm
@@ -94,12 +90,17 @@ class Continuation:
                 self.newton_iterations = maxit
                 break
 
-            # Compute the jacobian at x
-            jac = self.interface.jacobian(x)
-
             # Compute r (2.2.8)
             diff = x - x0
-            rnp1 = self.zeta*diff.dot(diff) + (1 - self.zeta) * (mu - mu0) ** 2 - ds ** 2
+            rnp1 = self.zeta * diff.dot(diff) + (1 - self.zeta) * (mu - mu0) ** 2 - ds ** 2
+
+            # Compute the jacobian F_x at x (LHS of 2.2.9)
+            jac = self.interface.jacobian(x)
+
+            # Compute F_mu (LHS of 2.2.9)
+            self.interface.set_parameter(parameter_name, mu + self.delta)
+            dflval = (self.interface.rhs(x) - fval) / self.delta
+            self.interface.set_parameter(parameter_name, mu)
 
             if self.parameters.get("Bordered Solver", False):
                 # Solve the entire bordered system in one go (2.2.9)

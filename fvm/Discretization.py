@@ -97,6 +97,9 @@ class Discretization:
         the value in self.parameters from outside this class will
         likely result in wrong answers.'''
 
+        if name in self.parameters and self.get_parameter(name) == value:
+            return
+
         self.parameters[name] = value
         self.recompute_linear_part = True
 
