@@ -3,6 +3,9 @@ import numpy
 from scipy import integrate
 
 def create_state_mtx(state, nx, ny, nz, dof):
+    '''Helper to create an (nx, ny, nz, dof) dimensional array out of a
+    state vector that makes it easier to access the variables.'''
+
     state_mtx = numpy.zeros([nx, ny, nz, dof])
     for k in range(nz):
         for j in range(ny):
@@ -12,6 +15,9 @@ def create_state_mtx(state, nx, ny, nz, dof):
     return state_mtx
 
 def create_state_vec(state_mtx, nx, ny, nz, dof):
+    '''Helper to create a state vector out of an array created with
+    create_state_mtx().'''
+
     state = numpy.zeros(nx * ny * nz * dof)
 
     row = 0
@@ -52,7 +58,8 @@ def compute_streamfunction(u, v, x, y):
     return ((-psiu + psiv[0]) + (psiv - psiu[:, 0][:, None])) / 2
 
 def get_u_value(state, i, j, k, interface):
-    y = interface.discretization.y
+    '''Get the value of u at a grid point.'''
+
     nx = interface.discretization.nx
     ny = interface.discretization.ny
     nz = interface.discretization.nz
@@ -61,16 +68,25 @@ def get_u_value(state, i, j, k, interface):
 
     state_mtx = create_state_mtx(state, nx, ny, nz, dof)
 
+    y = interface.discretization.y
     dy1 = (y[i] - y[i-1]) / 2
     dy2 = (y[i+1] - y[i]) / 2
 
+    u1 = (state_mtx[i, j, k, 0] * dy1 + state_mtx[i, j+1, k, 0] * dy2) / (dy1 + dy2)
     if dim == 2:
-        return (state_mtx[i, j, k, 0] * dy1 + state_mtx[i, j+1, k, 0] * dy2) / (dy1 + dy2)
+        return u1
 
-    raise Exception('Not implemented for 3D')
+    u2 = (state_mtx[i, j, k+1, 0] * dy1 + state_mtx[i, j+1, k+1, 0] * dy2) / (dy1 + dy2)
+
+    z = interface.discretization.z
+    dz1 = (z[i] - z[i-1]) / 2
+    dz2 = (z[i+1] - z[i]) / 2
+
+    return (u1 * dz1 + u2 * dz2) / (dz1 + dz2)
 
 def get_v_value(state, i, j, k, interface):
-    x = interface.discretization.x
+    '''Get the value of v at a grid point.'''
+
     nx = interface.discretization.nx
     ny = interface.discretization.ny
     nz = interface.discretization.nz
@@ -79,10 +95,41 @@ def get_v_value(state, i, j, k, interface):
 
     state_mtx = create_state_mtx(state, nx, ny, nz, dof)
 
+    x = interface.discretization.x
     dx1 = (x[i] - x[i-1]) / 2
     dx2 = (x[i+1] - x[i]) / 2
 
+    v1 = (state_mtx[i, j, k, 1] * dx1 + state_mtx[i+1, j, k, 1] * dx2) / (dx1 + dx2)
     if dim == 2:
-        return (state_mtx[i, j, k, 1] * dx1 + state_mtx[i+1, j, k, 1] * dx2) / (dx1 + dx2)
+        return v1
 
-    raise Exception('Not implemented for 3D')
+    v2 = (state_mtx[i, j, k+1, 1] * dx1 + state_mtx[i+1, j, k+1, 1] * dx2) / (dx1 + dx2)
+
+    z = interface.discretization.z
+    dz1 = (z[i] - z[i-1]) / 2
+    dz2 = (z[i+1] - z[i]) / 2
+
+    return (v1 * dz1 + v2 * dz2) / (dz1 + dz2)
+
+def get_w_value(state, i, j, k, interface):
+    '''Get the value of w at a grid point.'''
+
+    nx = interface.discretization.nx
+    ny = interface.discretization.ny
+    nz = interface.discretization.nz
+    dof = interface.discretization.dof
+
+    state_mtx = create_state_mtx(state, nx, ny, nz, dof)
+
+    x = interface.discretization.x
+    dx1 = (x[i] - x[i-1]) / 2
+    dx2 = (x[i+1] - x[i]) / 2
+
+    w1 = (state_mtx[i, j, k, 2] * dx1 + state_mtx[i+1, j, k, 2] * dx2) / (dx1 + dx2)
+    w2 = (state_mtx[i, j+1, k, 2] * dx1 + state_mtx[i+1, j+1, k, 2] * dx2) / (dx1 + dx2)
+
+    y = interface.discretiyation.y
+    dy1 = (y[i] - y[i-1]) / 2
+    dy2 = (y[i+1] - y[i]) / 2
+
+    return (w1 * dy1 + w2 * dy2) / (dy1 + dy2)
