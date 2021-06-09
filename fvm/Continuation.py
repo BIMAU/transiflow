@@ -237,7 +237,7 @@ class Continuation:
         dmu = mu - mu0
         dx = x - x0
 
-        if abs(dmu) < 1e-10:
+        if abs(dmu) < 1e-12:
             raise Exception('dmu too small')
 
         # Compute the tangent (2.2.4)
@@ -268,6 +268,23 @@ class Continuation:
         return self.interface.solve(jac, -dflval)
 
     def continuation(self, x0, parameter_name, start, target, ds):
+        '''Perform a pseudo-arclength continuation in parameter_name from
+        parameter value start to target with arclength step size ds,
+        and starting from an initial state x0.
+
+        Returns the final state x, the final parameter value mu, and a
+        struct with data obtained at every step of the
+        continuation.
+
+        The value reported in data is described by the 'Value'
+        parameter in terms of a lambda function, e.g. lambda x:
+        numpy.linalg.norm(x, inf).
+
+        A bifurcation can be detected automatically when the 'Detect
+        Bifurcation Points' parameter is set to True.
+
+        '''
+
         x = x0
         mu = start
 
