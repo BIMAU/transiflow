@@ -198,7 +198,7 @@ class Interface:
             alpha, beta, v, q, z = result
             self._subspaces = [q, z]
             idx = range(len(alpha))
-            idx = sorted(idx, key=lambda i: -(alpha[i] / beta[i]).real)
+            idx = sorted(idx, key=lambda i: -(alpha[i] / beta[i]).real if (alpha[i] / beta[i]).real < 100 else 100)
 
             w = v.copy()
             eigs = alpha.copy()
@@ -209,4 +209,4 @@ class Interface:
         else:
             alpha, beta, q, z = result
             self._subspaces = [q, z]
-            return numpy.array(sorted(alpha / beta, key=lambda x: -x.real))
+            return numpy.array(sorted(alpha / beta, key=lambda x: -x.real if x.real < 100 else 100))

@@ -1,4 +1,5 @@
 import numpy
+import pytest
 
 from fvm import TimeIntegration
 from fvm import Continuation
@@ -135,6 +136,45 @@ def test_continuation_2D_stretched(nx=4, interactive=False):
 
     x = plot_utils.create_state_mtx(x, nx, ny, nz, dof)
     plot_utils.plot_velocity_magnitude(x[:, :, 0, 0], x[:, :, 0, 1], interface)
+
+def test_continuation_bifurcation(nx=8, interactive=False):
+    try:
+        from fvm import JadaInterface # noqa: F401
+    except ImportError:
+        pytest.skip('jadapy not found')
+
+    dim = 2
+    dof = 4
+    ny = nx
+    nz = 1
+
+    parameters = {'Problem Type': 'Rayleigh-Benard',
+                  'Prandtl Number': 10,
+                  'Biot Number': 1,
+                  'xmax': 10,
+                  'Bordered Solver': True,
+                  'Verbose': True}
+    interface = Interface(parameters, nx, ny, nz, dim, dof)
+
+    continuation = Continuation(interface, parameters)
+
+    x0 = numpy.zeros(dof * nx * ny * nz)
+    x0 = continuation.newton(x0)
+
+    start = 0
+    target = 1700
+    ds = 200
+    x, mu, _ = continuation.continuation(x0, 'Rayleigh Number', start, target, ds)
+
+    parameters['Detect Bifurcation Points'] = True
+
+    target = 5000
+    ds = 50
+    x, mu, _ = continuation.continuation(x, 'Rayleigh Number', mu, target, ds)
+
+    assert numpy.linalg.norm(x) > 0
+    assert mu > 0
+    assert mu < target
 
 def test_continuation_time_integration(nx=4, interactive=False):
     dim = 2
