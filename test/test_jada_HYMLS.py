@@ -66,7 +66,7 @@ def test_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=Fals
 
     jac_op = EpetraInterface.CrsMatrix(interface.jacobian(x))
     mass_op = EpetraInterface.CrsMatrix(interface.mass_matrix())
-    jada_interface = JadaHYMLSInterface.JadaHYMLSInterface(interface.map, interface, preconditioned_solve=False)
+    jada_interface = JadaHYMLSInterface.JadaHYMLSInterface(interface, preconditioned_solve=False)
 
     alpha, beta = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[20, 40],
                             interface=jada_interface, prec=jada_interface.prec)
@@ -92,7 +92,7 @@ def test_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactiv
 
     jac_op = EpetraInterface.CrsMatrix(interface.jacobian(x))
     mass_op = EpetraInterface.CrsMatrix(interface.mass_matrix())
-    jada_interface = JadaHYMLSInterface.JadaHYMLSInterface(interface.map, interface, preconditioned_solve=True)
+    jada_interface = JadaHYMLSInterface.JadaHYMLSInterface(interface, preconditioned_solve=True)
 
     alpha, beta = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[20, 40],
                             interface=jada_interface)
@@ -118,7 +118,7 @@ def test_complex_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interact
 
     jac_op = ComplexEpetraInterface.CrsMatrix(interface.jacobian(x))
     mass_op = ComplexEpetraInterface.CrsMatrix(interface.mass_matrix())
-    jada_interface = JadaHYMLSInterface.ComplexJadaHYMLSInterface(interface.map, interface, preconditioned_solve=False)
+    jada_interface = JadaHYMLSInterface.ComplexJadaHYMLSInterface(interface, preconditioned_solve=False)
 
     alpha, beta = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[20, 40],
                             interface=jada_interface, prec=jada_interface.prec)
@@ -144,7 +144,7 @@ def test_complex_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, in
 
     jac_op = ComplexEpetraInterface.CrsMatrix(interface.jacobian(x))
     mass_op = ComplexEpetraInterface.CrsMatrix(interface.mass_matrix())
-    jada_interface = JadaHYMLSInterface.ComplexJadaHYMLSInterface(interface.map, interface, preconditioned_solve=True)
+    jada_interface = JadaHYMLSInterface.ComplexJadaHYMLSInterface(interface, preconditioned_solve=True)
 
     alpha, beta = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[20, 40],
                             interface=jada_interface)
@@ -170,7 +170,7 @@ def test_bordered_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, i
 
     jac_op = EpetraInterface.CrsMatrix(interface.jacobian(x))
     mass_op = EpetraInterface.CrsMatrix(interface.mass_matrix())
-    jada_interface = JadaHYMLSInterface.BorderedJadaHYMLSInterface(interface.map, interface)
+    jada_interface = JadaHYMLSInterface.BorderedJadaHYMLSInterface(interface)
 
     alpha, beta = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[20, 40],
                             interface=jada_interface)

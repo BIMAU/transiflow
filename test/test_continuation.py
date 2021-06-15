@@ -152,8 +152,8 @@ def test_continuation_bifurcation(nx=8, interactive=False):
                   'Prandtl Number': 10,
                   'Biot Number': 1,
                   'xmax': 10,
-                  'Bordered Solver': True,
-                  'Verbose': True}
+                  'Bordered Solver': True}
+
     interface = Interface(parameters, nx, ny, nz, dim, dof)
 
     continuation = Continuation(interface, parameters)

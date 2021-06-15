@@ -153,6 +153,52 @@ def test_HYMLS_2D_stretched(nx=8, interactive=False):
         x = plot_utils.create_velocity_magnitude_mtx(x, nx, ny, nz, dof)
         plot_utils.plot_velocity_magnitude(x[:, :, 0, 0], x[:, :, 0, 1], x=xpos, y=ypos)
 
+def test_HYMLS_bifurcation(nx=8, interactive=False):
+    try:
+        from fvm import HYMLSInterface
+        from PyTrilinos import Epetra
+        from PyTrilinos import Teuchos
+    except ImportError:
+        pytest.skip("HYMLS not found")
+
+    dim = 2
+    dof = 4
+    ny = nx
+    nz = 1
+
+    parameters = {'Problem Type': 'Rayleigh-Benard',
+                  'Prandtl Number': 10,
+                  'Biot Number': 1,
+                  'xmax': 10,
+                  'Bordered Solver': True}
+
+    parameters = Teuchos.ParameterList(parameters)
+
+    comm = Epetra.PyComm()
+    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+    m = interface.map
+
+    continuation = Continuation(interface, parameters)
+
+    x0 = HYMLSInterface.Vector(m)
+    x0.PutScalar(0.0)
+    x0 = continuation.newton(x0)
+
+    start = 0
+    target = 1700
+    ds = 200
+    x, mu, _ = continuation.continuation(x0, 'Rayleigh Number', start, target, ds)
+
+    parameters['Detect Bifurcation Points'] = True
+
+    target = 5000
+    ds = 50
+    x, mu, _ = continuation.continuation(x, 'Rayleigh Number', mu, target, ds)
+
+    assert x.Norm2() > 0
+    assert mu > 0
+    assert mu < target
+
 
 if __name__ == '__main__':
     # test_HYMLS(8, True)

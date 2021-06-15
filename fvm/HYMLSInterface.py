@@ -2,6 +2,7 @@ from PyTrilinos import Epetra
 from PyTrilinos import Amesos
 
 import copy
+import numpy
 
 import fvm
 
@@ -411,3 +412,42 @@ class Interface(fvm.Interface):
             return x, x2
 
         return x
+
+    def eigs(self, state, return_eigenvectors=False):
+        '''Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v.'''
+
+        from jadapy import jdqz, Target, ComplexEpetraInterface
+        from fvm.JadaHYMLSInterface import ComplexJadaHYMLSInterface
+
+        jac_op = ComplexEpetraInterface.CrsMatrix(self.jacobian(state))
+        mass_op = ComplexEpetraInterface.CrsMatrix(self.mass_matrix())
+        jada_interface = ComplexJadaHYMLSInterface(self)
+
+        parameters = self.parameters.get('Eigenvalue Solver', {})
+        target = parameters.get('Target', Target.LargestRealPart)
+        subspace_dimensions = [parameters.get('Minimum Subspace Dimension', 30),
+                               parameters.get('Maximum Subspace Dimension', 60)]
+        tol = parameters.get('Tolerance', 1e-7)
+        num = parameters.get('Number of Eigenvalues', 5)
+
+        result = jdqz.jdqz(jac_op, mass_op, num, tol=tol, subspace_dimensions=subspace_dimensions, target=target,
+                           interface=jada_interface, arithmetic='complex', prec=jada_interface.prec,
+                           return_eigenvectors=return_eigenvectors, return_subspaces=True,
+                           initial_subspaces=self._subspaces)
+
+        if return_eigenvectors:
+            alpha, beta, v, q, z = result
+            self._subspaces = [q, z]
+            idx = range(len(alpha))
+            idx = sorted(idx, key=lambda i: -(alpha[i] / beta[i]).real if (alpha[i] / beta[i]).real < 100 else 100)
+
+            w = v.copy()
+            eigs = alpha.copy()
+            for i in range(len(idx)):
+                w[:, i] = v[:, idx[i]]
+                eigs[i] = alpha[idx[i]] / beta[idx[i]]
+            return eigs, w
+        else:
+            alpha, beta, q, z = result
+            self._subspaces = [q, z]
+            return numpy.array(sorted(alpha / beta, key=lambda x: -x.real if x.real < 100 else 100))

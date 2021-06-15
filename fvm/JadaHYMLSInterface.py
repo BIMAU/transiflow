@@ -22,8 +22,8 @@ class JadaHYMLSPrecOp(EpetraInterface.Operator):
 
 class JadaHYMLSInterface(EpetraInterface.EpetraInterface):
 
-    def __init__(self, map, interface, *args, **kwargs):
-        super().__init__(map)
+    def __init__(self, interface, *args, **kwargs):
+        super().__init__(interface.map)
         self.interface = interface
         self.parameters = copy.copy(interface.parameters)
 
@@ -78,8 +78,8 @@ class ComplexJadaHYMLSPrecOp(EpetraInterface.Operator):
 
 class ComplexJadaHYMLSInterface(ComplexEpetraInterface.ComplexEpetraInterface):
 
-    def __init__(self, map, interface, *args, **kwargs):
-        super().__init__(map)
+    def __init__(self, interface, *args, **kwargs):
+        super().__init__(interface.map)
         self.interface = interface
         self.parameters = copy.copy(interface.parameters)
 
@@ -141,8 +141,8 @@ class ShiftedOperator(object):
 
 class BorderedJadaHYMLSInterface(EpetraInterface.EpetraInterface):
 
-    def __init__(self, map, interface, *args, **kwargs):
-        super().__init__(map)
+    def __init__(self, interface, *args, **kwargs):
+        super().__init__(interface.map)
         self.interface = interface
         self.parameters = copy.copy(interface.parameters)
 
@@ -182,8 +182,8 @@ class BorderedJadaHYMLSInterface(EpetraInterface.EpetraInterface):
 
 class ComplexBorderedJadaHYMLSInterface(ComplexEpetraInterface.ComplexEpetraInterface):
 
-    def __init__(self, map, interface, *args, **kwargs):
-        super().__init__(map)
+    def __init__(self, interface, *args, **kwargs):
+        super().__init__(interface.map)
         self.interface = interface
         self.parameters = copy.copy(interface.parameters)
 
