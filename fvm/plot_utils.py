@@ -42,7 +42,7 @@ def plot_streamfunction(u, v, interface=None, x=None, y=None):
     if y is None:
         y = interface.discretization.y[:-3]
 
-    psi = utils.compute_streamfunction(u, v, x, y)
+    psi = utils.compute_streamfunction(u, v, x=x, y=y)
 
     x, y = numpy.meshgrid(x, y)
 

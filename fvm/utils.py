@@ -49,8 +49,11 @@ def create_stretched_coordinate_vector(start, end, nx, sigma):
         x[-3] = x[-4] + dx
     return x
 
-def compute_streamfunction(u, v, x, y):
-    x, y = numpy.meshgrid(x, y)
+def compute_streamfunction(u, v, interface=None, x=None, y=None):
+    if x is None:
+        x = interface.discretization.x[:-3]
+    if y is None:
+        y = interface.discretization.y[:-3]
 
     psiv = integrate.cumtrapz(v.T, x, axis=1, initial=0)
     psiu = integrate.cumtrapz(u.T, y, axis=0, initial=0)

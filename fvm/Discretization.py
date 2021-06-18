@@ -131,6 +131,10 @@ class Discretization:
             - (self.p_x() + self.p_y()) \
             + self.div()
 
+        beta = self.get_parameter('Rossby Parameter')
+        if beta:
+            atom -= beta * self.coriolis()
+
         if self.dof > 3:
             atom += self.T_xx() + self.T_yy()
             atom += Ra * self.forward_average_T_y()
@@ -396,6 +400,29 @@ class Discretization:
                 frc += boundary_conditions.heatflux_bottom(atom, 0)
                 boundary_conditions.no_slip_top(atom)
                 boundary_conditions.no_slip_bottom(atom)
+        elif self.problem_type_equals('Double Gyre'):
+            tau_0 = self.get_parameter('Wind Stress Parameter')
+
+            frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+            for i in range(self.nx-1):
+                for j in range(self.ny):
+                    for k in range(self.nz):
+                        # volume size in the x direction
+                        dx = (self.x[i+1] - self.x[i-1]) / 2
+                        # volume size in the y direction
+                        dy = self.y[j] - self.y[j-1]
+                        # volume size in the z direction
+                        dz = self.z[k] - self.z[k-1]
+
+                        y = (self.y[j] + self.y[j-1]) / 2
+                        frc[i, j, k, 0] = -tau_0 / (2 * numpy.pi) * numpy.cos(2 * numpy.pi * y) * dx * dy * dz
+            frc = utils.create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
+
+            boundary_conditions.no_slip_east(atom)
+            boundary_conditions.no_slip_west(atom)
+
+            boundary_conditions.free_slip_north(atom)
+            boundary_conditions.free_slip_south(atom)
         else:
             raise Exception('Invalid problem type %s' % self.get_parameter('Problem Type'))
 
@@ -719,6 +746,41 @@ class Discretization:
             for j in range(self.ny):
                 for k in range(self.nz):
                     Discretization._backward_average_x(atom[i, j, k, self.dim+1, 2, 1, 1, :], k, j, i, self.z, self.y, self.x)
+        return atom
+
+    def _value_u(atom, i, j, k, x, y, z):
+        # volume size in the x direction
+        dx = (x[i+1] - x[i-1]) / 2
+        # volume size in the y direction
+        dy = y[j] - y[j-1]
+        # volume size in the z direction
+        dz = z[k] - z[k-1]
+
+        # forward average
+        atom[1] = dx * dy * dz
+
+    def coriolis(self):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
+                    # Value of yu at the position of v
+                    Discretization._backward_average_x(atom[i, j, k, 1, 0, :, 1, 1], i, j, k, self.x, self.y, self.z)
+                    Discretization._backward_average_x(atom[i, j, k, 1, 0, :, 2, 1], i, j+1, k, self.x, self.y, self.z)
+                    dy0 = self.y[j] - self.y[j-1]
+                    dy1 = self.y[j+1] - self.y[j]
+                    atom[i, j, k, 1, 0, :, 1, :] *= dy0 / (dy0 + dy1)
+                    atom[i, j, k, 1, 0, :, 2, :] *= dy1 / (dy0 + dy1)
+                    atom[i, j, k, 1, 0, :, :, :] *= self.y[j]
+
+                    # Value of -yv at the position of u
+                    Discretization._backward_average_x(atom[i, j, k, 0, 1, 1, :, 1], j, i, k, self.y, self.x, self.z)
+                    Discretization._backward_average_x(atom[i, j, k, 0, 1, 2, :, 1], j, i+1, k, self.y, self.x, self.z)
+                    dx0 = self.x[i] - self.x[i-1]
+                    dx1 = self.x[i+1] - self.x[i]
+                    atom[i, j, k, 0, 1, 1, :, :] *= dx0 / (dx0 + dx1)
+                    atom[i, j, k, 0, 1, 2, :, :] *= dx1 / (dx0 + dx1)
+                    atom[i, j, k, 0, 1, :, :, :] *= -(self.y[j] + self.y[j-1]) / 2
         return atom
 
     @staticmethod
