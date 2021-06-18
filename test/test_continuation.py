@@ -224,6 +224,46 @@ def test_continuation_time_integration(nx=4, interactive=False):
     assert numpy.linalg.norm(x[0:len(x):dof] - x3[0:len(x):dof]) < 1e-4
     assert numpy.linalg.norm(x[1:len(x):dof] - x3[1:len(x):dof]) < 1e-4
 
+def test_continuation_double_gyre(nx=8, interactive=False):
+    try:
+        from fvm import JadaInterface # noqa: F401
+    except ImportError:
+        pytest.skip('jadapy not found')
+
+    dim = 2
+    dof = 3
+    ny = nx
+    nz = 1
+
+    parameters = {'Problem Type': 'Double Gyre',
+                  'Reynolds Number': 16,
+                  'Rossby Parameter': 1000,
+                  'Wind Stress Parameter': 0}
+
+    interface = Interface(parameters, nx, ny, nz, dim, dof)
+
+    continuation = Continuation(interface, parameters)
+
+    x0 = numpy.zeros(dof * nx * ny * nz)
+
+    start = 0
+    target = 1000
+    ds = 200
+    x, mu, _ = continuation.continuation(x0, 'Wind Stress Parameter', start, target, ds)
+
+    parameters['Newton Tolerance'] = 1e-6
+    parameters['Detect Bifurcation Points'] = True
+    parameters['Eigenvalue Solver'] = {}
+    parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
+
+    target = 100
+    ds = 5
+    x, mu, _ = continuation.continuation(x, 'Reynolds Number', 16, target, ds)
+
+    assert numpy.linalg.norm(x) > 0
+    assert mu > 0
+    assert mu < target
+
 
 if __name__ == '__main__':
     # test_continuation(8, False)
