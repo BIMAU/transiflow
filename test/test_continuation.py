@@ -167,6 +167,8 @@ def test_continuation_bifurcation(nx=8, interactive=False):
     x, mu, _ = continuation.continuation(x0, 'Rayleigh Number', start, target, ds)
 
     parameters['Detect Bifurcation Points'] = True
+    parameters['Eigenvalue Solver'] = {}
+    parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
 
     target = 5000
     ds = 50
@@ -251,7 +253,6 @@ def test_continuation_double_gyre(nx=8, interactive=False):
     ds = 200
     x, mu, _ = continuation.continuation(x0, 'Wind Stress Parameter', start, target, ds)
 
-    parameters['Newton Tolerance'] = 1e-6
     parameters['Detect Bifurcation Points'] = True
     parameters['Eigenvalue Solver'] = {}
     parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
