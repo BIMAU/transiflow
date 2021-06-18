@@ -8,7 +8,10 @@ from fvm import plot_utils
 from fvm import utils
 
 def main():
-    ''' An example of performing a continuation for a 2D lid-driven cavity and detecting a bifurcation point'''
+    '''An example of performing a continuation for a double-gyre
+    wind-driven ocean, plotting the streamfunction at different Reynolds
+    numbers, and plotting the bifurcation diagram.'''
+
     dim = 2
     dof = 3
     nx = 32
