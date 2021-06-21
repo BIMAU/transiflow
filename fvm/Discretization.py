@@ -1,5 +1,4 @@
 import numpy
-import copy
 
 from fvm import utils
 from fvm import BoundaryConditions
@@ -57,7 +56,7 @@ class Discretization:
     '''
 
     def __init__(self, parameters, nx, ny, nz, dim, dof, x=None, y=None, z=None):
-        self.parameters = copy.copy(parameters)
+        self.parameters = parameters
 
         self.nx = nx
         self.ny = ny
@@ -770,6 +769,7 @@ class Discretization:
 
     def wind_stress(self):
         tau_0 = self.get_parameter('Wind Stress Parameter')
+        asym = self.get_parameter('Asymmetry Parameter')
 
         frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
         for i in range(self.nx-1):
@@ -783,7 +783,8 @@ class Discretization:
                     dz = self.z[k] - self.z[k-1]
 
                     y = (self.y[j] + self.y[j-1]) / 2
-                    frc[i, j, k, 0] = -tau_0 / (2 * numpy.pi) * numpy.cos(2 * numpy.pi * y) * dx * dy * dz
+                    frc[i, j, k, 0] = - (1 - asym) * numpy.cos(2 * numpy.pi * y) - asym * numpy.cos(numpy.pi * y)
+                    frc[i, j, k, 0] *= tau_0 / (2 * numpy.pi) * dx * dy * dz
         return utils.create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
 
     @staticmethod

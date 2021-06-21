@@ -43,21 +43,47 @@ def main():
 
     ds = 100
     target = 1000
-    x0 = continuation.continuation(x0, 'Wind Stress Parameter', 0, target, ds)[0]
+    x1 = continuation.continuation(x0, 'Wind Stress Parameter', 0, target, ds)[0]
 
-    v = utils.create_state_mtx(x0, nx, ny, nz, dof)
+    v = utils.create_state_mtx(x1, nx, ny, nz, dof)
     plot_utils.plot_streamfunction(v[:, :, 0, 0], v[:, :, 0, 1], interface)
 
-    # Perform an initial continuation to Reynolds number 29 without detecting bifurcation points
+    # Perform a continuation to Reynolds number 40 without detecting bifurcation points
     ds = 5
-    target = 29
-    x, mu, data1 = continuation.continuation(x0, 'Reynolds Number', 16, target, ds)
+    target = 40
+    interface.set_parameter('Maximum Step Size', 10)
+    x2, mu2, data2 = continuation.continuation(x1, 'Reynolds Number', 16, target, ds)
 
-    v = utils.create_state_mtx(x, nx, ny, nz, dof)
+    v = utils.create_state_mtx(x2, nx, ny, nz, dof)
     plot_utils.plot_streamfunction(v[:, :, 0, 0], v[:, :, 0, 1], interface)
+
+    # Add asymmetry to the problem
+    ds = 10
+    target = 1
+    interface.set_parameter('Maximum Iterations', 1)
+    interface.set_parameter('Reynolds Number', 16)
+    x3, mu3, data3 = continuation.continuation(x1, 'Asymmetry Parameter', 0, target, ds)
+
+    # Perform a continuation to Reynolds number 40 with assymmetry added to the problem,
+    # meaning we can't stay on the unstable branch
+    ds = 5
+    target = 40
+    interface.set_parameter('Maximum Iterations', 1000)
+    x4, mu4, data4 = continuation.continuation(x3, 'Reynolds Number', 16, target, ds)
+
+    # Go back to the symmetric problem
+    ds = -1
+    target = 0
+    x5, mu5, data5 = continuation.continuation(x4, 'Asymmetry Parameter', mu3, target, ds)
+
+    # Now compute the stable branch after the pitchfork bifurcation by going backwards
+    ds = -5
+    target = 40
+    x6, mu6, data6 = continuation.continuation(x5, 'Reynolds Number', mu4, target, ds)
 
     # Plot a bifurcation diagram
-    plt.plot(data1.mu, data1.value)
+    plt.plot(data2.mu, data2.value)
+    plt.plot(data6.mu, data6.value)
     plt.show()
 
 

@@ -198,6 +198,7 @@ class Continuation:
 
         for j in range(maxit):
             if abs(target - mu) < tol:
+                self.interface.set_parameter(parameter_name, target)
                 print("Convergence achieved onto target %s = %f" % (parameter_name, mu))
                 sys.stdout.flush()
                 break
