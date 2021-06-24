@@ -340,7 +340,7 @@ class Continuation:
         eig = None
 
         if not maxit:
-            maxit = self.parameters.get('Maximum Iterations', 1000)
+            maxit = self.parameters.get('Maximum Continuation Steps', 1000)
 
         # Some configuration for the detection of bifurcations
         detect_bifurcations = self.parameters.get('Detect Bifurcation Points', False)
@@ -361,7 +361,7 @@ class Continuation:
 
                 if eig_prev is not None and eig.real * eig_prev.real < 0:
                     deig = eig - eig_prev
-                    x, mu, v = self.detect_bifurcation(parameter_name, x, mu, dx, dmu, eig, deig, v, ds, maxit)
+                    x, mu, v = self.detect_bifurcation(parameter_name, x, mu, dx, dmu, eig, deig, v, ds, maxit - j)
 
                     if enable_branch_switching and not switched_branches:
                         switched_branches = True
@@ -376,7 +376,7 @@ class Continuation:
 
             if (mu >= target and mu0 < target) or (mu <= target and mu0 > target):
                 # Converge onto the end point
-                x, mu = self.converge(parameter_name, x, mu, dx, dmu, target, ds, maxit)
+                x, mu = self.converge(parameter_name, x, mu, dx, dmu, target, ds, maxit - j)
 
                 return x, mu
 
