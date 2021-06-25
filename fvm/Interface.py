@@ -24,7 +24,8 @@ class Interface:
 
         # Select one pressure node to fix
         self.pressure_row = self.dim
-        print('Fixing pressure at row %d' % self.pressure_row)
+        if self.parameters.get('Verbose', False):
+            print('Fixing pressure at row %d' % self.pressure_row)
 
         # Solver caching
         self._lu = None
