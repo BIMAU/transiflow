@@ -32,9 +32,7 @@ def main():
 
     # Value describes the value that is traced in the continuation
     # and time integration methods
-    parameters['Value'] = lambda x: numpy.max(utils.compute_streamfunction(
-        utils.create_state_mtx(x, nx, ny, nz, dof)[:, :, 0, 0],
-        utils.create_state_mtx(x, nx, ny, nz, dof)[:, :, 0, 1], interface))
+    parameters['Value'] = lambda x: numpy.max(utils.compute_streamfunction(x, interface))
 
     continuation = Continuation(interface, parameters)
 
@@ -45,8 +43,7 @@ def main():
     target = 1000
     x1 = continuation.continuation(x0, 'Wind Stress Parameter', 0, target, ds)[0]
 
-    v = utils.create_state_mtx(x1, nx, ny, nz, dof)
-    plot_utils.plot_streamfunction(v[:, :, 0, 0], v[:, :, 0, 1], interface)
+    plot_utils.plot_streamfunction(x1, interface)
 
     # Perform a continuation to Reynolds number 40 without detecting bifurcation points
     ds = 5
@@ -54,8 +51,7 @@ def main():
     interface.set_parameter('Maximum Step Size', 10)
     x2, mu2, data2 = continuation.continuation(x1, 'Reynolds Number', 16, target, ds)
 
-    v = utils.create_state_mtx(x2, nx, ny, nz, dof)
-    plot_utils.plot_streamfunction(v[:, :, 0, 0], v[:, :, 0, 1], interface)
+    plot_utils.plot_streamfunction(x2, interface)
 
     # Add asymmetry to the problem
     ds = 10

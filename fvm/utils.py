@@ -49,16 +49,37 @@ def create_stretched_coordinate_vector(start, end, nx, sigma):
         x[-3] = x[-4] + dx
     return x
 
-def compute_streamfunction(u, v, interface=None, x=None, y=None):
-    if x is None:
-        x = interface.discretization.x[:-3]
-    if y is None:
-        y = interface.discretization.y[:-3]
+def compute_streamfunction(state, interface):
+    x = interface.discretization.x
+    y = interface.discretization.y
 
-    psiv = integrate.cumtrapz(v.T, x, axis=1, initial=0)
-    psiu = integrate.cumtrapz(u.T, y, axis=0, initial=0)
+    nx = interface.discretization.nx
+    ny = interface.discretization.ny
+    nz = interface.discretization.nz
+    dof = interface.discretization.dof
 
-    return ((-psiu + psiv[0]) + (psiv - psiu[:, 0][:, None])) / 2
+    state_mtx = create_state_mtx(state, nx, ny, nz, dof)
+    u = state_mtx[:, :, 0, 0]
+    v = state_mtx[:, :, 0, 1]
+
+    psiu = numpy.zeros((nx, ny))
+    psiv = numpy.zeros((nx, ny))
+
+    # Integration using the midpoint rule
+    for i in range(nx):
+        for j in range(ny):
+            dx = x[i] - x[i-1]
+            dy = y[j] - y[j-1]
+
+            psiu[i, j] = v[i, j] * dx
+            if i > 0:
+                psiu[i, j] += psiu[i-1, j]
+
+            psiv[i, j] = u[i, j] * dy
+            if j > 0:
+                psiv[i, j] += psiv[i, j-1]
+
+    return (-psiu + psiv) / 2
 
 def get_u_value(state, i, j, k, interface):
     '''Get the value of u at a grid point.'''
