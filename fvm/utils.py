@@ -81,6 +81,22 @@ def compute_streamfunction(state, interface):
 
     return (-psiu + psiv) / 2
 
+def compute_average_kinetic_energy(u, v, interface=None, x=None, y=None):
+    if x is None:
+        x = interface.discretization.x
+    if y is None:
+        y = interface.discretization.y
+
+    Ek = 0
+    for i in range(interface.discretization.nx):
+        for j in range(interface.discretization.ny):
+            dx = x[i] - x[i-1]
+            dy = y[j] - y[j-1]
+            _u = (u[i, j] + u[i-1, j]) / 2
+            _v = (v[i, j] + v[i, j-1]) / 2
+            Ek += (_u * _u + _v * _v) / 2 * dx * dy
+    return Ek
+
 def get_u_value(state, i, j, k, interface):
     '''Get the value of u at a grid point.'''
 
