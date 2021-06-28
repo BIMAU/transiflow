@@ -1,7 +1,5 @@
 import numpy
 
-from scipy import integrate
-
 def create_state_mtx(state, nx, ny, nz, dof):
     '''Helper to create an (nx, ny, nz, dof) dimensional array out of a
     state vector that makes it easier to access the variables.'''
