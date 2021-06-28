@@ -732,39 +732,20 @@ class Discretization:
                     Discretization._backward_average_x(atom[i, j, k, self.dim+1, 2, 1, 1, :], k, j, i, self.z, self.y, self.x)
         return atom
 
-    def _value_u(atom, i, j, k, x, y, z):
-        # volume size in the x direction
-        dx = (x[i+1] - x[i-1]) / 2
-        # volume size in the y direction
-        dy = y[j] - y[j-1]
-        # volume size in the z direction
-        dz = z[k] - z[k-1]
-
-        # forward average
-        atom[1] = dx * dy * dz
-
     def coriolis(self):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
                     # Value of yu at the position of v
-                    Discretization._backward_average_x(atom[i, j, k, 1, 0, :, 1, 1], i, j, k, self.x, self.y, self.z)
-                    Discretization._backward_average_x(atom[i, j, k, 1, 0, :, 2, 1], i, j+1, k, self.x, self.y, self.z)
-                    dy0 = self.y[j] - self.y[j-1]
-                    dy1 = self.y[j+1] - self.y[j]
-                    atom[i, j, k, 1, 0, :, 1, :] *= dy0 / (dy0 + dy1)
-                    atom[i, j, k, 1, 0, :, 2, :] *= dy1 / (dy0 + dy1)
-                    atom[i, j, k, 1, 0, :, :, :] *= self.y[j]
+                    Discretization._forward_average_x(atom[i, j, k, 1, 0, 0, :, 1], j, i, k, self.y, self.x, self.z)
+                    Discretization._forward_average_x(atom[i, j, k, 1, 0, 1, :, 1], j, i, k, self.y, self.x, self.z)
+                    atom[i, j, k, 1, 0, :, :, :] *= self.y[j] / 2
 
                     # Value of -yv at the position of u
-                    Discretization._backward_average_x(atom[i, j, k, 0, 1, 1, :, 1], j, i, k, self.y, self.x, self.z)
-                    Discretization._backward_average_x(atom[i, j, k, 0, 1, 2, :, 1], j, i+1, k, self.y, self.x, self.z)
-                    dx0 = self.x[i] - self.x[i-1]
-                    dx1 = self.x[i+1] - self.x[i]
-                    atom[i, j, k, 0, 1, 1, :, :] *= dx0 / (dx0 + dx1)
-                    atom[i, j, k, 0, 1, 2, :, :] *= dx1 / (dx0 + dx1)
-                    atom[i, j, k, 0, 1, :, :, :] *= -(self.y[j] + self.y[j-1]) / 2
+                    Discretization._forward_average_x(atom[i, j, k, 0, 1, :, 0, 1], i, j, k, self.x, self.y, self.z)
+                    Discretization._forward_average_x(atom[i, j, k, 0, 1, :, 1, 1], i, j, k, self.x, self.y, self.z)
+                    atom[i, j, k, 0, 1, :, :, :] *= -(self.y[j] + self.y[j-1]) / 4
         return atom
 
     def wind_stress(self):
