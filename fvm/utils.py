@@ -77,7 +77,7 @@ def compute_streamfunction(state, interface):
             if j > 0:
                 psiv[i, j] += psiv[i, j-1]
 
-    return (-psiu + psiv) / 2
+    return (psiu + -psiv) / 2
 
 def compute_average_kinetic_energy(u, v, interface=None, x=None, y=None):
     if x is None:
