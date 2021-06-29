@@ -4,31 +4,15 @@ import matplotlib.pyplot as plt
 from fvm import utils
 from fvm.utils import create_state_mtx # noqa: F401
 
-def plot_velocity_magnitude(u, v, interface=None, x=None, y=None):
-    nx = u.shape[0]
-    ny = u.shape[1]
+def plot_velocity_magnitude(state, interface):
+    m = utils.compute_velocity_magnitude(state, interface)
 
-    psi = numpy.zeros([nx, ny])
-
-    for i in range(nx):
-        for j in range(ny):
-            psiu = u[i, j]
-            if j > 0:
-                psiu += u[i, j-1]
-            psiv = v[i, j]
-            if i > 0:
-                psiv += v[i-1, j]
-            psi[i, j] = numpy.linalg.norm([psiu, psiv])
-
-    if x is None:
-        x = interface.discretization.x[:-3]
-    if y is None:
-        y = interface.discretization.y[:-3]
-
+    x = interface.discretization.x[:-3]
+    y = interface.discretization.y[:-3]
     x, y = numpy.meshgrid(x, y)
 
     fig1, ax1 = plt.subplots()
-    cs = ax1.contourf(x, y, psi.transpose(), 15)
+    cs = ax1.contourf(x, y, m.transpose(), 15)
     fig1.colorbar(cs)
 
     ax1.vlines(x[0, :], *y[[0, -1], 0], colors='0.3', linewidths=0.5)

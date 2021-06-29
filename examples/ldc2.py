@@ -84,12 +84,11 @@ def main():
     _, v = interface.eigs(x2, True)
     v = v[:, 0].real
 
-    v = plot_utils.create_state_mtx(v, nx, ny, nz, dof)
-
     # Plot the velocity magnutide
-    plot_utils.plot_velocity_magnitude(v[:, :, 0, 0], v[:, :, 0, 1], interface)
+    plot_utils.plot_velocity_magnitude(v, interface)
 
     # Plot the pressure
+    v = plot_utils.create_state_mtx(v, nx, ny, nz, dof)
     plot_utils.plot_value(v[:, :, 0, 2], interface)
 
 

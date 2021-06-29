@@ -1,5 +1,7 @@
 import numpy
 
+from math import sqrt
+
 def create_state_mtx(state, nx, ny, nz, dof):
     '''Helper to create an (nx, ny, nz, dof) dimensional array out of a
     state vector that makes it easier to access the variables.'''
@@ -47,6 +49,41 @@ def create_stretched_coordinate_vector(start, end, nx, sigma):
         x[-3] = x[-4] + dx
     return x
 
+def compute_velocity_magnitude(state, interface):
+    x = interface.discretization.x
+    y = interface.discretization.y
+
+    nx = interface.discretization.nx
+    ny = interface.discretization.ny
+    nz = interface.discretization.nz
+    dof = interface.discretization.dof
+
+    state_mtx = create_state_mtx(state, nx, ny, nz, dof)
+    u = state_mtx[:, :, 0, 0]
+    v = state_mtx[:, :, 0, 1]
+
+    m = numpy.zeros((nx, ny))
+
+    # FIXME: This assumes zero boundaries
+    for i in range(nx):
+        for j in range(ny):
+            dx0 = x[i] - x[i-1]
+            dy0 = y[j] - y[j-1]
+            dx1 = x[i+1] - x[i]
+            dy1 = y[j+1] - y[j]
+
+            ubar = u[i, j] * dy0 / (dy0 + dy1)
+            if j < ny - 1:
+                ubar += u[i, j+1] * dy1 / (dy0 + dy1)
+
+            vbar = v[i, j] * dx0 / (dx0 + dx1)
+            if i < nx - 1:
+                vbar += v[i+1, j] * dx1 / (dx0 + dx1)
+
+            m[i, j] = sqrt(ubar * ubar + vbar * vbar)
+
+    return m
+
 def compute_streamfunction(state, interface):
     x = interface.discretization.x
     y = interface.discretization.y
@@ -77,7 +114,7 @@ def compute_streamfunction(state, interface):
             if j > 0:
                 psiv[i, j] += psiv[i, j-1]
 
-    return (psiu + -psiv) / 2
+    return (psiu - psiv) / 2
 
 def compute_average_kinetic_energy(u, v, interface=None, x=None, y=None):
     if x is None:

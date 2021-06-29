@@ -33,8 +33,7 @@ def test_continuation(nx=4, interactive=False):
 
     print(x)
 
-    x = plot_utils.create_state_mtx(x, nx, ny, nz, dof)
-    plot_utils.plot_velocity_magnitude(x[:, ny // 2, :, 0], x[:, ny // 2, :, 2], nx, nz)
+    plot_utils.plot_velocity_magnitude(x, interface)
 
 def continuation_semi_2D(nx=4, interactive=False):
     dim = 3
@@ -62,8 +61,7 @@ def continuation_semi_2D(nx=4, interactive=False):
 
     print(x)
 
-    x = plot_utils.create_state_mtx(x, nx, ny, nz, dof)
-    plot_utils.plot_velocity_magnitude(x[:, :, 0, 0], x[:, :, 0, 1], interface)
+    plot_utils.plot_velocity_magnitude(x, interface)
 
 def continuation_2D(nx=4, interactive=False):
     dim = 2
@@ -91,8 +89,7 @@ def continuation_2D(nx=4, interactive=False):
 
     print(x)
 
-    x = plot_utils.create_state_mtx(x, nx, ny, nz, dof)
-    plot_utils.plot_velocity_magnitude(x[:, :, 0, 0], x[:, :, 0, 1], interface)
+    plot_utils.plot_velocity_magnitude(x, interface)
 
 def test_continuation_2D_equals():
     x1 = continuation_2D()
@@ -134,8 +131,7 @@ def test_continuation_2D_stretched(nx=4, interactive=False):
 
     print(x)
 
-    x = plot_utils.create_state_mtx(x, nx, ny, nz, dof)
-    plot_utils.plot_velocity_magnitude(x[:, :, 0, 0], x[:, :, 0, 1], interface)
+    plot_utils.plot_velocity_magnitude(x, interface)
 
 def test_continuation_bifurcation(nx=8, interactive=False):
     try:

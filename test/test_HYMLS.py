@@ -57,8 +57,7 @@ def test_HYMLS(nx=4, interactive=False):
     if comm.MyPID() == 0:
         print(x)
 
-        x = plot_utils.create_velocity_magnitude_mtx(x, nx, ny, nz, dof)
-        plot_utils.plot_velocity_magnitude(x[:, ny // 2, :, 0], x[:, ny // 2, :, 2], nx, nz)
+        plot_utils.plot_velocity_magnitude(x, interface)
 
 def test_HYMLS_2D(nx=8, interactive=False):
     try:
@@ -101,8 +100,7 @@ def test_HYMLS_2D(nx=8, interactive=False):
     if comm.MyPID() == 0:
         print(x)
 
-        x = plot_utils.create_velocity_magnitude_mtx(x, nx, ny, nz, dof)
-        plot_utils.plot_velocity_magnitude(x[:, :, 0, 0], x[:, :, 0, 1], interface)
+        plot_utils.plot_velocity_magnitude(x, interface)
 
 def test_HYMLS_2D_stretched(nx=8, interactive=False):
     try:
@@ -147,11 +145,7 @@ def test_HYMLS_2D_stretched(nx=8, interactive=False):
     if comm.MyPID() == 0:
         print(x)
 
-        xpos = utils.create_stretched_coordinate_vector(0, 1, nx, 1.5)
-        ypos = utils.create_stretched_coordinate_vector(0, 1, ny, 1.5)
-
-        x = plot_utils.create_velocity_magnitude_mtx(x, nx, ny, nz, dof)
-        plot_utils.plot_velocity_magnitude(x[:, :, 0, 0], x[:, :, 0, 1], x=xpos, y=ypos)
+        plot_utils.plot_velocity_magnitude(x, interface)
 
 def test_HYMLS_bifurcation(nx=8, interactive=False):
     try:
