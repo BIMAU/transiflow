@@ -2,7 +2,6 @@ import pytest
 
 from fvm import Continuation
 from fvm import plot_utils
-from fvm import utils
 
 def gather(x):
     from PyTrilinos import Epetra
