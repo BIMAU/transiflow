@@ -165,6 +165,7 @@ class Interface(fvm.Interface):
         self.preconditioner.Initialize()
 
         self.solver = HYMLS.BorderedSolver(self.jac, self.preconditioner, self.parameters)
+        self.parameters.sublist('Iterative Solver').set('Output Stream', 0)
 
         # Put back the original parameters
         self.parameters = original_parameters
@@ -416,7 +417,7 @@ class Interface(fvm.Interface):
     def eigs(self, state, return_eigenvectors=False):
         '''Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v.'''
 
-        from jadapy import jdqz, Target, ComplexEpetraInterface
+        from jadapy import jdqz, ComplexEpetraInterface
         from fvm.JadaHYMLSInterface import ComplexJadaHYMLSInterface
 
         jac_op = ComplexEpetraInterface.CrsMatrix(self.jacobian(state))
@@ -424,7 +425,7 @@ class Interface(fvm.Interface):
         jada_interface = ComplexJadaHYMLSInterface(self)
 
         parameters = self.parameters.get('Eigenvalue Solver', {})
-        target = parameters.get('Target', Target.LargestRealPart)
+        target = parameters.get('Target', 0.0)
         subspace_dimensions = [parameters.get('Minimum Subspace Dimension', 30),
                                parameters.get('Maximum Subspace Dimension', 60)]
         tol = parameters.get('Tolerance', 1e-7)

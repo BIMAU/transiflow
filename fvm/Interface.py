@@ -176,7 +176,7 @@ class Interface:
     def eigs(self, state, return_eigenvectors=False):
         '''Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v.'''
 
-        from jadapy import jdqz, Target
+        from jadapy import jdqz
         from fvm.JadaInterface import JadaOp, JadaInterface
 
         jac_op = JadaOp(self.jacobian(state))
@@ -184,7 +184,7 @@ class Interface:
         jada_interface = JadaInterface(self, jac_op, mass_op, jac_op.shape[0], numpy.complex128)
 
         parameters = self.parameters.get('Eigenvalue Solver', {})
-        target = parameters.get('Target', Target.LargestRealPart)
+        target = parameters.get('Target', 0.0)
         subspace_dimensions = [parameters.get('Minimum Subspace Dimension', 30),
                                parameters.get('Maximum Subspace Dimension', 60)]
         tol = parameters.get('Tolerance', 1e-7)
