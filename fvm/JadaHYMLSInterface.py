@@ -1,11 +1,11 @@
-import copy
-
 import HYMLS
 
 from PyTrilinos import Epetra
 
 from jadapy import EpetraInterface
 from jadapy import ComplexEpetraInterface
+
+from fvm import HYMLSInterface
 
 class JadaHYMLSPrecOp(EpetraInterface.Operator):
     def __init__(self, op, prec):
@@ -25,7 +25,7 @@ class JadaHYMLSInterface(EpetraInterface.EpetraInterface):
     def __init__(self, interface, *args, **kwargs):
         super().__init__(interface.map)
         self.interface = interface
-        self.parameters = copy.copy(interface.parameters)
+        self.parameters = HYMLSInterface.convert_parameters(interface.parameters)
 
         self.preconditioned_solve = kwargs.get('preconditioned_solve', False)
 
@@ -81,7 +81,7 @@ class ComplexJadaHYMLSInterface(ComplexEpetraInterface.ComplexEpetraInterface):
     def __init__(self, interface, *args, **kwargs):
         super().__init__(interface.map)
         self.interface = interface
-        self.parameters = copy.copy(interface.parameters)
+        self.parameters = HYMLSInterface.convert_parameters(interface.parameters)
 
         self.preconditioned_solve = kwargs.get('preconditioned_solve', False)
 
@@ -144,7 +144,7 @@ class BorderedJadaHYMLSInterface(EpetraInterface.EpetraInterface):
     def __init__(self, interface, *args, **kwargs):
         super().__init__(interface.map)
         self.interface = interface
-        self.parameters = copy.copy(interface.parameters)
+        self.parameters = HYMLSInterface.convert_parameters(interface.parameters)
 
         self.preconditioned_solve = kwargs.get('preconditioned_solve', True)
 
@@ -185,7 +185,7 @@ class ComplexBorderedJadaHYMLSInterface(ComplexEpetraInterface.ComplexEpetraInte
     def __init__(self, interface, *args, **kwargs):
         super().__init__(interface.map)
         self.interface = interface
-        self.parameters = copy.copy(interface.parameters)
+        self.parameters = HYMLSInterface.convert_parameters(interface.parameters)
 
         self.preconditioned_solve = kwargs.get('preconditioned_solve', True)
 
