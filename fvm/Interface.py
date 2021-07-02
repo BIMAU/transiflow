@@ -40,6 +40,11 @@ class Interface:
 
         self.discretization.set_parameter(name, value)
 
+    def unset_parameter(self, name, original_parameters=None):
+        '''Set a parameter in self.parameters back to its original value. '''
+
+        self.discretization.unset_parameter(name, original_parameters)
+
     def get_parameter(self, name):
         '''Get a parameter from self.parameters through the discretization.'''
         return self.discretization.get_parameter(name)

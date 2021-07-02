@@ -1,5 +1,6 @@
 from PyTrilinos import Epetra
 from PyTrilinos import Amesos
+from PyTrilinos import Teuchos
 
 import copy
 import numpy
@@ -44,6 +45,25 @@ def set_default_parameter(parameterlist, name, value):
     if name not in parameterlist:
         parameterlist[name] = value
 
+def convert_parameters(parameters, teuchos_parameters=None):
+    if teuchos_parameters is None:
+        teuchos_parameters = Teuchos.ParameterList()
+
+    if isinstance(parameters, Teuchos.ParameterList):
+        return parameters
+
+    for i, j in parameters.items():
+        if isinstance(j, dict):
+            sublist = teuchos_parameters.sublist(i)
+            convert_parameters(j, sublist)
+        else:
+            try:
+                teuchos_parameters.set(i, j)
+            except Exception:
+                pass
+
+    return teuchos_parameters
+
 class Interface(fvm.Interface):
     '''This class defines an interface to the HYMLS backend for the
     discretization. We use this so we can write higher level methods
@@ -69,7 +89,9 @@ class Interface(fvm.Interface):
         HYMLS.Tools.InitializeIO(self.comm)
 
         self.parameters = parameters
-        problem_parameters = self.parameters.sublist('Problem')
+        self.teuchos_parameters = convert_parameters(parameters)
+
+        problem_parameters = self.teuchos_parameters.sublist('Problem')
         problem_parameters.set('nx', self.nx_global)
         problem_parameters.set('ny', self.ny_global)
         problem_parameters.set('nz', self.nz_global)
@@ -77,7 +99,7 @@ class Interface(fvm.Interface):
         problem_parameters.set('Degrees of Freedom', self.dof)
         problem_parameters.set('Equations', 'Stokes-C')
 
-        solver_parameters = self.parameters.sublist('Solver')
+        solver_parameters = self.teuchos_parameters.sublist('Solver')
         solver_parameters.set('Initial Vector', 'Zero')
 
         iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
@@ -89,7 +111,7 @@ class Interface(fvm.Interface):
         set_default_parameter(iterative_solver_parameters, 'Output Frequency', 1)
         set_default_parameter(iterative_solver_parameters, 'Show Maximum Residual Norm Only', False)
 
-        prec_parameters = self.parameters.sublist('Preconditioner')
+        prec_parameters = self.teuchos_parameters.sublist('Preconditioner')
         prec_parameters.set('Partitioner', 'Skew Cartesian')
         set_default_parameter(prec_parameters, 'Separator Length', min(8, self.nx_global))
         set_default_parameter(prec_parameters, 'Coarsening Factor', 2)
@@ -104,7 +126,7 @@ class Interface(fvm.Interface):
         self.assembly_map = self.create_map(True)
         self.assembly_importer = Epetra.Import(self.assembly_map, self.map)
 
-        partitioner = HYMLS.SkewCartesianPartitioner(self.parameters, self.comm)
+        partitioner = HYMLS.SkewCartesianPartitioner(self.teuchos_parameters, self.comm)
         partitioner.Partition()
 
         self.solve_map = partitioner.Map()
@@ -150,24 +172,25 @@ class Interface(fvm.Interface):
         later, rather than insert them.'''
 
         # Backup the original parameters and put model parameters to 1
-        original_parameters = self.parameters
-        self.parameters = copy.copy(self.parameters)
-        self.parameters['Reynolds Number'] = 1
-        self.parameters['Rayleigh Number'] = 1
-        self.parameters['Prandtl Number'] = 1
+        original_parameters = copy.copy(self.parameters)
+        self.set_parameter('Reynolds Number', 1)
+        self.set_parameter('Rayleigh Number', 1)
+        self.set_parameter('Prandtl Number', 1)
 
         # Generate a Jacobian with a random state
         x = Vector(self.map)
         x.Random()
         jac = self.jacobian(x)
 
-        self.preconditioner = HYMLS.Preconditioner(jac, self.parameters)
+        self.preconditioner = HYMLS.Preconditioner(jac, self.teuchos_parameters)
         self.preconditioner.Initialize()
 
-        self.solver = HYMLS.BorderedSolver(self.jac, self.preconditioner, self.parameters)
+        self.solver = HYMLS.BorderedSolver(self.jac, self.preconditioner, self.teuchos_parameters)
 
         # Put back the original parameters
-        self.parameters = original_parameters
+        self.unset_parameter('Reynolds Number', original_parameters)
+        self.unset_parameter('Rayleigh Number', original_parameters)
+        self.unset_parameter('Prandtl Number', original_parameters)
 
     def partition_domain(self):
         '''Partition the domain into Cartesian subdomains for computing the
