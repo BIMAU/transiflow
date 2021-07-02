@@ -64,7 +64,7 @@ class Discretization:
         self.dim = dim
         self.dof = dof
 
-        if 'Grid Stretching Factor' in self.parameters.keys():
+        if self.parameters.get('Grid Stretching', False) or 'Grid Stretching Factor' in self.parameters.keys():
             self.x = utils.create_stretched_coordinate_vector(
                 self.parameters.get('xmin', 0.0), self.parameters.get('xmax', 1.0), self.nx,
                 self.parameters.get('Grid Stretching Factor', 1.5)) if x is None else x
