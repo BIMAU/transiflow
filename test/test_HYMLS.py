@@ -105,7 +105,6 @@ def test_HYMLS_2D_stretched(nx=8, interactive=False):
     try:
         from fvm import HYMLSInterface
         from PyTrilinos import Epetra
-        from PyTrilinos import Teuchos
     except ImportError:
         pytest.skip("HYMLS not found")
 
@@ -114,11 +113,10 @@ def test_HYMLS_2D_stretched(nx=8, interactive=False):
     ny = nx
     nz = 1
 
-    parameters = Teuchos.ParameterList()
-    parameters.set('Reynolds Number', 0)
-    parameters.set('Bordered Solver', True)
-    parameters.set('Grid Stretching', True)
-    parameters.set('Verbose', True)
+    parameters = {'Reynolds Number': 0,
+                  'Bordered Solver': True,
+                  'Grid Stretching': True,
+                  'Verbose': True}
 
     comm = Epetra.PyComm()
     interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)

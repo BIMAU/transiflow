@@ -145,7 +145,7 @@ class Interface(fvm.Interface):
         z_start = self.parameters.get('zmin', 0.0) + self.nz_offset / self.nz_global * z_length
         z_end = z_start + self.nz_local / self.nz_global * z_length
 
-        if self.parameters.get('Grid Stretching', False):
+        if self.parameters.get('Grid Stretching', False) or self.teuchos_parameters.isParameter('Grid Stretching Factor'):
             sigma = self.parameters.get('Grid Stretching Factor', 1.5)
             x = fvm.utils.create_stretched_coordinate_vector(x_start, x_end, self.nx_local, sigma) if x is None else x
             y = fvm.utils.create_stretched_coordinate_vector(y_start, y_end, self.ny_local, sigma) if y is None else y
