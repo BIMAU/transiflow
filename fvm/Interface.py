@@ -95,8 +95,8 @@ class Interface:
 
             # Fix one pressure node
             if self.dof > self.dim:
-                coA = numpy.zeros(jac.begA[-1], dtype=jac.coA.dtype)
-                jcoA = numpy.zeros(jac.begA[-1], dtype=int)
+                coA = numpy.zeros(jac.begA[-1] + 1, dtype=jac.coA.dtype)
+                jcoA = numpy.zeros(jac.begA[-1] + 1, dtype=int)
                 begA = numpy.zeros(len(jac.begA), dtype=int)
 
                 idx = 0
@@ -128,8 +128,8 @@ class Interface:
             self._prec = None
             jac.lu = None
 
-            coA = numpy.zeros(jac.begA[-1] + 2 * jac.n + 1, dtype=jac.coA.dtype)
-            jcoA = numpy.zeros(jac.begA[-1] + 2 * jac.n + 1, dtype=int)
+            coA = numpy.zeros(jac.begA[-1] + 2 * jac.n + 2, dtype=jac.coA.dtype)
+            jcoA = numpy.zeros(jac.begA[-1] + 2 * jac.n + 2, dtype=int)
             begA = numpy.zeros(len(jac.begA) + 1, dtype=int)
 
             idx = 0
@@ -181,7 +181,7 @@ class Interface:
     def eigs(self, state, return_eigenvectors=False):
         '''Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v.'''
 
-        from jadapy import jdqz, Target
+        from jadapy import jdqz, orthogonalization
         from fvm.JadaInterface import JadaOp, JadaInterface
 
         jac_op = JadaOp(self.jacobian(state))
@@ -189,11 +189,25 @@ class Interface:
         jada_interface = JadaInterface(self, jac_op, mass_op, jac_op.shape[0], numpy.complex128)
 
         parameters = self.parameters.get('Eigenvalue Solver', {})
-        target = parameters.get('Target', Target.LargestRealPart)
+        target = parameters.get('Target', 0.0)
         subspace_dimensions = [parameters.get('Minimum Subspace Dimension', 30),
                                parameters.get('Maximum Subspace Dimension', 60)]
         tol = parameters.get('Tolerance', 1e-7)
         num = parameters.get('Number of Eigenvalues', 5)
+
+        if not self._subspaces:
+            # Use an inverse iteration to find guesses
+            # for the eigenvectors closest to the target
+            m = subspace_dimensions[0]
+            V = jada_interface.vector(m)
+            V[:, 0] = jada_interface.random()
+            orthogonalization.normalize(V[:, 0])
+
+            for i in range(1, m):
+                V[:, i] = jada_interface.shifted_prec(V[:, i-1], target, 1.0)
+                orthogonalization.orthonormalize(V[:, 0:i], V[:, i:i+1])
+
+            self._subspaces = [V]
 
         result = jdqz.jdqz(jac_op, mass_op, num, tol=tol, subspace_dimensions=subspace_dimensions, target=target,
                            interface=jada_interface, arithmetic='complex', prec=jada_interface.shifted_prec,
