@@ -46,7 +46,7 @@ def hymls_main():
     target = 1553.083383
     x, mu, _ = continuation.continuation(x0, 'Rayleigh Number', 0, target, ds)
 
-    jada_interface = JadaHYMLSInterface(interface)
+    jada_interface = JadaHYMLSInterface(interface, preconditioned_solve=True)
     jac_op = EpetraInterface.CrsMatrix(interface.jacobian(x))
     mass_op = EpetraInterface.CrsMatrix(interface.mass_matrix())
 
