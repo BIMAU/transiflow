@@ -152,6 +152,11 @@ def test_HYMLS_bifurcation(nx=8, interactive=False):
     except ImportError:
         pytest.skip("HYMLS not found")
 
+    try:
+        from fvm import JadaInterface # noqa: F401
+    except ImportError:
+        pytest.skip('jadapy not found')
+
     dim = 2
     dof = 4
     ny = nx
