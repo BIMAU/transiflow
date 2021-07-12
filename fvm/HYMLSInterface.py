@@ -439,7 +439,7 @@ class Interface(fvm.Interface):
     def eigs(self, state, return_eigenvectors=False):
         '''Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v.'''
 
-        from jadapy import jdqz, Target, ComplexEpetraInterface
+        from jadapy import jdqz, orthogonalization, ComplexEpetraInterface
         from fvm.JadaHYMLSInterface import ComplexJadaHYMLSInterface
 
         jac_op = ComplexEpetraInterface.CrsMatrix(self.jacobian(state))
@@ -447,11 +447,25 @@ class Interface(fvm.Interface):
         jada_interface = ComplexJadaHYMLSInterface(self)
 
         parameters = self.parameters.get('Eigenvalue Solver', {})
-        target = parameters.get('Target', Target.LargestRealPart)
+        target = parameters.get('Target', 0.0)
         subspace_dimensions = [parameters.get('Minimum Subspace Dimension', 30),
                                parameters.get('Maximum Subspace Dimension', 60)]
         tol = parameters.get('Tolerance', 1e-7)
         num = parameters.get('Number of Eigenvalues', 5)
+
+        if not self._subspaces:
+            # Use an inverse iteration to find guesses
+            # for the eigenvectors closest to the target
+            m = subspace_dimensions[0]
+            V = jada_interface.vector(m)
+            V[:, 0] = jada_interface.random()
+            orthogonalization.normalize(V[:, 0])
+
+            for i in range(1, m):
+                V[:, i] = jada_interface.prec(V[:, i-1], target, 1.0)
+                orthogonalization.orthonormalize(V[:, 0:i], V[:, i:i+1])
+
+            self._subspaces = [V]
 
         result = jdqz.jdqz(jac_op, mass_op, num, tol=tol, subspace_dimensions=subspace_dimensions, target=target,
                            interface=jada_interface, arithmetic='complex', prec=jada_interface.prec,
