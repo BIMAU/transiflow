@@ -186,6 +186,7 @@ class Interface(fvm.Interface):
         self.preconditioner.Initialize()
 
         self.solver = HYMLS.BorderedSolver(self.jac, self.preconditioner, self.teuchos_parameters)
+        self.teuchos_parameters.sublist('Iterative Solver').set('Output Stream', 0)
 
         # Put back the original parameters
         self.unset_parameter('Reynolds Number', original_parameters)
