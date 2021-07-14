@@ -153,6 +153,10 @@ class Discretization:
             atom += self.T_xx() + self.T_yy()
             atom += Ra * self.forward_average_T_y()
 
+        if self.problem_type_equals('Rayleigh-Benard perturbation'):
+            Bi = self.get_parameter('Biot Number')
+            atom += Bi / (Bi + 1) * self.backward_average_v_y()
+
         return atom
 
     def _linear_part_3D(self):
@@ -375,16 +379,19 @@ class Discretization:
 
             boundary_conditions.no_slip_bottom(atom)
             frc += boundary_conditions.moving_lid_top(atom, v)
-        elif self.problem_type_equals('Rayleigh-Benard'):
+        elif (self.problem_type_equals('Rayleigh-Benard')
+              or self.problem_type_equals('Rayleigh-Benard perturbation')):
             frc += boundary_conditions.heatflux_east(atom, 0)
             frc += boundary_conditions.heatflux_west(atom, 0)
             boundary_conditions.no_slip_east(atom)
             boundary_conditions.no_slip_west(atom)
 
+            bottom_temperature = 1 if self.problem_type_equals('Rayleigh-Benard') else 0
+
             if self.dim == 2 or self.nz <= 1:
                 Bi = self.get_parameter('Biot Number')
                 frc += boundary_conditions.heatflux_north(atom, 0, Bi)
-                frc += boundary_conditions.temperature_south(atom, 1)
+                frc += boundary_conditions.temperature_south(atom, bottom_temperature)
                 boundary_conditions.free_slip_north(atom)
                 boundary_conditions.no_slip_south(atom)
                 return frc

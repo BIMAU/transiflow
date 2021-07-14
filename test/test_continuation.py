@@ -133,47 +133,6 @@ def test_continuation_2D_stretched(nx=4, interactive=False):
 
     plot_utils.plot_velocity_magnitude(x, interface)
 
-def test_continuation_bifurcation(nx=8, interactive=False):
-    try:
-        from fvm import JadaInterface # noqa: F401
-    except ImportError:
-        pytest.skip('jadapy not found')
-
-    dim = 2
-    dof = 4
-    ny = nx
-    nz = 1
-
-    parameters = {'Problem Type': 'Rayleigh-Benard',
-                  'Prandtl Number': 10,
-                  'Biot Number': 1,
-                  'xmax': 10,
-                  'Bordered Solver': True}
-
-    interface = Interface(parameters, nx, ny, nz, dim, dof)
-
-    continuation = Continuation(interface, parameters)
-
-    x0 = numpy.zeros(dof * nx * ny * nz)
-    x0 = continuation.newton(x0)
-
-    start = 0
-    target = 1700
-    ds = 200
-    x, mu, _ = continuation.continuation(x0, 'Rayleigh Number', start, target, ds)
-
-    parameters['Detect Bifurcation Points'] = True
-    parameters['Eigenvalue Solver'] = {}
-    parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
-
-    target = 5000
-    ds = 50
-    x, mu, _ = continuation.continuation(x, 'Rayleigh Number', mu, target, ds)
-
-    assert numpy.linalg.norm(x) > 0
-    assert mu > 0
-    assert mu < target
-
 def test_continuation_time_integration(nx=4, interactive=False):
     dim = 2
     dof = 3
@@ -221,6 +180,65 @@ def test_continuation_time_integration(nx=4, interactive=False):
 
     assert numpy.linalg.norm(x[0:len(x):dof] - x3[0:len(x):dof]) < 1e-4
     assert numpy.linalg.norm(x[1:len(x):dof] - x3[1:len(x):dof]) < 1e-4
+
+def test_continuation_rayleigh_benard(nx=8, interactive=False):
+    try:
+        from fvm import JadaInterface # noqa: F401
+    except ImportError:
+        pytest.skip('jadapy not found')
+
+    dim = 2
+    dof = 4
+    ny = nx
+    nz = 1
+
+    parameters = {'Problem Type': 'Rayleigh-Benard',
+                  'Prandtl Number': 10,
+                  'Biot Number': 1,
+                  'xmax': 10,
+                  'Bordered Solver': True}
+
+    interface = Interface(parameters, nx, ny, nz, dim, dof)
+
+    continuation = Continuation(interface, parameters)
+
+    x0 = numpy.zeros(dof * nx * ny * nz)
+    x0 = continuation.newton(x0)
+
+    start = 0
+    target = 1700
+    ds = 200
+    x, mu, _ = continuation.continuation(x0, 'Rayleigh Number', start, target, ds)
+
+    parameters['Detect Bifurcation Points'] = True
+    parameters['Eigenvalue Solver'] = {}
+    parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
+
+    target = 5000
+    ds = 50
+    x2, mu2, _ = continuation.continuation(x, 'Rayleigh Number', mu, target, ds)
+
+    assert numpy.linalg.norm(x2) > 0
+    assert mu2 > 0
+    assert mu2 < target
+
+    parameters['Problem Type'] = 'Rayleigh-Benard perturbation'
+
+    # Subtract the motionless state
+    t = numpy.zeros((nx, ny, nz, dof))
+    for j in range(ny):
+        t[:, j, 0, dim+1] = 1 - (interface.discretization.y[j] + interface.discretization.y[j-1]) / 4
+    t = utils.create_state_vec(t, nx, ny, nz, dof)
+    x -= t
+
+    x3, mu3, _ = continuation.continuation(x, 'Rayleigh Number', mu, target, ds)
+
+    assert numpy.linalg.norm(x3[0:len(x):dof] - x2[0:len(x):dof]) < 1e-4
+    assert numpy.linalg.norm(x3[1:len(x):dof] - x2[1:len(x):dof]) < 1e-4
+    assert numpy.linalg.norm(x3[3:len(x):dof] - x2[3:len(x):dof] + t[3:len(x):dof]) < 1e-4
+    assert mu3 > 0
+    assert mu3 < target
+    assert abs(mu3 - mu2) < 1e-2
 
 def test_continuation_double_gyre(nx=8, interactive=False):
     try:
