@@ -165,7 +165,7 @@ def test_HYMLS_bifurcation(nx=8, interactive=False):
     parameters = {'Problem Type': 'Rayleigh-Benard',
                   'Prandtl Number': 10,
                   'Biot Number': 1,
-                  'xmax': 10,
+                  'X-max': 10,
                   'Bordered Solver': True}
 
     parameters = Teuchos.ParameterList(parameters)

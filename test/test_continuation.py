@@ -195,7 +195,7 @@ def test_continuation_rayleigh_benard(nx=8, interactive=False):
     parameters = {'Problem Type': 'Rayleigh-Benard',
                   'Prandtl Number': 10,
                   'Biot Number': 1,
-                  'xmax': 10,
+                  'X-max': 10,
                   'Bordered Solver': True}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof)

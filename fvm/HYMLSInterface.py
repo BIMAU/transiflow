@@ -133,16 +133,16 @@ class Interface(fvm.Interface):
         self.solve_importer = Epetra.Import(self.solve_map, self.map)
 
         # Create local coordinate vectors
-        x_length = self.parameters.get('xmax', 1.0) - self.parameters.get('xmin', 0.0)
-        x_start = self.parameters.get('xmin', 0.0) + self.nx_offset / self.nx_global * x_length
+        x_length = self.parameters.get('X-max', 1.0) - self.parameters.get('X-min', 0.0)
+        x_start = self.parameters.get('X-min', 0.0) + self.nx_offset / self.nx_global * x_length
         x_end = x_start + self.nx_local / self.nx_global * x_length
 
-        y_length = self.parameters.get('ymax', 1.0) - self.parameters.get('ymin', 0.0)
-        y_start = self.parameters.get('ymin', 0.0) + self.ny_offset / self.ny_global * y_length
+        y_length = self.parameters.get('Y-max', 1.0) - self.parameters.get('Y-min', 0.0)
+        y_start = self.parameters.get('Y-min', 0.0) + self.ny_offset / self.ny_global * y_length
         y_end = y_start + self.ny_local / self.ny_global * y_length
 
-        z_length = self.parameters.get('zmax', 1.0) - self.parameters.get('zmin', 0.0)
-        z_start = self.parameters.get('zmin', 0.0) + self.nz_offset / self.nz_global * z_length
+        z_length = self.parameters.get('Z-max', 1.0) - self.parameters.get('Z-min', 0.0)
+        z_start = self.parameters.get('Z-min', 0.0) + self.nz_offset / self.nz_global * z_length
         z_end = z_start + self.nz_local / self.nz_global * z_length
 
         if self.parameters.get('Grid Stretching', False) or self.teuchos_parameters.isParameter('Grid Stretching Factor'):
