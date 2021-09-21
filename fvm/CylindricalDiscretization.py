@@ -65,13 +65,16 @@ class CylindricalDiscretization(Discretization):
         frc = numpy.zeros(self.nx * self.ny * self.nz * self.dof)
 
         if self.problem_type_equals('Taylor-Couette'):
-            boundary_conditions.no_slip_east(atom)
-            boundary_conditions.no_slip_west(atom)
-
             vo = self.get_parameter('Outer Velocity', 2)
             vi = self.get_parameter('Inner Velocity', 1)
-            frc += boundary_conditions.moving_lid_north(atom, vo)
-            frc += boundary_conditions.moving_lid_south(atom, vi)
+            frc += boundary_conditions.moving_lid_east(atom, vo)
+            frc += boundary_conditions.moving_lid_west(atom, vi)
+
+            boundary_conditions.no_slip_north(atom)
+            boundary_conditions.no_slip_south(atom)
+
+            if self.dim == 2 or self.nz <= 1:
+                return frc
 
             boundary_conditions.no_slip_top(atom)
             boundary_conditions.no_slip_bottom(atom)
@@ -250,3 +253,117 @@ class CylindricalDiscretization(Discretization):
         if self.dim == 2:
             return self.irvscale(self.u_r() + self.v_y())
         return self.irvscale(self.u_r() + self.v_y() + self.w_z())
+
+    def convection_v_u(self, atomJ_in, atomF_in, averages, weighted_averages, bil):
+        atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+
+        Discretization.convection_v_u(self, atomJ, atomF, averages, weighted_averages, bil)
+        self.iruscale(atomJ)
+        self.iruscale(atomF)
+
+        atomJ_in += atomJ
+        atomF_in += atomF
+
+    def convection_v_v(self, atomJ_in, atomF_in, averages, weighted_averages, bil):
+        atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+
+        Discretization.convection_v_v(self, atomJ, atomF, averages, weighted_averages, bil)
+        self.irvscale(atomJ)
+        self.irvscale(atomF)
+
+        atomJ_in += atomJ
+        atomF_in += atomF
+
+    def _weighted_average_x(atom, i, j, k, x, y, z):
+        # volume size in the x direction
+        dx = (x[i+1] - x[i-1]) / 2
+
+        # distance between u[i] and u[i-1]
+        dxmh = x[i] - x[i-1]
+        # distance between u[i+1] and u[i]
+        dxph = x[i+1] - x[i]
+
+        atom[1] = 1 / 2 * dxmh / dx
+        atom[2] = 1 / 2 * dxph / dx
+
+    def value_v_at_u(self, state):
+        averages = numpy.zeros([self.nx, self.ny, self.nz])
+
+        atom = numpy.zeros(3)
+        for i in range(self.nx-1):
+            CylindricalDiscretization._weighted_average_x(atom, i, 0, 0, self.x, self.y, self.z)
+
+            averages[i, 0:self.ny, :] = 1 / 2 * atom[1] * state[i, 0:self.ny, :, 1]
+            averages[i, 0:self.ny, :] = 1 / 2 * atom[2] * state[i+1, 0:self.ny, :, 1]
+            averages[i, 1:self.ny, :] = 1 / 2 * atom[1] * state[i, 0:self.ny-1, :, 1]
+            averages[i, 1:self.ny, :] = 1 / 2 * atom[2] * state[i+1, 0:self.ny-1, :, 1]
+
+        return averages
+
+    @staticmethod
+    def _value_v_at_u(atom, i, j, k, x, y, z):
+        # volume size in the x direction
+        dx = (x[i+1] - x[i-1]) / 2
+        # volume size in the y direction
+        dy = y[j] - y[j-1]
+        # volume size in the z direction
+        dz = z[k] - z[k-1]
+
+        CylindricalDiscretization._weighted_average_x(atom, i, j, k, x, y, z)
+
+        atom[1] *= dx * dy * dz
+        atom[2] *= dx * dy * dz
+
+    def value_v_v(self, state):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+
+        averages = self.value_v_at_u(state)
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
+                    CylindricalDiscretization._value_v_at_u(atom[i, j, k, 0, 1, :, 1, 1], i, j, k,
+                                                            self.x, self.y, self.z)
+                    CylindricalDiscretization._value_v_at_u(atom[i, j, k, 0, 1, :, 2, 1], i, j, k,
+                                                            self.x, self.y, self.z)
+                    atom[i, j, k, 0, 1, :, :, :] *= -averages[i, j, k]
+
+        return atom
+
+    def value_u_at_v(self, state):
+        averages = numpy.zeros([self.nx, self.ny, self.nz])
+
+        atom = numpy.zeros(3)
+        for j in range(self.ny-1):
+            CylindricalDiscretization._weighted_average_x(atom, j, 0, 0, self.y, self.x, self.z)
+
+            averages[0:self.nx, j, :] = 1 / 2 * atom[1] * state[0:self.nx, j, :, 0]
+            averages[0:self.nx, j, :] = 1 / 2 * atom[2] * state[0:self.nx, j+1, :, 0]
+            averages[1:self.nx, j, :] = 1 / 2 * atom[1] * state[0:self.nx-1, j, :, 0]
+            averages[1:self.nx, j, :] = 1 / 2 * atom[2] * state[0:self.nx-1, j+1, :, 0]
+
+        return averages
+
+    def value_u_v(self, state):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+
+        averages = self.value_u_at_v(state)
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
+                    CylindricalDiscretization._value_u(atom[i, j, k, 1, 1, :, 1, 1], j, i, k, self.y, self.x, self.z)
+                    atom[i, j, k, 1, 1, :, :, :] *= averages[i, j, k]
+
+        return atom
+
+    def convection_2D(self, state):
+        atomJ, atomF = Discretization.convection_2D(self, state)
+
+        atom = self.iruscale(self.value_v_v(state))
+        atom += self.irvscale(self.value_u_v(state))
+
+        atomJ += atom
+        atomF += atom
+
+        return (atomJ, atomF)

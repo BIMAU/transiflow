@@ -111,10 +111,35 @@ class BoundaryConditions:
         atom[:, :, 0, :, :, :, :, 1] += atom[:, :, 0, :, :, :, :, 0]
         atom[:, :, 0, :, :, :, :, 0] = 0
 
+    def moving_lid_east(self, atom, velocity):
+        frc = self._constant_forcing_east(atom[:, :, :, :, 1, :, :, :], 1, 2 * velocity)
+        if self.dim == 3 and self.nz > 1:
+            frc += self._constant_forcing_east(atom[:, :, :, :, 1, :, :, :], 2, 2 * velocity)
+
+        self.no_slip_east(atom)
+
+        return frc
+
+    def moving_lid_west(self, atom, velocity):
+        frc = self._constant_forcing_west(atom[:, :, :, :, 1, :, :, :], 1, 2 * velocity)
+        if self.dim == 3 and self.nz > 1:
+            frc += self._constant_forcing_west(atom[:, :, :, :, 1, :, :, :], 2, 2 * velocity)
+
+        self.no_slip_west(atom)
+
+        return frc
+
     def moving_lid_north(self, atom, velocity):
         frc = self._constant_forcing_north(atom[:, :, :, :, 0, :, :, :], 0, 2 * velocity)
 
         self.no_slip_north(atom)
+
+        return frc
+
+    def moving_lid_south(self, atom, velocity):
+        frc = self._constant_forcing_south(atom[:, :, :, :, 0, :, :, :], 0, 2 * velocity)
+
+        self.no_slip_south(atom)
 
         return frc
 
@@ -123,6 +148,14 @@ class BoundaryConditions:
             self._constant_forcing_top(atom[:, :, :, :, 0, :, :, :], 1, 2 * velocity)
 
         self.no_slip_top(atom)
+
+        return frc
+
+    def moving_lid_bottom(self, atom, velocity):
+        frc = self._constant_forcing_bottom(atom[:, :, :, :, 0, :, :, :], 0, 2 * velocity) + \
+            self._constant_forcing_bottom(atom[:, :, :, :, 0, :, :, :], 1, 2 * velocity)
+
+        self.no_slip_bottom(atom)
 
         return frc
 
