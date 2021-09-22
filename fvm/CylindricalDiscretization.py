@@ -70,9 +70,6 @@ class CylindricalDiscretization(Discretization):
             frc += boundary_conditions.moving_lid_east(atom, vo)
             frc += boundary_conditions.moving_lid_west(atom, vi)
 
-            boundary_conditions.no_slip_north(atom)
-            boundary_conditions.no_slip_south(atom)
-
             if self.dim == 2 or self.nz <= 1:
                 return frc
 
