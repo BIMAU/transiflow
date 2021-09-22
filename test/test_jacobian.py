@@ -205,7 +205,8 @@ def test_jac_consistency_tc_uniform_2d():
     nz = 1
     dim = 2
     dof = 3
-    parameters = {'Problem Type': 'Taylor-Couette'}
+    parameters['Problem Type'] = 'Taylor-Couette'
+    parameters['Reynolds Number'] = 0
     n = dof * nx * ny * nz
 
     state = numpy.random.random(n)
@@ -225,18 +226,18 @@ def test_jac_consistency_tc_stretched_2d():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
 
     x = utils.create_stretched_coordinate_vector(0, 1, nx, 1.5)
-    y = utils.create_stretched_coordinate_vector(0, 1, ny, 1.5)
 
     nz = 1
     dim = 2
     dof = 3
-    parameters = {'Problem Type': 'Taylor-Couette'}
+    parameters['Problem Type'] = 'Taylor-Couette'
+    parameters['Reynolds Number'] = 0
     n = dof * nx * ny * nz
 
     state = numpy.random.random(n)
     pert = numpy.random.random(n)
 
-    discretization = CylindricalDiscretization(parameters, nx, ny, nz, dim, dof, x, y)
+    discretization = CylindricalDiscretization(parameters, nx, ny, nz, dim, dof, x)
     A = discretization.jacobian(state)
     rhs = discretization.rhs(state)
 
