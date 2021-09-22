@@ -360,10 +360,10 @@ class CylindricalDiscretization(Discretization):
     def convection_2D(self, state):
         atomJ, atomF = Discretization.convection_2D(self, state)
 
-        atom = self.iruscale(self.value_v_v(state))
-        atom += self.irvscale(self.value_u_v(state))
+        # atom = self.iruscale(self.value_v_v(state))
+        # atom += self.irvscale(self.value_u_v(state))
 
-        atomJ += atom
-        atomF += atom
+        # atomJ += atom
+        # atomF += atom
 
         return (atomJ, atomF)
