@@ -14,6 +14,35 @@ def create_state_mtx(state, nx, ny, nz, dof):
                     state_mtx[i, j, k, d] = state[d + i * dof + j * dof * nx + k * dof * nx * ny]
     return state_mtx
 
+def create_padded_state_mtx(state, nx, ny, nz, dof, x_periodic=True, y_periodic=True, z_periodic=True):
+    '''Helper to create an (nx+2, ny+2, nz+2, dof) dimensional array out of a
+    state vector that makes it easier to access the variables. The value from
+    the other side of the domain is padded to each border.'''
+
+    state_mtx = numpy.zeros([nx+2, ny+2, nz+2, dof])
+    state_mtx[1:nx+1, 1:ny+1, 1:nz+1, :] = create_state_mtx(state, nx, ny, nz, dof)
+
+    # Add extra borders for periodic boundary conditions
+    if x_periodic:
+        state_mtx[0, 1:ny+1, 1:nz+1, :] = state_mtx[nx, 1:ny+1, 1:nz+1, :]
+        state_mtx[nx+1, 1:ny+1, 1:nz+1, :] = state_mtx[1, 1:ny+1, 1:nz+1, :]
+    else:
+        state_mtx[nx, :, :, 0] = 0
+
+    if y_periodic:
+        state_mtx[1:nx+1, 0, 1:nz+1, :] = state_mtx[1:nx+1, ny, 1:nz+1, :]
+        state_mtx[1:nx+1, ny+1, 1:nz+1, :] = state_mtx[1:nx+1, 1, 1:nz+1, :]
+    else:
+        state_mtx[:, ny, :, 1] = 0
+
+    if z_periodic:
+        state_mtx[1:nx+1, 1:ny+1, 0, :] = state_mtx[1:nx+1, 1:ny+1, nz, :]
+        state_mtx[1:nx+1, 1:ny+1, nz+1, :] = state_mtx[1:nx+1, 1:ny+1, 1, :]
+    else:
+        state_mtx[:, :, nz, 2] = 0
+
+    return state_mtx
+
 def create_state_vec(state_mtx, nx, ny, nz, dof):
     '''Helper to create a state vector out of an array created with
     create_state_mtx().'''
