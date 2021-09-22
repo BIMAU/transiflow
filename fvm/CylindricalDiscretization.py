@@ -295,10 +295,10 @@ class CylindricalDiscretization(Discretization):
         for i in range(self.nx-1):
             CylindricalDiscretization._weighted_average_x(atom, i, 0, 0, self.x, self.y, self.z)
 
-            averages[i, 0:self.ny, :] = 1 / 2 * atom[1] * state[i, 0:self.ny, :, 1]
-            averages[i, 0:self.ny, :] = 1 / 2 * atom[2] * state[i+1, 0:self.ny, :, 1]
-            averages[i, 1:self.ny, :] = 1 / 2 * atom[1] * state[i, 0:self.ny-1, :, 1]
-            averages[i, 1:self.ny, :] = 1 / 2 * atom[2] * state[i+1, 0:self.ny-1, :, 1]
+            averages[i, :, :] = 1 / 2 * atom[1] * state[i+1, 0:self.ny, 1:self.nz+1, 1]
+            averages[i, :, :] = 1 / 2 * atom[2] * state[i+2, 0:self.ny, 1:self.nz+1, 1]
+            averages[i, :, :] = 1 / 2 * atom[1] * state[i+1, 1:self.ny+1, 1:self.nz+1, 1]
+            averages[i, :, :] = 1 / 2 * atom[2] * state[i+2, 1:self.ny+1, 1:self.nz+1, 1]
 
         return averages
 
@@ -338,10 +338,10 @@ class CylindricalDiscretization(Discretization):
         for j in range(self.ny-1):
             CylindricalDiscretization._weighted_average_x(atom, j, 0, 0, self.y, self.x, self.z)
 
-            averages[0:self.nx, j, :] = 1 / 2 * atom[1] * state[0:self.nx, j, :, 0]
-            averages[0:self.nx, j, :] = 1 / 2 * atom[2] * state[0:self.nx, j+1, :, 0]
-            averages[1:self.nx, j, :] = 1 / 2 * atom[1] * state[0:self.nx-1, j, :, 0]
-            averages[1:self.nx, j, :] = 1 / 2 * atom[2] * state[0:self.nx-1, j+1, :, 0]
+            averages[:, j, :] = 1 / 2 * atom[1] * state[0:self.nx, j+1, 1:self.nz+1, 0]
+            averages[:, j, :] = 1 / 2 * atom[2] * state[0:self.nx, j+2, 1:self.nz+1, 0]
+            averages[:, j, :] = 1 / 2 * atom[1] * state[1:self.nx+1, j+1, 1:self.nz+1, 0]
+            averages[:, j, :] = 1 / 2 * atom[2] * state[1:self.nx+1, j+2, 1:self.nz+1, 0]
 
         return averages
 

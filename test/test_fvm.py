@@ -370,12 +370,12 @@ def test_MxU():
     for i in range(n):
         state[i] = i+1
 
-    state_mtx = numpy.zeros([nx, ny, nz, dof])
+    state_mtx = numpy.zeros([nx+2, ny+2, nz+2, dof])
     for k in range(nz):
         for j in range(ny):
             for i in range(nx):
                 for d in range(dof):
-                    state_mtx[i, j, k, d] = state[d + i * dof + j * dof * nx + k * dof * nx * ny]
+                    state_mtx[i+1, j+1, k+1, d] = state[d + i * dof + j * dof * nx + k * dof * nx * ny]
 
     averages = numpy.zeros([nx, ny, nz, 3, 3])
     weighted_averages = numpy.zeros([nx, ny, nz, 3, 3])
@@ -385,9 +385,7 @@ def test_MxU():
     for i in range(nx):
         for j in range(ny):
             for k in range(nz):
-                average = 0
-                if i < nx-1:
-                    average += state[i * dof + j * dof * nx + k * dof * nx * ny] / 2
+                average = state[i * dof + j * dof * nx + k * dof * nx * ny] / 2
                 if i > 0:
                     average += state[(i-1) * dof + j * dof * nx + k * dof * nx * ny] / 2
                 print(i, j, k)

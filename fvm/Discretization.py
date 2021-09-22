@@ -61,8 +61,13 @@ class Discretization:
         self.nx = nx
         self.ny = ny
         self.nz = nz
+
         self.dim = dim
         self.dof = dof
+
+        self.x_periodic = False
+        self.y_periodic = False
+        self.z_periodic = False
 
         if self.parameters.get('Grid Stretching', False) or 'Grid Stretching Factor' in self.parameters.keys():
             self.x = utils.create_stretched_coordinate_vector(
@@ -189,7 +194,8 @@ class Discretization:
         '''Compute the nonlinear part of the equation. In case Re = 0 this
         does nothing.'''
 
-        state_mtx = utils.create_state_mtx(state, self.nx, self.ny, self.nz, self.dof)
+        state_mtx = utils.create_padded_state_mtx(state, self.nx, self.ny, self.nz, self.dof,
+                                                  self.x_periodic, self.y_periodic, self.z_periodic)
 
         Re = self.get_parameter('Reynolds Number')
         if Re == 0 and not self.dof > self.dim + 1:
@@ -1161,8 +1167,10 @@ class ConvectiveTerm:
         bil[:, :, :, 0, 0, 0:2] = 1/2
         bil[:, :, :, 1, 0, 0:2] = 1/2
 
-        averages[1:self.nx, :, :, 0] += 1/2 * state[0:self.nx-1, :, :]
-        averages[0:self.nx-1, :, :, 0] += 1/2 * state[0:self.nx-1, :, :]
+        cropped_state = state[:, 1:self.ny+1, 1:self.nz+1]
+
+        averages[:, :, :, 0] += 1/2 * cropped_state[0:self.nx, :, :]
+        averages[:, :, :, 0] += 1/2 * cropped_state[1:self.nx+1, :, :]
 
         weighted_averages[:, :, :, 0] = averages[:, :, :, 0]
 
@@ -1177,24 +1185,28 @@ class ConvectiveTerm:
         bil[i, :, :, 1, 0, 1] += 1/2 * dxmh / dx
         bil[i, :, :, 1, 0, 2] += 1/2 * dxph / dx
 
-        averages[i, :, :, 0] += 1/2 * state[i, :, :] * dxmh / dx
-        averages[i, :, :, 0] += 1/2 * state[i+1, :, :] * dxph / dx
+        averages[i, :, :, 0] += 1/2 * state[i+1, :, :] * dxmh / dx
+        averages[i, :, :, 0] += 1/2 * state[i+2, :, :] * dxph / dx
 
     def forward_average_x(self, bil, averages, weighted_averages, state):
         bil[:, :, :, 0, 0, 1:3] = 1/2
 
-        averages[0:self.nx-1, :, :, 0] += 1/2 * state[0:self.nx-1, :, :]
-        averages[0:self.nx-1, :, :, 0] += 1/2 * state[1:self.nx, :, :]
+        cropped_state = state[:, 1:self.ny+1, 1:self.nz+1]
 
-        for i in range(self.nx-1):
-            self._forward_average_x(bil, weighted_averages, state, i)
+        averages[:, :, :, 0] += 1/2 * cropped_state[1:self.nx+1, :, :]
+        averages[:, :, :, 0] += 1/2 * cropped_state[2:self.nx+2, :, :]
+
+        for i in range(self.nx):
+            self._forward_average_x(bil, weighted_averages, cropped_state, i)
 
     def backward_average_y(self, bil, averages, weighted_averages, state):
         bil[:, :, :, 0, 1, 0:2] = 1/2
         bil[:, :, :, 1, 1, 0:2] = 1/2
 
-        averages[:, 1:self.ny, :, 1] += 1/2 * state[:, 0:self.ny-1, :]
-        averages[:, 0:self.ny-1, :, 1] += 1/2 * state[:, 0:self.ny-1, :]
+        cropped_state = state[1:self.nx+1, :, 1:self.nz+1]
+
+        averages[:, :, :, 1] += 1/2 * cropped_state[:, 0:self.ny, :]
+        averages[:, :, :, 1] += 1/2 * cropped_state[:, 1:self.ny+1, :]
 
         weighted_averages[:, :, :, 1] = averages[:, :, :, 1]
 
@@ -1209,24 +1221,28 @@ class ConvectiveTerm:
         bil[:, j, :, 1, 1, 1] += 1/2 * dymh / dy
         bil[:, j, :, 1, 1, 2] += 1/2 * dyph / dy
 
-        averages[:, j, :, 1] += 1/2 * state[:, j, :] * dymh / dy
-        averages[:, j, :, 1] += 1/2 * state[:, j+1, :] * dyph / dy
+        averages[:, j, :, 1] += 1/2 * state[:, j+1, :] * dymh / dy
+        averages[:, j, :, 1] += 1/2 * state[:, j+2, :] * dyph / dy
 
     def forward_average_y(self, bil, averages, weighted_averages, state):
         bil[:, :, :, 0, 1, 1:3] = 1/2
 
-        averages[:, 0:self.ny-1, :, 1] += 1/2 * state[:, 0:self.ny-1, :]
-        averages[:, 0:self.ny-1, :, 1] += 1/2 * state[:, 1:self.ny, :]
+        cropped_state = state[1:self.nx+1, :, 1:self.nz+1]
 
-        for j in range(self.ny-1):
-            self._forward_average_y(bil, weighted_averages, state, j)
+        averages[:, :, :, 1] += 1/2 * cropped_state[:, 1:self.ny+1, :]
+        averages[:, :, :, 1] += 1/2 * cropped_state[:, 2:self.ny+2, :]
+
+        for j in range(self.ny):
+            self._forward_average_y(bil, weighted_averages, cropped_state, j)
 
     def backward_average_z(self, bil, averages, weighted_averages, state):
         bil[:, :, :, 0, 2, 0:2] = 1/2
         bil[:, :, :, 1, 2, 0:2] = 1/2
 
-        averages[:, :, 1:self.nz, 2] += 1/2 * state[:, :, 0:self.nz-1]
-        averages[:, :, 0:self.nz-1, 2] += 1/2 * state[:, :, 0:self.nz-1]
+        cropped_state = state[1:self.nx+1, 1:self.ny+1, :]
+
+        averages[:, :, :, 2] += 1/2 * cropped_state[:, :, 0:self.nz]
+        averages[:, :, :, 2] += 1/2 * cropped_state[:, :, 1:self.nz+1]
 
         weighted_averages[:, :, :, 2] = averages[:, :, :, 2]
 
@@ -1241,34 +1257,36 @@ class ConvectiveTerm:
         bil[:, :, k, 1, 2, 1] += 1/2 * dzmh / dz
         bil[:, :, k, 1, 2, 2] += 1/2 * dzph / dz
 
-        averages[:, :, k, 2] += 1/2 * state[:, :, k] * dzmh / dz
-        averages[:, :, k, 2] += 1/2 * state[:, :, k+1] * dzph / dz
+        averages[:, :, k, 2] += 1/2 * state[:, :, k+1] * dzmh / dz
+        averages[:, :, k, 2] += 1/2 * state[:, :, k+2] * dzph / dz
 
     def forward_average_z(self, bil, averages, weighted_averages, state):
         bil[:, :, :, 0, 2, 1:3] = 1/2
 
-        averages[:, :, 0:self.nz-1, 2] += 1/2 * state[:, :, 0:self.nz-1]
-        averages[:, :, 0:self.nz-1, 2] += 1/2 * state[:, :, 1:self.nz]
+        cropped_state = state[1:self.nx+1, 1:self.ny+1, :]
 
-        for k in range(self.nz-1):
-            self._forward_average_z(bil, weighted_averages, state, k)
+        averages[:, :, :, 2] += 1/2 * cropped_state[:, :, 1:self.nz+1]
+        averages[:, :, :, 2] += 1/2 * cropped_state[:, :, 2:self.nz+2]
+
+        for k in range(self.nz):
+            self._forward_average_z(bil, weighted_averages, cropped_state, k)
 
     def value_u(self, bil, averages, weighted_averages, state):
         bil[:, :, :, 0, 0, 1] = 1
         bil[:, :, :, 1, 0, 1] = 1
-        averages[0:self.nx-1, :, :, 0] = state[0:self.nx-1, :, :, 0]
+        averages[:, :, :, 0] = state[1:self.nx+1, 1:self.ny+1, 1:self.nz+1, 0]
         weighted_averages[:, :, :, 0] = averages[:, :, :, 0]
 
     def value_v(self, bil, averages, weighted_averages, state):
         bil[:, :, :, 0, 1, 1] = 1
         bil[:, :, :, 1, 1, 1] = 1
-        averages[:, 0:self.ny-1, :, 1] = state[:, 0:self.ny-1, :, 1]
+        averages[:, :, :, 1] = state[1:self.nx+1, 1:self.ny+1, 1:self.nz+1, 1]
         weighted_averages[:, :, :, 1] = averages[:, :, :, 1]
 
     def value_w(self, bil, averages, weighted_averages, state):
         bil[:, :, :, 0, 2, 1] = 1
         bil[:, :, :, 1, 2, 1] = 1
-        averages[:, :, 0:self.nz-1, 2] = state[:, :, 0:self.nz-1, 2]
+        averages[:, :, :, 2] = state[1:self.nx+1, 1:self.ny+1, 1:self.nz+1, 2]
         weighted_averages[:, :, :, 2] = averages[:, :, :, 2]
 
     def u_x(self, bil):
