@@ -875,7 +875,7 @@ class Discretization:
     @staticmethod
     def _convection_u_v(atomJ, atomF, averages, weighted_averages, bil, varU, varV, dim, nx, i):
         for d1 in range(3):
-            i2 = i + d1 - 1
+            i2 = (i + d1 - 1) % nx
 
             v_x = bil[i, :, :, 2, varU, varV, d1]
             if not numpy.any(v_x):
@@ -902,7 +902,7 @@ class Discretization:
     @staticmethod
     def _convection_v_u(atomJ, atomF, averages, weighted_averages, bil, varV, varU, dim, ny, j):
         for d1 in range(3):
-            j2 = j + d1 - 1
+            j2 = (j + d1 - 1) % ny
 
             u_y = bil[:, j, :, 2, varV, varU, d1]
             if not numpy.any(u_y):
@@ -929,7 +929,7 @@ class Discretization:
     @staticmethod
     def _convection_w_u(atomJ, atomF, averages, weighted_averages, bil, varW, varU, dim, nz, k):
         for d1 in range(3):
-            k2 = k + d1 - 1
+            k2 = (k + d1 - 1) % nz
 
             u_z = bil[:, :, k, 2, varW, varU, d1]
             if not numpy.any(u_z):
@@ -1036,10 +1036,13 @@ class Discretization:
             convective_term.T_x(bil)
             convective_term.T_y(bil)
 
-        convective_term.boundary_east(bil)
-        convective_term.boundary_west(bil)
-        convective_term.boundary_north(bil)
-        convective_term.boundary_south(bil)
+        if not self.x_periodic:
+            convective_term.boundary_east(bil)
+            convective_term.boundary_west(bil)
+
+        if not self.y_periodic:
+            convective_term.boundary_north(bil)
+            convective_term.boundary_south(bil)
 
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
@@ -1116,12 +1119,17 @@ class Discretization:
             convective_term.T_y(bil)
             convective_term.T_z(bil)
 
-        convective_term.boundary_east(bil)
-        convective_term.boundary_west(bil)
-        convective_term.boundary_north(bil)
-        convective_term.boundary_south(bil)
-        convective_term.boundary_top(bil)
-        convective_term.boundary_bottom(bil)
+        if not self.x_periodic:
+            convective_term.boundary_east(bil)
+            convective_term.boundary_west(bil)
+
+        if not self.y_periodic:
+            convective_term.boundary_north(bil)
+            convective_term.boundary_south(bil)
+
+        if not self.z_periodic:
+            convective_term.boundary_top(bil)
+            convective_term.boundary_bottom(bil)
 
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])

@@ -65,6 +65,8 @@ class CylindricalDiscretization(Discretization):
         frc = numpy.zeros(self.nx * self.ny * self.nz * self.dof)
 
         if self.problem_type_equals('Taylor-Couette'):
+            self.y_periodic = True
+
             vo = self.get_parameter('Outer Velocity', 2)
             vi = self.get_parameter('Inner Velocity', 1)
             frc += boundary_conditions.moving_lid_east(atom, vo)
