@@ -128,11 +128,17 @@ class Discretization:
         return self.parameters.get(name, default)
 
     def linear_part(self):
-        '''Compute the linear part of the equation.'''
+        '''Compute the linear part of the equation. Return a cached version if possible.'''
 
-        if self.dim == 2:
-            return self._linear_part_2D()
-        return self._linear_part_3D()
+        if self.recompute_linear_part:
+            if self.dim == 2:
+                self.atom = self._linear_part_2D()
+            else:
+                self.atom = self._linear_part_3D()
+
+            self.recompute_linear_part = False
+
+        return self.atom
 
     def _linear_part_2D(self):
         '''Compute the linear part of the equation in case the domain is 2D.
@@ -208,12 +214,8 @@ class Discretization:
     def rhs(self, state):
         '''Right-hand side in M * du / dt = F(u).'''
 
-        if self.recompute_linear_part:
-            self.atom = self.linear_part()
-            self.recompute_linear_part = False
-
         atomJ, atomF = self.nonlinear_part(state)
-        atomF += self.atom
+        atomF += self.linear_part()
 
         self.frc = self.boundaries(atomF)
 
@@ -222,12 +224,8 @@ class Discretization:
     def jacobian(self, state):
         '''Jacobian J of F in M * du / dt = F(u).'''
 
-        if self.recompute_linear_part:
-            self.atom = self.linear_part()
-            self.recompute_linear_part = False
-
         atomJ, atomF = self.nonlinear_part(state)
-        atomJ += self.atom
+        atomJ += self.linear_part()
 
         self.boundaries(atomJ)
 
