@@ -97,11 +97,12 @@ def test_bilin():
     state = create_divfree_state(discretization)
 
     atomJ, atomF = discretization.nonlinear_part(state)
+    discretization.boundaries(atomF)
     A = discretization.assemble_jacobian(atomF)
 
     for i in range(A.n):
         for j in range(A.begA[i], A.begA[i+1]):
-            assert i != A.jcoA[j]
+            assert i != A.jcoA[j] or A.coA[j] == -1
 
 def test_bilin_uniform():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
@@ -110,11 +111,12 @@ def test_bilin_uniform():
     state = create_divfree_state(discretization)
 
     atomJ, atomF = discretization.nonlinear_part(state)
+    discretization.boundaries(atomF)
     A = discretization.assemble_jacobian(atomF)
 
     for i in range(A.n):
         for j in range(A.begA[i], A.begA[i+1]):
-            assert i != A.jcoA[j]
+            assert i != A.jcoA[j] or A.coA[j] == -1
 
 def test_bilin_stretched():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
@@ -127,11 +129,12 @@ def test_bilin_stretched():
     state = create_divfree_state(discretization)
 
     atomJ, atomF = discretization.nonlinear_part(state)
+    discretization.boundaries(atomF)
     A = discretization.assemble_jacobian(atomF)
 
     for i in range(A.n):
         for j in range(A.begA[i], A.begA[i+1]):
-            assert i != A.jcoA[j]
+            assert i != A.jcoA[j] or A.coA[j] == -1
 
 def test_jac_consistency():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()

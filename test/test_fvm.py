@@ -671,6 +671,7 @@ def test_ldc_bil():
 
     discretization = Discretization(parameters, nx, ny, nz, dim, dof)
     atom, atomF = discretization.nonlinear_part(state)
+    discretization.boundaries(atom)
     A = discretization.assemble_jacobian(atom)
 
     B = read_matrix('ldc_bil_%sx%sx%s.txt' % (nx, ny, nz))
@@ -689,10 +690,14 @@ def test_ldc_bil():
         print(A.jcoA[A.begA[i]:A.begA[i+1]])
         print(A.coA[A.begA[i]:A.begA[i+1]])
 
+        if A.begA[i+1] - A.begA[i] == 1 and A.coA[A.begA[i]] == -1:
+            # Inserted boundary condition
+            continue
+
         assert B.begA[i+1] - B.begA[i] == A.begA[i+1] - A.begA[i]
-        for j in range(B.begA[i], B.begA[i+1]):
-            assert B.jcoA[j] == A.jcoA[j]
-            assert B.coA[j] == A.coA[j]
+        for j in range(B.begA[i+1] - B.begA[i]):
+            assert B.jcoA[B.begA[i] + j] == A.jcoA[A.begA[i] + j]
+            assert B.coA[B.begA[i] + j] == A.coA[A.begA[i] + j]
 
 def test_bous_bil():
     nx = 4
@@ -709,6 +714,7 @@ def test_bous_bil():
 
     discretization = Discretization(parameters, nx, ny, nz, dim, dof)
     atom, atomF = discretization.nonlinear_part(state)
+    discretization.boundaries(atom)
     A = discretization.assemble_jacobian(atom)
 
     B = read_bous_matrix('bous_bil_%sx%sx%s.txt' % (nx, ny, nz))
@@ -729,10 +735,14 @@ def test_bous_bil():
         print(A.jcoA[A.begA[i]:A.begA[i+1]])
         print(A.coA[A.begA[i]:A.begA[i+1]])
 
+        if A.begA[i+1] - A.begA[i] == 1 and A.coA[A.begA[i]] == -1:
+            # Inserted boundary condition
+            continue
+
         assert B.begA[i+1] - B.begA[i] == A.begA[i+1] - A.begA[i]
-        for j in range(B.begA[i], B.begA[i+1]):
-            assert B.jcoA[j] == A.jcoA[j]
-            assert B.coA[j] == A.coA[j]
+        for j in range(B.begA[i+1] - B.begA[i]):
+            assert B.jcoA[B.begA[i] + j] == A.jcoA[A.begA[i] + j]
+            assert B.coA[B.begA[i] + j] == A.coA[A.begA[i] + j]
 
 def test_ldc():
     nx = 4
