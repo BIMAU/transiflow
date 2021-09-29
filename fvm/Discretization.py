@@ -91,7 +91,6 @@ class Discretization:
             self.z = utils.create_uniform_coordinate_vector(
                 self.parameters.get('Z-min', 0.0), self.parameters.get('Z-max', 1.0), self.nz) if z is None else z
 
-        self.frc = None
         self.atom = None
         self.recompute_linear_part = True
 
@@ -217,9 +216,9 @@ class Discretization:
         atomJ, atomF = self.nonlinear_part(state)
         atomF += self.linear_part()
 
-        self.frc = self.boundaries(atomF)
+        frc = self.boundaries(atomF)
 
-        return self.assemble_rhs(state, atomF) + self.frc
+        return self.assemble_rhs(state, atomF) + frc
 
     def jacobian(self, state):
         '''Jacobian J of F in M * du / dt = F(u).'''
