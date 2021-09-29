@@ -38,6 +38,9 @@ class CylindricalDiscretization(Discretization):
 
         Discretization.__init__(self, parameters, nr, ntheta, nz, dim, dof, r, theta, z)
 
+        if self.problem_type_equals('Taylor-Couette'):
+            self.y_periodic = True
+
     def _linear_part_2D(self):
         '''Compute the linear part of the equation in case the domain is 2D.
         In case Re = 0 we instead compute the linear part for the Stokes
@@ -65,8 +68,6 @@ class CylindricalDiscretization(Discretization):
         frc = numpy.zeros(self.nx * self.ny * self.nz * self.dof)
 
         if self.problem_type_equals('Taylor-Couette'):
-            self.y_periodic = True
-
             vo = self.get_parameter('Outer Velocity', 2)
             vi = self.get_parameter('Inner Velocity', 1)
             frc += boundary_conditions.moving_lid_east(atom, vo)

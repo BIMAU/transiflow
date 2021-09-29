@@ -210,11 +210,12 @@ class Discretization:
 
         if self.recompute_linear_part:
             self.atom = self.linear_part()
-            self.frc = self.boundaries(self.atom)
             self.recompute_linear_part = False
 
         atomJ, atomF = self.nonlinear_part(state)
         atomF += self.atom
+
+        self.frc = self.boundaries(atomF)
 
         return self.assemble_rhs(state, atomF) + self.frc
 
@@ -223,11 +224,12 @@ class Discretization:
 
         if self.recompute_linear_part:
             self.atom = self.linear_part()
-            self.frc = self.boundaries(self.atom)
             self.recompute_linear_part = False
 
         atomJ, atomF = self.nonlinear_part(state)
         atomJ += self.atom
+
+        self.boundaries(atomJ)
 
         return self.assemble_jacobian(atomJ)
 
