@@ -1216,9 +1216,21 @@ class Discretization:
                     atomJ[i, j, k, 2, 2, 1, 1, 0:2] -= atom[1] * averages[i, j, k] * 1 / 2
                     atomJ[i, j, k, 2, 2, 1, 1, 1:3] -= atom[2] * averages[i, j, k+1] * 1 / 2
 
-    def convection_T_w(self, atomJ, atomF, averages, weighted_averages, bil):
-        for k in range(self.nz):
-            Discretization._convection_w_u(atomJ, atomF, averages, weighted_averages, bil, 2, self.dim+1, self.dim, self.nz, k)
+    def w_T_z(self, atomJ, atomF, state):
+        averages_w = state[1:self.nx+1, 1:self.ny+1, 0:self.nz+1, 2]
+        averages_T = self.average_z(state[:, :, :, self.dim+1])
+
+        atom = numpy.zeros(3)
+        atom_average = numpy.zeros(2)
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
+                    Discretization._backward_u_x(atom, k, j, i, self.z, self.y, self.x)
+                    atomF[i, j, k, self.dim+1, self.dim+1, 1, 1, 0:2] -= atom[0] * averages_w[i, j, k] * 1/2
+                    atomF[i, j, k, self.dim+1, self.dim+1, 1, 1, 1:3] -= atom[1] * averages_w[i, j, k+1] * 1/2
+
+                    atomJ[i, j, k, self.dim+1, 2, 1, 1, 0] -= atom[0] * averages_T[i, j, k]
+                    atomJ[i, j, k, self.dim+1, 2, 1, 1, 1] -= atom[1] * averages_T[i, j, k+1]
 
     def convection_2D(self, state):
         bil = numpy.zeros([self.nx, self.ny, self.nz, 3, self.dof, self.dof, 3])
@@ -1370,7 +1382,7 @@ class Discretization:
 
             self.u_T_x(atomJ, atomF, state)
             self.v_T_y(atomJ, atomF, state)
-            self.convection_T_w(atomJ, atomF, averages, weighted_averages, bil)
+            self.w_T_z(atomJ, atomF, state)
 
         atomJ += atomF
 
