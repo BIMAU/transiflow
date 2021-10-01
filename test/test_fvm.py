@@ -438,6 +438,13 @@ def read_bous_matrix(fname):
 
     return B
 
+def write_matrix(A, fname):
+    dirname = os.path.dirname(__file__)
+    with open(os.path.join(dirname, fname), 'w') as f:
+        for i in range(len(A.begA)-1):
+            for j in range(A.begA[i], A.begA[i+1]):
+                f.write('%12d%12d %.16e\n' % (i+1, A.jcoA[j]+1, A.coA[j]))
+
 def read_vector(fname):
     vec = numpy.array([])
 
@@ -455,6 +462,12 @@ def read_bous_vector(fname):
     for i in range(len(vec)):
         out[i] = vec[i + (i % dof == 3) - (i % dof == 4)]
     return out
+
+def write_vector(vec, fname):
+    dirname = os.path.dirname(__file__)
+    with open(os.path.join(dirname, fname), 'w') as f:
+        for i in range(len(vec)):
+            f.write('%.16e\n' % vec[i])
 
 def assemble_jacobian(atom, nx, ny, nz, dof):
     row = 0
@@ -740,6 +753,44 @@ def test_ldc():
 
     B = read_matrix('ldc_%sx%sx%s.txt' % (nx, ny, nz))
     rhs_B = read_vector('ldc_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+
+    for i in range(n):
+        print(i)
+
+        print('Expected:')
+        print(B.jcoA[B.begA[i]:B.begA[i+1]])
+        print(B.coA[B.begA[i]:B.begA[i+1]])
+
+        print('Got:')
+        print(A.jcoA[A.begA[i]:A.begA[i+1]])
+        print(A.coA[A.begA[i]:A.begA[i+1]])
+
+        assert A.begA[i+1] - A.begA[i] == B.begA[i+1] - B.begA[i]
+        for j in range(A.begA[i], A.begA[i+1]):
+            assert A.jcoA[j] == B.jcoA[j]
+            assert A.coA[j] == pytest.approx(B.coA[j])
+
+        assert rhs_B[i] == pytest.approx(rhs[i])
+
+def test_ldc_stretched():
+    nx = 4
+    ny = nx
+    nz = nx
+    dim = 3
+    dof = 4
+    parameters = {'Reynolds Number': 100, 'Grid Stretching': True}
+    n = nx * ny * nz * dof
+
+    state = numpy.zeros(n)
+    for i in range(n):
+        state[i] = i+1
+
+    discretization = Discretization(parameters, nx, ny, nz, dim, dof)
+    A = discretization.jacobian(state)
+    rhs = discretization.rhs(state)
+
+    B = read_matrix('ldc_stretched_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = read_vector('ldc_stretched_rhs_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
