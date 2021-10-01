@@ -4,7 +4,7 @@ import pytest
 
 from fvm import utils
 from fvm import CrsMatrix
-from fvm import Discretization
+from fvm import Discretization, CylindricalDiscretization
 
 def create_coordinate_vector(nx):
     dx = 1 / (nx + 1)
@@ -351,6 +351,32 @@ def test_u_z():
                 print(i, j, k)
                 assert atom[i, j, k, 3, 2, 1, 1, 0] == pytest.approx(-dy * dx)
                 assert atom[i, j, k, 3, 2, 1, 1, 1] == pytest.approx(dy * dx)
+
+def test_v_v():
+    parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
+    n = nx * ny * nz * dof
+
+    state = numpy.zeros(n)
+    for i in range(n):
+        state[i] = i+1
+
+    state_mtx = utils.create_padded_state_mtx(state, nx, ny, nz, dof, False, False, False)
+
+    discretization = CylindricalDiscretization(parameters, nx, ny, nz, dim, dof, x, y, z)
+    atom = discretization.v_v(state_mtx)
+
+    averages_v = discretization.weighted_average_x(state_mtx[:, :, :, 1])
+    averages_v = (averages_v[:, 0:ny, :] + averages_v[:, 1:ny+1, :]) / 2
+
+    rhs = discretization.assemble_rhs(state, atom)
+
+    atom_value = numpy.zeros(1)
+    for i in range(nx):
+        for j in range(ny):
+            for k in range(nz):
+                print(i, j, k)
+                Discretization._mass_x(atom_value, i, j, k, x, y, z)
+                assert rhs[i * dof + j * nx * dof + k * nx * ny * dof] == pytest.approx(-atom_value * averages_v[i, j, k+1] ** 2)
 
 def read_matrix(fname):
     A = CrsMatrix([], [], [0])
