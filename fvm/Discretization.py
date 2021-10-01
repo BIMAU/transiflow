@@ -956,18 +956,38 @@ class Discretization:
                     idx[varU if varU < dim else varW] += d2 - 1
                     atomJ[:, :, k, varU, varW, idx[0], idx[1], idx[2]] -= coef1 * coef2
 
-    def average_u_x(self, state):
+    def average_x(self, state):
         averages = numpy.zeros([self.nx+1, self.ny, self.nz])
 
         cropped_state = state[:, 1:self.ny+1, 1:self.nz+1]
 
-        averages[:, :, :] += 1/2 * cropped_state[0:self.nx+1, :, :, 0]
-        averages[:, :, :] += 1/2 * cropped_state[1:self.nx+2, :, :, 0]
+        averages[:, :, :] += 1/2 * cropped_state[0:self.nx+1, :, :]
+        averages[:, :, :] += 1/2 * cropped_state[1:self.nx+2, :, :]
+
+        return averages
+
+    def average_y(self, state):
+        averages = numpy.zeros([self.nx, self.ny+1, self.nz])
+
+        cropped_state = state[1:self.nx+1, :, 1:self.nz+1]
+
+        averages[:, :, :] += 1/2 * cropped_state[:, 0:self.ny+1, :]
+        averages[:, :, :] += 1/2 * cropped_state[:, 1:self.ny+2, :]
+
+        return averages
+
+    def average_z(self, state):
+        averages = numpy.zeros([self.nx, self.ny, self.nz+1])
+
+        cropped_state = state[1:self.nx+1, 1:self.ny+1, :]
+
+        averages[:, :, :] += 1/2 * cropped_state[:, :, 0:self.nz+1]
+        averages[:, :, :] += 1/2 * cropped_state[:, :, 1:self.nz+2]
 
         return averages
 
     def u_u_x(self, atomJ, atomF, state):
-        averages = self.average_u_x(state)
+        averages = self.average_x(state[:, :, :, 0])
 
         atom = numpy.zeros(3)
         for i in range(self.nx):
@@ -979,16 +999,6 @@ class Discretization:
 
                     atomJ[i, j, k, 0, 0, 0:2, 1, 1] -= atom[1] * averages[i, j, k] * 1 / 2
                     atomJ[i, j, k, 0, 0, 1:3, 1, 1] -= atom[2] * averages[i+1, j, k] * 1 / 2
-
-    def average_u_y(self, state):
-        averages = numpy.zeros([self.nx, self.ny+1, self.nz])
-
-        cropped_state = state[1:self.nx+1, :, 1:self.nz+1]
-
-        averages[:, :, :] += 1/2 * cropped_state[:, 0:self.ny+1, :, 0]
-        averages[:, :, :] += 1/2 * cropped_state[:, 1:self.ny+2, :, 0]
-
-        return averages
 
     @staticmethod
     def _weighted_average_x(atom, i, x):
@@ -1002,23 +1012,23 @@ class Discretization:
         atom[0] = 1 / 2 * dxmh / dx
         atom[1] = 1 / 2 * dxph / dx
 
-    def weighted_average_v_x(self, state):
-        averages = numpy.zeros([self.nx, self.ny+1, self.nz])
+    def weighted_average_x(self, state):
+        averages = numpy.zeros([self.nx, self.ny+1, self.nz+1])
 
-        cropped_state = state[:, 0:self.ny+1, 1:self.nz+1]
+        cropped_state = state[:, 0:self.ny+1, 0:self.nz+1]
 
         atom = numpy.zeros(2)
         for i in range(self.nx):
             Discretization._weighted_average_x(atom, i, self.x)
 
-            averages[i, :, :] += atom[0] * cropped_state[i+1, :, :, 1]
-            averages[i, :, :] += atom[1] * cropped_state[i+2, :, :, 1]
+            averages[i, :, :] += atom[0] * cropped_state[i+1, :, :]
+            averages[i, :, :] += atom[1] * cropped_state[i+2, :, :]
 
         return averages
 
     def v_u_y(self, atomJ, atomF, state):
-        averages_u = self.average_u_y(state)
-        averages_v = self.weighted_average_v_x(state)
+        averages_u = self.average_y(state[:, :, :, 0])
+        averages_v = self.weighted_average_x(state[:, :, :, 1])
 
         atom = numpy.zeros(3)
         atom_average = numpy.zeros(2)
@@ -1026,8 +1036,8 @@ class Discretization:
             for j in range(self.ny):
                 for k in range(self.nz):
                     Discretization._backward_u_y(atom, i, j, k, self.x, self.y, self.z)
-                    atomF[i, j, k, 0, 0, 1, 0:2, 1] -= atom[0] * averages_v[i, j, k] * 1 / 2
-                    atomF[i, j, k, 0, 0, 1, 1:3, 1] -= atom[1] * averages_v[i, j+1, k] * 1 / 2
+                    atomF[i, j, k, 0, 0, 1, 0:2, 1] -= atom[0] * averages_v[i, j, k+1] * 1 / 2
+                    atomF[i, j, k, 0, 0, 1, 1:3, 1] -= atom[1] * averages_v[i, j+1, k+1] * 1 / 2
 
                     Discretization._weighted_average_x(atom_average, i, self.x)
                     atomJ[i, j, k, 0, 1, 1:3, 0, 1] -= atom[0] * averages_u[i, j, k] * atom_average
