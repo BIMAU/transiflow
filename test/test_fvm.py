@@ -352,45 +352,6 @@ def test_u_z():
                 assert atom[i, j, k, 3, 2, 1, 1, 0] == pytest.approx(-dy * dx)
                 assert atom[i, j, k, 3, 2, 1, 1, 1] == pytest.approx(dy * dx)
 
-def test_MxU():
-    import importlib.util
-    spec = importlib.util.spec_from_file_location('Discretization', 'fvm/Discretization.py')
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-
-    parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
-    dim = 3
-    dof = 4
-    n = dof * nx * ny * nz
-
-    bil = numpy.zeros([nx, ny, nz, 3, dof, dof, 2])
-    convective_term = module.ConvectiveTerm(nx, ny, nz, dim, x, y, z)
-
-    state = numpy.zeros(n)
-    for i in range(n):
-        state[i] = i+1
-
-    state_mtx = numpy.zeros([nx+2, ny+2, nz+2, dof])
-    for k in range(nz):
-        for j in range(ny):
-            for i in range(nx):
-                for d in range(dof):
-                    state_mtx[i+1, j+1, k+1, d] = state[d + i * dof + j * dof * nx + k * dof * nx * ny]
-
-    averages = numpy.zeros([nx, ny, nz, 3, 3])
-    weighted_averages = numpy.zeros([nx, ny, nz, 3, 3])
-    convective_term.backward_average_x(bil[:, :, :, :, :, 0, :], averages[:, :, :, :, 0],
-                                       weighted_averages[:, :, :, :, 0], state_mtx[:, :, :, 0])
-
-    for i in range(nx):
-        for j in range(ny):
-            for k in range(nz):
-                average = state[i * dof + j * dof * nx + k * dof * nx * ny] / 2
-                if i > 0:
-                    average += state[(i-1) * dof + j * dof * nx + k * dof * nx * ny] / 2
-                print(i, j, k)
-                assert averages[i, j, k, 0, 0] == average
-
 def read_matrix(fname):
     A = CrsMatrix([], [], [0])
 
