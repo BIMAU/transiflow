@@ -987,7 +987,7 @@ class Discretization:
         return averages
 
     @staticmethod
-    def _weighted_average_x(atom, i, x):
+    def _weighted_average(atom, i, x):
         # volume size in the x direction
         dx = (x[i+1] - x[i-1]) / 2
 
@@ -1005,10 +1005,24 @@ class Discretization:
 
         atom = numpy.zeros(2)
         for i in range(self.nx):
-            Discretization._weighted_average_x(atom, i, self.x)
+            Discretization._weighted_average(atom, i, self.x)
 
             averages[i, :, :] += atom[0] * cropped_state[i+1, :, :]
             averages[i, :, :] += atom[1] * cropped_state[i+2, :, :]
+
+        return averages
+
+    def weighted_average_y(self, state):
+        averages = numpy.zeros([self.nx+1, self.ny, self.nz+1])
+
+        cropped_state = state[0:self.nx+1, :, 0:self.nz+1]
+
+        atom = numpy.zeros(2)
+        for j in range(self.ny):
+            Discretization._weighted_average(atom, j, self.y)
+
+            averages[:, j, :] += atom[0] * cropped_state[:, j+1, :]
+            averages[:, j, :] += atom[1] * cropped_state[:, j+2, :]
 
         return averages
 
@@ -1026,6 +1040,23 @@ class Discretization:
                     atomJ[i, j, k, 0, 0, 0:2, 1, 1] -= atom[1] * averages[i, j, k] * 1 / 2
                     atomJ[i, j, k, 0, 0, 1:3, 1, 1] -= atom[2] * averages[i+1, j, k] * 1 / 2
 
+    def u_v_x(self, atomJ, atomF, state):
+        averages_u = self.weighted_average_y(state[:, :, :, 0])
+        averages_v = self.average_x(state[:, :, :, 1])
+
+        atom = numpy.zeros(3)
+        atom_average = numpy.zeros(2)
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
+                    Discretization._backward_u_y(atom, j, i, k, self.y, self.x, self.z)
+                    atomF[i, j, k, 1, 1, 0:2, 1, 1] -= atom[0] * averages_u[i, j, k+1] * 1 / 2
+                    atomF[i, j, k, 1, 1, 1:3, 1, 1] -= atom[1] * averages_u[i+1, j, k+1] * 1 / 2
+
+                    Discretization._weighted_average(atom_average, j, self.y)
+                    atomJ[i, j, k, 1, 0, 0, 1:3, 1] -= atom[0] * averages_v[i, j, k] * atom_average
+                    atomJ[i, j, k, 1, 0, 1, 1:3, 1] -= atom[1] * averages_v[i+1, j, k] * atom_average
+
     def v_u_y(self, atomJ, atomF, state):
         averages_u = self.average_y(state[:, :, :, 0])
         averages_v = self.weighted_average_x(state[:, :, :, 1])
@@ -1039,7 +1070,7 @@ class Discretization:
                     atomF[i, j, k, 0, 0, 1, 0:2, 1] -= atom[0] * averages_v[i, j, k+1] * 1 / 2
                     atomF[i, j, k, 0, 0, 1, 1:3, 1] -= atom[1] * averages_v[i, j+1, k+1] * 1 / 2
 
-                    Discretization._weighted_average_x(atom_average, i, self.x)
+                    Discretization._weighted_average(atom_average, i, self.x)
                     atomJ[i, j, k, 0, 1, 1:3, 0, 1] -= atom[0] * averages_u[i, j, k] * atom_average
                     atomJ[i, j, k, 0, 1, 1:3, 1, 1] -= atom[1] * averages_u[i, j+1, k] * atom_average
 
@@ -1056,13 +1087,9 @@ class Discretization:
                     atomF[i, j, k, 0, 0, 1, 1, 0:2] -= atom[0] * averages_w[i, j+1, k] * 1 / 2
                     atomF[i, j, k, 0, 0, 1, 1, 1:3] -= atom[1] * averages_w[i, j+1, k+1] * 1 / 2
 
-                    Discretization._weighted_average_x(atom_average, i, self.x)
+                    Discretization._weighted_average(atom_average, i, self.x)
                     atomJ[i, j, k, 0, 2, 1:3, 1, 0] -= atom[0] * averages_u[i, j, k] * atom_average
                     atomJ[i, j, k, 0, 2, 1:3, 1, 1] -= atom[1] * averages_u[i, j, k+1] * atom_average
-
-    def convection_u_v(self, atomJ, atomF, averages, weighted_averages, bil):
-        for i in range(self.nx):
-            Discretization._convection_u_v(atomJ, atomF, averages, weighted_averages, bil, 0, 1, self.dim, self.nx, i)
 
     def convection_v_v(self, atomJ, atomF, averages, weighted_averages, bil):
         for j in range(self.ny):
@@ -1143,8 +1170,8 @@ class Discretization:
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
 
         self.u_u_x(atomJ, atomF, state)
+        self.u_v_x(atomJ, atomF, state)
         self.v_u_y(atomJ, atomF, state)
-        self.convection_u_v(atomJ, atomF, averages, weighted_averages, bil)
         self.convection_v_v(atomJ, atomF, averages, weighted_averages, bil)
 
         if self.dof > self.dim + 1:
@@ -1230,9 +1257,9 @@ class Discretization:
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
 
         self.u_u_x(atomJ, atomF, state)
+        self.u_v_x(atomJ, atomF, state)
         self.v_u_y(atomJ, atomF, state)
         self.w_u_z(atomJ, atomF, state)
-        self.convection_u_v(atomJ, atomF, averages, weighted_averages, bil)
         self.convection_u_w(atomJ, atomF, averages, weighted_averages, bil)
         self.convection_v_v(atomJ, atomF, averages, weighted_averages, bil)
         self.convection_v_w(atomJ, atomF, averages, weighted_averages, bil)
