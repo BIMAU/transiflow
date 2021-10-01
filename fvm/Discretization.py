@@ -1043,9 +1043,22 @@ class Discretization:
                     atomJ[i, j, k, 0, 1, 1:3, 0, 1] -= atom[0] * averages_u[i, j, k] * atom_average
                     atomJ[i, j, k, 0, 1, 1:3, 1, 1] -= atom[1] * averages_u[i, j+1, k] * atom_average
 
-    def convection_w_u(self, atomJ, atomF, averages, weighted_averages, bil):
-        for k in range(self.nz):
-            Discretization._convection_w_u(atomJ, atomF, averages, weighted_averages, bil, 2, 0, self.dim, self.nz, k)
+    def w_u_z(self, atomJ, atomF, state):
+        averages_u = self.average_z(state[:, :, :, 0])
+        averages_w = self.weighted_average_x(state[:, :, :, 2])
+
+        atom = numpy.zeros(3)
+        atom_average = numpy.zeros(2)
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
+                    Discretization._backward_u_z(atom, i, j, k, self.x, self.y, self.z)
+                    atomF[i, j, k, 0, 0, 1, 1, 0:2] -= atom[0] * averages_w[i, j+1, k] * 1 / 2
+                    atomF[i, j, k, 0, 0, 1, 1, 1:3] -= atom[1] * averages_w[i, j+1, k+1] * 1 / 2
+
+                    Discretization._weighted_average_x(atom_average, i, self.x)
+                    atomJ[i, j, k, 0, 2, 1:3, 1, 0] -= atom[0] * averages_u[i, j, k] * atom_average
+                    atomJ[i, j, k, 0, 2, 1:3, 1, 1] -= atom[1] * averages_u[i, j, k+1] * atom_average
 
     def convection_u_v(self, atomJ, atomF, averages, weighted_averages, bil):
         for i in range(self.nx):
@@ -1218,11 +1231,11 @@ class Discretization:
 
         self.u_u_x(atomJ, atomF, state)
         self.v_u_y(atomJ, atomF, state)
+        self.w_u_z(atomJ, atomF, state)
         self.convection_u_v(atomJ, atomF, averages, weighted_averages, bil)
         self.convection_u_w(atomJ, atomF, averages, weighted_averages, bil)
         self.convection_v_v(atomJ, atomF, averages, weighted_averages, bil)
         self.convection_v_w(atomJ, atomF, averages, weighted_averages, bil)
-        self.convection_w_u(atomJ, atomF, averages, weighted_averages, bil)
         self.convection_w_v(atomJ, atomF, averages, weighted_averages, bil)
         self.convection_w_w(atomJ, atomF, averages, weighted_averages, bil)
 
