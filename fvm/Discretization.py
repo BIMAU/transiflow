@@ -1233,48 +1233,6 @@ class Discretization:
                     atomJ[i, j, k, self.dim+1, 2, 1, 1, 1] -= atom[1] * averages_T[i, j, k+1]
 
     def convection_2D(self, state):
-        bil = numpy.zeros([self.nx, self.ny, self.nz, 3, self.dof, self.dof, 3])
-        averages = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof])
-        weighted_averages = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof])
-
-        convective_term = ConvectiveTerm(self.nx, self.ny, self.nz, self.dim, self.x, self.y, self.z)
-
-        convective_term.backward_average_x(bil[:, :, :, :, 0, :, :], averages[:, :, :, 0, :],
-                                           weighted_averages[:, :, :, 0, :], state[:, :, :, 0]) # tMxU
-        convective_term.forward_average_x(bil[:, :, :, :, 1, :, :], averages[:, :, :, 1, :],
-                                          weighted_averages[:, :, :, 1, :], state[:, :, :, 1]) # tMxV
-        convective_term.forward_average_y(bil[:, :, :, :, 0, :, :], averages[:, :, :, 0, :],
-                                          weighted_averages[:, :, :, 0, :], state[:, :, :, 0]) # tMyU
-        convective_term.backward_average_y(bil[:, :, :, :, 1, :, :], averages[:, :, :, 1, :],
-                                           weighted_averages[:, :, :, 1, :], state[:, :, :, 1]) # tMyV
-
-        if self.dof > self.dim + 1:
-            convective_term.forward_average_x(bil[:, :, :, :, self.dim+1, :, :], averages[:, :, :, self.dim+1, :],
-                                              weighted_averages[:, :, :, self.dim+1, :], state[:, :, :, self.dim+1]) # tMxT
-            convective_term.forward_average_y(bil[:, :, :, :, self.dim+1, :, :], averages[:, :, :, self.dim+1, :],
-                                              weighted_averages[:, :, :, self.dim+1, :], state[:, :, :, self.dim+1]) # tMyT
-            convective_term.value_u(bil[:, :, :, :, :, self.dim+1, :], averages[:, :, :, :, self.dim+1],
-                                    weighted_averages[:, :, :, :, self.dim+1], state)
-            convective_term.value_v(bil[:, :, :, :, :, self.dim+1, :], averages[:, :, :, :, self.dim+1],
-                                    weighted_averages[:, :, :, :, self.dim+1], state)
-
-        convective_term.u_x(bil) # tMxUMxU
-        convective_term.u_y(bil) # tMxVMyU
-        convective_term.v_x(bil) # tMyUMxV
-        convective_term.v_y(bil) # tMyVMyV
-
-        if self.dof > self.dim + 1:
-            convective_term.T_x(bil)
-            convective_term.T_y(bil)
-
-        if not self.x_periodic:
-            convective_term.boundary_east(bil)
-            convective_term.boundary_west(bil)
-
-        if not self.y_periodic:
-            convective_term.boundary_north(bil)
-            convective_term.boundary_south(bil)
-
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
 
@@ -1296,72 +1254,6 @@ class Discretization:
         return (atomJ, atomF)
 
     def convection_3D(self, state):
-        bil = numpy.zeros([self.nx, self.ny, self.nz, 3, self.dof, self.dof, 3])
-        averages = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof])
-        weighted_averages = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof])
-
-        convective_term = ConvectiveTerm(self.nx, self.ny, self.nz, self.dim, self.x, self.y, self.z)
-
-        convective_term.backward_average_x(bil[:, :, :, :, 0, :, :], averages[:, :, :, 0, :],
-                                           weighted_averages[:, :, :, 0, :], state[:, :, :, 0]) # tMxU
-        convective_term.forward_average_x(bil[:, :, :, :, 1, :, :], averages[:, :, :, 1, :],
-                                          weighted_averages[:, :, :, 1, :], state[:, :, :, 1]) # tMxV
-        convective_term.forward_average_x(bil[:, :, :, :, 2, :, :], averages[:, :, :, 2, :],
-                                          weighted_averages[:, :, :, 2, :], state[:, :, :, 2]) # tMxW
-        convective_term.forward_average_y(bil[:, :, :, :, 0, :, :], averages[:, :, :, 0, :],
-                                          weighted_averages[:, :, :, 0, :], state[:, :, :, 0]) # tMyU
-        convective_term.backward_average_y(bil[:, :, :, :, 1, :, :], averages[:, :, :, 1, :],
-                                           weighted_averages[:, :, :, 1, :], state[:, :, :, 1]) # tMyV
-        convective_term.forward_average_y(bil[:, :, :, :, 2, :, :], averages[:, :, :, 2, :],
-                                          weighted_averages[:, :, :, 2, :], state[:, :, :, 2]) # tMyW
-        convective_term.forward_average_z(bil[:, :, :, :, 0, :, :], averages[:, :, :, 0, :],
-                                          weighted_averages[:, :, :, 0, :], state[:, :, :, 0]) # tMzU
-        convective_term.forward_average_z(bil[:, :, :, :, 1, :, :], averages[:, :, :, 1, :],
-                                          weighted_averages[:, :, :, 1, :], state[:, :, :, 1]) # tMzV
-        convective_term.backward_average_z(bil[:, :, :, :, 2, :, :], averages[:, :, :, 2, :],
-                                           weighted_averages[:, :, :, 2, :], state[:, :, :, 2]) # tMzW
-
-        if self.dof > self.dim + 1:
-            convective_term.forward_average_x(bil[:, :, :, :, self.dim+1, :, :], averages[:, :, :, self.dim+1, :],
-                                              weighted_averages[:, :, :, self.dim+1, :], state[:, :, :, self.dim+1]) # tMxT
-            convective_term.forward_average_y(bil[:, :, :, :, self.dim+1, :, :], averages[:, :, :, self.dim+1, :],
-                                              weighted_averages[:, :, :, self.dim+1, :], state[:, :, :, self.dim+1]) # tMyT
-            convective_term.forward_average_z(bil[:, :, :, :, self.dim+1, :, :], averages[:, :, :, self.dim+1, :],
-                                              weighted_averages[:, :, :, self.dim+1, :], state[:, :, :, self.dim+1]) # tMzT
-            convective_term.value_u(bil[:, :, :, :, :, self.dim+1, :], averages[:, :, :, :, self.dim+1],
-                                    weighted_averages[:, :, :, :, self.dim+1], state)
-            convective_term.value_v(bil[:, :, :, :, :, self.dim+1, :], averages[:, :, :, :, self.dim+1],
-                                    weighted_averages[:, :, :, :, self.dim+1], state)
-            convective_term.value_w(bil[:, :, :, :, :, self.dim+1, :], averages[:, :, :, :, self.dim+1],
-                                    weighted_averages[:, :, :, :, self.dim+1], state)
-
-        convective_term.u_x(bil) # tMxUMxU
-        convective_term.u_y(bil) # tMxVMyU
-        convective_term.u_z(bil) # tMxWMzU
-        convective_term.v_x(bil) # tMyUMxV
-        convective_term.v_y(bil) # tMyVMyV
-        convective_term.v_z(bil) # tMyWMzV
-        convective_term.w_x(bil) # tMzUMxW
-        convective_term.w_y(bil) # tMzVMyW
-        convective_term.w_z(bil) # tMzWMzW
-
-        if self.dof > self.dim + 1:
-            convective_term.T_x(bil)
-            convective_term.T_y(bil)
-            convective_term.T_z(bil)
-
-        if not self.x_periodic:
-            convective_term.boundary_east(bil)
-            convective_term.boundary_west(bil)
-
-        if not self.y_periodic:
-            convective_term.boundary_north(bil)
-            convective_term.boundary_south(bil)
-
-        if not self.z_periodic:
-            convective_term.boundary_top(bil)
-            convective_term.boundary_bottom(bil)
-
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
 
