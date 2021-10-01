@@ -986,20 +986,6 @@ class Discretization:
 
         return averages
 
-    def u_u_x(self, atomJ, atomF, state):
-        averages = self.average_x(state[:, :, :, 0])
-
-        atom = numpy.zeros(3)
-        for i in range(self.nx):
-            for j in range(self.ny):
-                for k in range(self.nz):
-                    Discretization._forward_u_x(atom, i, j, k, self.x, self.y, self.z)
-                    atomF[i, j, k, 0, 0, 0:2, 1, 1] -= atom[1] * averages[i, j, k] * 1 / 2
-                    atomF[i, j, k, 0, 0, 1:3, 1, 1] -= atom[2] * averages[i+1, j, k] * 1 / 2
-
-                    atomJ[i, j, k, 0, 0, 0:2, 1, 1] -= atom[1] * averages[i, j, k] * 1 / 2
-                    atomJ[i, j, k, 0, 0, 1:3, 1, 1] -= atom[2] * averages[i+1, j, k] * 1 / 2
-
     @staticmethod
     def _weighted_average_x(atom, i, x):
         # volume size in the x direction
@@ -1025,6 +1011,20 @@ class Discretization:
             averages[i, :, :] += atom[1] * cropped_state[i+2, :, :]
 
         return averages
+
+    def u_u_x(self, atomJ, atomF, state):
+        averages = self.average_x(state[:, :, :, 0])
+
+        atom = numpy.zeros(3)
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
+                    Discretization._forward_u_x(atom, i, j, k, self.x, self.y, self.z)
+                    atomF[i, j, k, 0, 0, 0:2, 1, 1] -= atom[1] * averages[i, j, k] * 1 / 2
+                    atomF[i, j, k, 0, 0, 1:3, 1, 1] -= atom[2] * averages[i+1, j, k] * 1 / 2
+
+                    atomJ[i, j, k, 0, 0, 0:2, 1, 1] -= atom[1] * averages[i, j, k] * 1 / 2
+                    atomJ[i, j, k, 0, 0, 1:3, 1, 1] -= atom[2] * averages[i+1, j, k] * 1 / 2
 
     def v_u_y(self, atomJ, atomF, state):
         averages_u = self.average_y(state[:, :, :, 0])
