@@ -254,22 +254,22 @@ class CylindricalDiscretization(Discretization):
             return self.irvscale(self.u_r() + self.v_y())
         return self.irvscale(self.u_r() + self.v_y() + self.w_z())
 
-    def convection_v_u(self, atomJ_in, atomF_in, averages, weighted_averages, bil):
+    def v_u_y(self, atomJ_in, atomF_in, state):
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
 
-        Discretization.convection_v_u(self, atomJ, atomF, averages, weighted_averages, bil)
+        Discretization.v_u_y(self, atomJ, atomF, state)
         self.iruscale(atomJ)
         self.iruscale(atomF)
 
         atomJ_in += atomJ
         atomF_in += atomF
 
-    def convection_v_v(self, atomJ_in, atomF_in, averages, weighted_averages, bil):
+    def v_v_y(self, atomJ_in, atomF_in, state):
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
 
-        Discretization.convection_v_v(self, atomJ, atomF, averages, weighted_averages, bil)
+        Discretization.v_v_y(self, atomJ, atomF, state)
         self.irvscale(atomJ)
         self.irvscale(atomF)
 
