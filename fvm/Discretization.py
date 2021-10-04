@@ -980,7 +980,6 @@ class Discretization:
         averages_T = self.average_x(state[:, :, :, self.dim+1])
 
         atom = numpy.zeros(3)
-        atom_average = numpy.zeros(2)
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
@@ -1044,7 +1043,6 @@ class Discretization:
         averages_T = self.average_y(state[:, :, :, self.dim+1])
 
         atom = numpy.zeros(3)
-        atom_average = numpy.zeros(2)
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
@@ -1108,7 +1106,6 @@ class Discretization:
         averages_T = self.average_z(state[:, :, :, self.dim+1])
 
         atom = numpy.zeros(3)
-        atom_average = numpy.zeros(2)
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
