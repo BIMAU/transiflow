@@ -38,9 +38,9 @@ def create_random_state(nx, ny, nz, dim, dof):
 def create_test_problem_tc():
     nx = 13
     ny = 7
-    nz = 1
-    dim = 2
-    dof = 3
+    nz = 5
+    dim = 3
+    dof = 4
 
     x = create_coordinate_vector(nx)
     y = create_coordinate_vector(ny)
@@ -229,7 +229,7 @@ def test_jac_consistency_stretched_2d():
         rhs2 = discretization.rhs(state + eps * pert)
         assert numpy.linalg.norm((rhs2 - rhs) / eps - A @ pert) < eps2
 
-def test_jac_consistency_tc_uniform_2d():
+def test_jac_consistency_tc_uniform():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem_tc()
 
     state = create_random_state_tc(nx, ny, nz, dim, dof)
@@ -241,24 +241,25 @@ def test_jac_consistency_tc_uniform_2d():
 
     for i in range(3, 12):
         eps = 10 ** -i
-        eps2 = 3 * max(eps, 10 ** (-14+i))
+        eps2 = 2 * max(eps, 10 ** (-14+i))
         rhs2 = discretization.rhs(state + eps * pert)
         assert numpy.linalg.norm((rhs2 - rhs) / eps - A @ pert) < eps2
 
-def test_jac_consistency_tc_stretched_2d():
+def test_jac_consistency_tc_stretched():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem_tc()
 
     x = utils.create_stretched_coordinate_vector(0, 1, nx, 1.5)
+    z = utils.create_stretched_coordinate_vector(0, 1, nz, 1.5)
 
     state = create_random_state_tc(nx, ny, nz, dim, dof)
     pert = create_random_state_tc(nx, ny, nz, dim, dof)
 
-    discretization = CylindricalDiscretization(parameters, nx, ny, nz, dim, dof, x)
+    discretization = CylindricalDiscretization(parameters, nx, ny, nz, dim, dof, x, None, z)
     A = discretization.jacobian(state)
     rhs = discretization.rhs(state)
 
     for i in range(3, 12):
         eps = 10 ** -i
-        eps2 = 3 * max(eps, 10 ** (-14+i))
+        eps2 = 2 * max(eps, 10 ** (-14+i))
         rhs2 = discretization.rhs(state + eps * pert)
         assert numpy.linalg.norm((rhs2 - rhs) / eps - A @ pert) < eps2

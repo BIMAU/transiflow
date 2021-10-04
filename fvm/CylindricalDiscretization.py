@@ -58,6 +58,26 @@ class CylindricalDiscretization(Discretization):
 
         return atom
 
+    def _linear_part_3D(self):
+        '''Compute the linear part of the equation in case the domain is 3D.
+        In case Re = 0 we instead compute the linear part for the Stokes
+        problem.'''
+
+        Re = self.get_parameter('Reynolds Number')
+
+        if Re == 0:
+            Re = 1
+
+        atom = 1 / Re * (self.iruscale(self.u_rr()) + self.iru2scale(self.u_tt() - self.value_u() - 2 * self.v_t_u())
+                         + self.u_zz()
+                         + self.irvscale(self.v_rr()) + self.irv2scale(self.v_tt() - self.value_v() - 2 * self.u_t_v())
+                         + self.v_zz()
+                         + self.irvscale(self.w_rr()) + self.irv2scale(self.w_tt()) + self.w_zz()) \
+            - (self.p_r() + self.irvscale(self.p_t()) + self.p_z()) \
+            + self.div()
+
+        return atom
+
     def boundaries(self, atom):
         '''Compute boundary conditions for the currently defined problem type.'''
 
@@ -168,6 +188,33 @@ class CylindricalDiscretization(Discretization):
                     CylindricalDiscretization._v_rr(atom[i, j, k, 1, 1, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
+    def w_tt(self):
+        return self.w_yy()
+
+    @staticmethod
+    def _w_rr(atom, i, j, k, x, y, z):
+        # distance between v[i] and v[i-1]
+        dx = (x[i] - x[i-2]) / 2
+        # distance between v[i+1] and v[i]
+        dxp1 = (x[i+1] - x[i-1]) / 2
+        # volume size in the y direction
+        dy = y[j] - y[j-1]
+        # volume size in the z direction
+        dz = (z[k+1] - z[k-1]) / 2
+
+        # second order finite difference
+        atom[0] = x[i-1] / dx * dy * dz
+        atom[2] = x[i] / dxp1 * dy * dz
+        atom[1] = -atom[0] - atom[2]
+
+    def w_rr(self):
+        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        for i in range(self.nx):
+            for j in range(self.ny):
+                for k in range(self.nz):
+                    CylindricalDiscretization._w_rr(atom[i, j, k, 1, 1, :, 1, 1], i, j, k, self.x, self.y, self.z)
+        return atom
+
     def p_r(self):
         return self.p_x()
 
@@ -252,7 +299,7 @@ class CylindricalDiscretization(Discretization):
     def div(self):
         if self.dim == 2:
             return self.irvscale(self.u_r() + self.v_y())
-        return self.irvscale(self.u_r() + self.v_y() + self.w_z())
+        return self.irvscale(self.u_r() + self.v_y()) + self.w_z()
 
     def v_u_y(self, atomJ_in, atomF_in, state):
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
@@ -270,6 +317,17 @@ class CylindricalDiscretization(Discretization):
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
 
         Discretization.v_v_y(self, atomJ, atomF, state)
+        self.irvscale(atomJ)
+        self.irvscale(atomF)
+
+        atomJ_in += atomJ
+        atomF_in += atomF
+
+    def v_w_y(self, atomJ_in, atomF_in, state):
+        atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+
+        Discretization.v_w_y(self, atomJ, atomF, state)
         self.irvscale(atomJ)
         self.irvscale(atomF)
 
@@ -325,6 +383,14 @@ class CylindricalDiscretization(Discretization):
 
     def convection_2D(self, state):
         atomJ, atomF = Discretization.convection_2D(self, state)
+
+        self.v_v(atomJ, atomF, state)
+        self.u_v(atomJ, atomF, state)
+
+        return (atomJ, atomF)
+
+    def convection_3D(self, state):
+        atomJ, atomF = Discretization.convection_3D(self, state)
 
         self.v_v(atomJ, atomF, state)
         self.u_v(atomJ, atomF, state)
