@@ -405,30 +405,6 @@ def read_matrix(fname):
 
     return A
 
-def read_bous_matrix(fname):
-    A = read_matrix(fname)
-
-    dof = 5
-    B = CrsMatrix([], [], [0])
-    # Swap indices since the Fortran code had T at position 3
-    for i in range(len(A.begA)-1):
-        i2 = i + (i % dof == 3) - (i % dof == 4)
-        if i2 + 1 >= len(A.begA):
-            continue
-
-        row = []
-        for j in range(A.begA[i2], A.begA[i2+1]):
-            col = A.jcoA[j] + (A.jcoA[j] % dof == 3) - (A.jcoA[j] % dof == 4)
-            row.append((col, A.coA[j]))
-
-        row = sorted(row, key=lambda col: col[0])
-        for col, val in row:
-            B.jcoA.append(col)
-            B.coA.append(val)
-        B.begA.append(len(B.jcoA))
-
-    return B
-
 def write_matrix(A, fname):
     dirname = os.path.dirname(__file__)
     with open(os.path.join(dirname, fname), 'w') as f:
@@ -444,15 +420,6 @@ def read_vector(fname):
         for i in f.readlines():
             vec = numpy.append(vec, float(i.strip()))
     return vec
-
-def read_bous_vector(fname):
-    vec = read_vector(fname)
-
-    dof = 5
-    out = numpy.zeros(len(vec))
-    for i in range(len(vec)):
-        out[i] = vec[i + (i % dof == 3) - (i % dof == 4)]
-    return out
 
 def write_vector(vec, fname):
     dirname = os.path.dirname(__file__)
@@ -529,9 +496,7 @@ def test_bous_lin():
     atom = discretization.linear_part()
     A = assemble_jacobian(atom, nx, ny, nz, dof)
 
-    B = read_bous_matrix('bous_lin_%sx%sx%s.txt' % (nx, ny, nz))
-
-    pytest.skip('The Prandtl number is currently applied in a different place')
+    B = read_matrix('bous_lin_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -627,9 +592,7 @@ def test_bous_bnd():
     discretization.boundaries(atom)
     A = discretization.assemble_jacobian(atom)
 
-    B = read_bous_matrix('bous_bnd_%sx%sx%s.txt' % (nx, ny, nz))
-
-    pytest.skip('The Prandtl number is currently applied in a different place')
+    B = read_matrix('bous_bnd_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -708,9 +671,7 @@ def test_bous_bil():
     discretization.boundaries(atom)
     A = discretization.assemble_jacobian(atom)
 
-    B = read_bous_matrix('bous_bil_%sx%sx%s.txt' % (nx, ny, nz))
-
-    pytest.skip('The Prandtl number is currently applied in a different place')
+    B = read_matrix('bous_bil_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -879,10 +840,8 @@ def test_bous():
     A = discretization.jacobian(state)
     rhs = discretization.rhs(state)
 
-    B = read_bous_matrix('bous_%sx%sx%s.txt' % (nx, ny, nz))
-    rhs_B = read_bous_vector('bous_rhs_%sx%sx%s.txt' % (nx, ny, nz))
-
-    pytest.skip('The Prandtl number is currently applied in a different place')
+    B = read_matrix('bous_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = read_vector('bous_rhs_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
