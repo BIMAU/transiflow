@@ -829,7 +829,8 @@ def test_bous():
     nz = nx
     dim = 3
     dof = 5
-    parameters = {'Reynolds Number': 1, 'Rayleigh Number': 100, 'Prandtl Number': 100, 'Problem Type': 'Rayleigh-Benard'}
+    parameters = {'Reynolds Number': 1, 'Rayleigh Number': 100, 'Prandtl Number': 100,
+                  'Problem Type': 'Rayleigh-Benard'}
     n = nx * ny * nz * dof
 
     state = numpy.zeros(n)
@@ -867,7 +868,8 @@ def test_bous_stretched():
     nz = nx
     dim = 3
     dof = 5
-    parameters = {'Reynolds Number': 1, 'Rayleigh Number': 100, 'Prandtl Number': 100, 'Problem Type': 'Rayleigh-Benard', 'Grid Stretching': True}
+    parameters = {'Reynolds Number': 1, 'Rayleigh Number': 100, 'Prandtl Number': 100,
+                  'Problem Type': 'Rayleigh-Benard', 'Grid Stretching': True}
     n = nx * ny * nz * dof
 
     state = numpy.zeros(n)
@@ -905,7 +907,8 @@ def test_bous_2D():
     nz = 1
     dim = 3
     dof1 = 5
-    parameters = {'Reynolds Number': 1, 'Rayleigh Number': 100, 'Prandtl Number': 100, 'Problem Type': 'Rayleigh-Benard'}
+    parameters = {'Reynolds Number': 1, 'Rayleigh Number': 100, 'Prandtl Number': 100,
+                  'Problem Type': 'Rayleigh-Benard'}
     n = nx * ny * nz * dof1
 
     state1 = numpy.zeros(n)
