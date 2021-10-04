@@ -380,7 +380,7 @@ def test_v_v():
                 print(i, j, k)
                 Discretization._mass_x(atom_value, i, j, k, x, y, z)
                 assert rhs[i * dof + j * nx * dof + k * nx * ny * dof] * x[i] == pytest.approx(
-                    -atom_value * averages_v[i, j, k+1] ** 2)
+                    atom_value * averages_v[i, j, k+1] ** 2)
 
 def read_matrix(fname):
     A = CrsMatrix([], [], [0])
