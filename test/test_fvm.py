@@ -363,12 +363,15 @@ def test_v_v():
     state_mtx = utils.create_padded_state_mtx(state, nx, ny, nz, dof, False, False, False)
 
     discretization = CylindricalDiscretization(parameters, nx, ny, nz, dim, dof, x, y, z)
-    atom = discretization.v_v(state_mtx)
+
+    atomJ = numpy.zeros([nx, ny, nz, dof, dof, 3, 3, 3])
+    atomF = numpy.zeros([nx, ny, nz, dof, dof, 3, 3, 3])
+    discretization.v_v(atomJ, atomF, state_mtx)
 
     averages_v = discretization.weighted_average_x(state_mtx[:, :, :, 1])
     averages_v = (averages_v[:, 0:ny, :] + averages_v[:, 1:ny+1, :]) / 2
 
-    rhs = discretization.assemble_rhs(state, atom)
+    rhs = discretization.assemble_rhs(state, atomF)
 
     atom_value = numpy.zeros(1)
     for i in range(nx):
@@ -376,7 +379,8 @@ def test_v_v():
             for k in range(nz):
                 print(i, j, k)
                 Discretization._mass_x(atom_value, i, j, k, x, y, z)
-                assert rhs[i * dof + j * nx * dof + k * nx * ny * dof] == pytest.approx(-atom_value * averages_v[i, j, k+1] ** 2)
+                assert rhs[i * dof + j * nx * dof + k * nx * ny * dof] * x[i] == pytest.approx(
+                    -atom_value * averages_v[i, j, k+1] ** 2)
 
 def read_matrix(fname):
     A = CrsMatrix([], [], [0])

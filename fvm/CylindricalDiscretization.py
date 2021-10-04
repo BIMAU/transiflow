@@ -316,7 +316,7 @@ class CylindricalDiscretization(Discretization):
         atom[1] *= dx * dy * dz
         atom[2] *= dx * dy * dz
 
-    def v_v(self, state):
+    def v_v(self, atomJ_in, atomF_in, state):
         averages_v = self.weighted_average_x(state[:, :, :, 1])
         averages_v = (averages_v[:, 0:self.ny, :] + averages_v[:, 1:self.ny+1, :]) / 2
 
@@ -332,7 +332,10 @@ class CylindricalDiscretization(Discretization):
                     atom[i, j, k, 0, 1, 1:3, 0, 1] -= atom_value * atom_average * averages_v[i, j, k+1] * 1 / 2
                     atom[i, j, k, 0, 1, 1:3, 1, 1] -= atom_value * atom_average * averages_v[i, j, k+1] * 1 / 2
 
-        return atom
+        self.iruscale(atom)
+
+        atomJ_in += atom + atom
+        atomF_in += atom
 
     def value_u_at_v(self, state):
         averages = numpy.zeros([self.nx, self.ny, self.nz])
@@ -363,10 +366,7 @@ class CylindricalDiscretization(Discretization):
     def convection_2D(self, state):
         atomJ, atomF = Discretization.convection_2D(self, state)
 
-        atom = self.iruscale(self.v_v(state))
+        self.v_v(atomJ, atomF, state)
         # atom += self.irvscale(self.value_u_v(state))
-
-        atomJ += atom + atom
-        atomF += atom
 
         return (atomJ, atomF)
