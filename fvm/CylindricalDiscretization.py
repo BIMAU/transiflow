@@ -40,6 +40,9 @@ class CylindricalDiscretization(Discretization):
 
         if self.problem_type_equals('Taylor-Couette'):
             self.y_periodic = True
+        elif self.problem_type_equals('Axisymmetric Taylor-Couette'):
+            self.y_periodic = True
+            self.z_periodic = True
 
     def _linear_part_2D(self):
         '''Compute the linear part of the equation in case the domain is 2D.
@@ -51,12 +54,10 @@ class CylindricalDiscretization(Discretization):
         if Re == 0:
             Re = 1
 
-        atom = 1 / Re * (self.iruscale(self.u_rr()) + self.iru2scale(self.u_tt() - self.value_u() - 2 * self.v_t_u())
+        return 1 / Re * (self.iruscale(self.u_rr()) + self.iru2scale(self.u_tt() - self.value_u() - 2 * self.v_t_u())
                          + self.irvscale(self.v_rr()) + self.irv2scale(self.v_tt() - self.value_v() - 2 * self.u_t_v())) \
             - (self.p_r() + self.irvscale(self.p_t())) \
             + self.div()
-
-        return atom
 
     def _linear_part_3D(self):
         '''Compute the linear part of the equation in case the domain is 3D.
@@ -68,15 +69,13 @@ class CylindricalDiscretization(Discretization):
         if Re == 0:
             Re = 1
 
-        atom = 1 / Re * (self.iruscale(self.u_rr()) + self.iru2scale(self.u_tt() - self.value_u() - 2 * self.v_t_u())
+        return 1 / Re * (self.iruscale(self.u_rr()) + self.iru2scale(self.u_tt() - self.value_u() - 2 * self.v_t_u())
                          + self.u_zz()
                          + self.irvscale(self.v_rr()) + self.irv2scale(self.v_tt() - self.value_v() - 2 * self.u_t_v())
                          + self.v_zz()
                          + self.irvscale(self.w_rr()) + self.irv2scale(self.w_tt()) + self.w_zz()) \
             - (self.p_r() + self.irvscale(self.p_t()) + self.p_z()) \
             + self.div()
-
-        return atom
 
     def nonlinear_part(self, state):
         '''Compute the nonlinear part of the equation. In case Re = 0 this
@@ -131,6 +130,13 @@ class CylindricalDiscretization(Discretization):
 
             boundary_conditions.no_slip_top(atom)
             boundary_conditions.no_slip_bottom(atom)
+        elif self.problem_type_equals('Axisymmetric Taylor-Couette'):
+            vo = self.get_parameter('Outer Velocity', 2)
+            vi = self.get_parameter('Inner Velocity', 1)
+            frc += boundary_conditions.moving_lid_east(atom, vo)
+            frc += boundary_conditions.moving_lid_west(atom, vi)
+
+            return frc
         else:
             raise Exception('Invalid problem type %s' % self.get_parameter('Problem Type'))
 
