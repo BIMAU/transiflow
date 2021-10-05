@@ -205,12 +205,12 @@ class Discretization:
         state_mtx = utils.create_padded_state_mtx(state, self.nx, self.ny, self.nz, self.dof,
                                                   self.x_periodic, self.y_periodic, self.z_periodic)
 
-        Re = self.get_parameter('Reynolds Number')
-        if Re == 0 and not self.dof > self.dim + 1:
-            state_mtx[:, :, :, :] = 0
-
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+
+        Re = self.get_parameter('Reynolds Number')
+        if Re == 0 and not self.dof > self.dim + 1:
+            return (atomJ, atomF)
 
         self.u_u_x(atomJ, atomF, state_mtx)
         self.u_v_x(atomJ, atomF, state_mtx)
