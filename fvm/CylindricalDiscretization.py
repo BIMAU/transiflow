@@ -86,7 +86,7 @@ class CylindricalDiscretization(Discretization):
                                                   self.x_periodic, self.y_periodic, self.z_periodic)
 
         Re = self.get_parameter('Reynolds Number')
-        if Re == 0 and not self.dof > self.dim + 1:
+        if Re == 0:
             state_mtx[:, :, :, :] = 0
 
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
@@ -106,17 +106,6 @@ class CylindricalDiscretization(Discretization):
             self.w_u_z(atomJ, atomF, state_mtx)
             self.w_v_z(atomJ, atomF, state_mtx)
             self.w_w_z(atomJ, atomF, state_mtx)
-
-        if self.dof > self.dim + 1:
-            Pr = self.get_parameter('Prandtl Number', 1.0)
-            atomJ /= Pr
-            atomF /= Pr
-
-            self.u_T_x(atomJ, atomF, state_mtx)
-            self.v_T_y(atomJ, atomF, state_mtx)
-
-            if self.dim > 2:
-                self.w_T_z(atomJ, atomF, state_mtx)
 
         atomJ += atomF
 
