@@ -209,9 +209,35 @@ class Discretization:
         if Re == 0 and not self.dof > self.dim + 1:
             state_mtx[:, :, :, :] = 0
 
-        if self.dim == 2:
-            return self.convection_2D(state_mtx)
-        return self.convection_3D(state_mtx)
+        atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+
+        self.u_u_x(atomJ, atomF, state_mtx)
+        self.u_v_x(atomJ, atomF, state_mtx)
+        self.v_u_y(atomJ, atomF, state_mtx)
+        self.v_v_y(atomJ, atomF, state_mtx)
+
+        if self.dim > 2:
+            self.u_w_x(atomJ, atomF, state_mtx)
+            self.v_w_y(atomJ, atomF, state_mtx)
+            self.w_u_z(atomJ, atomF, state_mtx)
+            self.w_v_z(atomJ, atomF, state_mtx)
+            self.w_w_z(atomJ, atomF, state_mtx)
+
+        if self.dof > self.dim + 1:
+            Pr = self.get_parameter('Prandtl Number', 1.0)
+            atomJ /= Pr
+            atomF /= Pr
+
+            self.u_T_x(atomJ, atomF, state_mtx)
+            self.v_T_y(atomJ, atomF, state_mtx)
+
+            if self.dim > 2:
+                self.w_T_z(atomJ, atomF, state_mtx)
+
+        atomJ += atomF
+
+        return (atomJ, atomF)
 
     def rhs(self, state):
         '''Right-hand side in M * du / dt = F(u).'''
@@ -1115,51 +1141,3 @@ class Discretization:
 
                     atomJ[i, j, k, self.dim+1, 2, 1, 1, 0] -= atom[0] * averages_T[i, j, k]
                     atomJ[i, j, k, self.dim+1, 2, 1, 1, 1] -= atom[1] * averages_T[i, j, k+1]
-
-    def convection_2D(self, state):
-        atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
-        atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
-
-        self.u_u_x(atomJ, atomF, state)
-        self.u_v_x(atomJ, atomF, state)
-        self.v_u_y(atomJ, atomF, state)
-        self.v_v_y(atomJ, atomF, state)
-
-        if self.dof > self.dim + 1:
-            Pr = self.get_parameter('Prandtl Number', 1.0)
-            atomJ /= Pr
-            atomF /= Pr
-
-            self.u_T_x(atomJ, atomF, state)
-            self.v_T_y(atomJ, atomF, state)
-
-        atomJ += atomF
-
-        return (atomJ, atomF)
-
-    def convection_3D(self, state):
-        atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
-        atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
-
-        self.u_u_x(atomJ, atomF, state)
-        self.u_v_x(atomJ, atomF, state)
-        self.u_w_x(atomJ, atomF, state)
-        self.v_u_y(atomJ, atomF, state)
-        self.v_v_y(atomJ, atomF, state)
-        self.v_w_y(atomJ, atomF, state)
-        self.w_u_z(atomJ, atomF, state)
-        self.w_v_z(atomJ, atomF, state)
-        self.w_w_z(atomJ, atomF, state)
-
-        if self.dof > self.dim + 1:
-            Pr = self.get_parameter('Prandtl Number', 1.0)
-            atomJ /= Pr
-            atomF /= Pr
-
-            self.u_T_x(atomJ, atomF, state)
-            self.v_T_y(atomJ, atomF, state)
-            self.w_T_z(atomJ, atomF, state)
-
-        atomJ += atomF
-
-        return (atomJ, atomF)

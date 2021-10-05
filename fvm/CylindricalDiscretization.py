@@ -78,6 +78,50 @@ class CylindricalDiscretization(Discretization):
 
         return atom
 
+    def nonlinear_part(self, state):
+        '''Compute the nonlinear part of the equation. In case Re = 0 this
+        does nothing.'''
+
+        state_mtx = utils.create_padded_state_mtx(state, self.nx, self.ny, self.nz, self.dof,
+                                                  self.x_periodic, self.y_periodic, self.z_periodic)
+
+        Re = self.get_parameter('Reynolds Number')
+        if Re == 0 and not self.dof > self.dim + 1:
+            state_mtx[:, :, :, :] = 0
+
+        atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+
+        self.u_u_x(atomJ, atomF, state_mtx)
+        self.u_v_x(atomJ, atomF, state_mtx)
+        self.v_u_y(atomJ, atomF, state_mtx)
+        self.v_v_y(atomJ, atomF, state_mtx)
+
+        if self.dim > 2:
+            self.u_w_x(atomJ, atomF, state_mtx)
+            self.v_w_y(atomJ, atomF, state_mtx)
+            self.w_u_z(atomJ, atomF, state_mtx)
+            self.w_v_z(atomJ, atomF, state_mtx)
+            self.w_w_z(atomJ, atomF, state_mtx)
+
+        if self.dof > self.dim + 1:
+            Pr = self.get_parameter('Prandtl Number', 1.0)
+            atomJ /= Pr
+            atomF /= Pr
+
+            self.u_T_x(atomJ, atomF, state_mtx)
+            self.v_T_y(atomJ, atomF, state_mtx)
+
+            if self.dim > 2:
+                self.w_T_z(atomJ, atomF, state_mtx)
+
+        atomJ += atomF
+
+        self.v_v(atomJ, atomF, state_mtx)
+        self.u_v(atomJ, atomF, state_mtx)
+
+        return (atomJ, atomF)
+
     def boundaries(self, atom):
         '''Compute boundary conditions for the currently defined problem type.'''
 
@@ -380,19 +424,3 @@ class CylindricalDiscretization(Discretization):
 
         atomJ_in += atomJ + atomF
         atomF_in += atomF
-
-    def convection_2D(self, state):
-        atomJ, atomF = Discretization.convection_2D(self, state)
-
-        self.v_v(atomJ, atomF, state)
-        self.u_v(atomJ, atomF, state)
-
-        return (atomJ, atomF)
-
-    def convection_3D(self, state):
-        atomJ, atomF = Discretization.convection_3D(self, state)
-
-        self.v_v(atomJ, atomF, state)
-        self.u_v(atomJ, atomF, state)
-
-        return (atomJ, atomF)
