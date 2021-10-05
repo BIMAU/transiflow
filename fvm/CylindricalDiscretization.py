@@ -19,18 +19,9 @@ class CylindricalDiscretization(Discretization):
             r = utils.create_stretched_coordinate_vector(
                 self.parameters.get('R-min', 0.0), self.parameters.get('R-max', 1.0), nr,
                 self.parameters.get('Grid Stretching Factor', 1.5)) if r is None else r
-
-            # TODO: Maybe force this if dim = 2?
-            z = utils.create_stretched_coordinate_vector(
-                self.parameters.get('Z-min', 0.0), self.parameters.get('Z-max', 1.0), nz,
-                self.parameters.get('Grid Stretching Factor', 1.5)) if z is None else z
         else:
             r = utils.create_uniform_coordinate_vector(
                 self.parameters.get('R-min', 0.0), self.parameters.get('R-max', 1.0), nr) if r is None else r
-
-            # TODO: Maybe force this if dim = 2?
-            z = utils.create_uniform_coordinate_vector(
-                self.parameters.get('Z-min', 0.0), self.parameters.get('Z-max', 1.0), nz) if z is None else z
 
         theta = utils.create_uniform_coordinate_vector(
             self.parameters.get('Theta-min', 0.0), self.parameters.get('Theta-max', 1.0), ntheta) \
