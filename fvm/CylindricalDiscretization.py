@@ -113,8 +113,8 @@ class CylindricalDiscretization(Discretization):
         if self.problem_type_equals('Taylor-Couette'):
             vo = self.get_parameter('Outer Velocity', 2)
             vi = self.get_parameter('Inner Velocity', 1)
-            frc += boundary_conditions.moving_lid_east(atom, vo)
-            frc += boundary_conditions.moving_lid_west(atom, vi)
+            frc += boundary_conditions.moving_lid_east(atom, vo * self.x[self.nx-1])
+            frc += boundary_conditions.moving_lid_west(atom, vi * self.x[-1])
 
             if self.dim == 2 or self.nz <= 1:
                 return frc
@@ -124,8 +124,8 @@ class CylindricalDiscretization(Discretization):
         elif self.problem_type_equals('Axisymmetric Taylor-Couette'):
             vo = self.get_parameter('Outer Velocity', 2)
             vi = self.get_parameter('Inner Velocity', 1)
-            frc += boundary_conditions.moving_lid_east(atom, vo)
-            frc += boundary_conditions.moving_lid_west(atom, vi)
+            frc += boundary_conditions.moving_lid_east(atom, vo * self.x[self.nx-1])
+            frc += boundary_conditions.moving_lid_west(atom, vi * self.x[-1])
 
             return frc
         else:
