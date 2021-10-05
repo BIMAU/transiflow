@@ -92,17 +92,17 @@ class CylindricalDiscretization(Discretization):
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
 
-        self.u_u_x(atomJ, atomF, state_mtx)
-        self.u_v_x(atomJ, atomF, state_mtx)
-        self.v_u_y(atomJ, atomF, state_mtx)
-        self.v_v_y(atomJ, atomF, state_mtx)
+        self.u_u_r(atomJ, atomF, state_mtx)
+        self.u_v_r(atomJ, atomF, state_mtx)
+        self.v_u_t(atomJ, atomF, state_mtx)
+        self.v_v_t(atomJ, atomF, state_mtx)
 
         self.v_v(atomJ, atomF, state_mtx)
         self.u_v(atomJ, atomF, state_mtx)
 
         if self.dim > 2:
-            self.u_w_x(atomJ, atomF, state_mtx)
-            self.v_w_y(atomJ, atomF, state_mtx)
+            self.u_w_r(atomJ, atomF, state_mtx)
+            self.v_w_t(atomJ, atomF, state_mtx)
             self.w_u_z(atomJ, atomF, state_mtx)
             self.w_v_z(atomJ, atomF, state_mtx)
             self.w_w_z(atomJ, atomF, state_mtx)
@@ -334,7 +334,16 @@ class CylindricalDiscretization(Discretization):
             return self.irvscale(self.u_r() + self.v_y())
         return self.irvscale(self.u_r() + self.v_y()) + self.w_z()
 
-    def v_u_y(self, atomJ_in, atomF_in, state):
+    def u_u_r(self, atomJ, atomF, state):
+        Discretization.u_u_x(self, atomJ, atomF, state)
+
+    def u_v_r(self, atomJ, atomF, state):
+        Discretization.u_v_x(self, atomJ, atomF, state)
+
+    def u_w_r(self, atomJ, atomF, state):
+        Discretization.u_w_x(self, atomJ, atomF, state)
+
+    def v_u_t(self, atomJ_in, atomF_in, state):
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
 
@@ -345,7 +354,7 @@ class CylindricalDiscretization(Discretization):
         atomJ_in += atomJ
         atomF_in += atomF
 
-    def v_v_y(self, atomJ_in, atomF_in, state):
+    def v_v_t(self, atomJ_in, atomF_in, state):
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
 
@@ -356,7 +365,7 @@ class CylindricalDiscretization(Discretization):
         atomJ_in += atomJ
         atomF_in += atomF
 
-    def v_w_y(self, atomJ_in, atomF_in, state):
+    def v_w_t(self, atomJ_in, atomF_in, state):
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
 
