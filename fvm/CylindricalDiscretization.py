@@ -298,14 +298,6 @@ class CylindricalDiscretization(Discretization):
                     CylindricalDiscretization._value_u(atom[i, j, k, 1, 1, :, 1, 1], j, i, k, self.y, self.x, self.z)
         return atom
 
-    def value_w(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
-        for i in range(self.nx):
-            for j in range(self.ny):
-                for k in range(self.nz):
-                    CylindricalDiscretization._value_u(atom[i, j, k, 0, 0, :, 1, 1], k, j, i, self.z, self.y, self.x)
-        return atom
-
     @staticmethod
     def _backward_u_r(atom, i, j, k, x, y, z):
         # volume size in the y direction
