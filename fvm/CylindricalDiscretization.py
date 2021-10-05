@@ -97,6 +97,9 @@ class CylindricalDiscretization(Discretization):
         self.v_u_y(atomJ, atomF, state_mtx)
         self.v_v_y(atomJ, atomF, state_mtx)
 
+        self.v_v(atomJ, atomF, state_mtx)
+        self.u_v(atomJ, atomF, state_mtx)
+
         if self.dim > 2:
             self.u_w_x(atomJ, atomF, state_mtx)
             self.v_w_y(atomJ, atomF, state_mtx)
@@ -116,9 +119,6 @@ class CylindricalDiscretization(Discretization):
                 self.w_T_z(atomJ, atomF, state_mtx)
 
         atomJ += atomF
-
-        self.v_v(atomJ, atomF, state_mtx)
-        self.u_v(atomJ, atomF, state_mtx)
 
         return (atomJ, atomF)
 
@@ -396,7 +396,7 @@ class CylindricalDiscretization(Discretization):
 
         self.iruscale(atom)
 
-        atomJ_in += atom + atom
+        atomJ_in += atom
         atomF_in += atom
 
     def u_v(self, atomJ_in, atomF_in, state):
@@ -422,5 +422,5 @@ class CylindricalDiscretization(Discretization):
         self.irvscale(atomF)
         self.irvscale(atomJ)
 
-        atomJ_in += atomJ + atomF
+        atomJ_in += atomJ
         atomF_in += atomF
