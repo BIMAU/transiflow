@@ -250,8 +250,8 @@ class CylindricalDiscretization(Discretization):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    Discretization._backward_u_x(atom[i, j, k, 1, 0, 1, :, 1], j, i, k, self.y, self.x, self.z)
-                    Discretization._backward_u_x(atom[i, j, k, 1, 0, 2, :, 1], j, i, k, self.y, self.x, self.z)
+                    Discretization._forward_u_x(atom[i, j, k, 1, 0, 0, :, 1], j, i, k, self.y, self.x, self.z)
+                    Discretization._forward_u_x(atom[i, j, k, 1, 0, 1, :, 1], j, i, k, self.y, self.x, self.z)
                     atom[i, j, k, 1, 0, :, :, :] /= 2
         return atom
 
