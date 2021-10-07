@@ -24,20 +24,20 @@ def create_padded_state_mtx(state, nx, ny, nz, dof, x_periodic=True, y_periodic=
 
     # Add extra borders for periodic boundary conditions
     if x_periodic:
-        state_mtx[0, 1:ny+1, 1:nz+1, :] = state_mtx[nx, 1:ny+1, 1:nz+1, :]
-        state_mtx[nx+1, 1:ny+1, 1:nz+1, :] = state_mtx[1, 1:ny+1, 1:nz+1, :]
+        state_mtx[0, :, :, :] = state_mtx[nx, :, :, :]
+        state_mtx[nx+1, :, :, :] = state_mtx[1, :, :, :]
     else:
         state_mtx[nx, :, :, 0] = 0
 
     if y_periodic:
-        state_mtx[1:nx+1, 0, 1:nz+1, :] = state_mtx[1:nx+1, ny, 1:nz+1, :]
-        state_mtx[1:nx+1, ny+1, 1:nz+1, :] = state_mtx[1:nx+1, 1, 1:nz+1, :]
+        state_mtx[:, 0, :, :] = state_mtx[:, ny, :, :]
+        state_mtx[:, ny+1, :, :] = state_mtx[:, 1, :, :]
     else:
         state_mtx[:, ny, :, 1] = 0
 
     if z_periodic:
-        state_mtx[1:nx+1, 1:ny+1, 0, :] = state_mtx[1:nx+1, 1:ny+1, nz, :]
-        state_mtx[1:nx+1, 1:ny+1, nz+1, :] = state_mtx[1:nx+1, 1:ny+1, 1, :]
+        state_mtx[:, :, 0, :] = state_mtx[:, :, nz, :]
+        state_mtx[:, :, nz+1, :] = state_mtx[:, :, 1, :]
     else:
         state_mtx[:, :, nz, 2] = 0
 
