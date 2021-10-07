@@ -60,7 +60,8 @@ def create_state_vec(state_mtx, nx, ny, nz, dof):
 
 def create_uniform_coordinate_vector(start, end, nx):
     dx = (end - start) / nx
-    return numpy.roll(numpy.arange(start - dx, end + 2 * dx, dx), -2)
+    x = start + numpy.arange(-1, nx + 2) * dx
+    return numpy.roll(x, -2)
 
 def create_stretched_coordinate_vector(start, end, nx, sigma):
     if start < 0 or end > 1:
