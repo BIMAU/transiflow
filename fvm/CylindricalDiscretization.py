@@ -221,28 +221,12 @@ class CylindricalDiscretization(Discretization):
     def w_tt(self):
         return self.w_yy()
 
-    @staticmethod
-    def _w_rr(atom, i, j, k, x, y, z):
-        # distance between v[i] and v[i-1]
-        dx = (x[i] - x[i-2]) / 2
-        # distance between v[i+1] and v[i]
-        dxp1 = (x[i+1] - x[i-1]) / 2
-        # volume size in the y direction
-        dy = y[j] - y[j-1]
-        # volume size in the z direction
-        dz = (z[k+1] - z[k-1]) / 2
-
-        # second order finite difference
-        atom[0] = x[i-1] / dx * dy * dz
-        atom[2] = x[i] / dxp1 * dy * dz
-        atom[1] = -atom[0] - atom[2]
-
     def w_rr(self):
         atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    CylindricalDiscretization._w_rr(atom[i, j, k, 1, 1, :, 1, 1], i, j, k, self.x, self.y, self.z)
+                    CylindricalDiscretization._v_rr(atom[i, j, k, 2, 2, :, 1, 1], i, k, j, self.x, self.z, self.y)
         return atom
 
     def p_r(self):
