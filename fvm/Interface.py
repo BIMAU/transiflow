@@ -3,7 +3,7 @@ import numpy
 from scipy import sparse
 from scipy.sparse import linalg
 
-from fvm import Discretization
+from fvm import Discretization, CylindricalDiscretization
 
 class Interface:
     '''This class defines an interface to the NumPy backend for the
@@ -18,7 +18,11 @@ class Interface:
         self.nz = nz
         self.dim = dim
         self.dof = dof
+
         self.discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
+
+        if 'Problem Type' in parameters and 'Taylor-Couette' in parameters['Problem Type']:
+            self.discretization = CylindricalDiscretization(parameters, nx, ny, nz, dim, dof, x, y, z)
 
         self.parameters = parameters
 
