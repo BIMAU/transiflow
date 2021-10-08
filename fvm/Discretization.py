@@ -69,6 +69,9 @@ class Discretization:
         self.y_periodic = False
         self.z_periodic = False
 
+        if self.nz == 1:
+            self.z_periodic = True
+
         if self.parameters.get('Grid Stretching', False) or 'Grid Stretching Factor' in self.parameters.keys():
             self.x = utils.create_stretched_coordinate_vector(
                 self.parameters.get('X-min', 0.0), self.parameters.get('X-max', 1.0), self.nx,
@@ -260,7 +263,8 @@ class Discretization:
         '''
 
         # Put the state in shifted matrix form
-        state_mtx = utils.create_padded_state_mtx(state, self.nx, self.ny, self.nz, self.dof)
+        state_mtx = utils.create_padded_state_mtx(state, self.nx, self.ny, self.nz, self.dof,
+                                                  self.x_periodic, self.y_periodic, self.z_periodic)
 
         # Add up all contributions without iterating over the domain
         out_mtx = numpy.zeros([self.nx, self.ny, self.nz, self.dof])

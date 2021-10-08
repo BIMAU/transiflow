@@ -25,6 +25,16 @@ def create_test_problem():
 
     return (parameters, nx, ny, nz, dim, dof, x, y, z)
 
+def create_random_state(nx, ny, nz, dim, dof):
+    n = nx * ny * nz * dof
+    x = numpy.random.random(n)
+    x = utils.create_state_mtx(x, nx, ny, nz, dof)
+    x[nx-1, :, :, 0] = 0
+    x[:, ny-1, :, 1] = 0
+    if dim > 2:
+        x[:, :, nz-1, 2] = 0
+    return utils.create_state_vec(x, nx, ny, nz, dof)
+
 def create_test_problem_tc():
     nx = 13
     ny = 7
@@ -39,6 +49,14 @@ def create_test_problem_tc():
     parameters = {'Reynolds Number': 100, 'Problem Type': 'Taylor-Couette'}
 
     return (parameters, nx, ny, nz, dim, dof, x, y, z)
+
+def create_random_state_tc(nx, ny, nz, dim, dof):
+    n = nx * ny * nz * dof
+    x = numpy.random.random(n)
+    x = utils.create_state_mtx(x, nx, ny, nz, dof)
+    x[nx-1, :, :, 0] = 0
+    x[:, :, nz-1, 2] = 0
+    return utils.create_state_vec(x, nx, ny, nz, dof)
 
 def check_divfree(discretization, state):
     A = discretization.jacobian(state)
@@ -63,9 +81,13 @@ def make_divfree(discretization, state):
     return state
 
 def create_divfree_state(discretization):
-    n = discretization.dof * discretization.nx * discretization.ny * discretization.nz
+    nx = discretization.nx
+    ny = discretization.ny
+    nz = discretization.nz
+    dim = discretization.dim
+    dof = discretization.dof
 
-    state = numpy.random.random(n)
+    state = create_random_state(nx, ny, nz, dim, dof)
     return make_divfree(discretization, state)
 
 def test_bilin():
@@ -114,10 +136,8 @@ def test_bilin_stretched():
 def test_jac_consistency():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
 
-    n = dof * nx * ny * nz
-
-    state = numpy.random.random(n)
-    pert = numpy.random.random(n)
+    state = create_random_state(nx, ny, nz, dim, dof)
+    pert = create_random_state(nx, ny, nz, dim, dof)
 
     discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
     A = discretization.jacobian(state)
@@ -132,10 +152,8 @@ def test_jac_consistency():
 def test_jac_consistency_uniform():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem()
 
-    n = dof * nx * ny * nz
-
-    state = numpy.random.random(n)
-    pert = numpy.random.random(n)
+    state = create_random_state(nx, ny, nz, dim, dof)
+    pert = create_random_state(nx, ny, nz, dim, dof)
 
     discretization = Discretization(parameters, nx, ny, nz, dim, dof)
     A = discretization.jacobian(state)
@@ -154,10 +172,8 @@ def test_jac_consistency_stretched():
     y = utils.create_stretched_coordinate_vector(0, 1, ny, 1.5)
     z = utils.create_stretched_coordinate_vector(0, 1, nz, 1.5)
 
-    n = dof * nx * ny * nz
-
-    state = numpy.random.random(n)
-    pert = numpy.random.random(n)
+    state = create_random_state(nx, ny, nz, dim, dof)
+    pert = create_random_state(nx, ny, nz, dim, dof)
 
     discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
     A = discretization.jacobian(state)
@@ -175,10 +191,8 @@ def test_jac_consistency_uniform_2d():
     nz = 1
     dim = 2
     dof = 3
-    n = dof * nx * ny * nz
-
-    state = numpy.random.random(n)
-    pert = numpy.random.random(n)
+    state = create_random_state(nx, ny, nz, dim, dof)
+    pert = create_random_state(nx, ny, nz, dim, dof)
 
     discretization = Discretization(parameters, nx, ny, nz, dim, dof)
     A = discretization.jacobian(state)
@@ -199,10 +213,8 @@ def test_jac_consistency_stretched_2d():
     nz = 1
     dim = 2
     dof = 3
-    n = dof * nx * ny * nz
-
-    state = numpy.random.random(n)
-    pert = numpy.random.random(n)
+    state = create_random_state(nx, ny, nz, dim, dof)
+    pert = create_random_state(nx, ny, nz, dim, dof)
 
     discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y)
     A = discretization.jacobian(state)
@@ -217,10 +229,8 @@ def test_jac_consistency_stretched_2d():
 def test_jac_consistency_tc_uniform_2d():
     parameters, nx, ny, nz, dim, dof, x, y, z = create_test_problem_tc()
 
-    n = dof * nx * ny * nz
-
-    state = numpy.random.random(n)
-    pert = numpy.random.random(n)
+    state = create_random_state_tc(nx, ny, nz, dim, dof)
+    pert = create_random_state_tc(nx, ny, nz, dim, dof)
 
     discretization = CylindricalDiscretization(parameters, nx, ny, nz, dim, dof)
     A = discretization.jacobian(state)
@@ -237,10 +247,8 @@ def test_jac_consistency_tc_stretched_2d():
 
     x = utils.create_stretched_coordinate_vector(0, 1, nx, 1.5)
 
-    n = dof * nx * ny * nz
-
-    state = numpy.random.random(n)
-    pert = numpy.random.random(n)
+    state = create_random_state_tc(nx, ny, nz, dim, dof)
+    pert = create_random_state_tc(nx, ny, nz, dim, dof)
 
     discretization = CylindricalDiscretization(parameters, nx, ny, nz, dim, dof, x)
     A = discretization.jacobian(state)
