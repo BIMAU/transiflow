@@ -24,7 +24,7 @@ class CylindricalDiscretization(Discretization):
                 self.parameters.get('R-min', 0.0), self.parameters.get('R-max', 1.0), nr) if r is None else r
 
         theta = utils.create_uniform_coordinate_vector(
-            self.parameters.get('Theta-min', 0.0), self.parameters.get('Theta-max', 1.0), ntheta) \
+            self.parameters.get('Theta-min', 0.0), self.parameters.get('Theta-max', 2 * numpy.pi), ntheta) \
             if theta is None else theta
 
         Discretization.__init__(self, parameters, nr, ntheta, nz, dim, dof, r, theta, z)
