@@ -29,11 +29,7 @@ class CylindricalDiscretization(Discretization):
 
         Discretization.__init__(self, parameters, nr, ntheta, nz, dim, dof, r, theta, z)
 
-        if self.problem_type_equals('Taylor-Couette'):
-            self.y_periodic = True
-        elif self.problem_type_equals('Axisymmetric Taylor-Couette'):
-            self.y_periodic = True
-            self.z_periodic = True
+        self.y_periodic = True
 
     def _linear_part_2D(self):
         '''Compute the linear part of the equation in case the domain is 2D.
@@ -121,13 +117,6 @@ class CylindricalDiscretization(Discretization):
 
             boundary_conditions.no_slip_top(atom)
             boundary_conditions.no_slip_bottom(atom)
-        elif self.problem_type_equals('Axisymmetric Taylor-Couette'):
-            vo = self.get_parameter('Outer Velocity', 2)
-            vi = self.get_parameter('Inner Velocity', 1)
-            frc += boundary_conditions.moving_lid_east(atom, vo * self.x[self.nx-1])
-            frc += boundary_conditions.moving_lid_west(atom, vi * self.x[-1])
-
-            return frc
         else:
             raise Exception('Invalid problem type %s' % self.get_parameter('Problem Type'))
 

@@ -360,7 +360,7 @@ def test_v_v():
     for i in range(n):
         state[i] = i+1
 
-    state_mtx = utils.create_padded_state_mtx(state, nx, ny, nz, dof, False, False, False)
+    state_mtx = utils.create_padded_state_mtx(state, nx, ny, nz, dof, False, True, False)
 
     discretization = CylindricalDiscretization(parameters, nx, ny, nz, dim, dof, x, y, z)
 
