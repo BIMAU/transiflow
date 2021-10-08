@@ -353,6 +353,7 @@ class Discretization:
                                 idx += 1
                         row += 1
                         begA[row] = idx
+
         return CrsMatrix(coA, jcoA, begA)
 
     def assemble_mass_matrix(self, atom):
@@ -375,6 +376,7 @@ class Discretization:
                             idx += 1
                         row += 1
                         begA[row] = idx
+
         return CrsMatrix(coA, jcoA, begA)
 
     def problem_type_equals(self, second):

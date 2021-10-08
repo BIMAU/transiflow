@@ -241,7 +241,7 @@ def test_jac_consistency_tc_uniform():
 
     for i in range(3, 12):
         eps = 10 ** -i
-        eps2 = 2 * max(eps, 10 ** (-14+i))
+        eps2 = 3 * max(eps, 10 ** (-14+i))
         rhs2 = discretization.rhs(state + eps * pert)
         assert numpy.linalg.norm((rhs2 - rhs) / eps - A @ pert) < eps2
 
@@ -260,6 +260,6 @@ def test_jac_consistency_tc_stretched():
 
     for i in range(3, 12):
         eps = 10 ** -i
-        eps2 = 2 * max(eps, 10 ** (-14+i))
+        eps2 = 3 * max(eps, 10 ** (-14+i))
         rhs2 = discretization.rhs(state + eps * pert)
         assert numpy.linalg.norm((rhs2 - rhs) / eps - A @ pert) < eps2

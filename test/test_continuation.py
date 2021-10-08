@@ -279,6 +279,44 @@ def test_continuation_double_gyre(nx=8, interactive=False):
     assert mu > 0
     assert mu < target
 
+def test_continuation_2D_taylor_couette(nx=8, interactive=False):
+    try:
+        from fvm import JadaInterface # noqa: F401
+    except ImportError:
+        pytest.skip('jadapy not found')
+
+    dim = 3
+    dof = 4
+    ny = 1
+    nz = nx
+
+    parameters = {'Problem Type': 'Taylor-Couette',
+                  'Reynolds Number': 1,
+                  'R-min': 0.8,
+                  'R-max': 1,
+                  'Z-max': 3,
+                  'Inner Velocity': 10 * 1 / 0.8,
+                  'Outer Velocity': 0}
+
+    interface = Interface(parameters, nx, ny, nz, dim, dof)
+
+    continuation = Continuation(interface, parameters)
+
+    x0 = numpy.zeros(dof * nx * ny * nz)
+
+    parameters['Detect Bifurcation Points'] = True
+    parameters['Eigenvalue Solver'] = {}
+    parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
+
+    start = 0
+    target = 100
+    ds = 30
+    x, mu, _ = continuation.continuation(x0, 'Reynolds Number', start, target, ds)
+
+    assert numpy.linalg.norm(x) > 0
+    assert mu > 0
+    assert mu < target
+
 
 if __name__ == '__main__':
     # test_continuation(8, False)
