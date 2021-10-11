@@ -188,11 +188,15 @@ class Interface:
         from jadapy import jdqz, orthogonalization
         from fvm.JadaInterface import JadaOp, JadaInterface
 
+        parameters = self.parameters.get('Eigenvalue Solver', {})
+        arithmetic = parameters.get('Arithmetic', 'complex')
+
         jac_op = JadaOp(self.jacobian(state))
         mass_op = JadaOp(self.mass_matrix())
         jada_interface = JadaInterface(self, jac_op, mass_op, jac_op.shape[0], numpy.complex128)
+        if arithmetic == 'real':
+            jada_interface = JadaInterface(self, jac_op, mass_op, jac_op.shape[0])
 
-        parameters = self.parameters.get('Eigenvalue Solver', {})
         target = parameters.get('Target', 0.0)
         subspace_dimensions = [parameters.get('Minimum Subspace Dimension', 30),
                                parameters.get('Maximum Subspace Dimension', 60)]
@@ -214,7 +218,7 @@ class Interface:
             self._subspaces = [V]
 
         result = jdqz.jdqz(jac_op, mass_op, num, tol=tol, subspace_dimensions=subspace_dimensions, target=target,
-                           interface=jada_interface, arithmetic='complex', prec=jada_interface.shifted_prec,
+                           interface=jada_interface, arithmetic=arithmetic, prec=jada_interface.shifted_prec,
                            return_eigenvectors=return_eigenvectors, return_subspaces=True,
                            initial_subspaces=self._subspaces)
 
