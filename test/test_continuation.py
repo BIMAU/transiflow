@@ -222,7 +222,7 @@ def test_continuation_rayleigh_benard(nx=8, interactive=False):
     assert mu2 > 0
     assert mu2 < target
 
-    parameters['Problem Type'] = 'Rayleigh-Benard perturbation'
+    parameters['Problem Type'] = 'Rayleigh-Benard Perturbation'
 
     # Subtract the motionless state
     t = numpy.zeros((nx, ny, nz, dof))

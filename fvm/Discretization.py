@@ -166,7 +166,7 @@ class Discretization:
             atom += self.T_xx() + self.T_yy()
             atom += Ra * self.forward_average_T_y()
 
-        if self.problem_type_equals('Rayleigh-Benard perturbation'):
+        if self.problem_type_equals('Rayleigh-Benard Perturbation'):
             Bi = self.get_parameter('Biot Number')
             atom += Bi / (Bi + 1) * self.backward_average_v_y()
 
@@ -407,7 +407,7 @@ class Discretization:
             boundary_conditions.no_slip_bottom(atom)
             frc += boundary_conditions.moving_lid_top(atom, v)
         elif (self.problem_type_equals('Rayleigh-Benard')
-              or self.problem_type_equals('Rayleigh-Benard perturbation')):
+              or self.problem_type_equals('Rayleigh-Benard Perturbation')):
             frc += boundary_conditions.heatflux_east(atom, 0)
             frc += boundary_conditions.heatflux_west(atom, 0)
             boundary_conditions.no_slip_east(atom)
@@ -432,7 +432,7 @@ class Discretization:
             frc += boundary_conditions.temperature_bottom(atom, 0)
             boundary_conditions.no_slip_top(atom)
             boundary_conditions.no_slip_bottom(atom)
-        elif self.problem_type_equals('Differentially heated cavity'):
+        elif self.problem_type_equals('Differentially Heated Cavity'):
             frc += boundary_conditions.temperature_east(atom, -1/2)
             frc += boundary_conditions.temperature_west(atom, 1/2)
             boundary_conditions.no_slip_east(atom)

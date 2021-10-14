@@ -107,8 +107,8 @@ class CylindricalDiscretization(Discretization):
         frc = numpy.zeros(self.nx * self.ny * self.nz * self.dof)
 
         if self.problem_type_equals('Taylor-Couette'):
-            vo = self.get_parameter('Outer Velocity', 2)
-            vi = self.get_parameter('Inner Velocity', 1)
+            vo = self.get_parameter('Outer Angular Velocity', 2)
+            vi = self.get_parameter('Inner Angular Velocity', 1)
             frc += boundary_conditions.moving_lid_east(atom, vo * self.x[self.nx-1])
             frc += boundary_conditions.moving_lid_west(atom, vi * self.x[-1])
 
