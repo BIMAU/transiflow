@@ -98,11 +98,17 @@ class JadaInterface(NumPyInterface.NumPyInterface):
         except AttributeError:
             pass
 
+        eps = 1e-10
+        eps2 = 1e-1
+
         # Cache previous preconditioners
-        if self._shifted_matrix and \
-           abs(alpha) > 1e-10 and abs(beta) > 1e-10 and abs(self._prev_beta) > 1e-10 and \
-           abs(alpha / beta - self._prev_alpha / self._prev_beta) / abs(alpha / beta) < 1e-1:
-            return self.interface.solve(self._shifted_matrix, x)
+        if self._shifted_matrix:
+            if abs(alpha) < eps:
+                if abs(alpha - self._prev_alpha) < eps2 and abs(beta - self._prev_beta) < eps2:
+                    return self.interface.solve(self._shifted_matrix, x)
+            elif abs(beta) > eps and abs(self._prev_beta) > eps:
+                if abs(alpha / beta - self._prev_alpha / self._prev_beta) / abs(alpha / beta) < eps2:
+                    return self.interface.solve(self._shifted_matrix, x)
 
         self._prev_alpha = alpha
         self._prev_beta = beta
