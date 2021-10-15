@@ -48,6 +48,25 @@ class JadaPrecOp(object):
         crs_mat = CrsMatrix(mat.data, mat.indices, mat.indptr)
         return self.op.proj(self.interface.solve(crs_mat, x))
 
+class CachedMatrix:
+    def __init__(self, matrix, alpha, beta):
+        self.matrix = matrix
+        self.alpha = alpha
+        self.beta = beta
+
+    def same_shifts(self, alpha, beta):
+        eps = 1e-10
+        eps2 = 1e-1
+
+        if abs(alpha) < eps:
+            if abs(alpha - self.alpha) < eps2 and abs(beta - self.beta) < eps2:
+                return True
+        elif abs(beta) > eps and abs(self.beta) > eps:
+            if abs(alpha / beta - self.alpha / self.beta) / abs(alpha / beta) < eps2:
+                return True
+
+        return False
+
 class JadaInterface(NumPyInterface.NumPyInterface):
     def __init__(self, interface, jac_op, mass_op, *args, **kwargs):
         super().__init__(*args)
@@ -58,9 +77,8 @@ class JadaInterface(NumPyInterface.NumPyInterface):
         self.preconditioned_solve = kwargs.get('preconditioned_solve', False)
         self.shifted = kwargs.get('shifted', False)
 
-        self._prev_alpha = None
-        self._prev_beta = None
-        self._shifted_matrix = None
+        self._shifted_matrices = []
+        self._max_shifted_matrices = 2
 
     def solve(self, op, x, tol, maxit):
         if op.dtype.char != op.dtype.char.upper():
@@ -98,21 +116,15 @@ class JadaInterface(NumPyInterface.NumPyInterface):
         except AttributeError:
             pass
 
-        eps = 1e-10
-        eps2 = 1e-1
-
         # Cache previous preconditioners
-        if self._shifted_matrix:
-            if abs(alpha) < eps:
-                if abs(alpha - self._prev_alpha) < eps2 and abs(beta - self._prev_beta) < eps2:
-                    return self.interface.solve(self._shifted_matrix, x)
-            elif abs(beta) > eps and abs(self._prev_beta) > eps:
-                if abs(alpha / beta - self._prev_alpha / self._prev_beta) / abs(alpha / beta) < eps2:
-                    return self.interface.solve(self._shifted_matrix, x)
+        for cached_matrix in self._shifted_matrices:
+            if cached_matrix.same_shifts(alpha, beta):
+                return self.interface.solve(cached_matrix.matrix, x)
 
-        self._prev_alpha = alpha
-        self._prev_beta = beta
+        if len(self._shifted_matrices) >= self._max_shifted_matrices:
+            self._shifted_matrices.pop(0)
 
         mat = beta * self.jac_op.mat - alpha * self.mass_op.mat
-        self._shifted_matrix = CrsMatrix(mat.data, mat.indices, mat.indptr)
-        return self.interface.solve(self._shifted_matrix, x)
+        shifted_matrix = CrsMatrix(mat.data, mat.indices, mat.indptr)
+        self._shifted_matrices.append(CachedMatrix(shifted_matrix, alpha, beta))
+        return self.interface.solve(shifted_matrix, x)
