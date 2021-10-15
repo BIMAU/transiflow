@@ -1,5 +1,6 @@
 from fvm import CrsMatrix
 
+import time
 import warnings
 
 from jadapy import NumPyInterface
@@ -53,6 +54,7 @@ class CachedMatrix:
         self.matrix = matrix
         self.alpha = alpha
         self.beta = beta
+        self.last_used = time.time()
 
     def same_shifts(self, alpha, beta):
         eps = 1e-10
@@ -66,6 +68,10 @@ class CachedMatrix:
                 return True
 
         return False
+
+    def get_matrix(self):
+        self.last_used = time.time()
+        return self.matrix
 
 class JadaInterface(NumPyInterface.NumPyInterface):
     def __init__(self, interface, jac_op, mass_op, *args, **kwargs):
@@ -117,12 +123,16 @@ class JadaInterface(NumPyInterface.NumPyInterface):
             pass
 
         # Cache previous preconditioners
-        for cached_matrix in self._shifted_matrices:
+        for i, cached_matrix in enumerate(self._shifted_matrices):
             if cached_matrix.same_shifts(alpha, beta):
-                return self.interface.solve(cached_matrix.matrix, x)
+                return self.interface.solve(cached_matrix.get_matrix(), x)
 
+        # Remove the cached preconditioner that was not used last
         if len(self._shifted_matrices) >= self._max_shifted_matrices:
-            self._shifted_matrices.pop(0)
+            if self._shifted_matrices[0].last_used > self._shifted_matrices[1].last_used:
+                self._shifted_matrices.pop(1)
+            else:
+                self._shifted_matrices.pop(0)
 
         mat = beta * self.jac_op.mat - alpha * self.mass_op.mat
         shifted_matrix = CrsMatrix(mat.data, mat.indices, mat.indptr)
