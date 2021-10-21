@@ -393,8 +393,11 @@ class Interface(fvm.Interface):
 
         return x
 
-    def solve(self, jac, rhs, rhs2=None, V=None, W=None, C=None):
+    def solve(self, jac, rhs, rhs2=None, V=None, W=None, C=None, solver=None):
         '''Solve J y = x for y with the possibility of solving a bordered system.'''
+
+        if solver is None:
+            solver = self.solver
 
         rhs_sol = Vector(self.solve_map)
         rhs_sol.Import(rhs, self.solve_importer, Epetra.Insert)
@@ -416,18 +419,18 @@ class Interface(fvm.Interface):
             C_sol = Epetra.SerialDenseMatrix(1, 1)
             C_sol[0, 0] = C
 
-            self.solver.SetBorder(V_sol, W_sol, C_sol)
+            solver.SetBorder(V_sol, W_sol, C_sol)
         else:
-            self.solver.UnsetBorder()
+            solver.UnsetBorder()
 
         self.preconditioner.Compute()
 
         if rhs2 is not None:
-            self.solver.ApplyInverse(rhs_sol, rhs2_sol, x_sol, x2_sol)
+            solver.ApplyInverse(rhs_sol, rhs2_sol, x_sol, x2_sol)
 
             x2 = x2_sol[0, 0]
         else:
-            self.solver.ApplyInverse(rhs_sol, x_sol)
+            solver.ApplyInverse(rhs_sol, x_sol)
 
         x = Vector(rhs)
         x.Export(x_sol, self.solve_importer, Epetra.Insert)
