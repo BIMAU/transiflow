@@ -2,7 +2,6 @@ from PyTrilinos import Epetra
 from PyTrilinos import Amesos
 from PyTrilinos import Teuchos
 
-import copy
 import numpy
 
 import fvm
@@ -166,16 +165,34 @@ class Interface(fvm.Interface):
         self.mass = None
         self.initialize()
 
+    def unset_parameter(self, name, original_parameters):
+        '''Set a parameter in self.parameters back to its original value. '''
+
+        if name in original_parameters:
+            self.set_parameter(name, original_parameters[name])
+            return
+
+        if name in self.parameters:
+            if hasattr(self.parameters, 'remove'):
+                self.parameters.remove(name)
+            else:
+                del self.parameters[name]
+
     def initialize(self):
         '''Initialize the Jacobian and the preconditioner, but make sure the
         nonlinear part is also nonzero so we can replace all values
         later, rather than insert them.'''
 
         # Backup the original parameters and put model parameters to 1
-        original_parameters = copy.copy(self.parameters)
-        self.set_parameter('Reynolds Number', 1)
-        self.set_parameter('Rayleigh Number', 1)
-        self.set_parameter('Prandtl Number', 1)
+        parameter_names = ['Reynolds Number', 'Rayleigh Number',
+                           'Prandtl Number', 'Rossby Parameter']
+
+        original_parameters = {}
+        for i in parameter_names:
+            if i in self.parameters:
+                original_parameters[i] = self.parameters[i]
+
+            self.set_parameter(i, 1)
 
         # Generate a Jacobian with a random state
         x = Vector(self.map)
@@ -189,9 +206,8 @@ class Interface(fvm.Interface):
         self.teuchos_parameters.sublist('Iterative Solver').set('Output Stream', 0)
 
         # Put back the original parameters
-        self.unset_parameter('Reynolds Number', original_parameters)
-        self.unset_parameter('Rayleigh Number', original_parameters)
-        self.unset_parameter('Prandtl Number', original_parameters)
+        for i in parameter_names:
+            self.unset_parameter(i, original_parameters)
 
     def partition_domain(self):
         '''Partition the domain into Cartesian subdomains for computing the

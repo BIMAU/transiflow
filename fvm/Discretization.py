@@ -109,21 +109,6 @@ class Discretization:
         self.parameters[name] = value
         self.recompute_linear_part = True
 
-    def unset_parameter(self, name, original_parameters=None):
-        '''Set a parameter in self.parameters back to its original value. '''
-
-        if original_parameters is None:
-            if name in self.parameters:
-                del self.parameters[name]
-            return
-
-        if name in original_parameters:
-            self.set_parameter(name, original_parameters[name])
-            return
-
-        if name in self.parameters:
-            del self.parameters[name]
-
     def get_parameter(self, name, default=0):
         '''Get a parameter from self.parameters.'''
 
