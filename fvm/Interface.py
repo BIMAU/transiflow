@@ -59,6 +59,47 @@ class Interface:
         '''Mass matrix M in M * du / dt = F(u).'''
         return self.discretization.mass_matrix()
 
+    def _compute_factorization(self, jac):
+        '''Compute the LU factorization of jac.'''
+        self._lu = None
+        self._prec = None
+        jac.lu = None
+
+        coA = jac.coA
+        jcoA = jac.jcoA
+        begA = jac.begA
+
+        # Fix one pressure node
+        if self.dof > self.dim:
+            coA = numpy.zeros(jac.begA[-1] + 1, dtype=jac.coA.dtype)
+            jcoA = numpy.zeros(jac.begA[-1] + 1, dtype=int)
+            begA = numpy.zeros(len(jac.begA), dtype=int)
+
+            idx = 0
+            for i in range(len(jac.begA)-1):
+                if i == self.pressure_row:
+                    coA[idx] = -1.0
+                    jcoA[idx] = i
+                    idx += 1
+                    begA[i+1] = idx
+                    continue
+                for j in range(jac.begA[i], jac.begA[i+1]):
+                    if jac.jcoA[j] != self.pressure_row:
+                        coA[idx] = jac.coA[j]
+                        jcoA[idx] = jac.jcoA[j]
+                        idx += 1
+                begA[i+1] = idx
+
+        # Convert the matrix to CSC format since splu expects that
+        A = sparse.csr_matrix((coA, jcoA, begA)).tocsc()
+
+        jac.lu = linalg.splu(A)
+        jac.bordered_lu = False
+
+        # Cache the factorization for use in the iterative solver
+        self._lu = jac.lu
+        self._prec = linalg.LinearOperator((jac.n, jac.n), matvec=self._lu.solve, dtype=jac.dtype)
+
     def solve(self, jac, rhs, rhs2=None, V=None, W=None, C=None):
         '''Solve J y = x for y.'''
         x = rhs.copy()
@@ -83,44 +124,7 @@ class Interface:
 
         # Use a direct solver instead
         if rhs2 is None and (not jac.lu or jac.bordered_lu):
-            self._lu = None
-            self._prec = None
-            jac.lu = None
-
-            coA = jac.coA
-            jcoA = jac.jcoA
-            begA = jac.begA
-
-            # Fix one pressure node
-            if self.dof > self.dim:
-                coA = numpy.zeros(jac.begA[-1] + 1, dtype=jac.coA.dtype)
-                jcoA = numpy.zeros(jac.begA[-1] + 1, dtype=int)
-                begA = numpy.zeros(len(jac.begA), dtype=int)
-
-                idx = 0
-                for i in range(len(jac.begA)-1):
-                    if i == self.pressure_row:
-                        coA[idx] = -1.0
-                        jcoA[idx] = i
-                        idx += 1
-                        begA[i+1] = idx
-                        continue
-                    for j in range(jac.begA[i], jac.begA[i+1]):
-                        if jac.jcoA[j] != self.pressure_row:
-                            coA[idx] = jac.coA[j]
-                            jcoA[idx] = jac.jcoA[j]
-                            idx += 1
-                    begA[i+1] = idx
-
-            # Convert the matrix to CSC format since splu expects that
-            A = sparse.csr_matrix((coA, jcoA, begA)).tocsc()
-
-            jac.lu = linalg.splu(A)
-            jac.bordered_lu = False
-
-            # Cache the factorization for use in the iterative solver
-            self._lu = jac.lu
-            self._prec = linalg.LinearOperator((jac.n, jac.n), matvec=self._lu.solve, dtype=jac.dtype)
+            self._compute_factorization(jac)
         elif rhs2 is not None and (not jac.lu or not jac.bordered_lu):
             self._lu = None
             self._prec = None
