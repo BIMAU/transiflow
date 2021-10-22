@@ -212,6 +212,7 @@ def test_continuation_rayleigh_benard(nx=8, interactive=False):
 
     parameters['Detect Bifurcation Points'] = True
     parameters['Eigenvalue Solver'] = {}
+    parameters['Eigenvalue Solver']['Arithmetic'] = 'real'
     parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
 
     target = 5000
