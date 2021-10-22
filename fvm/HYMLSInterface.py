@@ -22,7 +22,7 @@ class Vector(Epetra.Vector):
         return v
 
     def dot(self, other):
-        return self.Dot(other)
+        return self.Dot(other)[0]
 
     size = property(Epetra.Vector.GlobalLength)
 
