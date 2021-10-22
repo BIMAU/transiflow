@@ -100,6 +100,56 @@ class Interface:
         self._lu = jac.lu
         self._prec = linalg.LinearOperator((jac.n, jac.n), matvec=self._lu.solve, dtype=jac.dtype)
 
+    def _compute_bordered_factorization(self, jac, V, W, C):
+        '''Compute the LU factorization of the bordered jacobian.'''
+        self._lu = None
+        self._prec = None
+        jac.lu = None
+
+        coA = numpy.zeros(jac.begA[-1] + 2 * jac.n + 2, dtype=jac.coA.dtype)
+        jcoA = numpy.zeros(jac.begA[-1] + 2 * jac.n + 2, dtype=int)
+        begA = numpy.zeros(len(jac.begA) + 1, dtype=int)
+
+        idx = 0
+        for i in range(jac.n):
+            if i == self.pressure_row and self.dof > self.dim:
+                coA[idx] = -1.0
+                jcoA[idx] = i
+                idx += 1
+                begA[i+1] = idx
+                continue
+            for j in range(jac.begA[i], jac.begA[i+1]):
+                if jac.jcoA[j] != self.pressure_row or not self.dof > self.dim:
+                    coA[idx] = jac.coA[j]
+                    jcoA[idx] = jac.jcoA[j]
+                    idx += 1
+            coA[idx] = V[i]
+            jcoA[idx] = jac.n
+            idx += 1
+
+            begA[i+1] = idx
+
+        for i in range(jac.n):
+            coA[idx] = W[i]
+            jcoA[idx] = i
+            idx += 1
+
+        coA[idx] = C
+        jcoA[idx] = jac.n
+        idx += 1
+
+        begA[jac.n+1] = idx
+
+        # Convert the matrix to CSC format since splu expects that
+        A = sparse.csr_matrix((coA, jcoA, begA)).tocsc()
+
+        jac.lu = linalg.splu(A)
+        jac.bordered_lu = True
+
+        # Cache the factorization for use in the iterative solver
+        self._lu = jac.lu
+        self._prec = linalg.LinearOperator((jac.n, jac.n), matvec=self._lu.solve, dtype=jac.dtype)
+
     def solve(self, jac, rhs, rhs2=None, V=None, W=None, C=None):
         '''Solve J y = x for y.'''
         x = rhs.copy()
@@ -126,53 +176,7 @@ class Interface:
         if rhs2 is None and (not jac.lu or jac.bordered_lu):
             self._compute_factorization(jac)
         elif rhs2 is not None and (not jac.lu or not jac.bordered_lu):
-            self._lu = None
-            self._prec = None
-            jac.lu = None
-
-            coA = numpy.zeros(jac.begA[-1] + 2 * jac.n + 2, dtype=jac.coA.dtype)
-            jcoA = numpy.zeros(jac.begA[-1] + 2 * jac.n + 2, dtype=int)
-            begA = numpy.zeros(len(jac.begA) + 1, dtype=int)
-
-            idx = 0
-            for i in range(jac.n):
-                if i == self.pressure_row and self.dof > self.dim:
-                    coA[idx] = -1.0
-                    jcoA[idx] = i
-                    idx += 1
-                    begA[i+1] = idx
-                    continue
-                for j in range(jac.begA[i], jac.begA[i+1]):
-                    if jac.jcoA[j] != self.pressure_row or not self.dof > self.dim:
-                        coA[idx] = jac.coA[j]
-                        jcoA[idx] = jac.jcoA[j]
-                        idx += 1
-                coA[idx] = V[i]
-                jcoA[idx] = jac.n
-                idx += 1
-
-                begA[i+1] = idx
-
-            for i in range(jac.n):
-                coA[idx] = W[i]
-                jcoA[idx] = i
-                idx += 1
-
-            coA[idx] = C
-            jcoA[idx] = jac.n
-            idx += 1
-
-            begA[jac.n+1] = idx
-
-            # Convert the matrix to CSC format since splu expects that
-            A = sparse.csr_matrix((coA, jcoA, begA)).tocsc()
-
-            jac.lu = linalg.splu(A)
-            jac.bordered_lu = True
-
-            # Cache the factorization for use in the iterative solver
-            self._lu = jac.lu
-            self._prec = linalg.LinearOperator((jac.n, jac.n), matvec=self._lu.solve, dtype=jac.dtype)
+            self._compute_bordered_factorization(jac, V, W, C)
 
         if jac.bordered_lu:
             y = jac.solve(x)
