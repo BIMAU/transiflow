@@ -20,35 +20,6 @@ class JadaOp:
     def __matmul__(self, x):
         return self.mat * x
 
-class JadaPrecOp(object):
-    def __init__(self, op, interface, shifted=True):
-        self.op = op
-        self.interface = interface
-        self.shifted = shifted
-
-        self.dtype = self.op.dtype
-        self.shape = self.op.shape
-
-    def matvec(self, x):
-        if not self.shifted:
-            return self.op.proj(self.interface.solve(self.op.A.fvm_mat, x))
-
-        alpha = self.op.alpha
-        beta = self.op.beta
-        try:
-            if len(alpha.shape) == 2:
-                alpha = alpha[0, 0]
-                beta = beta[0, 0]
-            elif len(alpha.shape) == 1:
-                alpha = alpha[0]
-                beta = beta[0]
-        except AttributeError:
-            pass
-
-        mat = beta * self.op.A.mat - alpha * self.op.B.mat
-        crs_mat = CrsMatrix(mat.data, mat.indices, mat.indptr)
-        return self.op.proj(self.interface.solve(crs_mat, x))
-
 class CachedMatrix:
     def __init__(self, matrix, alpha, beta):
         self.matrix = matrix
@@ -73,18 +44,73 @@ class CachedMatrix:
         self.last_used = time.time()
         return self.matrix
 
+class MatrixCache:
+    def __init__(self, jac_op, mass_op):
+        self.jac_op = jac_op
+        self.mass_op = mass_op
+
+        self.matrices = []
+        self.max_matrices = 2
+
+    def get_shifted_matrix(self, alpha, beta):
+        try:
+            if len(alpha.shape) == 2:
+                alpha = alpha[0, 0]
+                beta = beta[0, 0]
+            elif len(alpha.shape) == 1:
+                alpha = alpha[0]
+                beta = beta[0]
+        except AttributeError:
+            pass
+
+        # Cache previous preconditioners
+        for i, cached_matrix in enumerate(self.matrices):
+            if cached_matrix.same_shifts(alpha, beta):
+                return cached_matrix.get_matrix()
+
+        # Remove the cached preconditioner that was not used last
+        if len(self.matrices) >= self.max_matrices:
+            if self.matrices[0].last_used > self.matrices[1].last_used:
+                self.matrices.pop(1)
+            else:
+                self.matrices.pop(0)
+
+        mat = beta * self.jac_op.mat - alpha * self.mass_op.mat
+        shifted_matrix = CrsMatrix(mat.data, mat.indices, mat.indptr)
+        self.matrices.append(CachedMatrix(shifted_matrix, alpha, beta))
+
+        return shifted_matrix
+
+class JadaPrecOp(object):
+    def __init__(self, op, interface, shifted=True):
+        self.op = op
+        self.interface = interface
+        self.shifted = shifted
+
+        self.dtype = self.op.dtype
+        self.shape = self.op.shape
+
+        self._matrix_cache = MatrixCache(self.op.A, self.op.B)
+
+    def matvec(self, x):
+        if not self.shifted:
+            return self.op.proj(self.interface.solve(self.op.A.fvm_mat, x))
+
+        alpha = self.op.alpha
+        beta = self.op.beta
+        shifted_matrix = self._matrix_cache.get_shifted_matrix(alpha, beta)
+        return self.op.proj(self.interface.solve(shifted_matrix, x))
+
 class JadaInterface(NumPyInterface.NumPyInterface):
     def __init__(self, interface, jac_op, mass_op, *args, **kwargs):
         super().__init__(*args)
         self.interface = interface
         self.jac_op = jac_op
-        self.mass_op = mass_op
 
         self.preconditioned_solve = kwargs.get('preconditioned_solve', False)
         self.shifted = kwargs.get('shifted', False)
 
-        self._shifted_matrices = []
-        self._max_shifted_matrices = 2
+        self._matrix_cache = MatrixCache(jac_op, mass_op)
 
     def solve(self, op, x, tol, maxit):
         if op.dtype.char != op.dtype.char.upper():
@@ -101,7 +127,9 @@ class JadaInterface(NumPyInterface.NumPyInterface):
             if self.preconditioned_solve:
                 prec_op = JadaPrecOp(op, self.interface, self.shifted)
 
-            out[:, i], info = sparse.linalg.gmres(op, x[:, i], restart=100, maxiter=maxit, tol=tol, atol=0, M=prec_op)
+            restart = min(maxit, 100)
+            maxiter = (maxit - 1) // restart + 1
+            out[:, i], info = sparse.linalg.gmres(op, x[:, i], restart=restart, maxiter=maxiter, tol=tol, atol=0, M=prec_op)
             if info < 0:
                 raise Exception('GMRES returned ' + str(info))
             elif info > 0:
@@ -112,29 +140,5 @@ class JadaInterface(NumPyInterface.NumPyInterface):
         return self.interface.solve(self.jac_op.fvm_mat, x)
 
     def shifted_prec(self, x, alpha, beta):
-        try:
-            if len(alpha.shape) == 2:
-                alpha = alpha[0, 0]
-                beta = beta[0, 0]
-            elif len(alpha.shape) == 1:
-                alpha = alpha[0]
-                beta = beta[0]
-        except AttributeError:
-            pass
-
-        # Cache previous preconditioners
-        for i, cached_matrix in enumerate(self._shifted_matrices):
-            if cached_matrix.same_shifts(alpha, beta):
-                return self.interface.solve(cached_matrix.get_matrix(), x)
-
-        # Remove the cached preconditioner that was not used last
-        if len(self._shifted_matrices) >= self._max_shifted_matrices:
-            if self._shifted_matrices[0].last_used > self._shifted_matrices[1].last_used:
-                self._shifted_matrices.pop(1)
-            else:
-                self._shifted_matrices.pop(0)
-
-        mat = beta * self.jac_op.mat - alpha * self.mass_op.mat
-        shifted_matrix = CrsMatrix(mat.data, mat.indices, mat.indptr)
-        self._shifted_matrices.append(CachedMatrix(shifted_matrix, alpha, beta))
+        shifted_matrix = self._matrix_cache.get_shifted_matrix(alpha, beta)
         return self.interface.solve(shifted_matrix, x)

@@ -16,6 +16,93 @@ def import_test():
     except ImportError:
         pytest.skip('jadapy not found')
 
+class Operator:
+    def __init__(self, A, B, alpha=0, beta=1):
+        self.A = A
+        self.B = B
+
+        self.alpha = alpha
+        self.beta = beta
+
+        self.dtype = A.dtype
+        self.shape = A.shape
+
+    def matvec(self, x):
+        return (self.A @ x) * self.beta - (self.B @ x) * self.alpha
+
+    def proj(self, x):
+        return x
+
+def check_divfree(discretization, state):
+    A = discretization.jacobian(state)
+    x = A @ state
+    for i in range(len(state)):
+        if i % discretization.dof == discretization.dim:
+            assert abs(x[i]) < 1e-14
+
+def test_solve(interface, x, tol):
+    from fvm import JadaInterface
+    from jadapy.utils import norm
+
+    numpy.random.seed(1234)
+
+    jac_op = JadaInterface.JadaOp(interface.jacobian(x))
+    mass_op = JadaInterface.JadaOp(interface.mass_matrix())
+    jada_interface = JadaInterface.JadaInterface(interface, jac_op, mass_op, len(x), preconditioned_solve=True)
+
+    assert norm(x) > tol
+
+    check_divfree(interface.discretization, x)
+
+    b = numpy.zeros((x.shape[0], 1))
+    b[:, 0] = x
+
+    op = Operator(jac_op, mass_op)
+    x = jada_interface.solve(op, b, tol, maxit=1)
+
+    r = jac_op.matvec(x) - b
+    r[interface.pressure_row] = 0
+
+    assert norm(x) > tol
+    assert norm(r) / norm(b) < tol
+
+def test_shifted_solve(interface, x, tol):
+    from fvm import JadaInterface
+    from jadapy.utils import norm
+
+    numpy.random.seed(1234)
+
+    check_divfree(interface.discretization, x)
+    assert norm(x) > tol
+
+    jac_op = JadaInterface.JadaOp(interface.jacobian(x))
+    mass_op = JadaInterface.JadaOp(interface.mass_matrix())
+
+    b = numpy.zeros((x.shape[0], 1))
+    b[:, 0] = x
+
+    jada_interface = JadaInterface.JadaInterface(interface, jac_op, mass_op, len(x), preconditioned_solve=True)
+
+    op = Operator(jac_op, mass_op, 1, 2)
+    x = jada_interface.solve(op, b, tol, maxit=1)
+
+    r = (op.A @ x) * op.beta - (op.B @ x) * op.alpha - b
+    r[interface.pressure_row] = 0
+
+    assert norm(x) > tol
+    assert norm(r) / norm(b) > tol
+
+    jada_interface = JadaInterface.JadaInterface(interface, jac_op, mass_op, len(x), preconditioned_solve=True, shifted=True)
+
+    op = Operator(jac_op, mass_op, 1, 2)
+    x = jada_interface.solve(op, b, tol, maxit=1)
+
+    r = (op.A @ x) * op.beta - (op.B @ x) * op.alpha - b
+    r[interface.pressure_row] = 0
+
+    assert norm(x) > tol
+    assert norm(r) / norm(b) < tol
+
 def test_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
     from fvm import JadaInterface
     from jadapy import jdqz
