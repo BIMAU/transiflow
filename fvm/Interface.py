@@ -70,7 +70,7 @@ class Interface:
         begA = jac.begA
 
         # Fix one pressure node
-        if self.dof > self.dim:
+        if self.dof > self.dim and self.pressure_row is not None:
             coA = numpy.zeros(jac.begA[-1] + 1, dtype=jac.coA.dtype)
             jcoA = numpy.zeros(jac.begA[-1] + 1, dtype=int)
             begA = numpy.zeros(len(jac.begA), dtype=int)
@@ -88,6 +88,7 @@ class Interface:
                         coA[idx] = jac.coA[j]
                         jcoA[idx] = jac.jcoA[j]
                         idx += 1
+
                 begA[i+1] = idx
 
         # Convert the matrix to CSC format since splu expects that
@@ -110,16 +111,18 @@ class Interface:
         jcoA = numpy.zeros(jac.begA[-1] + 2 * jac.n + 2, dtype=int)
         begA = numpy.zeros(len(jac.begA) + 1, dtype=int)
 
+        fix_pressure_row = self.dof > self.dim and self.pressure_row is not None
+
         idx = 0
         for i in range(jac.n):
-            if i == self.pressure_row and self.dof > self.dim:
+            if fix_pressure_row and i == self.pressure_row:
                 coA[idx] = -1.0
                 jcoA[idx] = i
                 idx += 1
                 begA[i+1] = idx
                 continue
             for j in range(jac.begA[i], jac.begA[i+1]):
-                if jac.jcoA[j] != self.pressure_row or not self.dof > self.dim:
+                if not fix_pressure_row or jac.jcoA[j] != self.pressure_row:
                     coA[idx] = jac.coA[j]
                     jcoA[idx] = jac.jcoA[j]
                     idx += 1
