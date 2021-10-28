@@ -460,14 +460,28 @@ class Interface(fvm.Interface):
     def eigs(self, state, return_eigenvectors=False):
         '''Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v.'''
 
-        from jadapy import jdqz, orthogonalization, ComplexEpetraInterface
-        from fvm.JadaHYMLSInterface import ComplexJadaHYMLSInterface
-
-        jac_op = ComplexEpetraInterface.CrsMatrix(self.jacobian(state))
-        mass_op = ComplexEpetraInterface.CrsMatrix(self.mass_matrix())
-        jada_interface = ComplexJadaHYMLSInterface(self)
+        from jadapy import jdqz, orthogonalization
 
         parameters = self.parameters.get('Eigenvalue Solver', {})
+        arithmetic = parameters.get('Arithmetic', 'complex')
+
+        if arithmetic == 'complex':
+            from jadapy import ComplexEpetraInterface as EpetraInterface
+            from fvm.JadaHYMLSInterface import ComplexJadaHYMLSInterface as JadaHYMLSInterface
+        else:
+            from jadapy import EpetraInterface
+            from fvm.JadaHYMLSInterface import BorderedJadaHYMLSInterface as JadaHYMLSInterface
+
+        jac_op = EpetraInterface.CrsMatrix(self.jacobian(state))
+        mass_op = EpetraInterface.CrsMatrix(self.mass_matrix())
+
+        if arithmetic == 'complex':
+            jada_interface = JadaHYMLSInterface(self)
+            prec = jada_interface.prec
+        else:
+            jada_interface = JadaHYMLSInterface(self, preconditioned_solve=True)
+            prec = None
+
         target = parameters.get('Target', 0.0)
         subspace_dimensions = [parameters.get('Minimum Subspace Dimension', 30),
                                parameters.get('Maximum Subspace Dimension', 60)]
@@ -489,7 +503,7 @@ class Interface(fvm.Interface):
             self._subspaces = [V]
 
         result = jdqz.jdqz(jac_op, mass_op, num, tol=tol, subspace_dimensions=subspace_dimensions, target=target,
-                           interface=jada_interface, arithmetic='complex', prec=jada_interface.prec,
+                           interface=jada_interface, arithmetic=arithmetic, prec=prec,
                            return_eigenvectors=return_eigenvectors, return_subspaces=True,
                            initial_subspaces=self._subspaces)
 
