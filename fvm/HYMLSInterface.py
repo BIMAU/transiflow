@@ -100,6 +100,7 @@ class Interface(fvm.Interface):
 
         solver_parameters = self.teuchos_parameters.sublist('Solver')
         solver_parameters.set('Initial Vector', 'Zero')
+        solver_parameters.set('Left or Right Preconditioning', 'Left')
 
         iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
         set_default_parameter(iterative_solver_parameters, 'Maximum Iterations', 1000)
@@ -192,14 +193,14 @@ class Interface(fvm.Interface):
             if i in self.parameters:
                 original_parameters[i] = self.parameters[i]
 
-            self.set_parameter(i, 1)
+            self.set_parameter(i, numpy.random.random())
 
         # Generate a Jacobian with a random state
         x = Vector(self.map)
         x.Random()
-        jac = self.jacobian(x)
+        self.jacobian(x)
 
-        self.preconditioner = HYMLS.Preconditioner(jac, self.teuchos_parameters)
+        self.preconditioner = HYMLS.Preconditioner(self.jac, self.teuchos_parameters)
         self.preconditioner.Initialize()
 
         self.solver = HYMLS.BorderedSolver(self.jac, self.preconditioner, self.teuchos_parameters)
@@ -436,8 +437,6 @@ class Interface(fvm.Interface):
             C_sol[0, 0] = C
 
             solver.SetBorder(V_sol, W_sol, C_sol)
-        else:
-            solver.UnsetBorder()
 
         self.preconditioner.Compute()
 
@@ -447,6 +446,8 @@ class Interface(fvm.Interface):
             x2 = x2_sol[0, 0]
         else:
             solver.ApplyInverse(rhs_sol, x_sol)
+
+        solver.UnsetBorder()
 
         x = Vector(rhs)
         x.Export(x_sol, self.solve_importer, Epetra.Insert)

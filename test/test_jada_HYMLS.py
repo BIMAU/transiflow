@@ -56,6 +56,48 @@ def x(interface):
     ds = 100
     return continuation.continuation(x0, 'Reynolds Number', start, target, ds)[0]
 
+class Operator:
+    def __init__(self, A):
+        self.A = A
+
+    def matvec(self, x):
+        return self.A @ x
+
+    def proj(self, x):
+        return x
+
+def test_solve(interface, x, tol):
+    from fvm import HYMLSInterface, JadaHYMLSInterface
+
+    from jadapy import EpetraInterface
+    from jadapy.utils import norm
+
+    interface.teuchos_parameters.sublist('Preconditioner').set('Number of Levels', 0)
+    interface.initialize()
+
+    b = EpetraInterface.Vector(x)
+
+    # Create a test vector to remove the nonzero first pressure
+    t = HYMLSInterface.Vector(x)
+    t.PutScalar(0.0)
+    for i in range(t.MyLength()):
+        if t.Map().GID(i) != interface.dim:
+            t[i] = 1.0
+
+    jac_op = EpetraInterface.CrsMatrix(interface.jacobian(x))
+    jada_interface = JadaHYMLSInterface.JadaHYMLSInterface(interface, preconditioned_solve=True)
+
+    op = Operator(jac_op)
+    x = jada_interface.solve(op, b, tol, maxit=1)
+
+    r = op.matvec(x) - b
+
+    # Remove the nonzero first pressure
+    r.Multiply(1.0, r, t, 0.0)
+
+    assert norm(x) > tol
+    assert norm(r) / norm(b) < tol
+
 def test_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
     from fvm import JadaHYMLSInterface
 
