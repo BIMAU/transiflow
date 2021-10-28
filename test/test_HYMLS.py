@@ -143,7 +143,7 @@ def test_HYMLS_2D_stretched(nx=8, interactive=False):
 
         plot_utils.plot_velocity_magnitude(x, interface)
 
-def test_HYMLS_bifurcation(nx=8, interactive=False):
+def test_HYMLS_rayleigh_benard(nx=8):
     try:
         from fvm import HYMLSInterface
         from PyTrilinos import Epetra
@@ -185,6 +185,9 @@ def test_HYMLS_bifurcation(nx=8, interactive=False):
     x, mu, _ = continuation.continuation(x0, 'Rayleigh Number', start, target, ds)
 
     parameters['Detect Bifurcation Points'] = True
+    parameters['Eigenvalue Solver'] = {}
+    parameters['Eigenvalue Solver']['Arithmetic'] = 'real'
+    parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
 
     target = 5000
     ds = 50
@@ -194,8 +197,61 @@ def test_HYMLS_bifurcation(nx=8, interactive=False):
     assert mu > 0
     assert mu < target
 
+def test_HYMLS_double_gyre(nx=8):
+    try:
+        from fvm import HYMLSInterface
+        from PyTrilinos import Epetra
+    except ImportError:
+        pytest.skip("HYMLS not found")
+
+    try:
+        from fvm import JadaInterface # noqa: F401
+    except ImportError:
+        pytest.skip('jadapy not found')
+
+    dim = 2
+    dof = 3
+    ny = nx
+    nz = 1
+
+    parameters = {'Problem Type': 'Double Gyre',
+                  'Reynolds Number': 16,
+                  'Rossby Parameter': 1000,
+                  'Wind Stress Parameter': 0}
+
+    parameters['Preconditioner'] = {}
+    parameters['Preconditioner']['Number of Levels'] = 0
+
+    comm = Epetra.PyComm()
+    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+    m = interface.map
+
+    continuation = Continuation(interface, parameters)
+
+    x0 = HYMLSInterface.Vector(m)
+    x0.PutScalar(0.0)
+
+    start = 0
+    target = 1000
+    ds = 200
+    x, mu, _ = continuation.continuation(x0, 'Wind Stress Parameter', start, target, ds)
+
+    parameters['Detect Bifurcation Points'] = True
+    parameters['Destination Tolerance'] = 1e-4
+    parameters['Eigenvalue Solver'] = {}
+    parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
+
+    target = 100
+    ds = 5
+    x, mu, _ = continuation.continuation(x, 'Reynolds Number', 16, target, ds)
+
+    assert x.Norm2() > 0
+    assert mu > 0
+    assert mu < target
+
 
 if __name__ == '__main__':
     # test_HYMLS(8, True)
     # test_HYMLS_2D(16, True)
-    test_HYMLS_2D_stretched(32, True)
+    # test_HYMLS_2D_stretched(32, True)
+    test_HYMLS_double_gyre()
