@@ -460,8 +460,6 @@ class Interface(fvm.Interface):
     def eigs(self, state, return_eigenvectors=False):
         '''Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v.'''
 
-        from jadapy import jdqz, orthogonalization
-
         parameters = self.parameters.get('Eigenvalue Solver', {})
         arithmetic = parameters.get('Arithmetic', 'complex')
 
@@ -482,44 +480,5 @@ class Interface(fvm.Interface):
             jada_interface = JadaHYMLSInterface(self, preconditioned_solve=True)
             prec = None
 
-        target = parameters.get('Target', 0.0)
-        subspace_dimensions = [parameters.get('Minimum Subspace Dimension', 30),
-                               parameters.get('Maximum Subspace Dimension', 60)]
-        tol = parameters.get('Tolerance', 1e-7)
-        num = parameters.get('Number of Eigenvalues', 5)
-
-        if not self._subspaces:
-            # Use an inverse iteration to find guesses
-            # for the eigenvectors closest to the target
-            m = subspace_dimensions[0]
-            V = jada_interface.vector(m)
-            V[:, 0] = jada_interface.random()
-            orthogonalization.normalize(V[:, 0])
-
-            for i in range(1, m):
-                V[:, i] = jada_interface.prec(V[:, i-1], target, 1.0)
-                orthogonalization.orthonormalize(V[:, 0:i], V[:, i])
-
-            self._subspaces = [V]
-
-        result = jdqz.jdqz(jac_op, mass_op, num, tol=tol, subspace_dimensions=subspace_dimensions, target=target,
-                           interface=jada_interface, arithmetic=arithmetic, prec=prec,
-                           return_eigenvectors=return_eigenvectors, return_subspaces=True,
-                           initial_subspaces=self._subspaces)
-
-        if return_eigenvectors:
-            alpha, beta, v, q, z = result
-            self._subspaces = [q, z]
-            idx = range(len(alpha))
-            idx = sorted(idx, key=lambda i: -(alpha[i] / beta[i]).real if (alpha[i] / beta[i]).real < 100 else 100)
-
-            w = v.copy()
-            eigs = alpha.copy()
-            for i in range(len(idx)):
-                w[:, i] = v[:, idx[i]]
-                eigs[i] = alpha[idx[i]] / beta[idx[i]]
-            return eigs, w
-        else:
-            alpha, beta, q, z = result
-            self._subspaces = [q, z]
-            return numpy.array(sorted(alpha / beta, key=lambda x: -x.real if x.real < 100 else 100))
+        return self._eigs(jada_interface, jac_op, mass_op, prec,
+                          state, return_eigenvectors)

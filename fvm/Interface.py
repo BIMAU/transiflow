@@ -187,21 +187,13 @@ class Interface:
 
         return jac.solve(x)
 
-    def eigs(self, state, return_eigenvectors=False):
-        '''Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v.'''
+    def _eigs(self, jada_interface, jac_op, mass_op, prec_op, state, return_eigenvectors):
+        '''Internal helper for eigs()'''
 
         from jadapy import jdqz, orthogonalization
-        from fvm.JadaInterface import JadaOp, JadaInterface
 
         parameters = self.parameters.get('Eigenvalue Solver', {})
         arithmetic = parameters.get('Arithmetic', 'complex')
-
-        jac_op = JadaOp(self.jacobian(state))
-        mass_op = JadaOp(self.mass_matrix())
-        jada_interface = JadaInterface(self, jac_op, mass_op, jac_op.shape[0], numpy.complex128)
-        if arithmetic == 'real':
-            jada_interface = JadaInterface(self, jac_op, mass_op, jac_op.shape[0])
-
         target = parameters.get('Target', 0.0)
         subspace_dimensions = [parameters.get('Minimum Subspace Dimension', 30),
                                parameters.get('Maximum Subspace Dimension', 60)]
@@ -217,13 +209,13 @@ class Interface:
             orthogonalization.normalize(V[:, 0])
 
             for i in range(1, m):
-                V[:, i] = jada_interface.shifted_prec(V[:, i-1], target, 1.0)
+                V[:, i] = jada_interface.prec(V[:, i-1])
                 orthogonalization.orthonormalize(V[:, 0:i], V[:, i])
 
             self._subspaces = [V]
 
         result = jdqz.jdqz(jac_op, mass_op, num, tol=tol, subspace_dimensions=subspace_dimensions, target=target,
-                           interface=jada_interface, arithmetic=arithmetic, prec=jada_interface.shifted_prec,
+                           interface=jada_interface, arithmetic=arithmetic, prec=prec_op,
                            return_eigenvectors=return_eigenvectors, return_subspaces=True,
                            initial_subspaces=self._subspaces)
 
@@ -243,3 +235,20 @@ class Interface:
             alpha, beta, q, z = result
             self._subspaces = [q, z]
             return numpy.array(sorted(alpha / beta, key=lambda x: -x.real if x.real < 100 else 100))
+
+    def eigs(self, state, return_eigenvectors=False):
+        '''Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v.'''
+
+        from fvm.JadaInterface import JadaOp, JadaInterface
+
+        parameters = self.parameters.get('Eigenvalue Solver', {})
+        arithmetic = parameters.get('Arithmetic', 'complex')
+
+        jac_op = JadaOp(self.jacobian(state))
+        mass_op = JadaOp(self.mass_matrix())
+        jada_interface = JadaInterface(self, jac_op, mass_op, jac_op.shape[0], numpy.complex128)
+        if arithmetic == 'real':
+            jada_interface = JadaInterface(self, jac_op, mass_op, jac_op.shape[0])
+
+        return self._eigs(jada_interface, jac_op, mass_op, jada_interface.shifted_prec,
+                          state, return_eigenvectors)
