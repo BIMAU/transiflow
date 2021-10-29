@@ -195,20 +195,20 @@ class Interface:
         parameters = self.parameters.get('Eigenvalue Solver', {})
         arithmetic = parameters.get('Arithmetic', 'complex')
         target = parameters.get('Target', 0.0)
+        initial_subspace_dimension = parameters.get('Initial Subspace Dimension', 0)
         subspace_dimensions = [parameters.get('Minimum Subspace Dimension', 30),
                                parameters.get('Maximum Subspace Dimension', 60)]
         tol = parameters.get('Tolerance', 1e-7)
         num = parameters.get('Number of Eigenvalues', 5)
 
-        if not self._subspaces:
+        if not self._subspaces and initial_subspace_dimension > 0:
             # Use an inverse iteration to find guesses
             # for the eigenvectors closest to the target
-            m = subspace_dimensions[0]
-            V = jada_interface.vector(m)
+            V = jada_interface.vector(initial_subspace_dimension)
             V[:, 0] = jada_interface.random()
             orthogonalization.normalize(V[:, 0])
 
-            for i in range(1, m):
+            for i in range(1, initial_subspace_dimension):
                 V[:, i] = jada_interface.prec(V[:, i-1])
                 orthogonalization.orthonormalize(V[:, 0:i], V[:, i])
 
