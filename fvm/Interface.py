@@ -274,16 +274,26 @@ class Interface:
     def eigs(self, state, return_eigenvectors=False):
         '''Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v.'''
 
-        from fvm.JadaInterface import JadaOp, JadaInterface
+        from fvm.JadaInterface import JadaOp
 
         parameters = self.parameters.get('Eigenvalue Solver', {})
         arithmetic = parameters.get('Arithmetic', 'complex')
 
         jac_op = JadaOp(self.jacobian(state))
         mass_op = JadaOp(self.mass_matrix())
+        prec = None
+
+        if self.parameters.get('Bordered Solver', False):
+            from fvm.JadaInterface import BorderedJadaInterface as JadaInterface
+        else:
+            from fvm.JadaInterface import JadaInterface
+
         jada_interface = JadaInterface(self, jac_op, mass_op, jac_op.shape[0], numpy.complex128)
         if arithmetic == 'real':
             jada_interface = JadaInterface(self, jac_op, mass_op, jac_op.shape[0])
 
-        return self._eigs(jada_interface, jac_op, mass_op, jada_interface.shifted_prec,
+        if not self.parameters.get('Bordered Solver', False):
+            prec = jada_interface.shifted_prec
+
+        return self._eigs(jada_interface, jac_op, mass_op, prec,
                           state, return_eigenvectors)
