@@ -175,11 +175,12 @@ class BorderedJadaInterface(NumPyInterface.NumPyInterface):
 
         mat = beta * self.jac_op.mat - alpha * self.mass_op.mat
         shifted_matrix = CrsMatrix(mat.data, mat.indices, mat.indptr, False)
+        shifted_bordered_matrix = self.interface.compute_bordered_matrix(shifted_matrix, op.Z, op.Q)
 
         out = x.copy()
         for i in range(x.shape[1]):
-            x2 = numpy.zeros(op.Q.shape[1], x.dtype)
-            out[:, i] = self.interface.solve(shifted_matrix, x[:, i], x2, op.Z, op.Q)[0]
+            x2 = numpy.append(x[:, i], numpy.zeros(op.Q.shape[1], x.dtype))
+            out[:, i] = self.interface.solve(shifted_bordered_matrix, x2)[:-op.Q.shape[1]]
 
         return out
 
