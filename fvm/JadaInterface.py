@@ -83,24 +83,15 @@ class MatrixCache:
         return shifted_matrix
 
 class JadaPrecOp(object):
-    def __init__(self, op, interface, shifted=True):
+    def __init__(self, op, prec_op):
         self.op = op
-        self.interface = interface
-        self.shifted = shifted
+        self.prec_op = prec_op
 
         self.dtype = self.op.dtype
         self.shape = self.op.shape
 
-        self._matrix_cache = MatrixCache(self.op.A, self.op.B)
-
     def matvec(self, x):
-        if not self.shifted:
-            return self.op.proj(self.interface.solve(self.op.A.fvm_mat, x))
-
-        alpha = self.op.alpha
-        beta = self.op.beta
-        shifted_matrix = self._matrix_cache.get_shifted_matrix(alpha, beta)
-        return self.op.proj(self.interface.solve(shifted_matrix, x))
+        return self.op.proj(self.prec_op(x, self.op.alpha, self.op.beta))
 
 class JadaInterface(NumPyInterface.NumPyInterface):
     def __init__(self, interface, jac_op, mass_op, *args, **kwargs):
@@ -122,11 +113,15 @@ class JadaInterface(NumPyInterface.NumPyInterface):
                 op.alpha = op.alpha.real
             op.beta = op.beta.real
 
+        prec_op = None
+        if self.preconditioned_solve:
+            if self.shifted:
+                prec_op = JadaPrecOp(op, self.shifted_prec)
+            else:
+                prec_op = JadaPrecOp(op, self.prec)
+
         out = x.copy()
         for i in range(x.shape[1]):
-            prec_op = None
-            if self.preconditioned_solve:
-                prec_op = JadaPrecOp(op, self.interface, self.shifted)
 
             restart = min(maxit, 100)
             maxiter = (maxit - 1) // restart + 1
