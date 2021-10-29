@@ -103,13 +103,38 @@ class Interface:
 
     def _compute_bordered_factorization(self, jac, V, W, C):
         '''Compute the LU factorization of the bordered jacobian.'''
+
+        def _get_value(V, i, j):
+            if not hasattr(V, 'shape') or len(V.shape) < 1:
+                return V
+
+            if len(V.shape) < 2:
+                return V[i]
+
+            return V[i, j]
+
         self._lu = None
         self._prec = None
         jac.lu = None
 
-        coA = numpy.zeros(jac.begA[-1] + 2 * jac.n + 2, dtype=jac.coA.dtype)
-        jcoA = numpy.zeros(jac.begA[-1] + 2 * jac.n + 2, dtype=int)
-        begA = numpy.zeros(len(jac.begA) + 1, dtype=int)
+        if V is None:
+            raise Exception('V is None')
+
+        border_size = 1
+        if len(V.shape) > 1:
+            border_size = V.shape[1]
+
+        extra_border_space = jac.n * border_size * 2 + border_size * border_size
+
+        if W is None:
+            W = V
+
+        if C is None:
+            C = numpy.zeros((border_size, border_size), dtype=jac.coA.dtype)
+
+        coA = numpy.zeros(jac.begA[-1] + extra_border_space + 1, dtype=jac.coA.dtype)
+        jcoA = numpy.zeros(jac.begA[-1] + extra_border_space + 1, dtype=int)
+        begA = numpy.zeros(len(jac.begA) + border_size, dtype=int)
 
         fix_pressure_row = self.dof > self.dim and self.pressure_row is not None
 
@@ -121,27 +146,32 @@ class Interface:
                 idx += 1
                 begA[i+1] = idx
                 continue
+
             for j in range(jac.begA[i], jac.begA[i+1]):
                 if not fix_pressure_row or jac.jcoA[j] != self.pressure_row:
                     coA[idx] = jac.coA[j]
                     jcoA[idx] = jac.jcoA[j]
                     idx += 1
-            coA[idx] = V[i]
-            jcoA[idx] = jac.n
-            idx += 1
+
+            for j in range(border_size):
+                coA[idx] = _get_value(V, i, j)
+                jcoA[idx] = jac.n + j
+                idx += 1
 
             begA[i+1] = idx
 
-        for i in range(jac.n):
-            coA[idx] = W[i]
-            jcoA[idx] = i
-            idx += 1
+        for i in range(border_size):
+            for j in range(jac.n):
+                coA[idx] = _get_value(W, j, i)
+                jcoA[idx] = j
+                idx += 1
 
-        coA[idx] = C
-        jcoA[idx] = jac.n
-        idx += 1
+            for j in range(border_size):
+                coA[idx] = _get_value(C, i, j)
+                jcoA[idx] = jac.n + j
+                idx += 1
 
-        begA[jac.n+1] = idx
+            begA[jac.n+1+i] = idx
 
         # Convert the matrix to CSC format since splu expects that
         A = sparse.csr_matrix((coA, jcoA, begA)).tocsc()
@@ -183,7 +213,12 @@ class Interface:
 
         if jac.bordered_lu:
             y = jac.solve(x)
-            return y[:-1], y[-1]
+
+            border_size = 1
+            if hasattr(rhs2, 'shape') and len(rhs2.shape) > 0:
+                border_size = rhs2.shape[0]
+
+            return y[:-border_size], y[-border_size:]
 
         return jac.solve(x)
 

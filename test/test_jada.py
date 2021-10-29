@@ -317,3 +317,22 @@ def test_complex_shifted_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, 
     fig, ax = plt.subplots()
     ax.scatter(jdqz_eigs.real, jdqz_eigs.imag, marker='+')
     plt.show()
+
+def test_complex_shifted_prec_bordered_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
+    from fvm import JadaInterface
+    from jadapy import jdqz
+
+    numpy.random.seed(1234)
+
+    jac_op = JadaInterface.JadaOp(interface.jacobian(x))
+    mass_op = JadaInterface.JadaOp(interface.mass_matrix())
+    jada_interface = JadaInterface.BorderedJadaInterface(interface, jac_op, mass_op, len(x), numpy.complex128)
+
+    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[20, 40],
+                               arithmetic='complex', return_eigenvectors=True, interface=jada_interface)
+    check_eigenvalues(jac_op, mass_op, alpha / beta, v, num_evs, atol)
+
+    jdqz_eigs = numpy.array(sorted(alpha / beta, key=lambda x: abs(x)))
+
+    assert_allclose(jdqz_eigs.real, arpack_eigs.real, rtol=0, atol=atol)
+    assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)

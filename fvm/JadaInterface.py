@@ -1,6 +1,7 @@
 from fvm import CrsMatrix
 
 import time
+import numpy
 import warnings
 
 from jadapy import NumPyInterface
@@ -142,3 +143,45 @@ class JadaInterface(NumPyInterface.NumPyInterface):
     def shifted_prec(self, x, alpha, beta):
         shifted_matrix = self._matrix_cache.get_shifted_matrix(alpha, beta)
         return self.interface.solve(shifted_matrix, x)
+
+class BorderedJadaInterface(NumPyInterface.NumPyInterface):
+    def __init__(self, interface, jac_op, mass_op, *args, **kwargs):
+        super().__init__(*args)
+        self.interface = interface
+        self.jac_op = jac_op
+        self.mass_op = mass_op
+
+    def solve(self, op, x, tol, maxit):
+        alpha = op.alpha
+        beta = op.beta
+
+        if op.dtype.char != op.dtype.char.upper():
+            # Real case
+            if abs(op.alpha.real) < abs(op.alpha.imag):
+                alpha = op.alpha.imag
+            else:
+                alpha = op.alpha.real
+            beta = op.beta.real
+
+        try:
+            if len(alpha.shape) == 2:
+                alpha = alpha[0, 0]
+                beta = beta[0, 0]
+            elif len(alpha.shape) == 1:
+                alpha = alpha[0]
+                beta = beta[0]
+        except AttributeError:
+            pass
+
+        mat = beta * self.jac_op.mat - alpha * self.mass_op.mat
+        shifted_matrix = CrsMatrix(mat.data, mat.indices, mat.indptr)
+
+        out = x.copy()
+        for i in range(x.shape[1]):
+            x2 = numpy.zeros(op.Q.shape[1], x.dtype)
+            out[:, i] = self.interface.solve(shifted_matrix, x[:, i], x2, op.Z, op.Q)[0]
+
+        return out
+
+    def prec(self, x, *args):
+        return self.interface.solve(self.jac_op.fvm_mat, x)
