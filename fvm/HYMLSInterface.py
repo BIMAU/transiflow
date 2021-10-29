@@ -498,7 +498,7 @@ class Interface(fvm.Interface):
 
             for i in range(1, m):
                 V[:, i] = jada_interface.prec(V[:, i-1], target, 1.0)
-                orthogonalization.orthonormalize(V[:, 0:i], V[:, i:i+1])
+                orthogonalization.orthonormalize(V[:, 0:i], V[:, i])
 
             self._subspaces = [V]
 
