@@ -77,7 +77,7 @@ class MatrixCache:
                 self.matrices.pop(0)
 
         mat = beta * self.jac_op.mat - alpha * self.mass_op.mat
-        shifted_matrix = CrsMatrix(mat.data, mat.indices, mat.indptr)
+        shifted_matrix = CrsMatrix(mat.data, mat.indices, mat.indptr, False)
         self.matrices.append(CachedMatrix(shifted_matrix, alpha, beta))
 
         return shifted_matrix
@@ -174,7 +174,7 @@ class BorderedJadaInterface(NumPyInterface.NumPyInterface):
             pass
 
         mat = beta * self.jac_op.mat - alpha * self.mass_op.mat
-        shifted_matrix = CrsMatrix(mat.data, mat.indices, mat.indptr)
+        shifted_matrix = CrsMatrix(mat.data, mat.indices, mat.indptr, False)
 
         out = x.copy()
         for i in range(x.shape[1]):
