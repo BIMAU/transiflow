@@ -8,6 +8,19 @@ from jadapy import NumPyInterface
 
 from scipy import sparse
 
+def _get_scalars(alpha, beta):
+    try:
+        if len(alpha.shape) == 2:
+            alpha = alpha[0, 0]
+            beta = beta[0, 0]
+        elif len(alpha.shape) == 1:
+            alpha = alpha[0]
+            beta = beta[0]
+    except AttributeError:
+        pass
+
+    return alpha, beta
+
 class JadaOp:
     def __init__(self, mat):
         self.fvm_mat = mat
@@ -41,6 +54,9 @@ class CachedMatrix:
 
         return False
 
+    def same_shapes(self, matrix):
+        return matrix is None or self.matrix.shape == matrix.shape
+
     def get_matrix(self):
         self.last_used = time.time()
         return self.matrix
@@ -53,20 +69,12 @@ class MatrixCache:
         self.matrices = []
         self.max_matrices = 2
 
-    def get_shifted_matrix(self, alpha, beta):
-        try:
-            if len(alpha.shape) == 2:
-                alpha = alpha[0, 0]
-                beta = beta[0, 0]
-            elif len(alpha.shape) == 1:
-                alpha = alpha[0]
-                beta = beta[0]
-        except AttributeError:
-            pass
+    def get_shifted_matrix(self, alpha, beta, shifted_matrix=None):
+        alpha, beta = _get_scalars(alpha, beta)
 
         # Cache previous preconditioners
         for i, cached_matrix in enumerate(self.matrices):
-            if cached_matrix.same_shifts(alpha, beta):
+            if cached_matrix.same_shifts(alpha, beta) and cached_matrix.same_shapes(shifted_matrix):
                 return cached_matrix.get_matrix()
 
         # Remove the cached preconditioner that was not used last
@@ -76,8 +84,10 @@ class MatrixCache:
             else:
                 self.matrices.pop(0)
 
-        mat = beta * self.jac_op.mat - alpha * self.mass_op.mat
-        shifted_matrix = CrsMatrix(mat.data, mat.indices, mat.indptr, False)
+        if shifted_matrix is None:
+            mat = beta * self.jac_op.mat - alpha * self.mass_op.mat
+            shifted_matrix = CrsMatrix(mat.data, mat.indices, mat.indptr, False)
+
         self.matrices.append(CachedMatrix(shifted_matrix, alpha, beta))
 
         return shifted_matrix
@@ -139,12 +149,25 @@ class JadaInterface(NumPyInterface.NumPyInterface):
         shifted_matrix = self._matrix_cache.get_shifted_matrix(alpha, beta)
         return self.interface.solve(shifted_matrix, x)
 
+class BorderedJadaPrecOp(object):
+    def __init__(self, interface, prec):
+        self.interface = interface
+        self.prec = prec
+
+        self.dtype = prec.dtype
+        self.shape = prec.shape
+
+    def matvec(self, x):
+        return self.interface.solve(self.prec, x)
+
 class BorderedJadaInterface(NumPyInterface.NumPyInterface):
     def __init__(self, interface, jac_op, mass_op, *args, **kwargs):
         super().__init__(*args)
         self.interface = interface
         self.jac_op = jac_op
         self.mass_op = mass_op
+
+        self._matrix_cache = MatrixCache(jac_op, mass_op)
 
     def solve(self, op, x, tol, maxit):
         alpha = op.alpha
@@ -158,24 +181,29 @@ class BorderedJadaInterface(NumPyInterface.NumPyInterface):
                 alpha = op.alpha.real
             beta = op.beta.real
 
-        try:
-            if len(alpha.shape) == 2:
-                alpha = alpha[0, 0]
-                beta = beta[0, 0]
-            elif len(alpha.shape) == 1:
-                alpha = alpha[0]
-                beta = beta[0]
-        except AttributeError:
-            pass
+        alpha, beta = _get_scalars(alpha, beta)
 
         mat = beta * self.jac_op.mat - alpha * self.mass_op.mat
         shifted_matrix = CrsMatrix(mat.data, mat.indices, mat.indptr, False)
         shifted_bordered_matrix = self.interface.compute_bordered_matrix(shifted_matrix, op.Z, op.Q)
+        shifted_bordered_op = JadaOp(shifted_bordered_matrix)
+
+        prec = self._matrix_cache.get_shifted_matrix(alpha, beta, shifted_bordered_matrix)
+        prec_op = BorderedJadaPrecOp(self.interface, prec)
 
         out = x.copy()
         for i in range(x.shape[1]):
+            restart = min(maxit, 100)
+            maxiter = (maxit - 1) // restart + 1
             x2 = numpy.append(x[:, i], numpy.zeros(op.Q.shape[1], x.dtype))
-            out[:, i] = self.interface.solve(shifted_bordered_matrix, x2)[:-op.Q.shape[1]]
+            y, info = sparse.linalg.gmres(shifted_bordered_op, x2, restart=restart,
+                                          maxiter=maxiter, tol=tol, atol=0, M=prec_op)
+            out[:, i] = y[:-op.Q.shape[1]]
+
+            if info < 0:
+                raise Exception('GMRES returned ' + str(info))
+            elif info > 0:
+                warnings.warn('GMRES did not converge in ' + str(info) + ' iterations')
 
         return out
 
