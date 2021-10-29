@@ -3,6 +3,7 @@ import numpy
 from scipy import sparse
 from scipy.sparse import linalg
 
+from fvm import CrsMatrix
 from fvm import Discretization, CylindricalDiscretization
 
 class Interface:
@@ -101,8 +102,8 @@ class Interface:
         self._lu = jac.lu
         self._prec = linalg.LinearOperator((jac.n, jac.n), matvec=self._lu.solve, dtype=jac.dtype)
 
-    def _compute_bordered_factorization(self, jac, V, W, C):
-        '''Compute the LU factorization of the bordered jacobian.'''
+    def compute_bordered_matrix(self, jac, V, W=None, C=None, fix_pressure_row=False):
+        '''Helper to compute a bordered matrix of the form [A, V; W', C]'''
 
         def _get_value(V, i, j):
             if not hasattr(V, 'shape') or len(V.shape) < 1:
@@ -112,10 +113,6 @@ class Interface:
                 return V[i]
 
             return V[i, j]
-
-        self._lu = None
-        self._prec = None
-        jac.lu = None
 
         if V is None:
             raise Exception('V is None')
@@ -132,11 +129,9 @@ class Interface:
         if C is None:
             C = numpy.zeros((border_size, border_size), dtype=jac.coA.dtype)
 
-        coA = numpy.zeros(jac.begA[-1] + extra_border_space + 1, dtype=jac.coA.dtype)
+        coA = numpy.zeros(jac.begA[-1] + extra_border_space + 1, dtype=V.dtype)
         jcoA = numpy.zeros(jac.begA[-1] + extra_border_space + 1, dtype=int)
         begA = numpy.zeros(len(jac.begA) + border_size, dtype=int)
-
-        fix_pressure_row = self.dof > self.dim and self.pressure_row is not None
 
         idx = 0
         for i in range(jac.n):
@@ -173,8 +168,20 @@ class Interface:
 
             begA[jac.n+1+i] = idx
 
+        return CrsMatrix(coA, jcoA, begA, False)
+
+    def _compute_bordered_factorization(self, jac, V, W, C):
+        '''Compute the LU factorization of the bordered jacobian.'''
+
+        self._lu = None
+        self._prec = None
+        jac.lu = None
+
+        A = self.compute_bordered_matrix(jac, V, W, C,
+                                         self.dof > self.dim and self.pressure_row is not None)
+
         # Convert the matrix to CSC format since splu expects that
-        A = sparse.csr_matrix((coA, jcoA, begA)).tocsc()
+        A = sparse.csr_matrix((A.coA, A.jcoA, A.begA)).tocsc()
 
         jac.lu = linalg.splu(A)
         jac.bordered_lu = True
