@@ -67,7 +67,7 @@ class MatrixCache:
         self.mass_op = mass_op
 
         self.matrices = []
-        self.max_matrices = 2
+        self.max_matrices = 1
 
     def get_shifted_matrix(self, alpha, beta, shifted_matrix=None):
         alpha, beta = _get_scalars(alpha, beta)
@@ -79,12 +79,15 @@ class MatrixCache:
 
         # Remove the cached preconditioner that was not used last
         if len(self.matrices) >= self.max_matrices:
-            if self.matrices[0].last_used > self.matrices[1].last_used:
+            if len(self.matrices) > 1 and self.matrices[0].last_used > self.matrices[1].last_used:
                 self.matrices.pop(1)
             else:
                 self.matrices.pop(0)
 
         if shifted_matrix is None:
+            if alpha == 0.0 and beta == 1.0:
+                return self.jac_op.fvm_mat
+
             mat = beta * self.jac_op.mat - alpha * self.mass_op.mat
             shifted_matrix = CrsMatrix(mat.data, mat.indices, mat.indptr, False)
 
