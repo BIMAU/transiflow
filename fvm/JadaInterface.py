@@ -72,6 +72,9 @@ class MatrixCache:
     def get_shifted_matrix(self, alpha, beta, shifted_matrix=None):
         alpha, beta = _get_scalars(alpha, beta)
 
+        if shifted_matrix is None and alpha == 0.0 and beta == 1.0:
+            return self.jac_op.fvm_mat
+
         # Cache previous preconditioners
         for i, cached_matrix in enumerate(self.matrices):
             if cached_matrix.same_shifts(alpha, beta) and cached_matrix.same_shapes(shifted_matrix):
@@ -85,9 +88,6 @@ class MatrixCache:
                 self.matrices.pop(0)
 
         if shifted_matrix is None:
-            if alpha == 0.0 and beta == 1.0:
-                return self.jac_op.fvm_mat
-
             mat = beta * self.jac_op.mat - alpha * self.mass_op.mat
             shifted_matrix = CrsMatrix(mat.data, mat.indices, mat.indptr, False)
 
