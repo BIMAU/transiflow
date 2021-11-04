@@ -1,3 +1,4 @@
+import sys
 import numpy
 
 from scipy import sparse
@@ -29,8 +30,6 @@ class Interface:
 
         # Select one pressure node to fix
         self.pressure_row = self.dim
-        if self.parameters.get('Verbose', False):
-            print('Fixing pressure at row %d' % self.pressure_row)
 
         # Solver caching
         self._lu = None
@@ -38,6 +37,11 @@ class Interface:
 
         # Eigenvalue solver caching
         self._subspaces = None
+
+    def debug_print(self, *args):
+        if self.parameters.get('Verbose', False):
+            print(*args)
+            sys.stdout.flush()
 
     def set_parameter(self, name, value):
         '''Set a parameter in self.parameters while also letting the
@@ -72,6 +76,8 @@ class Interface:
 
         # Fix one pressure node
         if self.dof > self.dim and self.pressure_row is not None:
+            self.debug_print('Fixing pressure at row %d of the Jacobian matrix' % self.pressure_row)
+
             coA = numpy.zeros(jac.begA[-1] + 1, dtype=jac.coA.dtype)
             jcoA = numpy.zeros(jac.begA[-1] + 1, dtype=int)
             begA = numpy.zeros(len(jac.begA), dtype=int)
@@ -95,12 +101,16 @@ class Interface:
         # Convert the matrix to CSC format since splu expects that
         A = sparse.csr_matrix((coA, jcoA, begA)).tocsc()
 
+        self.debug_print('Computing the sparse LU factorization of the Jacobian matrix')
+
         jac.lu = linalg.splu(A)
         jac.bordered_lu = False
 
         # Cache the factorization for use in the iterative solver
         self._lu = jac.lu
         self._prec = linalg.LinearOperator((jac.n, jac.n), matvec=self._lu.solve, dtype=jac.dtype)
+
+        self.debug_print('Done computing the sparse LU factorization of the Jacobian matrix')
 
     def compute_bordered_matrix(self, jac, V, W=None, C=None, fix_pressure_row=False):
         '''Helper to compute a bordered matrix of the form [A, V; W', C]'''
@@ -177,11 +187,19 @@ class Interface:
         self._prec = None
         jac.lu = None
 
-        A = self.compute_bordered_matrix(jac, V, W, C,
-                                         self.dof > self.dim and self.pressure_row is not None)
+        fix_pressure_row = self.dof > self.dim and self.pressure_row is not None
+
+        if fix_pressure_row:
+            self.debug_print('Fixing pressure at row %d of the Jacobian matrix and adding the border' % self.pressure_row)
+        else:
+            self.debug_print('Adding the border to the Jacobian matrix')
+
+        A = self.compute_bordered_matrix(jac, V, W, C, fix_pressure_row)
 
         # Convert the matrix to CSC format since splu expects that
         A = sparse.csr_matrix((A.coA, A.jcoA, A.begA)).tocsc()
+
+        self.debug_print('Computing the sparse LU factorization of the bordered Jacobian matrix')
 
         jac.lu = linalg.splu(A)
         jac.bordered_lu = True
@@ -189,6 +207,8 @@ class Interface:
         # Cache the factorization for use in the iterative solver
         self._lu = jac.lu
         self._prec = linalg.LinearOperator((jac.n, jac.n), matvec=self._lu.solve, dtype=jac.dtype)
+
+        self.debug_print('Done computing the sparse LU factorization of the bordered Jacobian matrix')
 
     def solve(self, jac, rhs, rhs2=None, V=None, W=None, C=None):
         '''Solve J y = x for y.'''
@@ -217,6 +237,8 @@ class Interface:
             self._compute_factorization(jac)
         elif rhs2 is not None and (not jac.lu or not jac.bordered_lu):
             self._compute_bordered_factorization(jac, V, W, C)
+
+        self.debug_print('Solving a linear system')
 
         if jac.bordered_lu:
             y = jac.solve(x)
