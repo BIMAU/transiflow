@@ -4,6 +4,8 @@ import numpy
 from scipy import sparse
 from scipy.sparse import linalg
 
+from fvm.utils import norm
+
 from fvm import CrsMatrix
 from fvm import Discretization, CylindricalDiscretization
 
@@ -42,6 +44,11 @@ class Interface:
         if self.parameters.get('Verbose', False):
             print(*args)
             sys.stdout.flush()
+
+    def debug_print_residual(self, string, jac, x, rhs):
+        if self.parameters.get('Verbose', False):
+            r = norm(jac @ x - rhs)
+            self.debug_print(string, '{}'.format(r))
 
     def set_parameter(self, name, value):
         '''Set a parameter in self.parameters while also letting the
@@ -127,6 +134,11 @@ class Interface:
         if V is None:
             raise Exception('V is None')
 
+        if fix_pressure_row:
+            self.debug_print('Fixing pressure at row %d of the Jacobian matrix and adding the border' % self.pressure_row)
+        else:
+            self.debug_print('Adding the border to the Jacobian matrix')
+
         border_size = 1
         if len(V.shape) > 1:
             border_size = V.shape[1]
@@ -188,12 +200,6 @@ class Interface:
         jac.lu = None
 
         fix_pressure_row = self.dof > self.dim and self.pressure_row is not None
-
-        if fix_pressure_row:
-            self.debug_print('Fixing pressure at row %d of the Jacobian matrix and adding the border' % self.pressure_row)
-        else:
-            self.debug_print('Adding the border to the Jacobian matrix')
-
         A = self.compute_bordered_matrix(jac, V, W, C, fix_pressure_row)
 
         # Convert the matrix to CSC format since splu expects that
@@ -238,18 +244,27 @@ class Interface:
         elif rhs2 is not None and (not jac.lu or not jac.bordered_lu):
             self._compute_bordered_factorization(jac, V, W, C)
 
-        self.debug_print('Solving a linear system')
-
         if jac.bordered_lu:
+            self.debug_print('Solving a bordered linear system')
+
             y = jac.solve(x)
 
             border_size = 1
             if hasattr(rhs2, 'shape') and len(rhs2.shape) > 0:
                 border_size = rhs2.shape[0]
 
+            self.debug_print_residual('Done solving a bordered linear system with residual',
+                                      jac, y[:-border_size], rhs - V * y[-border_size:])
+
             return y[:-border_size], y[-border_size:]
 
-        return jac.solve(x)
+        self.debug_print('Solving a linear system')
+
+        y = jac.solve(x)
+
+        self.debug_print_residual('Done solving a linear system with residual', jac, y, rhs)
+
+        return y
 
     def _eigs(self, jada_interface, jac_op, mass_op, prec_op, state, return_eigenvectors):
         '''Internal helper for eigs()'''
