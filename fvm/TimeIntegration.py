@@ -1,10 +1,7 @@
 import sys
 import numpy
 
-from math import sqrt
-
-def norm(x):
-    return sqrt(x.dot(x))
+from fvm.utils import norm
 
 class Data:
     def __init__(self):

@@ -2,6 +2,15 @@ import numpy
 
 from math import sqrt
 
+def norm(x):
+    if len(x.shape) > 1:
+        ret = numpy.zeros(x.shape[1])
+        for i in range(x.shape[1]):
+            ret[i] = x[:, i].dot(x[:, i])
+        return ret
+
+    return sqrt(x.dot(x))
+
 def create_state_mtx(state, nx, ny, nz, dof):
     '''Helper to create an (nx, ny, nz, dof) dimensional array out of a
     state vector that makes it easier to access the variables.'''
