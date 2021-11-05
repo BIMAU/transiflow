@@ -112,7 +112,7 @@ def test_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
     jac_op = JadaInterface.JadaOp(interface.jacobian(x))
     mass_op = JadaInterface.JadaOp(interface.mass_matrix())
 
-    alpha, beta = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[20, 40], target=0.1)
+    alpha, beta = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60], target=0.1)
     jdqz_eigs = numpy.array(sorted(alpha / beta, key=lambda x: abs(x)))
     jdqz_eigs = jdqz_eigs[:num_evs]
 
@@ -135,7 +135,7 @@ def test_complex_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=F
     jac_op = JadaInterface.JadaOp(interface.jacobian(x))
     mass_op = JadaInterface.JadaOp(interface.mass_matrix())
 
-    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[20, 40],
+    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
                                arithmetic='complex', return_eigenvectors=True)
     check_eigenvalues(jac_op, mass_op, alpha / beta, v, num_evs, atol)
 
@@ -161,7 +161,7 @@ def test_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=Fals
     mass_op = JadaInterface.JadaOp(interface.mass_matrix())
     jada_interface = JadaInterface.JadaInterface(interface, jac_op, mass_op, len(x))
 
-    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[20, 40],
+    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
                                return_eigenvectors=True, prec=jada_interface.prec)
 
     jdqz_eigs = numpy.array(sorted(alpha / beta, key=lambda x: abs(x)))
@@ -187,7 +187,7 @@ def test_complex_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interact
     mass_op = JadaInterface.JadaOp(interface.mass_matrix())
     jada_interface = JadaInterface.JadaInterface(interface, jac_op, mass_op, len(x), numpy.complex128)
 
-    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[20, 40],
+    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
                                arithmetic='complex', return_eigenvectors=True, prec=jada_interface.prec)
     check_eigenvalues(jac_op, mass_op, alpha / beta, v, num_evs, atol)
 
@@ -213,7 +213,7 @@ def test_complex_shifted_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, 
     mass_op = JadaInterface.JadaOp(interface.mass_matrix())
     jada_interface = JadaInterface.JadaInterface(interface, jac_op, mass_op, len(x), numpy.complex128)
 
-    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[20, 40],
+    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
                                arithmetic='complex', return_eigenvectors=True, prec=jada_interface.shifted_prec)
     check_eigenvalues(jac_op, mass_op, alpha / beta, v, num_evs, atol)
 
@@ -242,7 +242,7 @@ def test_complex_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, interac
     assert not jada_interface.preconditioned_solve
     assert not jada_interface.shifted
 
-    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[20, 40],
+    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
                                arithmetic='complex', return_eigenvectors=True, interface=jada_interface)
     check_eigenvalues(jac_op, mass_op, alpha / beta, v, num_evs, atol)
 
@@ -272,7 +272,7 @@ def test_complex_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, in
     assert jada_interface.preconditioned_solve
     assert not jada_interface.shifted
 
-    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[20, 40],
+    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
                                arithmetic='complex', return_eigenvectors=True, interface=jada_interface)
     check_eigenvalues(jac_op, mass_op, alpha / beta, v, num_evs, atol)
 
@@ -302,7 +302,7 @@ def test_complex_shifted_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, 
     assert jada_interface.preconditioned_solve
     assert jada_interface.shifted
 
-    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[20, 40],
+    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
                                arithmetic='complex', return_eigenvectors=True, interface=jada_interface)
     check_eigenvalues(jac_op, mass_op, alpha / beta, v, num_evs, atol)
 
@@ -328,7 +328,7 @@ def test_complex_shifted_prec_bordered_solve_2D(arpack_eigs, interface, x, num_e
     mass_op = JadaInterface.JadaOp(interface.mass_matrix())
     jada_interface = JadaInterface.BorderedJadaInterface(interface, jac_op, mass_op, len(x), numpy.complex128)
 
-    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[20, 40],
+    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
                                arithmetic='complex', return_eigenvectors=True, interface=jada_interface)
     check_eigenvalues(jac_op, mass_op, alpha / beta, v, num_evs, atol)
 
