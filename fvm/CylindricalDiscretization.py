@@ -30,6 +30,8 @@ class CylindricalDiscretization(Discretization):
         Discretization.__init__(self, parameters, nr, ntheta, nz, dim, dof, r, theta, z)
 
         self.y_periodic = True
+        if self.parameters.get('Z-periodic', False):
+            self.z_periodic = True
 
     def _linear_part_2D(self):
         '''Compute the linear part of the equation in case the domain is 2D.
@@ -115,8 +117,9 @@ class CylindricalDiscretization(Discretization):
             if self.dim == 2 or self.nz <= 1:
                 return frc
 
-            boundary_conditions.no_slip_top(atom)
-            boundary_conditions.no_slip_bottom(atom)
+            if not self.z_periodic:
+                boundary_conditions.no_slip_top(atom)
+                boundary_conditions.no_slip_bottom(atom)
         else:
             raise Exception('Invalid problem type %s' % self.get_parameter('Problem Type'))
 
