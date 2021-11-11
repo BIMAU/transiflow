@@ -133,7 +133,7 @@ def test_continuation_2D_stretched(nx=4, interactive=False):
 
     plot_utils.plot_velocity_magnitude(x, interface)
 
-def test_continuation_time_integration(nx=4, interactive=False):
+def test_continuation_time_integration(nx=4):
     dim = 2
     dof = 3
     ny = nx
@@ -181,7 +181,7 @@ def test_continuation_time_integration(nx=4, interactive=False):
     assert numpy.linalg.norm(x[0:len(x):dof] - x3[0:len(x):dof]) < 1e-4
     assert numpy.linalg.norm(x[1:len(x):dof] - x3[1:len(x):dof]) < 1e-4
 
-def test_continuation_rayleigh_benard(nx=8, interactive=False):
+def test_continuation_rayleigh_benard(nx=8):
     try:
         from fvm import JadaInterface # noqa: F401
     except ImportError:
@@ -241,7 +241,7 @@ def test_continuation_rayleigh_benard(nx=8, interactive=False):
     assert mu3 < target
     assert abs(mu3 - mu2) < 1e-2
 
-def test_continuation_double_gyre(nx=8, interactive=False):
+def test_continuation_double_gyre(nx=8):
     try:
         from fvm import JadaInterface # noqa: F401
     except ImportError:
@@ -280,7 +280,7 @@ def test_continuation_double_gyre(nx=8, interactive=False):
     assert mu > 0
     assert mu < target
 
-def test_continuation_2D_taylor_couette(nx=8, interactive=False):
+def test_continuation_2D_tc(nx=8):
     try:
         from fvm import JadaInterface # noqa: F401
     except ImportError:
@@ -291,13 +291,17 @@ def test_continuation_2D_taylor_couette(nx=8, interactive=False):
     ny = 1
     nz = nx
 
+    ri = 0.8
+    ro = 1
+
     parameters = {'Problem Type': 'Taylor-Couette',
                   'Reynolds Number': 1,
-                  'R-min': 0.8,
-                  'R-max': 1,
-                  'Z-max': 3,
-                  'Inner Velocity': 10 * 1 / 0.8,
-                  'Outer Velocity': 0}
+                  'R-min': ri,
+                  'R-max': ro,
+                  'Z-max': 1,
+                  'Z-periodic': True,
+                  'Inner Angular Velocity': 1 / ri / (ro - ri),
+                  'Outer Angular Velocity': 0}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof)
 
@@ -305,14 +309,22 @@ def test_continuation_2D_taylor_couette(nx=8, interactive=False):
 
     x0 = numpy.zeros(dof * nx * ny * nz)
 
+    start = 0
+    target = 80
+    ds = 30
+    x, mu, _ = continuation.continuation(x0, 'Reynolds Number', start, target, ds)
+
+    parameters['Maximum Step Size'] = 1
+    parameters['Bordered Solver'] = True
+    parameters['Newton Tolerance'] = 1e-12
     parameters['Detect Bifurcation Points'] = True
     parameters['Eigenvalue Solver'] = {}
     parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
+    parameters['Eigenvalue Solver']['Arithmetic'] = 'real'
 
-    start = 0
     target = 100
-    ds = 30
-    x, mu, _ = continuation.continuation(x0, 'Reynolds Number', start, target, ds)
+    ds = 1
+    x, mu, _ = continuation.continuation(x, 'Reynolds Number', mu, target, ds)
 
     assert numpy.linalg.norm(x) > 0
     assert mu > 0
