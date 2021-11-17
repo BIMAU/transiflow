@@ -2,14 +2,20 @@ import numpy
 
 from math import sqrt
 
+def dot(x, y):
+    try:
+        return x.T.conj() @ y
+    except AttributeError:
+        return x.dot(y)
+
 def norm(x):
     if len(x.shape) > 1:
         ret = numpy.zeros(x.shape[1])
         for i in range(x.shape[1]):
-            ret[i] = x[:, i].dot(x[:, i])
+            ret[i] = sqrt(abs(dot(x[:, i], x[:, i])))
         return ret
 
-    return sqrt(x.dot(x))
+    return sqrt(abs(dot(x, x)))
 
 def create_state_mtx(state, nx, ny, nz, dof):
     '''Helper to create an (nx, ny, nz, dof) dimensional array out of a
