@@ -116,3 +116,11 @@ class CrsMatrix:
             for j in range(self.begA[i], self.begA[i+1]):
                 out += '%5d %5d %e\n' % (i, self.jcoA[j], self.coA[j])
         return out
+
+    def dump(self, name):
+        with open(name, 'w') as f:
+            out = '%%%%MatrixMarket matrix coordinate real general\n%d %d %d\n' % (self.n, self.n, self.begA[self.n])
+            for i in range(self.n):
+                for j in range(self.begA[i], self.begA[i+1]):
+                    out += '%d %d %e\n' % (i+1, self.jcoA[j]+1, self.coA[j])
+            f.write(out)
