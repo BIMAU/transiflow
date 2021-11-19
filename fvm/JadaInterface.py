@@ -5,6 +5,7 @@ import numpy
 import warnings
 
 from jadapy import NumPyInterface
+from jadapy.orthogonalization import orthogonalize
 
 from scipy import sparse
 
@@ -208,6 +209,8 @@ class BorderedJadaInterface(NumPyInterface.NumPyInterface):
                 raise Exception('GMRES returned ' + str(info))
             elif info > 0:
                 warnings.warn('GMRES did not converge in ' + str(info) + ' iterations')
+
+        orthogonalize(op.Q, out)
 
         return out
 
