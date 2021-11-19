@@ -84,14 +84,15 @@ class MatrixCache:
         if len(self.matrices) >= self.max_matrices:
             if len(self.matrices) > 1 and self.matrices[0].last_used > self.matrices[1].last_used:
                 self.matrices.pop(1)
-            else:
+            elif len(self.matrices) > 0:
                 self.matrices.pop(0)
 
         if shifted_matrix is None:
             mat = beta * self.jac_op.mat - alpha * self.mass_op.mat
             shifted_matrix = CrsMatrix(mat.data, mat.indices, mat.indptr, False)
 
-        self.matrices.append(CachedMatrix(shifted_matrix, alpha, beta))
+        if self.max_matrices > 0:
+            self.matrices.append(CachedMatrix(shifted_matrix, alpha, beta))
 
         return shifted_matrix
 
