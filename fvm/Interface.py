@@ -34,6 +34,7 @@ class Interface:
         self.pressure_row = self.dim
 
         # Solver caching
+        self.border_scaling = 1e-3
         self._lu = None
         self._prec = None
 
@@ -171,7 +172,7 @@ class Interface:
                     idx += 1
 
             for j in range(border_size):
-                coA[idx] = _get_value(V, i, j)
+                coA[idx] = self.border_scaling * _get_value(V, i, j)
                 jcoA[idx] = jac.n + j
                 idx += 1
 
@@ -179,12 +180,12 @@ class Interface:
 
         for i in range(border_size):
             for j in range(jac.n):
-                coA[idx] = _get_value(W, j, i)
+                coA[idx] = self.border_scaling * _get_value(W, j, i)
                 jcoA[idx] = j
                 idx += 1
 
             for j in range(border_size):
-                coA[idx] = _get_value(C, i, j)
+                coA[idx] = self.border_scaling * self.border_scaling * _get_value(C, i, j)
                 jcoA[idx] = jac.n + j
                 idx += 1
 
@@ -236,7 +237,7 @@ class Interface:
                 return out
 
         if rhs2 is not None:
-            x = numpy.append(rhs, rhs2)
+            x = numpy.append(rhs, rhs2 * self.border_scaling)
 
         # Use a direct solver instead
         if rhs2 is None and (not jac.lu or jac.bordered_lu):
@@ -253,10 +254,13 @@ class Interface:
             if hasattr(rhs2, 'shape') and len(rhs2.shape) > 0:
                 border_size = rhs2.shape[0]
 
-            self.debug_print_residual('Done solving a bordered linear system with residual',
-                                      jac, y[:-border_size], rhs - V * y[-border_size:])
+            y1 = y[:-border_size]
+            y2 = y[-border_size:] * self.border_scaling
 
-            return y[:-border_size], y[-border_size:]
+            self.debug_print_residual('Done solving a bordered linear system with residual',
+                                      jac, y1, rhs - V * y2)
+
+            return y1, y2
 
         self.debug_print('Solving a linear system')
 
