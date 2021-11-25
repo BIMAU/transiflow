@@ -304,7 +304,7 @@ class Interface:
 
         if return_eigenvectors:
             alpha, beta, v, q, z = result
-            self._subspaces = [q, z]
+            self._subspaces = [q]
             idx = range(len(alpha))
             idx = sorted(idx, key=lambda i: -(alpha[i] / beta[i]).real if (alpha[i] / beta[i]).real < 100 else 100)
 
@@ -316,7 +316,7 @@ class Interface:
             return eigs, w
         else:
             alpha, beta, q, z = result
-            self._subspaces = [q, z]
+            self._subspaces = [q]
             return numpy.array(sorted(alpha / beta, key=lambda x: -x.real if x.real < 100 else 100))
 
     def eigs(self, state, return_eigenvectors=False):
