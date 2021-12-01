@@ -270,7 +270,7 @@ class Interface:
 
         return y
 
-    def _eigs(self, jada_interface, jac_op, mass_op, prec_op, state, return_eigenvectors):
+    def _eigs(self, jada_interface, jac_op, mass_op, prec_op, state, return_eigenvectors, enable_recycling):
         '''Internal helper for eigs()'''
 
         from jadapy import jdqz, orthogonalization
@@ -283,6 +283,9 @@ class Interface:
                                parameters.get('Maximum Subspace Dimension', 60)]
         tol = parameters.get('Tolerance', 1e-7)
         num = parameters.get('Number of Eigenvalues', 5)
+
+        if not enable_recycling:
+            self._subspaces = None
 
         if not self._subspaces and initial_subspace_dimension > 0:
             # Use an inverse iteration to find guesses
@@ -319,7 +322,7 @@ class Interface:
             self._subspaces = [q]
             return numpy.array(sorted(alpha / beta, key=lambda x: -x.real if x.real < 100 else 100))
 
-    def eigs(self, state, return_eigenvectors=False):
+    def eigs(self, state, return_eigenvectors=False, enable_recycling=False):
         '''Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v.'''
 
         from fvm.JadaInterface import JadaOp
@@ -344,4 +347,4 @@ class Interface:
             prec = jada_interface.shifted_prec
 
         return self._eigs(jada_interface, jac_op, mass_op, prec,
-                          state, return_eigenvectors)
+                          state, return_eigenvectors, enable_recycling)

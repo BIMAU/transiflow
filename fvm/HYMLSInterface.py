@@ -457,7 +457,7 @@ class Interface(fvm.Interface):
 
         return x
 
-    def eigs(self, state, return_eigenvectors=False):
+    def eigs(self, state, return_eigenvectors=False, enable_recycling=False):
         '''Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v.'''
 
         parameters = self.parameters.get('Eigenvalue Solver', {})
@@ -481,4 +481,4 @@ class Interface(fvm.Interface):
             prec = None
 
         return self._eigs(jada_interface, jac_op, mass_op, prec,
-                          state, return_eigenvectors)
+                          state, return_eigenvectors, enable_recycling)

@@ -184,7 +184,7 @@ class Continuation:
             x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, ds)
 
             eigs0 = eigs
-            eigs = self.interface.eigs(x)
+            eigs = self.interface.eigs(x, enable_recycling=True)
             deigs = eigs - eigs0
 
         return x, mu
