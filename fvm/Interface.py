@@ -281,6 +281,7 @@ class Interface:
         initial_subspace_dimension = parameters.get('Initial Subspace Dimension', 0)
         subspace_dimensions = [parameters.get('Minimum Subspace Dimension', 30),
                                parameters.get('Maximum Subspace Dimension', 60)]
+        enable_recycling = parameters.get('Recycle Subspaces', enable_recycling)
         tol = parameters.get('Tolerance', 1e-7)
         num = parameters.get('Number of Eigenvalues', 5)
 
