@@ -6,8 +6,8 @@ from numpy.testing import assert_allclose
 import matplotlib.pyplot as plt
 
 # Import common fixtures
-from test.jada_fixtures import * # noqa: F401, F403
-from test.jada_fixtures import check_eigenvalues
+from tests.jada_fixtures import * # noqa: F401, F403
+from tests.jada_fixtures import check_eigenvalues
 
 @pytest.fixture(autouse=True, scope='module')
 def import_test():

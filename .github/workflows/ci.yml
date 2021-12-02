@@ -44,6 +44,10 @@ jobs:
         brew install ${{ matrix.dependencies }}
       if: ${{ matrix.os == 'macos-latest' && matrix.dependencies != '' }}
 
+    - name: Lint with flake8
+      run: |
+        flake8 . --count --show-source --statistics
+
     - name: Clone JaDaPy
       uses: actions/checkout@v2
       with:
@@ -55,10 +59,6 @@ jobs:
         cd jadapy
         pip install .
 
-    - name: Lint with flake8
-      run: |
-        flake8 . --count --show-source --statistics
-
     - name: Test with pytest
       run: |
-        pytest
+        pytest tests

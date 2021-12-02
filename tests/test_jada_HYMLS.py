@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from fvm import Continuation
 
 # Import common fixtures
-from test.jada_fixtures import * # noqa: F401, F403
+from tests.jada_fixtures import * # noqa: F401, F403
 
 @pytest.fixture(autouse=True, scope='module')
 def import_test():
