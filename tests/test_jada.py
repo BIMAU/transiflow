@@ -112,7 +112,7 @@ def test_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
     jac_op = JadaInterface.JadaOp(interface.jacobian(x))
     mass_op = JadaInterface.JadaOp(interface.mass_matrix())
 
-    alpha, beta = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60], target=0.1)
+    alpha, beta = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[20, 40])
     jdqz_eigs = numpy.array(sorted(alpha / beta, key=lambda x: abs(x)))
     jdqz_eigs = jdqz_eigs[:num_evs]
 
