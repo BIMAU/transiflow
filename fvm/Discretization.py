@@ -365,7 +365,7 @@ class Discretization:
         return CrsMatrix(coA, jcoA, begA)
 
     def problem_type_equals(self, second):
-        first = self.get_parameter('Problem Type', 'Lid-driven cavity')
+        first = self.get_parameter('Problem Type', 'Lid-driven Cavity')
         return first.lower() == second.lower()
 
     def boundaries(self, atom):
@@ -377,7 +377,7 @@ class Discretization:
 
         frc = numpy.zeros(self.nx * self.ny * self.nz * self.dof)
 
-        if self.problem_type_equals('Lid-driven cavity'):
+        if self.problem_type_equals('Lid-driven Cavity'):
             v = self.get_parameter('Lid Velocity', 1)
             boundary_conditions.no_slip_east(atom)
             boundary_conditions.no_slip_west(atom)

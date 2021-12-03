@@ -16,7 +16,7 @@ def main():
     n = dof * nx * ny * nz
 
     # Define the problem
-    parameters = {'Problem Type': 'Lid-driven cavity',
+    parameters = {'Problem Type': 'Lid-driven Cavity',
                   # Problem parameters
                   'Reynolds Number': 0,
                   'Lid Velocity': 1,
