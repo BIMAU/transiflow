@@ -167,7 +167,7 @@ class Continuation:
 
         return ds
 
-    def detect_bifurcation(self, parameter_name, x, mu, dx, dmu, eigs, deigs, ds, maxit):
+    def detect_bifurcation(self, parameter_name, x, mu, dx, dmu, eigs, deigs, v, ds, maxit):
         ''' Converge onto a bifurcation '''
 
         tol = self.parameters.get('Destination Tolerance', 1e-8)
@@ -184,10 +184,10 @@ class Continuation:
             x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, ds)
 
             eigs0 = eigs
-            eigs = self.interface.eigs(x, enable_recycling=True)
+            eigs, v = self.interface.eigs(x, return_eigenvectors=True, enable_recycling=True)
             deigs = eigs - eigs0
 
-        return x, mu
+        return x, mu, v
 
     def converge(self, parameter_name, x, mu, dx, dmu, target, ds, maxit):
         ''' Converge onto the target value '''
@@ -242,6 +242,35 @@ class Continuation:
         # Compute the tangent (2.2.4)
         dx /= ds
         dmu /= ds
+
+        return x, mu, dx, dmu, ds
+
+    def switch_branches(self, parameter_name, x, mu, dx, dmu, v, ds):
+        ''' Switch branches according to (5.16) '''
+
+        dmu0 = dmu
+
+        # Compute the F(x) and F_x(x)
+        fval = self.interface.rhs(x)
+        jac = self.interface.jacobian(x)
+
+        # Compute F_mu(x)
+        self.interface.set_parameter(parameter_name, mu + self.delta)
+        dflval = (self.interface.rhs(x) - fval) / self.delta
+        self.interface.set_parameter(parameter_name, mu)
+
+        if self.parameters.get("Bordered Solver", False):
+            # Solve the entire bordered system in one go (5.16)
+            dx, dmu = self.interface.solve(jac, 0 * x, 0, dflval, dx, dmu)
+        else:
+            # Solve with F_x (equation below 5.16)
+            z = self.interface.solve(jac, dflval)
+            dmu = -dx.dot(v) / (dmu - dx.dot(z))
+            dx = v - dmu * z
+
+        if abs(dmu) < 1e-12:
+            dmu = dmu0
+            ds = self.parameters.get('Minimum Step Size', 0.01)
 
         return x, mu, dx, dmu, ds
 
@@ -305,6 +334,7 @@ class Continuation:
         self.store_data(data, x, mu)
 
         maxit = self.parameters.get('Maximum Iterations', 1000)
+        switched_branches = False
 
         # Perform the continuation
         for j in range(maxit):
@@ -322,15 +352,22 @@ class Continuation:
 
                 return x, mu, data
 
-            if self.parameters.get('Detect Bifurcation Points', False):
+            if self.parameters.get('Detect Bifurcation Points', False) or \
+               self.parameters.get('Enable Branch Switching', False) and \
+               not switched_branches:
                 eigs0 = eigs
-                eigs = self.interface.eigs(x)
+                eigs, v = self.interface.eigs(x, return_eigenvectors=True)
 
                 if eigs0 is not None and numpy.sign(eigs[0].real) != numpy.sign(eigs0[0].real):
                     deigs = eigs - eigs0
-                    x, mu = self.detect_bifurcation(parameter_name, x, mu, dx, dmu, eigs, deigs, ds, maxit)
+                    x, mu, v = self.detect_bifurcation(parameter_name, x, mu, dx, dmu, eigs, deigs, v, ds, maxit)
 
                     self.store_data(data, x, mu)
+
+                    if self.parameters.get('Enable Branch Switching', False):
+                        switched_branches = True
+                        x, mu, dx, dmu, ds = self.switch_branches(parameter_name, x, mu, dx, dmu, v[:, 0].real, ds)
+                        continue
 
                     return x, mu, data
 
