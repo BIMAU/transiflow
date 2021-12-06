@@ -344,14 +344,6 @@ class Continuation:
 
             self.store_data(data, x, mu)
 
-            if (mu >= target and mu0 < target) or (mu <= target and mu0 > target):
-                # Converge onto the end point
-                x, mu = self.converge(parameter_name, x, mu, dx, dmu, target, ds, maxit)
-
-                self.store_data(data, x, mu)
-
-                return x, mu, data
-
             if self.parameters.get('Detect Bifurcation Points', False) or \
                self.parameters.get('Enable Branch Switching', False) and \
                not switched_branches:
@@ -374,6 +366,14 @@ class Continuation:
                 if eigs0 is None and eigs[0].real > 0:
                     # We're past the bifurcation already, so go backward
                     ds = -ds
+
+            if (mu >= target and mu0 < target) or (mu <= target and mu0 > target):
+                # Converge onto the end point
+                x, mu = self.converge(parameter_name, x, mu, dx, dmu, target, ds, maxit)
+
+                self.store_data(data, x, mu)
+
+                return x, mu, data
 
             ds = self.adjust_step_size(ds)
 
