@@ -334,6 +334,11 @@ class Continuation:
         self.store_data(data, x, mu)
 
         maxit = self.parameters.get('Maximum Iterations', 1000)
+
+        # Some configuration for the detection of bifurcations
+        detect_bifurcations = self.parameters.get('Detect Bifurcation Points', False)
+        enable_branch_switching = self.parameters.get('Enable Branch Switching', False)
+        enable_recycling = False
         switched_branches = False
 
         # Perform the continuation
@@ -344,11 +349,10 @@ class Continuation:
 
             self.store_data(data, x, mu)
 
-            if self.parameters.get('Detect Bifurcation Points', False) or \
-               self.parameters.get('Enable Branch Switching', False) and \
-               not switched_branches:
+            if detect_bifurcations or (enable_branch_switching and not switched_branches):
                 eigs0 = eigs
-                eigs, v = self.interface.eigs(x, return_eigenvectors=True)
+                eigs, v = self.interface.eigs(x, return_eigenvectors=True, enable_recycling=enable_recycling)
+                enable_recycling = True
 
                 if eigs0 is not None and numpy.sign(eigs[0].real) != numpy.sign(eigs0[0].real):
                     deigs = eigs - eigs0
@@ -356,7 +360,7 @@ class Continuation:
 
                     self.store_data(data, x, mu)
 
-                    if self.parameters.get('Enable Branch Switching', False):
+                    if enable_branch_switching and not switched_branches:
                         switched_branches = True
                         x, mu, dx, dmu, ds = self.switch_branches(parameter_name, x, mu, dx, dmu, v[:, 0].real, ds)
                         continue
