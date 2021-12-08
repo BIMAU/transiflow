@@ -393,7 +393,8 @@ class Discretization:
             frc += boundary_conditions.moving_lid_top(atom, v)
         elif (self.problem_type_equals('Rayleigh-Benard')
               or self.problem_type_equals('Rayleigh-Benard Perturbation')):
-            frc += boundary_conditions.heatflux_east(atom, 0)
+            asym = self.get_parameter('Asymmetry Parameter')
+            frc += boundary_conditions.heatflux_east(atom, asym)
             frc += boundary_conditions.heatflux_west(atom, 0)
             boundary_conditions.no_slip_east(atom)
             boundary_conditions.no_slip_west(atom)

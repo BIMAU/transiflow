@@ -245,7 +245,7 @@ class Continuation:
 
         return x, mu, dx, dmu, ds
 
-    def switch_branches(self, parameter_name, x, mu, dx, dmu, v, ds):
+    def switch_branches_tangent(self, parameter_name, x, mu, dx, dmu, v, ds):
         ''' Switch branches according to (5.16) '''
 
         dmu0 = dmu
@@ -274,6 +274,23 @@ class Continuation:
 
         return x, mu, dx, dmu, ds
 
+    def switch_branches_asymmetry(self, parameter_name, x, mu, ds):
+        continuation = Continuation(self.interface, self.parameters)
+        x, a, _ = continuation.continuation(x, 'Asymmetry Parameter', 0, 1000, 10, 1, switched_branches=True)
+        x, mu, _ = continuation.continuation(x, parameter_name, mu, mu + 1, ds, switched_branches=True)
+        x, a, _ = continuation.continuation(x, 'Asymmetry Parameter', a, 0, -a, switched_branches=True)
+
+        dx, dmu = self.initial_tangent(x, parameter_name, mu)
+
+        return x, mu, dx, dmu, ds
+
+    def switch_branches(self, parameter_name, x, mu, dx, dmu, v, ds):
+        branch_switching_method = self.parameters.get('Branch Switching Method', 'Tangent')
+        if branch_switching_method == 'Asymmetry':
+            return self.switch_branches_asymmetry(parameter_name, x, mu, ds)
+
+        return self.switch_branches_tangent(parameter_name, x, mu, dx, dmu, v, ds)
+
     def store_data(self, data, x, mu):
         data.mu.append(mu)
         if 'Value' in self.parameters:
@@ -293,9 +310,18 @@ class Continuation:
 
         # Compute the jacobian at x and solve with it (2.2.5)
         jac = self.interface.jacobian(x)
-        return self.interface.solve(jac, -dflval)
+        dx = self.interface.solve(jac, -dflval)
 
-    def continuation(self, x0, parameter_name, start, target, ds):
+        # Scaling of the initial tangent (2.2.7)
+        dmu = 1
+        nrm = sqrt(self.zeta * dx.dot(dx) + dmu ** 2)
+        dmu /= nrm
+        dx /= nrm
+
+        return dx, dmu
+
+    def continuation(self, x0, parameter_name, start, target, ds,
+                     maxit=None, switched_branches=False):
         '''Perform a pseudo-arclength continuation in parameter_name from
         parameter value start to target with arclength step size ds,
         and starting from an initial state x0.
@@ -321,25 +347,19 @@ class Continuation:
         self.zeta = 1 / x.size
 
         # Get the initial tangent (2.2.5 - 2.2.7).
-        dx = self.initial_tangent(x, parameter_name, mu)
-
-        # Scaling of the initial tangent (2.2.7)
-        dmu = 1
-        nrm = sqrt(self.zeta * dx.dot(dx) + dmu ** 2)
-        dmu /= nrm
-        dx /= nrm
+        dx, dmu = self.initial_tangent(x, parameter_name, mu)
 
         eigs = None
         data = Data()
         self.store_data(data, x, mu)
 
-        maxit = self.parameters.get('Maximum Iterations', 1000)
+        if not maxit:
+            maxit = self.parameters.get('Maximum Iterations', 1000)
 
         # Some configuration for the detection of bifurcations
         detect_bifurcations = self.parameters.get('Detect Bifurcation Points', False)
         enable_branch_switching = self.parameters.get('Enable Branch Switching', False)
         enable_recycling = False
-        switched_branches = False
 
         # Perform the continuation
         for j in range(maxit):
