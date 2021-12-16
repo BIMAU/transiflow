@@ -1,12 +1,6 @@
 import sys
-import numpy
 
 from fvm.utils import norm
-
-class Data:
-    def __init__(self):
-        self.t = []
-        self.value = []
 
 class TimeIntegration:
     def __init__(self, interface, parameters):
@@ -55,27 +49,23 @@ class TimeIntegration:
 
         return x
 
-    def store_data(self, data, x, t):
-        data.t.append(t)
-        if 'Value' in self.parameters:
-            data.value.append(self.parameters['Value'](x))
-        else:
-            data.value.append(numpy.NAN)
+    def postprocess(self, x, t):
+        if 'Postprocess' in self.parameters and self.parameters['Postprocess']:
+            self.parameters['Postprocess'](x, t)
 
     def integration(self, x0, dt, tmax):
         x = x0
         t = 0
 
-        data = Data()
-        self.store_data(data, x, t)
+        self.postprocess(x, t)
 
         while t < tmax:
             x = self.newton(x, dt)
             t += dt
 
-            self.store_data(data, x, t)
-
             print("t = %f" % t)
             sys.stdout.flush()
 
-        return x, t, data
+            self.postprocess(x, t)
+
+        return x, t

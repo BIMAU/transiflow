@@ -6,6 +6,17 @@ from fvm import TimeIntegration
 from fvm import Interface
 from fvm import utils
 
+
+class Data:
+    def __init__(self):
+        self.t = []
+        self.value = []
+
+    def append(self, t, value):
+        self.t.append(t)
+        self.value.append(value)
+
+
 def main():
     ''' An example of performing a "poor man's continuation" for a 2D lid-driven cavity using time integration'''
     dim = 2
@@ -33,9 +44,9 @@ def main():
     # Define a point of interest
     poi = (nx // 2 - 1, ny // 4 - 1)
 
-    # Value describes the value that is traced in the continuation
-    # and time integration methods
-    parameters['Value'] = lambda x: utils.get_u_value(x, poi[0], poi[1], 0, interface)
+    # Store data for computing the bifurcation diagram using postprocessing
+    data = Data()
+    parameters['Postprocess'] = lambda x, t: data.append(t, utils.get_u_value(x, poi[0], poi[1], 0, interface))
 
     print('Looking at point ({}, {})'.format(interface.discretization.x[poi[0]],
                                              interface.discretization.y[poi[1]]))
@@ -48,7 +59,7 @@ def main():
     for mu in range(0, 100, 10):
         interface.set_parameter('Reynolds Number', mu)
         time_integration = TimeIntegration(interface, parameters)
-        x, t, data = time_integration.integration(x, 1, 10)
+        x, t = time_integration.integration(x, 1, 10)
 
         # Plot the traced value during the time integration
         # plt.plot(data.t, data.value)
