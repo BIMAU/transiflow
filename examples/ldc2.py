@@ -26,7 +26,7 @@ def main():
                   # Set a maximum step size ds
                   'Maximum Step Size': 500,
                   # Give back extra output (this is also more expensive)
-                  'Verbose': True}
+                  'Verbose': False}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof)
 
@@ -56,10 +56,10 @@ def main():
     parameters['Detect Bifurcation Points'] = True
     parameters['Maximum Step Size'] = 100
 
-    # parameters['Eigenvalue Solver'] = {}
-    # parameters['Eigenvalue Solver']['Target'] = 3j
-    # parameters['Eigenvalue Solver']['Tolerance'] = 1e-9
-    # parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 20
+    parameters['Eigenvalue Solver'] = {}
+    parameters['Eigenvalue Solver']['Target'] = 3j
+    parameters['Eigenvalue Solver']['Tolerance'] = 1e-9
+    parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 5
 
     # Now detect the bifurcation point
     target = 10000
@@ -73,7 +73,8 @@ def main():
     parameters['Newton Tolerance'] = 1e-4
     x3, mu3 = continuation.continuation(x2, 'Reynolds Number', mu2, target, ds)
 
-    # Plot a bifurcation diagram
+    # Plot a bifurcation diagram. Note that this is a bit of a mess, because we
+    # have to go back an forth when converging onto a target
     plt.plot(data.keys(), data.values())
     plt.show()
 
