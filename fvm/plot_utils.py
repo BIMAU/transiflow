@@ -8,7 +8,10 @@ def get_meshgrid(interface, x=None, y=None):
     if x is None:
         x = interface.discretization.x[:-3]
     if y is None:
-        y = interface.discretization.y[:-3]
+        if interface.ny > 1:
+            y = interface.discretization.y[:-3]
+        else:
+            y = interface.discretization.z[:-3]
 
     return numpy.meshgrid(x, y)
 
@@ -32,8 +35,8 @@ def plot_contour(x, y, value, legend=True, grid=True, show=True, color=True):
 
     return fig
 
-def plot_velocity_magnitude(state, interface, *args, **kwargs):
-    m = utils.compute_velocity_magnitude(state, interface)
+def plot_velocity_magnitude(state, interface, axis=2, *args, **kwargs):
+    m = utils.compute_velocity_magnitude(state, interface, axis)
 
     x, y = get_meshgrid(interface)
 

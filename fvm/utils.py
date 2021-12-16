@@ -94,7 +94,7 @@ def create_stretched_coordinate_vector(start, end, nx, sigma):
         x[-3] = x[-4] + dx
     return x
 
-def compute_velocity_magnitude(state, interface):
+def compute_velocity_magnitude(state, interface, axis=2):
     x = interface.discretization.x
     y = interface.discretization.y
 
@@ -103,13 +103,24 @@ def compute_velocity_magnitude(state, interface):
     nz = interface.discretization.nz
     dof = interface.discretization.dof
 
-    state_mtx = create_state_mtx(state, nx, ny, nz, dof)
-    u = state_mtx[:, :, 0, 0]
-    v = state_mtx[:, :, 0, 1]
+    state_mtx = create_padded_state_mtx(state, nx, ny, nz, dof,
+                                        interface.discretization.x_periodic,
+                                        interface.discretization.y_periodic,
+                                        interface.discretization.z_periodic)
+    u = state_mtx[1:, 1:, 1, 0]
+    v = state_mtx[1:, 1:, 1, 1]
+    w = state_mtx[1:, 1:, 1, 1] * 0
+
+    if axis == 1:
+        u = state_mtx[1:, 1, 1:, 0]
+        v = state_mtx[1:, 1, 1:, 2]
+        w = state_mtx[1:, 1, 1:, 1]
+        y = interface.discretization.z
+        ny = interface.discretization.nz
 
     m = numpy.zeros((nx, ny))
 
-    # FIXME: This assumes zero boundaries
+    # FIXME: This assumes zero or periodic boundaries
     for i in range(nx):
         for j in range(ny):
             dx0 = x[i] - x[i-1]
@@ -118,14 +129,15 @@ def compute_velocity_magnitude(state, interface):
             dy1 = y[j+1] - y[j]
 
             ubar = u[i, j] * dy0 / (dy0 + dy1)
-            if j < ny - 1:
-                ubar += u[i, j+1] * dy1 / (dy0 + dy1)
+            ubar += u[i, j+1] * dy1 / (dy0 + dy1)
 
             vbar = v[i, j] * dx0 / (dx0 + dx1)
-            if i < nx - 1:
-                vbar += v[i+1, j] * dx1 / (dx0 + dx1)
+            vbar += v[i+1, j] * dx1 / (dx0 + dx1)
 
-            m[i, j] = sqrt(ubar * ubar + vbar * vbar)
+            wbar = w[i, j] * dx0 / (dx0 + dx1)
+            wbar += w[i+1, j] * dx1 / (dx0 + dx1)
+
+            m[i, j] = sqrt(ubar * ubar + vbar * vbar + wbar * wbar)
 
     return m
 
