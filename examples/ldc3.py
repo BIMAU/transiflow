@@ -36,7 +36,7 @@ def main():
                   # Set a maximum step size ds
                   'Maximum Step Size': 500,
                   # Give back extra output (this is also more expensive)
-                  'Verbose': True,
+                  'Verbose': False,
                   'Theta': 1}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof)
