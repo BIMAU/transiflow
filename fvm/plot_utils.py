@@ -42,8 +42,8 @@ def plot_velocity_magnitude(state, interface, axis=2, *args, **kwargs):
 
     return plot_contour(x, y, m, *args, **kwargs)
 
-def plot_streamfunction(state, interface, *args, **kwargs):
-    psi = utils.compute_streamfunction(state, interface)
+def plot_streamfunction(state, interface, axis=2, *args, **kwargs):
+    psi = utils.compute_streamfunction(state, interface, axis)
 
     x, y = get_meshgrid(interface)
 

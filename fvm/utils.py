@@ -141,7 +141,7 @@ def compute_velocity_magnitude(state, interface, axis=2):
 
     return m
 
-def compute_streamfunction(state, interface):
+def compute_streamfunction(state, interface, axis=2):
     x = interface.discretization.x
     y = interface.discretization.y
 
@@ -150,9 +150,18 @@ def compute_streamfunction(state, interface):
     nz = interface.discretization.nz
     dof = interface.discretization.dof
 
-    state_mtx = create_state_mtx(state, nx, ny, nz, dof)
-    u = state_mtx[:, :, 0, 0]
-    v = state_mtx[:, :, 0, 1]
+    state_mtx = create_padded_state_mtx(state, nx, ny, nz, dof,
+                                        interface.discretization.x_periodic,
+                                        interface.discretization.y_periodic,
+                                        interface.discretization.z_periodic)
+    u = state_mtx[1:, 1:, 1, 0]
+    v = state_mtx[1:, 1:, 1, 1]
+
+    if axis == 1:
+        u = state_mtx[1:, 1, 1:, 0]
+        v = state_mtx[1:, 1, 1:, 2]
+        y = interface.discretization.z
+        ny = interface.discretization.nz
 
     psiu = numpy.zeros((nx, ny))
     psiv = numpy.zeros((nx, ny))
