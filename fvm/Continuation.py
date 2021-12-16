@@ -4,11 +4,6 @@ import numpy
 from math import sqrt
 from fvm.utils import norm
 
-class Data:
-    def __init__(self):
-        self.mu = []
-        self.value = []
-
 class Continuation:
 
     def __init__(self, interface, parameters):
@@ -232,6 +227,9 @@ class Continuation:
         print("%s: %f" % (parameter_name, mu))
         sys.stdout.flush()
 
+        if 'Postprocess' in self.parameters and self.parameters['Postprocess']:
+            self.parameters['Postprocess'](x, mu)
+
         # Set the new values computed by the corrector
         dmu = mu - mu0
         dx = x - x0
@@ -276,9 +274,9 @@ class Continuation:
 
     def switch_branches_asymmetry(self, parameter_name, x, mu, ds):
         continuation = Continuation(self.interface, self.parameters)
-        x, a, _ = continuation.continuation(x, 'Asymmetry Parameter', 0, 1000, 10, 1, switched_branches=True)
-        x, mu, _ = continuation.continuation(x, parameter_name, mu, mu + 1, ds, switched_branches=True)
-        x, a, _ = continuation.continuation(x, 'Asymmetry Parameter', a, 0, -a, switched_branches=True)
+        x, a = continuation.continuation(x, 'Asymmetry Parameter', 0, 1000, 10, 1, switched_branches=True)
+        x, mu = continuation.continuation(x, parameter_name, mu, mu + 1, ds, switched_branches=True)
+        x, a = continuation.continuation(x, 'Asymmetry Parameter', a, 0, -a, switched_branches=True)
 
         dx, dmu = self.initial_tangent(x, parameter_name, mu)
 
@@ -290,13 +288,6 @@ class Continuation:
             return self.switch_branches_asymmetry(parameter_name, x, mu, ds)
 
         return self.switch_branches_tangent(parameter_name, x, mu, dx, dmu, v, ds)
-
-    def store_data(self, data, x, mu):
-        data.mu.append(mu)
-        if 'Value' in self.parameters:
-            data.value.append(self.parameters['Value'](x))
-        else:
-            data.value.append(numpy.NAN)
 
     def initial_tangent(self, x, parameter_name, mu):
         ''' Compute the initial tangent '''
@@ -326,13 +317,11 @@ class Continuation:
         parameter value start to target with arclength step size ds,
         and starting from an initial state x0.
 
-        Returns the final state x, the final parameter value mu, and a
-        struct with data obtained at every step of the
-        continuation.
+        Returns the final state x and the final parameter value mu.
 
-        The value reported in data is described by the 'Value'
-        parameter in terms of a lambda function, e.g. lambda x:
-        numpy.linalg.norm(x, inf).
+        Postprocessing can be done by setting the 'Postprocess'
+        parameter to a lambda x, mu: ... function, which gets called
+        after every continuation step.
 
         A bifurcation can be detected automatically when the 'Detect
         Bifurcation Points' parameter is set to True.
@@ -350,8 +339,6 @@ class Continuation:
         dx, dmu = self.initial_tangent(x, parameter_name, mu)
 
         eigs = None
-        data = Data()
-        self.store_data(data, x, mu)
 
         if not maxit:
             maxit = self.parameters.get('Maximum Iterations', 1000)
@@ -367,8 +354,6 @@ class Continuation:
 
             x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, ds)
 
-            self.store_data(data, x, mu)
-
             if detect_bifurcations or (enable_branch_switching and not switched_branches):
                 eigs0 = eigs
                 eigs, v = self.interface.eigs(x, return_eigenvectors=True, enable_recycling=enable_recycling)
@@ -378,14 +363,12 @@ class Continuation:
                     deigs = eigs - eigs0
                     x, mu, v = self.detect_bifurcation(parameter_name, x, mu, dx, dmu, eigs, deigs, v, ds, maxit)
 
-                    self.store_data(data, x, mu)
-
                     if enable_branch_switching and not switched_branches:
                         switched_branches = True
                         x, mu, dx, dmu, ds = self.switch_branches(parameter_name, x, mu, dx, dmu, v[:, 0].real, ds)
                         continue
 
-                    return x, mu, data
+                    return x, mu
 
                 if eigs0 is None and eigs[0].real > 0:
                     # We're past the bifurcation already, so go backward
@@ -395,10 +378,8 @@ class Continuation:
                 # Converge onto the end point
                 x, mu = self.converge(parameter_name, x, mu, dx, dmu, target, ds, maxit)
 
-                self.store_data(data, x, mu)
-
-                return x, mu, data
+                return x, mu
 
             ds = self.adjust_step_size(ds)
 
-        return x, mu, data
+        return x, mu

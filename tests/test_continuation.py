@@ -208,7 +208,7 @@ def test_continuation_rayleigh_benard(nx=8):
     start = 0
     target = 1700
     ds = 200
-    x, mu, _ = continuation.continuation(x0, 'Rayleigh Number', start, target, ds)
+    x, mu = continuation.continuation(x0, 'Rayleigh Number', start, target, ds)
 
     parameters['Detect Bifurcation Points'] = True
     parameters['Eigenvalue Solver'] = {}
@@ -217,7 +217,7 @@ def test_continuation_rayleigh_benard(nx=8):
 
     target = 5000
     ds = 50
-    x2, mu2, _ = continuation.continuation(x, 'Rayleigh Number', mu, target, ds)
+    x2, mu2 = continuation.continuation(x, 'Rayleigh Number', mu, target, ds)
 
     assert numpy.linalg.norm(x2) > 0
     assert mu2 > 0
@@ -232,7 +232,7 @@ def test_continuation_rayleigh_benard(nx=8):
     t = utils.create_state_vec(t, nx, ny, nz, dof)
     x -= t
 
-    x3, mu3, _ = continuation.continuation(x, 'Rayleigh Number', mu, target, ds)
+    x3, mu3 = continuation.continuation(x, 'Rayleigh Number', mu, target, ds)
 
     assert numpy.linalg.norm(x3[0:len(x):dof] - x2[0:len(x):dof]) < 1e-4
     assert numpy.linalg.norm(x3[1:len(x):dof] - x2[1:len(x):dof]) < 1e-4
@@ -266,7 +266,7 @@ def test_continuation_double_gyre(nx=8):
     start = 0
     target = 1000
     ds = 200
-    x, mu, _ = continuation.continuation(x0, 'Wind Stress Parameter', start, target, ds)
+    x, mu = continuation.continuation(x0, 'Wind Stress Parameter', start, target, ds)
 
     parameters['Detect Bifurcation Points'] = True
     parameters['Eigenvalue Solver'] = {}
@@ -274,7 +274,7 @@ def test_continuation_double_gyre(nx=8):
 
     target = 100
     ds = 5
-    x, mu, _ = continuation.continuation(x, 'Reynolds Number', 16, target, ds)
+    x, mu = continuation.continuation(x, 'Reynolds Number', 16, target, ds)
 
     assert numpy.linalg.norm(x) > 0
     assert mu > 0
@@ -312,7 +312,7 @@ def test_continuation_2D_tc(nx=8):
     start = 0
     target = 80
     ds = 30
-    x, mu, _ = continuation.continuation(x0, 'Reynolds Number', start, target, ds)
+    x, mu = continuation.continuation(x0, 'Reynolds Number', start, target, ds)
 
     parameters['Maximum Step Size'] = 1
     parameters['Bordered Solver'] = True
@@ -324,7 +324,7 @@ def test_continuation_2D_tc(nx=8):
 
     target = 100
     ds = 1
-    x, mu, _ = continuation.continuation(x, 'Reynolds Number', mu, target, ds)
+    x, mu = continuation.continuation(x, 'Reynolds Number', mu, target, ds)
 
     assert numpy.linalg.norm(x) > 0
     assert mu > 0

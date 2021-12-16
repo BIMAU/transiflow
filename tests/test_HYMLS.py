@@ -182,7 +182,7 @@ def test_HYMLS_rayleigh_benard(nx=8):
     start = 0
     target = 1700
     ds = 200
-    x, mu, _ = continuation.continuation(x0, 'Rayleigh Number', start, target, ds)
+    x, mu = continuation.continuation(x0, 'Rayleigh Number', start, target, ds)
 
     parameters['Detect Bifurcation Points'] = True
     parameters['Eigenvalue Solver'] = {}
@@ -191,7 +191,7 @@ def test_HYMLS_rayleigh_benard(nx=8):
 
     target = 5000
     ds = 50
-    x, mu, _ = continuation.continuation(x, 'Rayleigh Number', mu, target, ds)
+    x, mu = continuation.continuation(x, 'Rayleigh Number', mu, target, ds)
 
     assert x.Norm2() > 0
     assert mu > 0
@@ -234,7 +234,7 @@ def test_HYMLS_double_gyre(nx=8):
     start = 0
     target = 1000
     ds = 200
-    x, mu, _ = continuation.continuation(x0, 'Wind Stress Parameter', start, target, ds)
+    x, mu = continuation.continuation(x0, 'Wind Stress Parameter', start, target, ds)
 
     parameters['Detect Bifurcation Points'] = True
     parameters['Destination Tolerance'] = 1e-4
@@ -243,7 +243,7 @@ def test_HYMLS_double_gyre(nx=8):
 
     target = 100
     ds = 5
-    x, mu, _ = continuation.continuation(x, 'Reynolds Number', 16, target, ds)
+    x, mu = continuation.continuation(x, 'Reynolds Number', 16, target, ds)
 
     assert x.Norm2() > 0
     assert mu > 0
