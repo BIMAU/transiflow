@@ -7,6 +7,17 @@ from fvm import Interface
 from fvm import plot_utils
 from fvm import utils
 
+
+class Data:
+    def __init__(self):
+        self.mu = []
+        self.value = []
+
+    def append(self, mu, value):
+        self.mu.append(mu)
+        self.value.append(value)
+
+
 def main():
     ''' An example of performing a continuation for a 2D lid-driven cavity and detecting a bifurcation point'''
     dim = 2
@@ -33,10 +44,6 @@ def main():
     # Define a point of interest
     poi = (nx // 2 - 1, ny // 4 - 1)
 
-    # Store data for computing the bifurcation diagram using postprocessing
-    data = {}
-    parameters['Postprocess'] = lambda x, mu: data.update({mu: utils.get_u_value(x, poi[0], poi[1], 0, interface)})
-
     print('Looking at point ({}, {})'.format(interface.discretization.x[poi[0]],
                                              interface.discretization.y[poi[1]]))
 
@@ -45,6 +52,10 @@ def main():
     # Compute an initial guess
     x0 = numpy.zeros(n)
     x0 = continuation.continuation(x0, 'Lid Velocity', 0, 1, 1)[0]
+
+    # Store data for computing the bifurcation diagram using postprocessing
+    data = Data()
+    parameters['Postprocess'] = lambda x, mu: data.append(mu, utils.get_u_value(x, poi[0], poi[1], 0, interface))
 
     # Perform an initial continuation to Reynolds number 7000 without detecting bifurcation points
     ds = 100
@@ -75,7 +86,7 @@ def main():
 
     # Plot a bifurcation diagram. Note that this is a bit of a mess, because we
     # have to go back an forth when converging onto a target
-    plt.plot(data.keys(), data.values())
+    plt.plot(data.mu, data.value)
     plt.show()
 
     # Add a perturbation based on the eigenvector

@@ -7,6 +7,17 @@ from fvm import Interface
 from fvm import plot_utils
 from fvm import utils
 
+
+class Data:
+    def __init__(self):
+        self.mu = []
+        self.value = []
+
+    def append(self, mu, value):
+        self.mu.append(mu)
+        self.value.append(value)
+
+
 def main():
     '''An example of performing a continuation for a double-gyre
     wind-driven ocean, plotting the streamfunction at different Reynolds
@@ -43,9 +54,9 @@ def main():
 
     # Perform a continuation to Reynolds number 40 without detecting bifurcation points
     # and use this in the bifurcation diagram
-    data2 = {}
-    interface.set_parameter('Postprocess', lambda x, mu: data2.update(
-        {mu: numpy.max(utils.compute_streamfunction(x, interface))}))
+    data2 = Data()
+    interface.set_parameter('Postprocess', lambda x, mu: data2.append(
+        mu, numpy.max(utils.compute_streamfunction(x, interface))))
 
     ds = 5
     target = 40
@@ -76,17 +87,17 @@ def main():
 
     # Now compute the stable branch after the pitchfork bifurcation by going backwards
     # and use this in the bifurcation diagram
-    data6 = {}
-    interface.set_parameter('Postprocess', lambda x, mu: data6.update(
-        {mu: numpy.max(utils.compute_streamfunction(x, interface))}))
+    data6 = Data()
+    interface.set_parameter('Postprocess', lambda x, mu: data6.append(
+        mu, numpy.max(utils.compute_streamfunction(x, interface))))
 
     ds = -5
     target = 40
     x6, mu6 = continuation.continuation(x5, 'Reynolds Number', mu4, target, ds)
 
     # Plot a bifurcation diagram
-    plt.plot(data2.keys(), data2.values())
-    plt.plot(data6.keys(), data6.values())
+    plt.plot(data2.mu, data2.value)
+    plt.plot(data6.mu, data6.value)
     plt.show()
 
 
