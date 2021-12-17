@@ -58,11 +58,11 @@ class CylindricalDiscretization(Discretization):
         if Re == 0:
             Re = 1
 
-        return 1 / Re * (self.iruscale(self.u_rr()) + self.iru2scale(self.u_tt() - self.value_u() - 2 * self.v_t_u())
+        return 1 / Re * (self.iruscale(self.u_rr()) + self.iru2scale(- self.value_u())
                          + self.u_zz()
-                         + self.irvscale(self.v_rr()) + self.irv2scale(self.v_tt() - self.value_v() + 2 * self.u_t_v())
+                         + self.irvscale(self.v_rr()) + self.irv2scale(- self.value_v())
                          + self.v_zz()
-                         + self.irvscale(self.w_rr()) + self.irv2scale(self.w_tt()) + self.w_zz()) \
+                         + self.irvscale(self.w_rr()) + self.w_zz()) \
             - (self.p_r() + self.irvscale(self.p_t()) + self.p_z()) \
             + self.div()
 
@@ -114,12 +114,18 @@ class CylindricalDiscretization(Discretization):
             frc += boundary_conditions.moving_lid_east(atom, vo * self.x[self.nx-1])
             frc += boundary_conditions.moving_lid_west(atom, vi * self.x[-1])
 
-            if self.dim == 2 or self.nz <= 1:
+            if self.dim <= 2 or self.nz <= 1:
                 return frc
+
+            asym = self.get_parameter('Asymmetry Parameter')
+            frc2 = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+            frc2[self.nx-1, 0, :, 2] = asym * numpy.cos(self.z[0:self.nz] / self.z[self.nz-1] * numpy.pi)
+            frc += utils.create_state_vec(frc2, self.nx, self.ny, self.nz, self.dof)
 
             if not self.z_periodic:
                 boundary_conditions.no_slip_top(atom)
                 boundary_conditions.no_slip_bottom(atom)
+
         else:
             raise Exception('Invalid problem type %s' % self.get_parameter('Problem Type'))
 
