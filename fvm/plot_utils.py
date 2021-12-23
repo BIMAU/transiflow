@@ -15,13 +15,16 @@ def get_meshgrid(interface, x=None, y=None):
 
     return numpy.meshgrid(x, y)
 
-def plot_contour(x, y, value, legend=True, grid=True, show=True, color=True):
+def plot_contour(x, y, value, legend=True, grid=True, show=True, color=True, levels=15, inline=False):
     fig, ax = plt.subplots()
 
     if color:
-        cs = ax.contourf(x, y, value.transpose(), 15)
+        cs = ax.contourf(x, y, value.transpose(), levels)
     else:
-        cs = ax.contour(x, y, value.transpose(), 15, colors=['k'])
+        cs = ax.contour(x, y, value.transpose(), levels, colors=['k'])
+
+    if inline:
+        ax.clabel(cs, cs.levels, inline=True, fontsize=10)
 
     if legend:
         fig.colorbar(cs)
