@@ -300,6 +300,20 @@ class Interface:
                 orthogonalization.orthonormalize(V[:, 0:i], V[:, i])
 
             self._subspaces = [V]
+        elif self._subspaces:
+            k = self._subspaces[0].shape[1]
+            V = jada_interface.vector(k + 1)
+            V[:, 0:k] = self._subspaces[0]
+            V[:, k] = jada_interface.random()
+            orthogonalization.orthonormalize(V[:, 0:k], V[:, k])
+
+            gamma = numpy.sqrt(1 + abs(target) ** 2)
+            W = jada_interface.vector(k + 1)
+            W[:, 0:k] = self._subspaces[1]
+            W[:, k] = (jac_op @ V[:, k]) * (1 / gamma) - (mass_op @ V[:, k]) * (target / gamma)
+            orthogonalization.orthonormalize(W[:, 0:k], W[:, k])
+
+            self._subspaces = [V, W]
 
         result = jdqz.jdqz(jac_op, mass_op, num, tol=tol, subspace_dimensions=subspace_dimensions, target=target,
                            interface=jada_interface, arithmetic=arithmetic, prec=prec_op,
