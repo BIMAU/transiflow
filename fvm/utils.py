@@ -17,9 +17,15 @@ def norm(x):
 
     return sqrt(abs(dot(x, x)))
 
-def create_state_mtx(state, nx, ny, nz, dof):
+def create_state_mtx(state, nx=None, ny=None, nz=None, dof=None, interface=None):
     '''Helper to create an (nx, ny, nz, dof) dimensional array out of a
     state vector that makes it easier to access the variables.'''
+
+    if interface:
+        nx = interface.discretization.nx
+        ny = interface.discretization.ny
+        nz = interface.discretization.nz
+        dof = interface.discretization.dof
 
     state_mtx = numpy.zeros([nx, ny, nz, dof])
     for k in range(nz):
@@ -29,10 +35,21 @@ def create_state_mtx(state, nx, ny, nz, dof):
                     state_mtx[i, j, k, d] = state[d + i * dof + j * dof * nx + k * dof * nx * ny]
     return state_mtx
 
-def create_padded_state_mtx(state, nx, ny, nz, dof, x_periodic=True, y_periodic=True, z_periodic=True):
+def create_padded_state_mtx(state, nx=None, ny=None, nz=None, dof=None,
+                            x_periodic=True, y_periodic=True, z_periodic=True,
+                            interface=None):
     '''Helper to create an (nx+2, ny+2, nz+2, dof) dimensional array out of a
     state vector that makes it easier to access the variables. The value from
     the other side of the domain is padded to each border.'''
+
+    if interface:
+        nx = interface.discretization.nx
+        ny = interface.discretization.ny
+        nz = interface.discretization.nz
+        dof = interface.discretization.dof
+        x_periodic = interface.discretization.x_periodic
+        y_periodic = interface.discretization.y_periodic
+        z_periodic = interface.discretization.z_periodic
 
     state_mtx = numpy.zeros([nx+2, ny+2, nz+2, dof])
     state_mtx[1:nx+1, 1:ny+1, 1:nz+1, :] = create_state_mtx(state, nx, ny, nz, dof)
@@ -58,9 +75,15 @@ def create_padded_state_mtx(state, nx, ny, nz, dof, x_periodic=True, y_periodic=
 
     return state_mtx
 
-def create_state_vec(state_mtx, nx, ny, nz, dof):
+def create_state_vec(state_mtx, nx=None, ny=None, nz=None, dof=None, interface=None):
     '''Helper to create a state vector out of an array created with
     create_state_mtx().'''
+
+    if interface:
+        nx = interface.discretization.nx
+        ny = interface.discretization.ny
+        nz = interface.discretization.nz
+        dof = interface.discretization.dof
 
     state = numpy.zeros(nx * ny * nz * dof)
 
@@ -100,13 +123,8 @@ def compute_velocity_magnitude(state, interface, axis=2):
 
     nx = interface.discretization.nx
     ny = interface.discretization.ny
-    nz = interface.discretization.nz
-    dof = interface.discretization.dof
 
-    state_mtx = create_padded_state_mtx(state, nx, ny, nz, dof,
-                                        interface.discretization.x_periodic,
-                                        interface.discretization.y_periodic,
-                                        interface.discretization.z_periodic)
+    state_mtx = create_padded_state_mtx(state, interface=interface)
     u = state_mtx[1:, 1:, 1, 0]
     v = state_mtx[1:, 1:, 1, 1]
     w = state_mtx[1:, 1:, 1, 1] * 0
@@ -147,13 +165,8 @@ def compute_streamfunction(state, interface, axis=2):
 
     nx = interface.discretization.nx
     ny = interface.discretization.ny
-    nz = interface.discretization.nz
-    dof = interface.discretization.dof
 
-    state_mtx = create_padded_state_mtx(state, nx, ny, nz, dof,
-                                        interface.discretization.x_periodic,
-                                        interface.discretization.y_periodic,
-                                        interface.discretization.z_periodic)
+    state_mtx = create_padded_state_mtx(state, interface=interface)
     u = state_mtx[1:, 1:, 1, 0]
     v = state_mtx[1:, 1:, 1, 1]
 
