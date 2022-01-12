@@ -296,7 +296,7 @@ class Interface:
             orthogonalization.normalize(V[:, 0])
 
             for i in range(1, initial_subspace_dimension):
-                V[:, i] = jada_interface.prec(V[:, i-1])
+                V[:, i] = jada_interface.prec(mass_op @ V[:, i-1])
                 orthogonalization.orthonormalize(V[:, 0:i], V[:, i])
 
             self._subspaces = [V]
