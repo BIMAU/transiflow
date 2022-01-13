@@ -27,16 +27,6 @@ def main():
 
     interface = Interface(parameters, nx, ny, nz, dim, dof)
 
-    # Define a point of interest
-    poi = (nx // 2 - 1, ny // 4 - 1)
-
-    # Value describes the value that is traced in the continuation
-    # and time integration methods
-    parameters['Value'] = lambda x: utils.get_u_value(x, poi[0], poi[1], 0, interface)
-
-    print('Looking at point ({}, {})'.format(interface.discretization.x[poi[0]],
-                                             interface.discretization.y[poi[1]]))
-
     continuation = Continuation(interface, parameters)
 
     # Compute an initial guess
