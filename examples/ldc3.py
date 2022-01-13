@@ -46,7 +46,9 @@ def main():
 
     # Store data for computing the bifurcation diagram using postprocessing
     data = Data()
-    parameters['Postprocess'] = lambda x, t: data.append(t, utils.get_u_value(x, poi[0], poi[1], 0, interface))
+    parameters['Postprocess'] = lambda x, t: data.append(t, utils.compute_average_kinetic_energy(
+        utils.create_state_mtx(x, nx, ny, nz, dof)[:, :, 0, 0],
+        utils.create_state_mtx(x, nx, ny, nz, dof)[:, :, 0, 1], interface))
 
     print('Looking at point ({}, {})'.format(interface.discretization.x[poi[0]],
                                              interface.discretization.y[poi[1]]))
@@ -70,6 +72,10 @@ def main():
 
     # Plot a bifurcation diagram
     plt.plot(mu_list, value_list)
+
+    plt.title('Bifurcation diagram for the lid-driven cavity with $n_x=n_z={}$'.format(nx))
+    plt.xlabel('Reynolds number')
+    plt.ylabel('Volume averaged kinetic energy')
     plt.show()
 
 
