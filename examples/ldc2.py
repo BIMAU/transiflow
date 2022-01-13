@@ -17,6 +17,17 @@ class Data:
         self.mu.append(mu)
         self.value.append(value)
 
+    def filter(self):
+        '''Filter out values obtained while converging onto a target'''
+        idx = []
+        for i, mu in enumerate(self.mu):
+            if idx:
+                idx = [j for j in idx if self.mu[j] < mu]
+
+            idx.append(i)
+
+        self.mu = [self.mu[i] for i in idx]
+        self.value = [self.value[i] for i in idx]
 
 def main():
     ''' An example of performing a continuation for a 2D lid-driven cavity and detecting a bifurcation point'''
@@ -41,12 +52,6 @@ def main():
 
     interface = Interface(parameters, nx, ny, nz, dim, dof)
 
-    # Define a point of interest
-    poi = (nx // 2 - 1, ny // 4 - 1)
-
-    print('Looking at point ({}, {})'.format(interface.discretization.x[poi[0]],
-                                             interface.discretization.y[poi[1]]))
-
     continuation = Continuation(interface, parameters)
 
     # Compute an initial guess
@@ -55,11 +60,13 @@ def main():
 
     # Store data for computing the bifurcation diagram using postprocessing
     data = Data()
-    parameters['Postprocess'] = lambda x, mu: data.append(mu, utils.get_u_value(x, poi[0], poi[1], 0, interface))
+    parameters['Postprocess'] = lambda x, mu: data.append(mu, utils.compute_average_kinetic_energy(
+        utils.create_state_mtx(x, nx, ny, nz, dof)[:, :, 0, 0],
+        utils.create_state_mtx(x, nx, ny, nz, dof)[:, :, 0, 1], interface))
 
     # Perform an initial continuation to Reynolds number 7000 without detecting bifurcation points
     ds = 100
-    target = 7000
+    target = 6000
     x, mu = continuation.continuation(x0, 'Reynolds Number', 0, target, ds)
 
     parameters['Newton Tolerance'] = 1e-12
@@ -76,6 +83,10 @@ def main():
     target = 10000
     x2, mu2 = continuation.continuation(x, 'Reynolds Number', mu, target, ds)
 
+    ke = utils.compute_average_kinetic_energy(
+        utils.create_state_mtx(x2, nx, ny, nz, dof)[:, :, 0, 0],
+        utils.create_state_mtx(x2, nx, ny, nz, dof)[:, :, 0, 1], interface)
+
     # Compute the unstable branch after the bifurcation
     parameters['Detect Bifurcation Points'] = False
     parameters['Maximum Step Size'] = 2000
@@ -84,9 +95,17 @@ def main():
     parameters['Newton Tolerance'] = 1e-4
     x3, mu3 = continuation.continuation(x2, 'Reynolds Number', mu2, target, ds)
 
-    # Plot a bifurcation diagram. Note that this is a bit of a mess, because we
+    # Plot a bifurcation diagram. Filter out the part where we
     # have to go back an forth when converging onto a target
+    data.filter()
+
+    bif = plt.scatter(mu2, ke, marker='^')
     plt.plot(data.mu, data.value)
+
+    plt.title('Bifurcation diagram for the lid-driven cavity with $n_x=n_z={}$'.format(nx))
+    plt.xlabel('Reynolds number')
+    plt.ylabel('Volume averaged kinetic energy')
+    plt.legend([bif], ['First Hopf bifurcation'])
     plt.show()
 
     # Add a perturbation based on the eigenvector
@@ -95,11 +114,11 @@ def main():
     v = v[:, 0].real
 
     # Plot the velocity magnitude
-    plot_utils.plot_velocity_magnitude(v, interface)
+    plot_utils.plot_velocity_magnitude(v, interface, title='Velocity magnitude of the bifurcating eigenvector')
 
     # Plot the pressure
     v = plot_utils.create_state_mtx(v, nx, ny, nz, dof)
-    plot_utils.plot_value(v[:, :, 0, 2], interface)
+    plot_utils.plot_value(v[:, :, 0, 2], interface, title='Pressure component of the bifurcating eigenvector')
 
 
 if __name__ == '__main__':
