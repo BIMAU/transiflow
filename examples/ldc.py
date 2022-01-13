@@ -75,7 +75,18 @@ def main():
     fig, ax = plt.subplots()
     for i in range(eigs.shape[0]):
         ax.scatter(eigs[i, :].real, eigs[i, :].imag, marker='+')
+
     ax.set_ylim(abs(eigs.imag).min() - 0.1, abs(eigs.imag).max() + 0.1)
+    ax.set_xlabel('$\\sigma_r$')
+    ax.set_ylabel('$\\sigma_i$')
+
+    legend = []
+    for i in data_points:
+        legend.append('Re='+str(i))
+
+    ax.legend(legend)
+
+    plt.title('Complex conjugate eigenvalues in the upper half-plane')
     plt.show()
 
 
