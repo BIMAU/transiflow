@@ -50,7 +50,7 @@ def main():
     target = 1000
     x1 = continuation.continuation(x0, 'Wind Stress Parameter', 0, target, ds)[0]
 
-    plot_utils.plot_streamfunction(x1, interface)
+    plot_utils.plot_streamfunction(x1, interface, title='Streamfunction at Re=16')
 
     # Perform a continuation to Reynolds number 40 without detecting bifurcation points
     # and use this in the bifurcation diagram
@@ -63,7 +63,7 @@ def main():
     interface.set_parameter('Maximum Step Size', 10)
     x2, mu2 = continuation.continuation(x1, 'Reynolds Number', 16, target, ds)
 
-    plot_utils.plot_streamfunction(x2, interface)
+    plot_utils.plot_streamfunction(x2, interface, title='Streamfunction at Re={}'.format(mu2))
 
     # Add asymmetry to the problem
     ds = 10
@@ -96,6 +96,9 @@ def main():
     x6, mu6 = continuation.continuation(x5, 'Reynolds Number', mu4, target, ds)
 
     # Plot a bifurcation diagram
+    plt.title('Bifurcation diagram for the QG model with $n_x=n_y={}$'.format(nx))
+    plt.xlabel('Reynolds number')
+    plt.ylabel('Maximum value of the streamfunction')
     plt.plot(data2.mu, data2.value)
     plt.plot(data6.mu, data6.value)
     plt.show()
