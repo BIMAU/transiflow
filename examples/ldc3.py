@@ -41,17 +41,11 @@ def main():
 
     interface = Interface(parameters, nx, ny, nz, dim, dof)
 
-    # Define a point of interest
-    poi = (nx // 2 - 1, ny // 4 - 1)
-
     # Store data for computing the bifurcation diagram using postprocessing
     data = Data()
     parameters['Postprocess'] = lambda x, t: data.append(t, utils.compute_average_kinetic_energy(
         utils.create_state_mtx(x, nx, ny, nz, dof)[:, :, 0, 0],
         utils.create_state_mtx(x, nx, ny, nz, dof)[:, :, 0, 1], interface))
-
-    print('Looking at point ({}, {})'.format(interface.discretization.x[poi[0]],
-                                             interface.discretization.y[poi[1]]))
 
     x = numpy.random.random(n)
 
