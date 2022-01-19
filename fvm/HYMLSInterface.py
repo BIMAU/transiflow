@@ -24,6 +24,17 @@ class Vector(Epetra.Vector):
     def dot(self, other):
         return self.Dot(other)[0]
 
+    def gather(self):
+        local_elements = []
+        if self.Comm().MyPID() == 0:
+            local_elements = range(self.Map().NumGlobalElements())
+
+        local_map = Epetra.Map(-1, local_elements, 0, self.Comm())
+        importer = Epetra.Import(local_map, self.Map())
+        out = Epetra.Vector(local_map)
+        out.Import(self, importer, Epetra.Insert)
+        return out
+
     size = property(Epetra.Vector.GlobalLength)
 
 def ind2sub(nx, ny, nz, idx, dof=1):
@@ -385,6 +396,45 @@ class Interface(fvm.Interface):
 
         return self.mass
 
+    def compute_scaling(self, jac):
+        '''Compute scaling for the linear problem'''
+        self.left_scaling = Vector(self.solve_map)
+        self.left_scaling.PutScalar(1.0)
+
+        self.inv_left_scaling = Vector(self.solve_map)
+        self.inv_left_scaling.PutScalar(1.0)
+
+        self.right_scaling = Vector(self.solve_map)
+        self.right_scaling.PutScalar(1.0)
+
+        self.inv_right_scaling = Vector(self.solve_map)
+        self.inv_right_scaling.PutScalar(1.0)
+
+        dim = self.discretization.dim
+        dof = self.discretization.dof
+
+        for lrid in range(jac.NumMyRows()):
+            grid = jac.GRID(lrid)
+            var = grid % dof
+            values, indices = jac.ExtractMyRowCopy(lrid)
+            for j in range(len(indices)):
+                lcid = indices[j]
+                value = values[j]
+                gcid = jac.GCID(lcid)
+                if value < 1e-8:
+                    continue
+
+                if var != dim and gcid % dof == dim:
+                    # If the row is a velocity and the column a pressure
+                    self.left_scaling[lrid] = 1 / value
+                    self.inv_left_scaling[lrid] = value
+                    break
+                elif var == dim and gcid % dof != dim and jac.MyGRID(gcid):
+                    # If the row is a pressure and the column a velocity
+                    lid = jac.LRID(gcid)
+                    self.right_scaling[lid] = 1 / value
+                    self.inv_right_scaling[lid] = value
+
     def direct_solve(self, jac, rhs):
         '''Currently unused direct solver that was used for testing.'''
 
@@ -438,6 +488,12 @@ class Interface(fvm.Interface):
 
             solver.SetBorder(V_sol, W_sol, C_sol)
 
+        self.compute_scaling(jac)
+
+        problem = Epetra.LinearProblem(jac, x_sol, rhs_sol)
+        problem.LeftScale(self.left_scaling)
+        problem.RightScale(self.right_scaling)
+
         self.preconditioner.Compute()
 
         if rhs2 is not None:
@@ -448,6 +504,9 @@ class Interface(fvm.Interface):
             solver.ApplyInverse(rhs_sol, x_sol)
 
         solver.UnsetBorder()
+
+        problem.LeftScale(self.inv_left_scaling)
+        problem.RightScale(self.inv_right_scaling)
 
         x = Vector(rhs)
         x.Export(x_sol, self.solve_importer, Epetra.Insert)
