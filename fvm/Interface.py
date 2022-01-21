@@ -331,11 +331,12 @@ class Interface:
             for i in range(len(idx)):
                 w[:, i] = v[:, idx[i]]
                 eigs[i] = alpha[idx[i]] / beta[idx[i]]
-            return eigs, w
+            return eigs[:num], w
         else:
             alpha, beta, q, z = result
             self._subspaces = [q, z]
-            return numpy.array(sorted(alpha / beta, key=lambda x: -x.real if x.real < 100 else 100))
+            eigs = numpy.array(sorted(alpha / beta, key=lambda x: -x.real if x.real < 100 else 100))
+            return eigs[:num]
 
     def eigs(self, state, return_eigenvectors=False, enable_recycling=False):
         '''Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v.'''
