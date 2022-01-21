@@ -2,13 +2,13 @@ import numpy
 
 from fvm import Continuation
 from fvm import Interface
-from fvm import utils
 
 from jadapy import jdqz
 
 from fvm.JadaInterface import JadaInterface, JadaOp
 
 import matplotlib.pyplot as plt
+
 
 def main():
     ''' An example of performing a continuation for a 2D lid-driven cavity'''
