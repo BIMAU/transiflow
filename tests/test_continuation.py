@@ -8,6 +8,8 @@ from fvm import Interface
 from fvm import utils
 
 def test_continuation(nx=4, interactive=False):
+    numpy.random.seed(1234)
+
     dim = 3
     dof = 4
     ny = nx
@@ -36,6 +38,8 @@ def test_continuation(nx=4, interactive=False):
     plot_utils.plot_velocity_magnitude(x, interface)
 
 def continuation_semi_2D(nx=4, interactive=False):
+    numpy.random.seed(1234)
+
     dim = 3
     dof = 4
     ny = nx
@@ -64,6 +68,8 @@ def continuation_semi_2D(nx=4, interactive=False):
     plot_utils.plot_velocity_magnitude(x, interface)
 
 def continuation_2D(nx=4, interactive=False):
+    numpy.random.seed(1234)
+
     dim = 2
     dof = 3
     ny = nx
@@ -103,6 +109,8 @@ def test_continuation_2D_equals():
     assert numpy.linalg.norm(x1[2:-1:dof1] - x2[3:-1:dof2]) < 1e-2
 
 def test_continuation_2D_stretched(nx=4, interactive=False):
+    numpy.random.seed(1234)
+
     dim = 2
     dof = 3
     ny = nx
@@ -134,6 +142,8 @@ def test_continuation_2D_stretched(nx=4, interactive=False):
     plot_utils.plot_velocity_magnitude(x, interface)
 
 def test_continuation_time_integration(nx=4):
+    numpy.random.seed(1234)
+
     dim = 2
     dof = 3
     ny = nx
@@ -186,6 +196,8 @@ def test_continuation_rayleigh_benard(nx=8):
         from fvm import JadaInterface # noqa: F401
     except ImportError:
         pytest.skip('jadapy not found')
+
+    numpy.random.seed(1234)
 
     dim = 2
     dof = 4
@@ -247,6 +259,8 @@ def test_continuation_double_gyre(nx=8):
     except ImportError:
         pytest.skip('jadapy not found')
 
+    numpy.random.seed(1234)
+
     dim = 2
     dof = 3
     ny = nx
@@ -276,8 +290,9 @@ def test_continuation_double_gyre(nx=8):
     ds = 5
     x, mu = continuation.continuation(x, 'Reynolds Number', 16, target, ds)
 
+
     assert numpy.linalg.norm(x) > 0
-    assert mu > 0
+    assert mu > 16
     assert mu < target
 
 def test_continuation_2D_tc(nx=8):
@@ -285,6 +300,8 @@ def test_continuation_2D_tc(nx=8):
         from fvm import JadaInterface # noqa: F401
     except ImportError:
         pytest.skip('jadapy not found')
+
+    numpy.random.seed(1234)
 
     dim = 3
     dof = 4

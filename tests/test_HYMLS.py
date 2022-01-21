@@ -1,4 +1,5 @@
 import pytest
+import numpy
 
 from fvm import Continuation
 from fvm import plot_utils
@@ -22,6 +23,8 @@ def test_HYMLS(nx=4, interactive=False):
         from PyTrilinos import Teuchos
     except ImportError:
         pytest.skip("HYMLS not found")
+
+    numpy.random.seed(1234)
 
     dim = 3
     dof = 4
@@ -65,6 +68,8 @@ def test_HYMLS_2D(nx=8, interactive=False):
     except ImportError:
         pytest.skip("HYMLS not found")
 
+    numpy.random.seed(1234)
+
     dim = 3
     dof = 4
     ny = nx
@@ -106,6 +111,8 @@ def test_HYMLS_2D_stretched(nx=8, interactive=False):
         from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("HYMLS not found")
+
+    numpy.random.seed(1234)
 
     dim = 3
     dof = 4
@@ -154,6 +161,8 @@ def test_HYMLS_rayleigh_benard(nx=8):
         from fvm import JadaInterface # noqa: F401
     except ImportError:
         pytest.skip('jadapy not found')
+
+    numpy.random.seed(1234)
 
     dim = 2
     dof = 4
@@ -206,6 +215,8 @@ def test_HYMLS_double_gyre(nx=8):
     except ImportError:
         pytest.skip('jadapy not found')
 
+    numpy.random.seed(1234)
+
     dim = 2
     dof = 3
     ny = nx
@@ -242,8 +253,9 @@ def test_HYMLS_double_gyre(nx=8):
     ds = 5
     x, mu = continuation.continuation(x, 'Reynolds Number', 16, target, ds)
 
+
     assert x.Norm2() > 0
-    assert mu > 0
+    assert mu > 16
     assert mu < target
 
 
