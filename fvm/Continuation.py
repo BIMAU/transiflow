@@ -165,7 +165,7 @@ class Continuation:
     def detect_bifurcation(self, parameter_name, x, mu, dx, dmu, eigs, deigs, v, ds, maxit):
         ''' Converge onto a bifurcation '''
 
-        tol = self.parameters.get('Destination Tolerance', 1e-8)
+        tol = self.parameters.get('Destination Tolerance', 1e-4)
 
         for j in range(maxit):
             if abs(eigs[0].real) < tol:
@@ -187,7 +187,7 @@ class Continuation:
     def converge(self, parameter_name, x, mu, dx, dmu, target, ds, maxit):
         ''' Converge onto the target value '''
 
-        tol = self.parameters.get('Destination Tolerance', 1e-8)
+        tol = self.parameters.get('Destination Tolerance', 1e-4)
 
         for j in range(maxit):
             if abs(target - mu) < tol:

@@ -147,7 +147,6 @@ def test_HYMLS_rayleigh_benard(nx=8):
     try:
         from fvm import HYMLSInterface
         from PyTrilinos import Epetra
-        from PyTrilinos import Teuchos
     except ImportError:
         pytest.skip("HYMLS not found")
 
@@ -166,8 +165,6 @@ def test_HYMLS_rayleigh_benard(nx=8):
                   'Biot Number': 1,
                   'X-max': 10,
                   'Bordered Solver': True}
-
-    parameters = Teuchos.ParameterList(parameters)
 
     comm = Epetra.PyComm()
     interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
