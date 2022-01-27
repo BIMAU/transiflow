@@ -163,6 +163,7 @@ class Interface(fvm.Interface):
         solver_parameters.set('Left or Right Preconditioning', 'Left')
 
         iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
+        iterative_solver_parameters.set('Output Stream', 0)
         set_default_parameter(iterative_solver_parameters, 'Maximum Iterations', 1000)
         set_default_parameter(iterative_solver_parameters, 'Maximum Restarts', 20)
         set_default_parameter(iterative_solver_parameters, 'Num Blocks', 100)
@@ -220,7 +221,6 @@ class Interface(fvm.Interface):
         self.preconditioner.Initialize()
 
         self.solver = HYMLS.BorderedSolver(self.jac, self.preconditioner, self.teuchos_parameters)
-        self.teuchos_parameters.sublist('Iterative Solver').set('Output Stream', 0)
 
         # Put back the original parameters
         for i in parameter_names:
