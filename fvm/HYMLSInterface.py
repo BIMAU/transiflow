@@ -143,6 +143,11 @@ class Interface(fvm.Interface):
         self.discretization = fvm.Discretization(self.parameters, self.nx_local, self.ny_local, self.nz_local,
                                                  self.dim, self.dof, x, y, z)
 
+        self.left_scaling = None
+        self.inv_left_scaling = None
+        self.right_scaling = None
+        self.inv_right_scaling = None
+
         self.jac = None
         self.mass = None
         self.initialize()
@@ -401,7 +406,7 @@ class Interface(fvm.Interface):
 
         return self.mass
 
-    def compute_scaling(self, jac):
+    def compute_scaling(self):
         '''Compute scaling for the linear problem'''
         self.left_scaling = Vector(self.solve_map)
         self.left_scaling.PutScalar(1.0)
@@ -418,14 +423,14 @@ class Interface(fvm.Interface):
         dim = self.discretization.dim
         dof = self.discretization.dof
 
-        for lrid in range(jac.NumMyRows()):
-            grid = jac.GRID(lrid)
+        for lrid in range(self.jac.NumMyRows()):
+            grid = self.jac.GRID(lrid)
             var = grid % dof
-            values, indices = jac.ExtractMyRowCopy(lrid)
+            values, indices = self.jac.ExtractMyRowCopy(lrid)
             for j in range(len(indices)):
                 lcid = indices[j]
                 value = values[j]
-                gcid = jac.GCID(lcid)
+                gcid = self.jac.GCID(lcid)
                 if value < 1e-8:
                     continue
 
@@ -434,11 +439,43 @@ class Interface(fvm.Interface):
                     self.left_scaling[lrid] = 1 / value
                     self.inv_left_scaling[lrid] = value
                     break
-                elif var == dim and gcid % dof != dim and jac.MyGRID(gcid):
+                elif var == dim and gcid % dof != dim and self.jac.MyGRID(gcid):
                     # If the row is a pressure and the column a velocity
-                    lid = jac.LRID(gcid)
+                    lid = self.jac.LRID(gcid)
                     self.right_scaling[lid] = 1 / value
                     self.inv_right_scaling[lid] = value
+
+    def scale_matrix(self, mat):
+        assert not hasattr(mat, 'scaled') or not mat.scaled
+        mat.scaled = True
+
+        mat.LeftScale(self.left_scaling)
+        mat.RightScale(self.right_scaling)
+
+    def scale_jacobian(self):
+        self.scale_matrix(self.jac)
+
+    def scale_rhs(self, rhs):
+        rhs.Multiply(1.0, self.left_scaling, rhs, 0.0)
+
+    def scale_lhs(self, lhs):
+        lhs.Multiply(1.0, self.inv_right_scaling, lhs, 0.0)
+
+    def unscale_matrix(self, mat):
+        assert mat.scaled
+        mat.scaled = False
+
+        mat.LeftScale(self.inv_left_scaling)
+        mat.RightScale(self.inv_right_scaling)
+
+    def unscale_jacobian(self):
+        self.unscale_matrix(self.jac)
+
+    def unscale_rhs(self, rhs):
+        rhs.Multiply(1.0, self.inv_left_scaling, rhs, 0.0)
+
+    def unscale_lhs(self, lhs):
+        lhs.Multiply(1.0, self.right_scaling, lhs, 0.0)
 
     def direct_solve(self, jac, rhs):
         '''Currently unused direct solver that was used for testing.'''
@@ -476,6 +513,8 @@ class Interface(fvm.Interface):
 
         x_sol = Vector(rhs_sol)
 
+        self.compute_scaling()
+
         if rhs2 is not None:
             rhs2_sol = Epetra.SerialDenseMatrix(1, 1)
             rhs2_sol[0, 0] = rhs2
@@ -485,22 +524,22 @@ class Interface(fvm.Interface):
             V_sol = Vector(self.solve_map)
             V_sol.Import(V, self.solve_importer, Epetra.Insert)
 
+            self.scale_rhs(V_sol)
+
             W_sol = Vector(self.solve_map)
             W_sol.Import(W, self.solve_importer, Epetra.Insert)
+
+            self.unscale_lhs(W_sol)
 
             C_sol = Epetra.SerialDenseMatrix(1, 1)
             C_sol[0, 0] = C
 
             solver.SetBorder(V_sol, W_sol, C_sol)
 
-        self.compute_scaling(jac)
-
-        problem = Epetra.LinearProblem(jac, x_sol, rhs_sol)
-        problem.LeftScale(self.left_scaling)
-        problem.RightScale(self.right_scaling)
+        self.scale_jacobian()
+        self.scale_rhs(rhs_sol)
 
         self.preconditioner.Compute()
-
         if rhs2 is not None:
             solver.ApplyInverse(rhs_sol, rhs2_sol, x_sol, x2_sol)
 
@@ -510,8 +549,8 @@ class Interface(fvm.Interface):
 
         solver.UnsetBorder()
 
-        problem.LeftScale(self.inv_left_scaling)
-        problem.RightScale(self.inv_right_scaling)
+        self.unscale_jacobian()
+        self.unscale_lhs(x_sol)
 
         x = Vector(rhs)
         x.Export(x_sol, self.solve_importer, Epetra.Insert)
@@ -537,6 +576,11 @@ class Interface(fvm.Interface):
         jac_op = EpetraInterface.CrsMatrix(self.jacobian(state))
         mass_op = EpetraInterface.CrsMatrix(self.mass_matrix())
 
+        self.compute_scaling()
+        self.scale_matrix(jac_op)
+        self.scale_matrix(mass_op)
+        self.scale_jacobian()
+
         if arithmetic == 'complex':
             jada_interface = JadaHYMLSInterface(self)
             prec = jada_interface.prec
@@ -544,5 +588,12 @@ class Interface(fvm.Interface):
             jada_interface = JadaHYMLSInterface(self, preconditioned_solve=True)
             prec = None
 
-        return self._eigs(jada_interface, jac_op, mass_op, prec,
-                          state, return_eigenvectors, enable_recycling)
+        ret = self._eigs(jada_interface, jac_op, mass_op, prec,
+                         state, return_eigenvectors, enable_recycling)
+
+        if return_eigenvectors:
+            self.unscale_lhs(ret[1])
+
+        self.unscale_jacobian()
+
+        return ret
