@@ -99,37 +99,7 @@ class Interface(fvm.Interface):
         HYMLS.Tools.InitializeIO(self.comm)
 
         self.parameters = parameters
-        self.teuchos_parameters = convert_parameters(parameters)
-
-        problem_parameters = self.teuchos_parameters.sublist('Problem')
-        problem_parameters.set('nx', self.nx_global)
-        problem_parameters.set('ny', self.ny_global)
-        problem_parameters.set('nz', self.nz_global)
-        problem_parameters.set('Dimension', self.dim)
-        problem_parameters.set('Degrees of Freedom', self.dof)
-        problem_parameters.set('Equations', 'Stokes-C')
-
-        solver_parameters = self.teuchos_parameters.sublist('Solver')
-        solver_parameters.set('Initial Vector', 'Zero')
-        solver_parameters.set('Left or Right Preconditioning', 'Left')
-
-        iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
-        set_default_parameter(iterative_solver_parameters, 'Maximum Iterations', 1000)
-        set_default_parameter(iterative_solver_parameters, 'Maximum Restarts', 20)
-        set_default_parameter(iterative_solver_parameters, 'Num Blocks', 100)
-        set_default_parameter(iterative_solver_parameters, 'Flexible Gmres', False)
-        set_default_parameter(iterative_solver_parameters, 'Convergence Tolerance', 1e-8)
-        set_default_parameter(iterative_solver_parameters, 'Output Frequency', 1)
-        set_default_parameter(iterative_solver_parameters, 'Show Maximum Residual Norm Only', False)
-
-        prec_parameters = self.teuchos_parameters.sublist('Preconditioner')
-        prec_parameters.set('Partitioner', 'Skew Cartesian')
-        set_default_parameter(prec_parameters, 'Separator Length', min(8, self.nx_global))
-        set_default_parameter(prec_parameters, 'Coarsening Factor', 2)
-        set_default_parameter(prec_parameters, 'Number of Levels', 1)
-
-        coarse_solver_parameters = prec_parameters.sublist('Coarse Solver')
-        set_default_parameter(coarse_solver_parameters, "amesos: solver type", "Amesos_Superludist")
+        self.teuchos_parameters = self.get_teuchos_parameters()
 
         self.partition_domain()
         self.map = self.create_map()
@@ -176,6 +146,41 @@ class Interface(fvm.Interface):
         self.jac = None
         self.mass = None
         self.initialize()
+
+    def get_teuchos_parameters(self):
+        teuchos_parameters = convert_parameters(self.parameters)
+
+        problem_parameters = teuchos_parameters.sublist('Problem')
+        problem_parameters.set('nx', self.nx_global)
+        problem_parameters.set('ny', self.ny_global)
+        problem_parameters.set('nz', self.nz_global)
+        problem_parameters.set('Dimension', self.dim)
+        problem_parameters.set('Degrees of Freedom', self.dof)
+        problem_parameters.set('Equations', 'Stokes-C')
+
+        solver_parameters = teuchos_parameters.sublist('Solver')
+        solver_parameters.set('Initial Vector', 'Zero')
+        solver_parameters.set('Left or Right Preconditioning', 'Left')
+
+        iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
+        set_default_parameter(iterative_solver_parameters, 'Maximum Iterations', 1000)
+        set_default_parameter(iterative_solver_parameters, 'Maximum Restarts', 20)
+        set_default_parameter(iterative_solver_parameters, 'Num Blocks', 100)
+        set_default_parameter(iterative_solver_parameters, 'Flexible Gmres', False)
+        set_default_parameter(iterative_solver_parameters, 'Convergence Tolerance', 1e-8)
+        set_default_parameter(iterative_solver_parameters, 'Output Frequency', 1)
+        set_default_parameter(iterative_solver_parameters, 'Show Maximum Residual Norm Only', False)
+
+        prec_parameters = teuchos_parameters.sublist('Preconditioner')
+        prec_parameters.set('Partitioner', 'Skew Cartesian')
+        set_default_parameter(prec_parameters, 'Separator Length', min(8, self.nx_global))
+        set_default_parameter(prec_parameters, 'Coarsening Factor', 2)
+        set_default_parameter(prec_parameters, 'Number of Levels', 1)
+
+        coarse_solver_parameters = prec_parameters.sublist('Coarse Solver')
+        set_default_parameter(coarse_solver_parameters, "amesos: solver type", "Amesos_Superludist")
+
+        return teuchos_parameters
 
     def unset_parameter(self, name, original_parameters):
         '''Set a parameter in self.parameters back to its original value. '''
