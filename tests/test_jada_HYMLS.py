@@ -72,13 +72,18 @@ def test_solve(interface, x, tol):
     from jadapy import EpetraInterface
     from jadapy.utils import norm
 
+    from PyTrilinos import Epetra
+
     interface.teuchos_parameters.sublist('Preconditioner').set('Number of Levels', 0)
     interface.initialize()
 
-    b = EpetraInterface.Vector(x)
+    x_sol = HYMLSInterface.Vector(interface.solve_map)
+    x_sol.Import(x, interface.solve_importer, Epetra.Insert)
+
+    b = EpetraInterface.Vector(x_sol)
 
     # Create a test vector to remove the nonzero first pressure
-    t = HYMLSInterface.Vector(x)
+    t = HYMLSInterface.Vector(x_sol)
     t.PutScalar(0.0)
     for i in range(t.MyLength()):
         if t.Map().GID(i) != interface.dim:
