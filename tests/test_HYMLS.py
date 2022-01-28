@@ -253,7 +253,6 @@ def test_HYMLS_double_gyre(nx=8):
     ds = 5
     x, mu = continuation.continuation(x, 'Reynolds Number', 16, target, ds)
 
-
     assert x.Norm2() > 0
     assert mu > 16
     assert mu < target

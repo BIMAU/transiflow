@@ -290,7 +290,6 @@ def test_continuation_double_gyre(nx=8):
     ds = 5
     x, mu = continuation.continuation(x, 'Reynolds Number', 16, target, ds)
 
-
     assert numpy.linalg.norm(x) > 0
     assert mu > 16
     assert mu < target
