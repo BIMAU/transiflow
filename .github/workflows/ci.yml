@@ -14,9 +14,7 @@ jobs:
           - os: 'ubuntu-latest'
             dependencies: ''
           - os: 'macos-latest'
-            dependencies: ''
-#          - os: 'macos-latest'
-#            dependencies: 'nlesc/nlesc/trilinos'
+            dependencies: 'nlesc/nlesc/trilinos'
 
     runs-on: ${{ matrix.os }}
 
@@ -58,6 +56,23 @@ jobs:
       run: |
         cd jadapy
         pip install .
+
+    - name: Clone HYMLS
+      uses: actions/checkout@v2
+      with:
+        repository: nlesc-smcm/hymls
+        path: hymls
+      if: ${{ matrix.os == 'macos-latest'}}
+
+    - name: Build HYMLS
+      run: |
+        cd hymls
+        mkdir build
+        cd build
+        cmake ..
+        make -j
+        make install
+      if: ${{ matrix.os == 'macos-latest'}}
 
     - name: Test with pytest
       run: |
