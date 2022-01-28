@@ -21,7 +21,7 @@ class JadaHYMLSPrecOp(EpetraInterface.Operator):
 class JadaHYMLSInterface(EpetraInterface.EpetraInterface):
 
     def __init__(self, interface, *args, **kwargs):
-        super().__init__(interface.map)
+        super().__init__(interface.solve_map)
         self.interface = interface
         self.parameters = interface.get_teuchos_parameters()
 
@@ -79,7 +79,7 @@ class ComplexJadaHYMLSPrecOp(EpetraInterface.Operator):
 class ComplexJadaHYMLSInterface(ComplexEpetraInterface.ComplexEpetraInterface):
 
     def __init__(self, interface, *args, **kwargs):
-        super().__init__(interface.map)
+        super().__init__(interface.solve_map)
         self.interface = interface
         self.parameters = interface.get_teuchos_parameters()
 
@@ -144,7 +144,7 @@ class ShiftedOperator(object):
 class BorderedJadaHYMLSInterface(EpetraInterface.EpetraInterface):
 
     def __init__(self, interface, *args, **kwargs):
-        super().__init__(interface.map)
+        super().__init__(interface.solve_map)
         self.interface = interface
         self.parameters = interface.get_teuchos_parameters()
 
@@ -163,32 +163,19 @@ class BorderedJadaHYMLSInterface(EpetraInterface.EpetraInterface):
             solver_parameters.set('Complex', True)
         else:
             solver_parameters.set('Complex', False)
-        solver_parameters.set('Use Bordering', True)
+        solver_parameters.set('Use Bordering', True)\
 
-        rhs_sol = EpetraInterface.Vector(self.interface.solve_map, rhs.NumVectors())
-        rhs_sol.Import(rhs, self.interface.solve_importer, Epetra.Insert)
-
-        out_sol = EpetraInterface.Vector(rhs_sol)
+        out = EpetraInterface.Vector(rhs)
 
         epetra_op = EpetraInterface.Operator(ShiftedOperator(op))
         if self.preconditioned_solve:
             solver = HYMLS.Solver(epetra_op, self.interface.preconditioner, self.parameters)
-
-            Z_sol = EpetraInterface.Vector(self.interface.solve_map, op.Z.NumVectors())
-            Z_sol.Import(op.Z, self.interface.solve_importer, Epetra.Insert)
-
-            Q_sol = EpetraInterface.Vector(self.interface.solve_map, op.Q.NumVectors())
-            Q_sol.Import(op.Q, self.interface.solve_importer, Epetra.Insert)
-
-            solver.SetBorder(Z_sol, Q_sol)
+            solver.SetBorder(op.Z, op.Q)
             self.interface.preconditioner.Compute()
-            solver.ApplyInverse(rhs_sol, out_sol)
+            solver.ApplyInverse(rhs, out)
             solver.UnsetBorder()
         else:
             raise Exception('Not implemented')
-
-        out = EpetraInterface.Vector(rhs)
-        out.Export(out_sol, self.interface.solve_importer, Epetra.Insert)
 
         return out
 
@@ -200,7 +187,7 @@ class BorderedJadaHYMLSInterface(EpetraInterface.EpetraInterface):
 class ComplexBorderedJadaHYMLSInterface(ComplexEpetraInterface.ComplexEpetraInterface):
 
     def __init__(self, interface, *args, **kwargs):
-        super().__init__(interface.map)
+        super().__init__(interface.solve_map)
         self.interface = interface
         self.parameters = interface.get_teuchos_parameters()
 
