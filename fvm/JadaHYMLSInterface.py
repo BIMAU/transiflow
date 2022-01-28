@@ -163,7 +163,7 @@ class BorderedJadaHYMLSInterface(EpetraInterface.EpetraInterface):
             solver_parameters.set('Complex', True)
         else:
             solver_parameters.set('Complex', False)
-        solver_parameters.set('Use Bordering', True)\
+        solver_parameters.set('Use Bordering', True)
 
         out = EpetraInterface.Vector(rhs)
 
