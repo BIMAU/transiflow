@@ -60,9 +60,7 @@ def main():
 
     # Store data for computing the bifurcation diagram using postprocessing
     data = Data()
-    parameters['Postprocess'] = lambda x, mu: data.append(mu, utils.compute_average_kinetic_energy(
-        utils.create_state_mtx(x, nx, ny, nz, dof)[:, :, 0, 0],
-        utils.create_state_mtx(x, nx, ny, nz, dof)[:, :, 0, 1], interface))
+    parameters['Postprocess'] = lambda x, mu: data.append(mu, utils.compute_average_kinetic_energy(x, interface))
 
     # Perform an initial continuation to Reynolds number 7000 without detecting bifurcation points
     ds = 100
@@ -83,9 +81,7 @@ def main():
     target = 10000
     x2, mu2 = continuation.continuation(x, 'Reynolds Number', mu, target, ds)
 
-    ke = utils.compute_average_kinetic_energy(
-        utils.create_state_mtx(x2, nx, ny, nz, dof)[:, :, 0, 0],
-        utils.create_state_mtx(x2, nx, ny, nz, dof)[:, :, 0, 1], interface)
+    ke = utils.compute_average_kinetic_energy(x, interface)
 
     # Compute the unstable branch after the bifurcation
     parameters['Detect Bifurcation Points'] = False

@@ -195,21 +195,45 @@ def compute_streamfunction(state, interface, axis=2):
 
     return (psiu - psiv) / 2
 
-def compute_average_kinetic_energy(u, v, interface=None, x=None, y=None):
-    if x is None:
-        x = interface.discretization.x
-    if y is None:
-        y = interface.discretization.y
+def compute_average_kinetic_energy(state, interface):
+    x = interface.discretization.x
+    y = interface.discretization.y
+    z = interface.discretization.z
 
+    nx = interface.discretization.nx
+    ny = interface.discretization.ny
+    nz = interface.discretization.nz
+
+    dim = interface.discretization.dim
+
+    if nx <= 1:
+        assert x[0] - x[-1] == 1
+
+    if ny <= 1:
+        assert y[0] - y[-1] == 1
+
+    if nz <= 1:
+        assert z[0] - z[-1] == 1
+
+    state_mtx = create_padded_state_mtx(state, interface=interface)
+
+    w = 0
     Ek = 0
-    for i in range(interface.discretization.nx):
-        for j in range(interface.discretization.ny):
-            dx = x[i] - x[i-1]
-            dy = y[j] - y[j-1]
-            _u = (u[i, j] + u[i-1, j]) / 2
-            _v = (v[i, j] + v[i, j-1]) / 2
-            Ek += (_u * _u + _v * _v) / 2 * dx * dy
-    return Ek
+    for i in range(nx):
+        for j in range(ny):
+            for k in range(nz):
+                dx = x[i] - x[i-1]
+                dy = y[j] - y[j-1]
+                dz = z[k] - z[k-1]
+
+                u = (state_mtx[i+1, j+1, k+1, 0] + state_mtx[i, j+1, k+1, 0]) / 2
+                v = (state_mtx[i+1, j+1, k+1, 1] + state_mtx[i+1, j, k+1, 1]) / 2
+                if dim > 2:
+                    w = (state_mtx[i+1, j+1, k+1, 2] + state_mtx[i+1, j+1, k, 2]) / 2
+
+                Ek += (u * u + v * v + w * w) * dx * dy * dz
+
+    return Ek / 2
 
 def get_u_value(state, i, j, k, interface):
     '''Get the value of u at a grid point.'''
