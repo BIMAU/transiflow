@@ -195,7 +195,7 @@ def compute_streamfunction(state, interface, axis=2):
 
     return (psiu - psiv) / 2
 
-def compute_average_kinetic_energy(state, interface):
+def compute_volume_averaged_kinetic_energy(state, interface):
     x = interface.discretization.x
     y = interface.discretization.y
     z = interface.discretization.z
