@@ -7,10 +7,14 @@ class TimeIntegration:
         self.interface = interface
         self.parameters = parameters
 
-    def newton(self, x0, dt, tol=1.e-10, maxit=1000):
+    def newton(self, x0, dt):
         residual_check = self.parameters.get('Residual Check', 'F')
         verbose = self.parameters.get('Verbose', False)
         theta = self.parameters.get('Theta', 1)
+
+        # Set Newton some parameters
+        maxit = self.parameters.get('Maximum Newton Iterations', 10)
+        tol = self.parameters.get('Newton Tolerance', 1e-10)
 
         x = x0
         b0 = self.interface.rhs(x0)
