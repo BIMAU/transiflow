@@ -14,9 +14,13 @@ class Continuation:
         self.delta = None
         self.zeta = None
 
-    def newton(self, x0, tol=1.e-7, maxit=1000):
+    def newton(self, x0):
         residual_check = self.parameters.get('Residual Check', 'F')
         verbose = self.parameters.get('Verbose', False)
+
+        # Set Newton some parameters
+        maxit = self.parameters.get('Maximum Newton Iterations', 10)
+        tol = self.parameters.get('Newton Tolerance', 1e-10)
 
         x = x0
         for k in range(maxit):
@@ -55,7 +59,7 @@ class Continuation:
         residual_check = self.parameters.get('Residual Check', 'F')
         verbose = self.parameters.get('Verbose', False)
 
-        # Set some parameters
+        # Set Newton some parameters
         maxit = self.parameters.get('Maximum Newton Iterations', 10)
         tol = self.parameters.get('Newton Tolerance', 1e-4)
 
