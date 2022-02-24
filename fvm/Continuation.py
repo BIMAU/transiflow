@@ -166,25 +166,26 @@ class Continuation:
 
         return ds
 
-    def detect_bifurcation(self, parameter_name, x, mu, dx, dmu, eigs, deigs, v, ds, maxit):
+    def detect_bifurcation(self, parameter_name, x, mu, dx, dmu, eig, deig, v, ds, maxit):
         ''' Converge onto a bifurcation '''
 
         tol = self.parameters.get('Destination Tolerance', 1e-4)
 
         for j in range(maxit):
-            if abs(eigs[0].real) < tol:
+            if abs(eig.real) < tol:
                 print("Bifurcation found at %s = %f with eigenvalue %e + %ei" % (
-                    parameter_name, mu, eigs[0].real, eigs[0].imag))
+                    parameter_name, mu, eig.real, eig.imag))
                 sys.stdout.flush()
                 break
 
             # Secant method
-            ds = ds / deigs[0].real * -eigs[0].real
+            ds = ds / deig.real * -eig.real
             x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, ds)
 
-            eigs0 = eigs
+            eig_prev = eig
             eigs, v = self.interface.eigs(x, return_eigenvectors=True, enable_recycling=True)
-            deigs = eigs - eigs0
+            eig = eigs[0]
+            deig = eig - eig_prev
 
         return x, mu, v
 
@@ -342,7 +343,7 @@ class Continuation:
         # Get the initial tangent (2.2.5 - 2.2.7).
         dx, dmu = self.initial_tangent(x, parameter_name, mu)
 
-        eigs = None
+        eig = None
 
         if not maxit:
             maxit = self.parameters.get('Maximum Iterations', 1000)
@@ -359,13 +360,14 @@ class Continuation:
             x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, ds)
 
             if detect_bifurcations or (enable_branch_switching and not switched_branches):
-                eigs0 = eigs
+                eig_prev = eig
                 eigs, v = self.interface.eigs(x, return_eigenvectors=True, enable_recycling=enable_recycling)
+                eig = eigs[0]
                 enable_recycling = True
 
-                if eigs0 is not None and numpy.sign(eigs[0].real) != numpy.sign(eigs0[0].real):
-                    deigs = eigs - eigs0
-                    x, mu, v = self.detect_bifurcation(parameter_name, x, mu, dx, dmu, eigs, deigs, v, ds, maxit)
+                if eig_prev is not None and numpy.sign(eig.real) != numpy.sign(eig_prev.real):
+                    deig = eig - eig_prev
+                    x, mu, v = self.detect_bifurcation(parameter_name, x, mu, dx, dmu, eig, deig, v, ds, maxit)
 
                     if enable_branch_switching and not switched_branches:
                         switched_branches = True
@@ -374,8 +376,8 @@ class Continuation:
 
                     return x, mu
 
-                if eigs0 is None and eigs[0].real > 0:
-                    # We're past the bifurcation already, so go backward
+                if eig_prev is None and eig.real > 0:
+                    # We're past the bifurcation already, so go backwards
                     ds = -ds
 
             if (mu >= target and mu0 < target) or (mu <= target and mu0 > target):
