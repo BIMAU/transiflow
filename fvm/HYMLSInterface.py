@@ -35,6 +35,19 @@ class Vector(Epetra.Vector):
         out.Import(self, importer, Epetra.Insert)
         return out
 
+    @staticmethod
+    def from_array(m, x):
+        local_elements = []
+        if m.Comm().MyPID() == 0:
+            local_elements = range(m.NumGlobalElements())
+
+        local_map = Epetra.Map(-1, local_elements, 0, m.Comm())
+        importer = Epetra.Import(m, local_map)
+        x_local = Vector(Epetra.Copy, local_map, x)
+        out = Vector(m)
+        out.Import(x_local, importer, Epetra.Insert)
+        return out
+
     size = property(Epetra.Vector.GlobalLength)
 
 def ind2sub(nx, ny, nz, idx, dof=1):
