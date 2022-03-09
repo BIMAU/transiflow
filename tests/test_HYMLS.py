@@ -1,5 +1,6 @@
 import pytest
 import numpy
+import os
 
 from fvm import Continuation
 from fvm import plot_utils
@@ -15,6 +16,104 @@ def gather(x):
     out = Epetra.Vector(local_map)
     out.Import(x, importer, Epetra.Insert)
     return out
+
+def read_matrix(fname, m):
+    from PyTrilinos import Epetra
+
+    A = Epetra.CrsMatrix(Epetra.Copy, m, 27)
+
+    dirname = os.path.dirname(__file__)
+    with open(os.path.join(dirname, fname), 'r') as f:
+        for i in f.readlines():
+            r, c, v = [j.strip() for j in i.strip().split(' ') if j]
+            r = int(r) - 1
+            c = int(c) - 1
+            v = float(v)
+            if A.MyGlobalRow(r):
+                A[r, c] = v
+        A.FillComplete()
+
+    return A
+
+def read_vector(fname, m):
+    from fvm import HYMLSInterface
+
+    vec = HYMLSInterface.Vector(m)
+
+    dirname = os.path.dirname(__file__)
+    with open(os.path.join(dirname, fname), 'r') as f:
+        for i, v in enumerate(f.readlines()):
+            lid = m.LID(i)
+            if lid != -1:
+                vec[lid] = float(v.strip())
+    return vec
+
+def extract_sorted_row(A, i):
+    values, indices = A.ExtractGlobalRowCopy(i)
+    idx = sorted(range(len(indices)), key=lambda i: indices[i])
+    return [indices[i] for i in idx], [values[i] for i in idx]
+
+def test_ldc():
+    try:
+        from fvm import HYMLSInterface
+        from PyTrilinos import Epetra
+    except ImportError:
+        pytest.skip("HYMLS not found")
+
+    nx = 4
+    ny = nx
+    nz = nx
+    dim = 3
+    dof = 4
+    parameters = {'Reynolds Number': 100}
+    n = nx * ny * nz * dof
+
+    state = numpy.zeros(n)
+    for i in range(n):
+        state[i] = i+1
+
+    comm = Epetra.PyComm()
+    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+
+    state = HYMLSInterface.Vector.from_array(interface.map, state)
+
+    A = interface.jacobian(state)
+    rhs = interface.rhs(state)
+
+    B = read_matrix('ldc_%sx%sx%s.txt' % (nx, ny, nz), interface.solve_map)
+    rhs_B = read_vector('ldc_rhs_%sx%sx%s.txt' % (nx, ny, nz), interface.map)
+
+    for i in range(n):
+        lid = interface.solve_map.LID(i)
+        if lid == -1:
+            continue
+
+        print(i, lid)
+
+        indices_A, values_A = extract_sorted_row(A, i)
+        indices_B, values_B = extract_sorted_row(B, i)
+
+        print('Expected:')
+        print(indices_B)
+        print(values_B)
+
+        print('Got:')
+        print(indices_A)
+        print(values_A)
+
+        assert len(indices_A) == len(indices_B)
+        for j in range(len(indices_A)):
+            assert indices_A[j] == indices_B[j]
+            assert values_A[j] == pytest.approx(values_B[j])
+
+    for i in range(n):
+        lid = interface.map.LID(i)
+        if lid == -1:
+            continue
+
+        print(i, lid, rhs_B[lid])
+
+        assert rhs_B[lid] == pytest.approx(rhs[lid])
 
 def test_HYMLS(nx=4, interactive=False):
     try:
