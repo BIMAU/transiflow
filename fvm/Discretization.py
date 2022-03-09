@@ -181,6 +181,13 @@ class Discretization:
             else:
                 atom += Ra * self.forward_average_T_y()
 
+        if self.problem_type_equals('Rayleigh-Benard Perturbation'):
+            Bi = self.get_parameter('Biot Number')
+            if self.nz > 1:
+                atom += Bi / (Bi + 1) * self.backward_average_v_y()
+            else:
+                atom += Bi / (Bi + 1) * self.backward_average_w_z()
+
         return atom
 
     def nonlinear_part(self, state):
