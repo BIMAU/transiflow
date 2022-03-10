@@ -55,6 +55,19 @@ def write_vector(vec, fname):
         for i in range(len(vec)):
             f.write('%.16e\n' % vec[i])
 
+def read_value(fname):
+    val = 0
+    dirname = os.path.dirname(__file__)
+    with open(os.path.join(dirname, fname), 'r') as f:
+        for v in f.readlines():
+            val = float(v.strip())
+    return val
+
+def write_value(val, fname):
+    dirname = os.path.dirname(__file__)
+    with open(os.path.join(dirname, fname), 'w') as f:
+        f.write('%.16e\n' % val)
+
 def extract_sorted_row(A, i):
     values, indices = A.ExtractGlobalRowCopy(i)
     idx = sorted(range(len(indices)), key=lambda i: indices[i])
@@ -173,6 +186,87 @@ def test_prec(nx=4, parameters=None):
 def test_multilevel_prec():
     parameters = {'Reynolds Number': 100, 'Preconditioner': {'Number of Levels': 2, 'Separator Length': 4}}
     test_prec(8, parameters)
+
+def test_bordered_prec():
+    try:
+        from fvm import HYMLSInterface
+        from PyTrilinos import Epetra
+    except ImportError:
+        pytest.skip("HYMLS not found")
+
+    nx = 4
+    ny = nx
+    nz = nx
+    dim = 3
+    dof = 4
+    n = nx * ny * nz * dof
+
+    parameters = {'Reynolds Number': 100, 'Preconditioner': {'Number of Levels': 0}}
+
+    state = numpy.zeros(n)
+    for i in range(n):
+        state[i] = i+1
+
+    V = numpy.zeros(n)
+    for i in range(n):
+        state[i] = i+2
+
+    W = numpy.zeros(n)
+    for i in range(n):
+        state[i] = i+3
+
+    C = 42
+
+    rhs_2 = 4
+
+    comm = Epetra.PyComm()
+    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+
+    state = HYMLSInterface.Vector.from_array(interface.map, state)
+    V = HYMLSInterface.Vector.from_array(interface.map, V)
+    W = HYMLSInterface.Vector.from_array(interface.map, W)
+
+    interface.jacobian(state)
+    rhs = interface.rhs(state)
+
+    rhs_2_sol = Epetra.SerialDenseMatrix(1, 1)
+    rhs_2_sol[0, 0] = rhs_2
+
+    prec_rhs_2 = Epetra.SerialDenseMatrix(1, 1)
+
+    V_sol = HYMLSInterface.Vector(interface.solve_map)
+    V_sol.Import(V, interface.solve_importer, Epetra.Insert)
+
+    W_sol = HYMLSInterface.Vector(interface.solve_map)
+    W_sol.Import(W, interface.solve_importer, Epetra.Insert)
+
+    C_sol = Epetra.SerialDenseMatrix(1, 1)
+    C_sol[0, 0] = C
+
+    rhs_sol = HYMLSInterface.Vector(interface.solve_map)
+    prec_rhs = HYMLSInterface.Vector(interface.solve_map)
+    rhs_sol.Import(rhs, interface.solve_importer, Epetra.Insert)
+
+    interface.preconditioner.SetBorder(V_sol, W_sol, C_sol)
+    interface.preconditioner.Compute()
+    interface.preconditioner.ApplyInverse(rhs_sol, rhs_2_sol, prec_rhs, prec_rhs_2)
+
+    # write_vector(prec_rhs, 'ldc_bordered_prec_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+    # write_value(prec_rhs_2[0, 0], 'ldc_bordered_prec_rhs_2_%sx%sx%s.txt' % (nx, ny, nz))
+
+    prec_rhs_B = read_vector('ldc_bordered_prec_rhs_%sx%sx%s.txt' % (nx, ny, nz), interface.solve_map)
+    prec_rhs_2_B = read_value('ldc_bordered_prec_rhs_2_%sx%sx%s.txt' % (nx, ny, nz))
+
+    for i in range(n):
+        lid = interface.solve_map.LID(i)
+        if lid == -1:
+            continue
+
+        print(i, lid, prec_rhs[lid], prec_rhs_B[lid])
+
+        assert prec_rhs_B[lid] == pytest.approx(prec_rhs[lid])
+
+    assert prec_rhs_2_B == prec_rhs_2[0, 0]
 
 def test_norm():
     try:
