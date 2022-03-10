@@ -122,20 +122,21 @@ def test_ldc():
 
         assert rhs_B[lid] == pytest.approx(rhs[lid])
 
-def test_prec():
+def test_prec(nx=4, parameters=None):
     try:
         from fvm import HYMLSInterface
         from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("HYMLS not found")
 
-    nx = 4
     ny = nx
     nz = nx
     dim = 3
     dof = 4
-    parameters = {'Reynolds Number': 100, 'Preconditioner': {'Number of Levels': 0}}
     n = nx * ny * nz * dof
+
+    if not parameters:
+        parameters = {'Reynolds Number': 100, 'Preconditioner': {'Number of Levels': 0}}
 
     state = numpy.zeros(n)
     for i in range(n):
@@ -156,6 +157,8 @@ def test_prec():
     interface.preconditioner.Compute()
     interface.preconditioner.ApplyInverse(rhs_sol, prec_rhs)
 
+    # write_vector(prec_rhs, 'ldc_prec_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+
     prec_rhs_B = read_vector('ldc_prec_rhs_%sx%sx%s.txt' % (nx, ny, nz), interface.solve_map)
 
     for i in range(n):
@@ -166,6 +169,10 @@ def test_prec():
         print(i, lid, prec_rhs[lid], prec_rhs_B[lid])
 
         assert prec_rhs_B[lid] == pytest.approx(prec_rhs[lid])
+
+def test_multilevel_prec():
+    parameters = {'Reynolds Number': 100, 'Preconditioner': {'Number of Levels': 2, 'Separator Length': 4}}
+    test_prec(8, parameters)
 
 def test_norm():
     try:
