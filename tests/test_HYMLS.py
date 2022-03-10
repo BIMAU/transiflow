@@ -4,6 +4,7 @@ import os
 
 from fvm import Continuation
 from fvm import plot_utils
+from fvm import utils
 
 def gather(x):
     from PyTrilinos import Epetra
@@ -47,6 +48,12 @@ def read_vector(fname, m):
             if lid != -1:
                 vec[lid] = float(v.strip())
     return vec
+
+def write_vector(vec, fname):
+    dirname = os.path.dirname(__file__)
+    with open(os.path.join(dirname, fname), 'w') as f:
+        for i in range(len(vec)):
+            f.write('%.16e\n' % vec[i])
 
 def extract_sorted_row(A, i):
     values, indices = A.ExtractGlobalRowCopy(i)
@@ -111,9 +118,82 @@ def test_ldc():
         if lid == -1:
             continue
 
-        print(i, lid, rhs_B[lid])
+        print(i, lid, rhs[lid], rhs_B[lid])
 
         assert rhs_B[lid] == pytest.approx(rhs[lid])
+
+def test_prec():
+    try:
+        from fvm import HYMLSInterface
+        from PyTrilinos import Epetra
+    except ImportError:
+        pytest.skip("HYMLS not found")
+
+    nx = 4
+    ny = nx
+    nz = nx
+    dim = 3
+    dof = 4
+    parameters = {'Reynolds Number': 100, 'Preconditioner': {'Number of Levels': 0}}
+    n = nx * ny * nz * dof
+
+    state = numpy.zeros(n)
+    for i in range(n):
+        state[i] = i+1
+
+    comm = Epetra.PyComm()
+    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+
+    state = HYMLSInterface.Vector.from_array(interface.map, state)
+
+    interface.jacobian(state)
+    rhs = interface.rhs(state)
+
+    rhs_sol = HYMLSInterface.Vector(interface.solve_map)
+    prec_rhs = HYMLSInterface.Vector(interface.solve_map)
+    rhs_sol.Import(rhs, interface.solve_importer, Epetra.Insert)
+
+    interface.preconditioner.Compute()
+    interface.preconditioner.ApplyInverse(rhs_sol, prec_rhs)
+
+    prec_rhs_B = read_vector('ldc_prec_rhs_%sx%sx%s.txt' % (nx, ny, nz), interface.solve_map)
+
+    for i in range(n):
+        lid = interface.solve_map.LID(i)
+        if lid == -1:
+            continue
+
+        print(i, lid, prec_rhs[lid], prec_rhs_B[lid])
+
+        assert prec_rhs_B[lid] == pytest.approx(prec_rhs[lid])
+
+def test_norm():
+    try:
+        from fvm import HYMLSInterface
+        from PyTrilinos import Epetra
+    except ImportError:
+        pytest.skip("HYMLS not found")
+
+    nx = 4
+    ny = nx
+    nz = nx
+    dim = 3
+    dof = 4
+    parameters = {}
+    n = nx * ny * nz * dof
+
+    state = numpy.zeros(n)
+    for i in range(n):
+        state[i] = i+1
+
+    comm = Epetra.PyComm()
+    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+
+    state_dist = HYMLSInterface.Vector.from_array(interface.map, state)
+    assert utils.norm(state) == utils.norm(state_dist)
+
+    state_dist = HYMLSInterface.Vector.from_array(interface.solve_map, state)
+    assert utils.norm(state) == utils.norm(state_dist)
 
 def test_HYMLS(nx=4, interactive=False):
     try:
