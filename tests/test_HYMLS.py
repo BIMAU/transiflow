@@ -135,6 +135,68 @@ def test_ldc():
 
         assert rhs_B[lid] == pytest.approx(rhs[lid])
 
+def test_ldc_stretched():
+    try:
+        from fvm import HYMLSInterface
+        from PyTrilinos import Epetra
+    except ImportError:
+        pytest.skip("HYMLS not found")
+
+    nx = 4
+    ny = nx
+    nz = nx
+    dim = 3
+    dof = 4
+    parameters = {'Reynolds Number': 100, 'Grid Stretching': True}
+    n = nx * ny * nz * dof
+
+    state = numpy.zeros(n)
+    for i in range(n):
+        state[i] = i+1
+
+    comm = Epetra.PyComm()
+    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+
+    state = HYMLSInterface.Vector.from_array(interface.map, state)
+
+    A = interface.jacobian(state)
+    rhs = interface.rhs(state)
+
+    B = read_matrix('ldc_stretched_%sx%sx%s.txt' % (nx, ny, nz), interface.solve_map)
+    rhs_B = read_vector('ldc_stretched_rhs_%sx%sx%s.txt' % (nx, ny, nz), interface.map)
+
+    for i in range(n):
+        lid = interface.solve_map.LID(i)
+        if lid == -1:
+            continue
+
+        print(i, lid)
+
+        indices_A, values_A = extract_sorted_row(A, i)
+        indices_B, values_B = extract_sorted_row(B, i)
+
+        print('Expected:')
+        print(indices_B)
+        print(values_B)
+
+        print('Got:')
+        print(indices_A)
+        print(values_A)
+
+        assert len(indices_A) == len(indices_B)
+        for j in range(len(indices_A)):
+            assert indices_A[j] == indices_B[j]
+            assert values_A[j] == pytest.approx(values_B[j])
+
+    for i in range(n):
+        lid = interface.map.LID(i)
+        if lid == -1:
+            continue
+
+        print(i, lid, rhs[lid], rhs_B[lid])
+
+        assert rhs_B[lid] == pytest.approx(rhs[lid])
+
 def test_prec(nx=4, parameters=None):
     try:
         from fvm import HYMLSInterface
@@ -186,6 +248,59 @@ def test_prec(nx=4, parameters=None):
 def test_multilevel_prec():
     parameters = {'Reynolds Number': 100, 'Preconditioner': {'Number of Levels': 2, 'Separator Length': 4}}
     test_prec(8, parameters)
+
+def test_prec_stretched(nx=4, parameters=None):
+    try:
+        from fvm import HYMLSInterface
+        from PyTrilinos import Epetra
+    except ImportError:
+        pytest.skip("HYMLS not found")
+
+    ny = nx
+    nz = nx
+    dim = 3
+    dof = 4
+    n = nx * ny * nz * dof
+
+    if not parameters:
+        parameters = {'Reynolds Number': 100, 'Grid Stretching': True, 'Preconditioner': {'Number of Levels': 0}}
+
+    state = numpy.zeros(n)
+    for i in range(n):
+        state[i] = i+1
+
+    comm = Epetra.PyComm()
+    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+
+    state = HYMLSInterface.Vector.from_array(interface.map, state)
+
+    interface.jacobian(state)
+    rhs = interface.rhs(state)
+
+    rhs_sol = HYMLSInterface.Vector(interface.solve_map)
+    prec_rhs = HYMLSInterface.Vector(interface.solve_map)
+    rhs_sol.Import(rhs, interface.solve_importer, Epetra.Insert)
+
+    interface.preconditioner.Compute()
+    interface.preconditioner.ApplyInverse(rhs_sol, prec_rhs)
+
+    # write_vector(prec_rhs, 'ldc_stretched_prec_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+
+    prec_rhs_B = read_vector('ldc_stretched_prec_rhs_%sx%sx%s.txt' % (nx, ny, nz), interface.solve_map)
+
+    for i in range(n):
+        lid = interface.solve_map.LID(i)
+        if lid == -1:
+            continue
+
+        print(i, lid, prec_rhs[lid], prec_rhs_B[lid])
+
+        assert prec_rhs_B[lid] == pytest.approx(prec_rhs[lid])
+
+def test_multilevel_prec_stretched():
+    parameters = {'Reynolds Number': 100, 'Grid Stretching': True,
+                  'Preconditioner': {'Number of Levels': 2, 'Separator Length': 4}}
+    test_prec_stretched(8, parameters)
 
 def test_bordered_prec():
     try:
