@@ -35,11 +35,12 @@
 %include "HYMLS_Solver.hpp"
 
  // We have to specify the methods below manually, because SWIG can't convert an RCP to const.
-%extend FROSch::Preconditioner
+%extend FROSch::IfpackPreconditioner
 {
-    Preconditioner(Teuchos::RCP<Epetra_RowMatrix> m)
+    IfpackPreconditioner(Teuchos::RCP<Epetra_RowMatrix> m,
+                         Teuchos::RCP<Teuchos::ParameterList> &p)
     {
-        return new FROSch::Preconditioner(m);
+        return new FROSch::IfpackPreconditioner(m,p);
     }
 
     int ApplyInverse(Teuchos::RCP<Epetra_MultiVector> x, Teuchos::RCP<Epetra_MultiVector> y)
@@ -50,7 +51,7 @@
 
 %extend HYMLS::Solver
 {
-    Solver(Teuchos::RCP<Epetra_RowMatrix> m, FROSch::Preconditioner &o, Teuchos::RCP<Teuchos::ParameterList> p)
+    Solver(Teuchos::RCP<Epetra_RowMatrix> m, FROSch::IfpackPreconditioner &o, Teuchos::RCP<Teuchos::ParameterList> p)
     {
         return new HYMLS::Solver(m, Teuchos::rcp(&o, false), p);
     }
