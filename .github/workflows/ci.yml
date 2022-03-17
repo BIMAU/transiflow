@@ -47,6 +47,22 @@ jobs:
         brew install ${{ matrix.dependencies }}
       if: ${{ matrix.os == 'macos-latest' && matrix.dependencies != '' }}
 
+    - name: Compiler cache
+      uses: hendrikmuhs/ccache-action@v1
+      with:
+        key: fvm-${{ matrix.os }}
+        max-size: 500M
+
+    - name: Point compilers at ccache
+      run: |
+        echo "/usr/lib/ccache" >> $GITHUB_PATH
+        echo "/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+        echo "CMAKE_C_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
+        echo "CMAKE_CXX_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
+        echo "CMAKE_Fortran_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
+        echo "CCACHE_COMPILERCHECK=content" >> $GITHUB_ENV
+        echo "CCACHE_NOHASHDIR=true" >> $GITHUB_ENV
+
     - name: Lint with flake8
       run: |
         flake8 . --count --show-source --statistics
@@ -69,17 +85,12 @@ jobs:
         path: hymls
       if: ${{ matrix.os == 'macos-latest'}}
 
-    - name: Cache HYMLS
-      uses: actions/cache@v2
-      with:
-        path: hymls-build
-        key: ${{ runner.os }}-hymls-build
-
     - name: Build HYMLS
       run: |
-        mkdir -p hymls-build
-        cd hymls-build
-        cmake ../hymls
+        cd hymls
+        mkdir build
+        cd build
+        cmake ..
         make -j
         make install
       if: ${{ matrix.os == 'macos-latest'}}
