@@ -99,5 +99,5 @@ jobs:
       run: |
         mpiexec -np ${{ matrix.numproc }} --oversubscribe pytest tests
       env:
-        PYTHONPATH: /usr/local/lib/python3.9/site-packages:/usr/local/Cellar/trilinos/13.0.1/lib/python3.9/site-packages
+        PYTHONPATH: "/usr/local/lib/python3.9/site-packages:/usr/local/Cellar/trilinos/13.0.1/lib/python3.9/site-packages"
       if: ${{ matrix.numproc != 1 }}
