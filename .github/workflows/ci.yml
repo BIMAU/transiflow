@@ -92,12 +92,12 @@ jobs:
 
     - name: Test with pytest
       run: |
-        pytest tests
+        pytest -s tests
       if: ${{ matrix.numproc == 1 }}
 
     - name: Test with parallel pytest
       run: |
-        mpiexec -np ${{ matrix.numproc }} --oversubscribe pytest tests
+        mpiexec -np ${{ matrix.numproc }} --oversubscribe pytest -s tests
       env:
-        PYTHONPATH: "/usr/local/lib/python3.9/site-packages:/usr/local/Cellar/trilinos/13.0.1/lib/python3.9/site-packages"
+        PYTHONPATH: /usr/local/lib/python3.9/site-packages:/usr/local/opt/trilinos/lib/python3.9/site-packages
       if: ${{ matrix.numproc != 1 }}
