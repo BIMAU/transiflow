@@ -3,6 +3,7 @@ import numpy
 import os
 
 from fvm import Continuation
+from fvm import Interface
 from fvm import plot_utils
 from fvm import utils
 
@@ -73,6 +74,12 @@ def extract_sorted_row(A, i):
     idx = sorted(range(len(indices)), key=lambda i: indices[i])
     return [indices[i] for i in idx], [values[i] for i in idx]
 
+def extract_sorted_local_row(A, i):
+    indices = A.jcoA[A.begA[i]:A.begA[i+1]]
+    values = A.coA[A.begA[i]:A.begA[i+1]]
+    idx = sorted(range(len(indices)), key=lambda i: indices[i])
+    return [indices[i] for i in idx], [values[i] for i in idx]
+
 def test_ldc():
     try:
         from fvm import HYMLSInterface
@@ -135,7 +142,7 @@ def test_ldc():
 
         assert rhs_B[lid] == pytest.approx(rhs[lid])
 
-def test_ldc_stretched():
+def test_ldc_stretched_file():
     try:
         from fvm import HYMLSInterface
         from PyTrilinos import Epetra
@@ -196,6 +203,71 @@ def test_ldc_stretched():
         print(i, lid, rhs[lid], rhs_B[lid])
 
         assert rhs_B[lid] == pytest.approx(rhs[lid])
+
+def test_ldc_stretched(nx=4):
+    try:
+        from fvm import HYMLSInterface
+        from PyTrilinos import Epetra
+    except ImportError:
+        pytest.skip("HYMLS not found")
+
+    ny = nx
+    nz = nx
+    dim = 3
+    dof = 4
+    parameters = {'Reynolds Number': 100, 'Grid Stretching': True}
+    n = nx * ny * nz * dof
+
+    state = numpy.zeros(n)
+    for i in range(n):
+        state[i] = i+1
+
+    interface = Interface(parameters, nx, ny, nz, dim, dof)
+    B = interface.jacobian(state)
+    rhs_B = interface.rhs(state)
+
+    comm = Epetra.PyComm()
+    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+
+    state = HYMLSInterface.Vector.from_array(interface.map, state)
+
+    A = interface.jacobian(state)
+    rhs = interface.rhs(state)
+
+    for i in range(n):
+        lid = interface.solve_map.LID(i)
+        if lid == -1:
+            continue
+
+        print(i, lid)
+
+        indices_A, values_A = extract_sorted_row(A, i)
+        indices_B, values_B = extract_sorted_local_row(B, i)
+
+        print('Expected:')
+        print(indices_B)
+        print(values_B)
+
+        print('Got:')
+        print(indices_A)
+        print(values_A)
+
+        assert len(indices_A) == len(indices_B)
+        for j in range(len(indices_A)):
+            assert indices_A[j] == indices_B[j]
+            assert values_A[j] == pytest.approx(values_B[j])
+
+    for i in range(n):
+        lid = interface.map.LID(i)
+        if lid == -1:
+            continue
+
+        print(i, lid, rhs[lid], rhs_B[lid])
+
+        assert rhs_B[i] == pytest.approx(rhs[lid])
+
+def test_ldc8_stretched():
+    test_ldc_stretched(8)
 
 def test_prec(nx=4, parameters=None):
     try:

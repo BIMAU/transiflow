@@ -102,7 +102,7 @@ def create_uniform_coordinate_vector(start, end, nx):
     return numpy.roll(x, -2)
 
 def create_stretched_coordinate_vector(start, end, nx, sigma):
-    if start < 0 or end > 1:
+    if start != 0 or end != 1:
         raise ValueError('Grid stretching currently only works for a [0, 1] domain')
 
     x = create_uniform_coordinate_vector(start, end, nx)

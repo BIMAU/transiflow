@@ -87,6 +87,11 @@ def convert_parameters(parameters, teuchos_parameters=None):
 
     return teuchos_parameters
 
+def get_local_coordinate_vector(x, nx_offset, nx_local):
+    x = numpy.roll(x, 2)
+    x = x[nx_offset:nx_offset+nx_local+3]
+    return numpy.roll(x, -2)
+
 class Interface(fvm.Interface):
     '''This class defines an interface to the HYMLS backend for the
     discretization. We use this so we can write higher level methods
@@ -127,27 +132,39 @@ class Interface(fvm.Interface):
         self.solve_importer = Epetra.Import(self.solve_map, self.map)
 
         # Create local coordinate vectors
-        x_length = self.parameters.get('X-max', 1.0) - self.parameters.get('X-min', 0.0)
-        x_start = self.parameters.get('X-min', 0.0) + self.nx_offset / self.nx_global * x_length
-        x_end = x_start + self.nx_local / self.nx_global * x_length
-
-        y_length = self.parameters.get('Y-max', 1.0) - self.parameters.get('Y-min', 0.0)
-        y_start = self.parameters.get('Y-min', 0.0) + self.ny_offset / self.ny_global * y_length
-        y_end = y_start + self.ny_local / self.ny_global * y_length
-
-        z_length = self.parameters.get('Z-max', 1.0) - self.parameters.get('Z-min', 0.0)
-        z_start = self.parameters.get('Z-min', 0.0) + self.nz_offset / self.nz_global * z_length
-        z_end = z_start + self.nz_local / self.nz_global * z_length
-
         if self.parameters.get('Grid Stretching', False) or self.teuchos_parameters.isParameter('Grid Stretching Factor'):
-            sigma = self.parameters.get('Grid Stretching Factor', 1.5)
-            x = fvm.utils.create_stretched_coordinate_vector(x_start, x_end, self.nx_local, sigma) if x is None else x
-            y = fvm.utils.create_stretched_coordinate_vector(y_start, y_end, self.ny_local, sigma) if y is None else y
-            z = fvm.utils.create_stretched_coordinate_vector(z_start, z_end, self.nz_local, sigma) if z is None else z
+            x = get_local_coordinate_vector(
+                fvm.utils.create_stretched_coordinate_vector(
+                    self.parameters.get('X-min', 0.0), self.parameters.get('X-max', 1.0), nx,
+                    self.parameters.get('Grid Stretching Factor', 1.5)),
+                self.nx_offset, self.nx_local) if x is None else x
+            y = get_local_coordinate_vector(
+                fvm.utils.create_stretched_coordinate_vector(
+                    self.parameters.get('Y-min', 0.0), self.parameters.get('Y-max', 1.0), ny,
+                    self.parameters.get('Grid Stretching Factor', 1.5)),
+                self.ny_offset, self.ny_local) if y is None else y
+
+            # TODO: Maybe force this if dim = 2?
+            z = get_local_coordinate_vector(
+                fvm.utils.create_stretched_coordinate_vector(
+                    self.parameters.get('Z-min', 0.0), self.parameters.get('Z-max', 1.0), nz,
+                    self.parameters.get('Grid Stretching Factor', 1.5)),
+                self.nz_offset, self.nz_local) if z is None else z
         else:
-            x = fvm.utils.create_uniform_coordinate_vector(x_start, x_end, self.nx_local) if x is None else x
-            y = fvm.utils.create_uniform_coordinate_vector(y_start, y_end, self.ny_local) if y is None else y
-            z = fvm.utils.create_uniform_coordinate_vector(z_start, z_end, self.nz_local) if z is None else z
+            x = get_local_coordinate_vector(
+                fvm.utils.create_uniform_coordinate_vector(
+                    self.parameters.get('X-min', 0.0), self.parameters.get('X-max', 1.0), nx),
+                self.nx_offset, self.nx_local) if x is None else x
+            y = get_local_coordinate_vector(
+                fvm.utils.create_uniform_coordinate_vector(
+                    self.parameters.get('Y-min', 0.0), self.parameters.get('Y-max', 1.0), ny),
+                self.ny_offset, self.ny_local) if y is None else y
+
+            # TODO: Maybe force this if dim = 2?
+            z = get_local_coordinate_vector(
+                fvm.utils.create_uniform_coordinate_vector(
+                    self.parameters.get('Z-min', 0.0), self.parameters.get('Z-max', 1.0), nz),
+                self.nz_offset, self.nz_local) if z is None else z
 
         # Re-initialize the fvm.Interface parameters
         self.nx = self.nx_local
