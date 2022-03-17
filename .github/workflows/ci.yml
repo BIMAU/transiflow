@@ -53,16 +53,6 @@ jobs:
         key: fvm-${{ matrix.os }}
         max-size: 500M
 
-    - name: Point compilers at ccache
-      run: |
-        echo "/usr/lib/ccache" >> $GITHUB_PATH
-        echo "/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
-        echo "CMAKE_C_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
-        echo "CMAKE_CXX_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
-        echo "CMAKE_Fortran_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
-        echo "CCACHE_COMPILERCHECK=content" >> $GITHUB_ENV
-        echo "CCACHE_NOHASHDIR=true" >> $GITHUB_ENV
-
     - name: Lint with flake8
       run: |
         flake8 . --count --show-source --statistics
