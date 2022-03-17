@@ -53,6 +53,11 @@ jobs:
         key: fvm-${{ matrix.os }}
         max-size: 500M
 
+    - name: Add ccache to the path
+      run: |
+        echo "/usr/lib/ccache" >> $GITHUB_PATH
+        echo "/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+
     - name: Lint with flake8
       run: |
         flake8 . --count --show-source --statistics
