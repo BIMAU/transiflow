@@ -86,5 +86,5 @@ jobs:
 
     - name: Test with parallel pytest
       run: |
-        mpiexec -np ${{ matrix.numproc }} pytest tests
+        mpiexec -np ${{ matrix.numproc }} --oversubscribe pytest tests
       if: ${{ matrix.numproc != 1 }}
