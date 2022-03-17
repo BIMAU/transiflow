@@ -77,7 +77,7 @@ jobs:
 
     - name: Build HYMLS
       run: |
-        mkdir hymls-build
+        mkdir -p hymls-build
         cd hymls-build
         cmake ../hymls
         make -j
