@@ -104,7 +104,7 @@ class Interface(fvm.Interface):
     with the C-grid discretization. The subdomains will be distributed
     over multiple processors if MPI is used to run the application.'''
 
-    def __init__(self, comm, parameters, nx, ny, nz, dim, dof, x=None, y=None, z=None):
+    def __init__(self, comm, parameters, nx, ny, nz, dim, dof):
         fvm.Interface.__init__(self, parameters, nx, ny, nz, dim, dof)
 
         self.nx_global = nx
@@ -131,47 +131,17 @@ class Interface(fvm.Interface):
         self.solve_map = partitioner.Map()
         self.solve_importer = Epetra.Import(self.solve_map, self.map)
 
-        # Create local coordinate vectors
-        if self.parameters.get('Grid Stretching', False) or self.teuchos_parameters.isParameter('Grid Stretching Factor'):
-            x = get_local_coordinate_vector(
-                fvm.utils.create_stretched_coordinate_vector(
-                    self.parameters.get('X-min', 0.0), self.parameters.get('X-max', 1.0), nx,
-                    self.parameters.get('Grid Stretching Factor', 1.5)),
-                self.nx_offset, self.nx_local) if x is None else x
-            y = get_local_coordinate_vector(
-                fvm.utils.create_stretched_coordinate_vector(
-                    self.parameters.get('Y-min', 0.0), self.parameters.get('Y-max', 1.0), ny,
-                    self.parameters.get('Grid Stretching Factor', 1.5)),
-                self.ny_offset, self.ny_local) if y is None else y
+        self.discretization.x = get_local_coordinate_vector(self.discretization.x, self.nx_offset, self.nx_local)
+        self.discretization.y = get_local_coordinate_vector(self.discretization.y, self.ny_offset, self.ny_local)
+        self.discretization.z = get_local_coordinate_vector(self.discretization.z, self.nz_offset, self.nz_local)
 
-            # TODO: Maybe force this if dim = 2?
-            z = get_local_coordinate_vector(
-                fvm.utils.create_stretched_coordinate_vector(
-                    self.parameters.get('Z-min', 0.0), self.parameters.get('Z-max', 1.0), nz,
-                    self.parameters.get('Grid Stretching Factor', 1.5)),
-                self.nz_offset, self.nz_local) if z is None else z
-        else:
-            x = get_local_coordinate_vector(
-                fvm.utils.create_uniform_coordinate_vector(
-                    self.parameters.get('X-min', 0.0), self.parameters.get('X-max', 1.0), nx),
-                self.nx_offset, self.nx_local) if x is None else x
-            y = get_local_coordinate_vector(
-                fvm.utils.create_uniform_coordinate_vector(
-                    self.parameters.get('Y-min', 0.0), self.parameters.get('Y-max', 1.0), ny),
-                self.ny_offset, self.ny_local) if y is None else y
+        self.discretization.nx = self.nx_local
+        self.discretization.ny = self.ny_local
+        self.discretization.nz = self.nz_local
 
-            # TODO: Maybe force this if dim = 2?
-            z = get_local_coordinate_vector(
-                fvm.utils.create_uniform_coordinate_vector(
-                    self.parameters.get('Z-min', 0.0), self.parameters.get('Z-max', 1.0), nz),
-                self.nz_offset, self.nz_local) if z is None else z
-
-        # Re-initialize the fvm.Interface parameters
         self.nx = self.nx_local
         self.ny = self.ny_local
         self.nz = self.nz_local
-        self.discretization = fvm.Discretization(self.parameters, self.nx_local, self.ny_local, self.nz_local,
-                                                 self.dim, self.dof, x, y, z)
 
         self.left_scaling = None
         self.inv_left_scaling = None
