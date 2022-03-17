@@ -69,12 +69,17 @@ jobs:
         path: hymls
       if: ${{ matrix.os == 'macos-latest'}}
 
+    - name: Cache HYMLS
+      uses: actions/cache@v2
+      with:
+        path: hymls-build
+        key: ${{ runner.os }}-hymls-build
+
     - name: Build HYMLS
       run: |
-        cd hymls
-        mkdir build
-        cd build
-        cmake ..
+        mkdir hymls-build
+        cd hymls-build
+        cmake ../hymls
         make -j
         make install
       if: ${{ matrix.os == 'macos-latest'}}
