@@ -13,8 +13,13 @@ jobs:
         include:
           - os: 'ubuntu-latest'
             dependencies: ''
+            numproc: 1
           - os: 'macos-latest'
             dependencies: 'nlesc/nlesc/trilinos'
+            numproc: 1
+          - os: 'macos-latest'
+            dependencies: 'nlesc/nlesc/trilinos'
+            numproc: 4
 
     runs-on: ${{ matrix.os }}
 
@@ -77,3 +82,9 @@ jobs:
     - name: Test with pytest
       run: |
         pytest tests
+      if: ${{ matrix.numproc == 1 }}
+
+    - name: Test with parallel pytest
+      run: |
+        mpiexec -np ${{ matrix.numproc }} pytest tests
+      if: ${{ matrix.numproc != 1 }}
