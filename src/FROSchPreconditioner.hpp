@@ -82,7 +82,7 @@ namespace FROSch
         protected:
             Teuchos::RCP<const Epetra_RowMatrix> Matrix_;
             Teuchos::RCP<Teuchos::ParameterList> ParameterList_;
-            Teuchos::RCP<SchwarzPreconditioner<double,int> > FROSchPreconditioner_ = Teuchos::null;
+            Teuchos::RCP<OneLevelPreconditioner<double,int> > FROSchPreconditioner_ = Teuchos::null;
 
             bool IsInitialized_ = false;
             bool IsComputed_ = false;

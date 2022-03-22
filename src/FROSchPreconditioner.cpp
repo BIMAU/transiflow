@@ -20,7 +20,7 @@ namespace FROSch {
         RCP<const Matrix<double,int,FROSch::DefaultGlobalOrdinal,KokkosClassic::DefaultNode::DefaultNodeType> > xMatrix = rcp(new CrsMatrixWrap<double,int,FROSch::DefaultGlobalOrdinal,KokkosClassic::DefaultNode::DefaultNodeType>(xCrsMatrix));
         // this is an Xpetra::Matrix that allows 'viewing' the matrix like a block matrix, for instance
 
-        RCP<OneLevelPreconditioner<double,int> > FROSchPreconditioner_(new OneLevelPreconditioner<double,int>(xMatrix,ParameterList_));
+        FROSchPreconditioner_.reset(new OneLevelPreconditioner<double,int>(xMatrix,ParameterList_));
         //ConstXMapPtr repeatedMap = extractRepeatedMap(comm,underlyingLib);
     }
 
