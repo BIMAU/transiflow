@@ -136,7 +136,7 @@ class Interface(fvm.Interface):
         # FIXME: Here we compute the pattern for the preconditioner in HYMLS,
         # maybe not needed by FROSch
 
-        self.preconditioner = FROSch.Preconditioner(self.jac)
+        self.preconditioner = FROSch.IfpackPreconditioner(self.jac, self.teuchos_parameters)
         self.preconditioner.Initialize()
 
         self.solver = FROSch.Solver(self.jac, self.preconditioner, self.teuchos_parameters)
