@@ -99,5 +99,5 @@ jobs:
       run: |
         mpiexec -np ${{ matrix.numproc }} --oversubscribe python tests/test_HYMLS.py
       env:
-        PYTHONPATH: /usr/local/lib/python3.9/site-packages:/usr/local/opt/trilinos/lib/python3.9/site-packages
+        PYTHONPATH: /usr/local/lib/python3.9/site-packages:/usr/local/opt/trilinos/lib/python3.9/site-packages:.
       if: ${{ matrix.numproc != 1 }}
