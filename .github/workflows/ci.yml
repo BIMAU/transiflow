@@ -11,12 +11,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: 'ubuntu-latest'
-            dependencies: ''
-            numproc: 1
-          - os: 'macos-latest'
-            dependencies: 'nlesc/nlesc/trilinos'
-            numproc: 1
+          # - os: 'ubuntu-latest'
+          #   dependencies: ''
+          #   numproc: 1
+          # - os: 'macos-latest'
+          #   dependencies: 'nlesc/nlesc/trilinos'
+          #   numproc: 1
           - os: 'macos-latest'
             dependencies: 'nlesc/nlesc/trilinos'
             numproc: 4
