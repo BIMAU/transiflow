@@ -3,7 +3,7 @@
 
 #include <Xpetra_EpetraCrsMatrix.hpp>
 #include "Ifpack_Preconditioner.h"
-#include "FROSch_OneLevelPreconditioner_def.hpp"
+#include "FROSch_TwoLevelBlockPreconditioner_def.hpp"
 
 namespace FROSch
 {
@@ -80,9 +80,12 @@ namespace FROSch
             const Epetra_Map &OperatorRangeMap() const { return Matrix_->OperatorRangeMap(); }
 
         protected:
+            Teuchos::RCP<const Epetra_Comm> Comm_;
+            Teuchos::RCP<const Teuchos::Comm<int> > TeuchosComm_ = Teuchos::null;
+
             Teuchos::RCP<const Epetra_RowMatrix> Matrix_;
             Teuchos::RCP<Teuchos::ParameterList> ParameterList_;
-            Teuchos::RCP<OneLevelPreconditioner<double,int> > FROSchPreconditioner_ = Teuchos::null;
+            Teuchos::RCP<TwoLevelBlockPreconditioner<double,int> > FROSchPreconditioner_ = Teuchos::null;
 
             bool IsInitialized_ = false;
             bool IsComputed_ = false;
