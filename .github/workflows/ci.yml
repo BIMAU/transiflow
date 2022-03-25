@@ -85,7 +85,7 @@ jobs:
         cd hymls
         mkdir build
         cd build
-        cmake -DCMAKE_INSTALL_PREFIX=${{ env.HOME }} ..
+        cmake -DCMAKE_INSTALL_PREFIX=$HOME ..
         make -j
         make install
       if: ${{ matrix.os == 'macos-latest'}}
@@ -99,5 +99,5 @@ jobs:
       run: |
         mpiexec -np ${{ matrix.numproc }} --oversubscribe python tests/test_HYMLS.py
       env:
-        PYTHONPATH: ${{ env.HOME }}/lib/python3.9/site-packages:/usr/local/opt/trilinos/lib/python3.9/site-packages:.
+        PYTHONPATH: $HOME/lib/python3.9/site-packages:/usr/local/opt/trilinos/lib/python3.9/site-packages:.
       if: ${{ matrix.numproc != 1 }}
