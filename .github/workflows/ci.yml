@@ -57,6 +57,10 @@ jobs:
       run: |
         echo "/usr/lib/ccache" >> $GITHUB_PATH
         echo "/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+        
+    - name: Set env.HOME
+      run: echo ::set-env name=HOME::$HOME
+      shell: bash
 
     - name: Lint with flake8
       run: |
@@ -85,7 +89,7 @@ jobs:
         cd hymls
         mkdir build
         cd build
-        cmake -DCMAKE_INSTALL_PREFIX=~ ..
+        cmake -DCMAKE_INSTALL_PREFIX=${{ env.HOME }} ..
         make -j
         make install
       if: ${{ matrix.os == 'macos-latest'}}
@@ -99,5 +103,5 @@ jobs:
       run: |
         mpiexec -np ${{ matrix.numproc }} --oversubscribe python tests/test_HYMLS.py
       env:
-        PYTHONPATH: ~/lib/python3.9/site-packages:/usr/local/opt/trilinos/lib/python3.9/site-packages:.
+        PYTHONPATH: ${{ env.HOME }}/lib/python3.9/site-packages:/usr/local/opt/trilinos/lib/python3.9/site-packages:.
       if: ${{ matrix.numproc != 1 }}
