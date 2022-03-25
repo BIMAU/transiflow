@@ -135,8 +135,15 @@ class Interface(fvm.Interface):
 
         # TODO: create the maps
         u_map=create_dof_map(0, False);
-        u_map_repeated=create_map(0,True)
-        # etc.
+        v_map=create_dof_map(1, False);
+        if self.dim==3:
+            w_map=create_dof_map(2, False);
+            p_map=create_dof_map(3, False);\
+        else:
+            p_map=create_dof_map(2, False);
+
+        #TODO: create velocity map with u,v,w and interfaces repeated
+        reapeated_velocity_map = []
 
         self.preconditioner = FROSch.IfpackPreconditioner(self.jac, self.teuchos_parameters)
         self.preconditioner.Initialize()
