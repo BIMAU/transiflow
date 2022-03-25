@@ -133,8 +133,10 @@ class Interface(fvm.Interface):
         x.Random()
         self.jacobian(x)
 
-        # FIXME: Here we compute the pattern for the preconditioner in HYMLS,
-        # maybe not needed by FROSch
+        # TODO: create the maps
+        u_map=create_dof_map(0, False);
+        u_map_repeated=create_map(0,True)
+        # etc.
 
         self.preconditioner = FROSch.IfpackPreconditioner(self.jac, self.teuchos_parameters)
         self.preconditioner.Initialize()
@@ -255,6 +257,25 @@ class Interface(fvm.Interface):
                         local_elements[pos] = sub2ind(self.nx_global, self.ny_global, self.nz_global, self.dof,
                                                       i + self.nx_offset, j + self.ny_offset, k + self.nz_offset, var)
                         pos += 1
+
+        return Epetra.Map(-1, local_elements[0:pos], 0, self.comm)
+
+    def create_dof_map(self, var, overlapping=False):
+        '''Create a map on which the local discretization domain is defined for the specified degree of freedom (var).
+        E.g., if var=0, your map will contain only the first variable (typically u) in each grid cell.
+        The overlapping part is only used for computing the discretization.'''
+
+        local_elements = [0] * self.nx_local * self.ny_local * self.nz_local * self.dof
+
+        pos = 0
+        for k in range(self.nz_local):
+            for j in range(self.ny_local):
+                for i in range(self.nx_local):
+                    if not overlapping and self.is_ghost(i, j, k):
+                        continue
+                    local_elements[pos] = sub2ind(self.nx_global, self.ny_global, self.nz_global, self.dof,
+                                                  i + self.nx_offset, j + self.ny_offset, k + self.nz_offset, var)
+                    pos += 1
 
         return Epetra.Map(-1, local_elements[0:pos], 0, self.comm)
 
