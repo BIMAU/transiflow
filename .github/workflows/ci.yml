@@ -18,7 +18,10 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v3
+      with:
+        python-version: 3.9
 
     - name: Install python dependencies
       run: |
@@ -53,7 +56,7 @@ jobs:
         flake8 . --count --show-source --statistics
 
     - name: Clone JaDaPy
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: BIMAU/jadapy
         path: jadapy
@@ -64,7 +67,7 @@ jobs:
         pip install .
 
     - name: Clone HYMLS
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: nlesc-smcm/hymls
         path: hymls
