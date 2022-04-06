@@ -156,12 +156,17 @@ class Interface(fvm.Interface):
         teuchos_parameters = convert_parameters(self.parameters)
 
         problem_parameters = teuchos_parameters.sublist('Problem')
-        problem_parameters.set('nx', self.nx_global)
-        problem_parameters.set('ny', self.ny_global)
-        problem_parameters.set('nz', self.nz_global)
-        problem_parameters.set('Dimension', self.dim)
-        problem_parameters.set('Degrees of Freedom', self.dof)
-        problem_parameters.set('Equations', 'Stokes-C')
+        set_default_parameter(problem_parameters, 'nx', self.nx_global)
+        set_default_parameter(problem_parameters, 'ny', self.ny_global)
+        set_default_parameter(problem_parameters, 'nz', self.nz_global)
+
+        set_default_parameter(problem_parameters, 'Dimension', self.dim)
+        set_default_parameter(problem_parameters, 'Degrees of Freedom', self.dof)
+        set_default_parameter(problem_parameters, 'Equations', 'Stokes-C')
+
+        set_default_parameter(problem_parameters, 'x-periodic', self.discretization.x_periodic)
+        set_default_parameter(problem_parameters, 'y-periodic', self.discretization.y_periodic)
+        set_default_parameter(problem_parameters, 'z-periodic', self.discretization.z_periodic)
 
         solver_parameters = teuchos_parameters.sublist('Solver')
         solver_parameters.set('Initial Vector', 'Zero')
