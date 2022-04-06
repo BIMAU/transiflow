@@ -63,26 +63,42 @@ class CrsMatrix:
         return x
 
     def __add__(self, B):
-        A = CrsMatrix(self.coA[:self.begA[-1]].copy(), self.jcoA[:self.begA[-1]].copy(),
-                      self.begA.copy(), False)
+        coA = numpy.zeros(self.begA[-1] + B.begA[-1], dtype=self.dtype)
+        jcoA = numpy.zeros(self.begA[-1] + B.begA[-1], dtype=int)
+        begA = numpy.zeros(len(self.begA), dtype=int)
 
+        idx = 0
         for i in range(self.n):
-            for j in range(B.begA[i], B.begA[i+1]):
-                if abs(B.coA[j]) < 1e-14:
-                    continue
-
+            for j in range(self.begA[i], self.begA[i+1]):
                 found = False
-                for k in range(A.begA[i], A.begA[i+1]):
-                    if B.jcoA[j] == A.jcoA[k]:
-                        A.coA[k] += B.coA[j]
+                for k in range(B.begA[i], B.begA[i+1]):
+                    if self.jcoA[j] == B.jcoA[k]:
+                        coA[idx] = self.coA[j] + B.coA[k]
+                        jcoA[idx] = self.jcoA[j]
+                        idx += 1
                         found = True
                         break
 
                 if not found:
-                    raise Exception('A does not contain the pattern of B', i,
-                                    A.jcoA[A.begA[i]:A.begA[i+1]],
-                                    B.jcoA[B.begA[i]:B.begA[i+1]])
-        return A
+                    coA[idx] = self.coA[j]
+                    jcoA[idx] = self.jcoA[j]
+                    idx += 1
+
+            for j in range(B.begA[i], B.begA[i+1]):
+                found = False
+                for k in range(self.begA[i], self.begA[i+1]):
+                    if B.jcoA[j] == self.jcoA[k]:
+                        found = True
+                        break
+
+                if not found:
+                    coA[idx] = B.coA[j]
+                    jcoA[idx] = B.jcoA[j]
+                    idx += 1
+
+            begA[i+1] = idx
+
+        return CrsMatrix(coA, jcoA, begA, False)
 
     def __sub__(self, B):
         A = CrsMatrix(-B.coA[:B.begA[-1]], B.jcoA[:B.begA[-1]], B.begA, False)
