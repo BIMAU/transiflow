@@ -133,16 +133,16 @@ class Interface(fvm.Interface):
         x.Random()
         self.jacobian(x)
 
-        # TODO: create the maps
-        u_map=create_dof_map(0, False);
-        v_map=create_dof_map(1, False);
-        if self.dim==3:
-            w_map=create_dof_map(2, False);
-            p_map=create_dof_map(3, False);\
-        else:
-            p_map=create_dof_map(2, False);
+        u_map = self.create_dof_map(0, True)
+        v_map = self.create_dof_map(1, True)
 
-        reapeated_velocity_map = create_velocity_map_with_interfaces()
+        if self.dim == 3:
+            w_map = self.create_dof_map(2, True)
+            p_map = self.create_dof_map(3, False)
+            reapeated_velocity_map = self.create_repeated_map([u_map, v_map, w_map])
+        else:
+            p_map = self.create_dof_map(2, False)
+            reapeated_velocity_map = self.create_repeated_map([u_map, v_map])
 
         self.preconditioner = FROSch.IfpackPreconditioner(self.jac, self.teuchos_parameters)
         self.preconditioner.Initialize()
@@ -247,6 +247,17 @@ class Interface(fvm.Interface):
 
         return ghost
 
+    def is_interface(self, i, j, k):
+        interface = False
+        if self.pidx > 0 and i == 1:
+            interface = True
+        elif self.pidy > 0 and j == 1:
+            interface = True
+        elif self.pidz > 0 and k == 1:
+            interface = True
+
+        return interface
+
     def create_map(self, overlapping=False):
         '''Create a map on which the local discretization domain is defined.
         The overlapping part is only used for computing the discretization.'''
@@ -266,10 +277,10 @@ class Interface(fvm.Interface):
 
         return Epetra.Map(-1, local_elements[0:pos], 0, self.comm)
 
-    def create_dof_map(self, var, overlapping=False):
+    def create_dof_map(self, var, interface=False):
         '''Create a map on which the local discretization domain is defined for the specified degree of freedom (var).
         E.g., if var=0, your map will contain only the first variable (typically u) in each grid cell.
-        The overlapping part is only used for computing the discretization.'''
+        The interface part is used for communication between processors.'''
 
         local_elements = [0] * self.nx_local * self.ny_local * self.nz_local
 
@@ -277,7 +288,7 @@ class Interface(fvm.Interface):
         for k in range(self.nz_local):
             for j in range(self.ny_local):
                 for i in range(self.nx_local):
-                    if not overlapping and self.is_ghost(i, j, k):
+                    if self.is_ghost(i, j, k) and (not interface or not self.is_interface(i, j, k)):
                         continue
                     local_elements[pos] = sub2ind(self.nx_global, self.ny_global, self.nz_global, self.dof,
                                                   i + self.nx_offset, j + self.ny_offset, k + self.nz_offset, var)
@@ -285,22 +296,20 @@ class Interface(fvm.Interface):
 
         return Epetra.Map(-1, local_elements[0:pos], 0, self.comm)
 
-    def create_velocity_map_with_interfaces(self):
-        '''Create a map on which the velocities of the local discretization domain is defined,
-           including variables on the interface.
-        '''
-        local_elements = [0] * self.nx_local * self.ny_local * self.nz_local * self.dof
+    def create_repeated_map(self, maps):
+        '''Create a repeated map by merging the given maps.'''
+
+        local_elements = 0
+        for m in maps:
+            local_elements += m.NumMyElements()
+
+        local_elements = [0] * local_elements
 
         pos = 0
-#TODO: in hymls-apps/fvm this was implemented using domain->FirstRealI(), LastRealJ(), etc.
-#       is there something like that here?
-        for k in range(self.nz_local):
-            for j in range(self.ny_local):
-                for i in range(self.nx_local):
-                    for var in range(self.dim):
-                        local_elements[pos] = sub2ind(self.nx_global, self.ny_global, self.nz_global, self.dof,
-                                                  i + self.nx_offset, j + self.ny_offset, k + self.nz_offset, var)
-                    pos += 1
+        for m in maps:
+            for i in m.MyGlobalElements():
+                local_elements[pos] = i
+                pos += 1
 
         return Epetra.Map(-1, local_elements[0:pos], 0, self.comm)
 
