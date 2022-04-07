@@ -139,10 +139,10 @@ class Interface(fvm.Interface):
         if self.dim == 3:
             w_map = self.create_dof_map(2, True)
             p_map = self.create_dof_map(3, False)
-            reapeated_velocity_map = self.create_repeated_map([u_map, v_map, w_map])
+            repeated_velocity_map = self.create_repeated_map([u_map, v_map, w_map])
         else:
             p_map = self.create_dof_map(2, False)
-            reapeated_velocity_map = self.create_repeated_map([u_map, v_map])
+            repeated_velocity_map = self.create_repeated_map([u_map, v_map])
 
         self.preconditioner = FROSch.IfpackPreconditioner(self.jac, self.teuchos_parameters)
         self.preconditioner.Initialize()
