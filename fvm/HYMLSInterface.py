@@ -3,7 +3,8 @@ from PyTrilinos import Amesos
 from PyTrilinos import Teuchos
 
 import numpy
-
+import sys
+import os
 import fvm
 
 import HYMLS
@@ -33,6 +34,19 @@ class Vector(Epetra.Vector):
         importer = Epetra.Import(local_map, self.Map())
         out = Epetra.Vector(local_map)
         out.Import(self, importer, Epetra.Insert)
+        return out
+
+    @staticmethod
+    def from_array(m, x):
+        local_elements = []
+        if m.Comm().MyPID() == 0:
+            local_elements = range(m.NumGlobalElements())
+
+        local_map = Epetra.Map(-1, local_elements, 0, m.Comm())
+        importer = Epetra.Import(m, local_map)
+        x_local = Vector(Epetra.Copy, local_map, x)
+        out = Vector(m)
+        out.Import(x_local, importer, Epetra.Insert)
         return out
 
     size = property(Epetra.Vector.GlobalLength)
@@ -74,6 +88,11 @@ def convert_parameters(parameters, teuchos_parameters=None):
 
     return teuchos_parameters
 
+def get_local_coordinate_vector(x, nx_offset, nx_local):
+    x = numpy.roll(x, 2)
+    x = x[nx_offset:nx_offset+nx_local+3]
+    return numpy.roll(x, -2)
+
 class Interface(fvm.Interface):
     '''This class defines an interface to the HYMLS backend for the
     discretization. We use this so we can write higher level methods
@@ -86,7 +105,7 @@ class Interface(fvm.Interface):
     with the C-grid discretization. The subdomains will be distributed
     over multiple processors if MPI is used to run the application.'''
 
-    def __init__(self, comm, parameters, nx, ny, nz, dim, dof, x=None, y=None, z=None):
+    def __init__(self, comm, parameters, nx, ny, nz, dim, dof):
         fvm.Interface.__init__(self, parameters, nx, ny, nz, dim, dof)
 
         self.nx_global = nx
@@ -96,7 +115,14 @@ class Interface(fvm.Interface):
 
         self.comm = comm
 
+        # disables output from MPI ranks!=0
         HYMLS.Tools.InitializeIO(self.comm)
+
+        # do the same for Python output:
+        if self.comm.MyPID()!=0:
+            self._original_stdout = sys.stdout
+            print('PID %d will now disable output to stdout'%(self.comm.MyPID()))
+            sys.stdout = open(os.devnull, 'w')
 
         self.parameters = parameters
         self.teuchos_parameters = self.get_teuchos_parameters()
@@ -113,35 +139,17 @@ class Interface(fvm.Interface):
         self.solve_map = partitioner.Map()
         self.solve_importer = Epetra.Import(self.solve_map, self.map)
 
-        # Create local coordinate vectors
-        x_length = self.parameters.get('X-max', 1.0) - self.parameters.get('X-min', 0.0)
-        x_start = self.parameters.get('X-min', 0.0) + self.nx_offset / self.nx_global * x_length
-        x_end = x_start + self.nx_local / self.nx_global * x_length
+        self.discretization.x = get_local_coordinate_vector(self.discretization.x, self.nx_offset, self.nx_local)
+        self.discretization.y = get_local_coordinate_vector(self.discretization.y, self.ny_offset, self.ny_local)
+        self.discretization.z = get_local_coordinate_vector(self.discretization.z, self.nz_offset, self.nz_local)
 
-        y_length = self.parameters.get('Y-max', 1.0) - self.parameters.get('Y-min', 0.0)
-        y_start = self.parameters.get('Y-min', 0.0) + self.ny_offset / self.ny_global * y_length
-        y_end = y_start + self.ny_local / self.ny_global * y_length
+        self.discretization.nx = self.nx_local
+        self.discretization.ny = self.ny_local
+        self.discretization.nz = self.nz_local
 
-        z_length = self.parameters.get('Z-max', 1.0) - self.parameters.get('Z-min', 0.0)
-        z_start = self.parameters.get('Z-min', 0.0) + self.nz_offset / self.nz_global * z_length
-        z_end = z_start + self.nz_local / self.nz_global * z_length
-
-        if self.parameters.get('Grid Stretching', False) or self.teuchos_parameters.isParameter('Grid Stretching Factor'):
-            sigma = self.parameters.get('Grid Stretching Factor', 1.5)
-            x = fvm.utils.create_stretched_coordinate_vector(x_start, x_end, self.nx_local, sigma) if x is None else x
-            y = fvm.utils.create_stretched_coordinate_vector(y_start, y_end, self.ny_local, sigma) if y is None else y
-            z = fvm.utils.create_stretched_coordinate_vector(z_start, z_end, self.nz_local, sigma) if z is None else z
-        else:
-            x = fvm.utils.create_uniform_coordinate_vector(x_start, x_end, self.nx_local) if x is None else x
-            y = fvm.utils.create_uniform_coordinate_vector(y_start, y_end, self.ny_local) if y is None else y
-            z = fvm.utils.create_uniform_coordinate_vector(z_start, z_end, self.nz_local) if z is None else z
-
-        # Re-initialize the fvm.Interface parameters
         self.nx = self.nx_local
         self.ny = self.ny_local
         self.nz = self.nz_local
-        self.discretization = fvm.Discretization(self.parameters, self.nx_local, self.ny_local, self.nz_local,
-                                                 self.dim, self.dof, x, y, z)
 
         self.left_scaling = None
         self.inv_left_scaling = None
@@ -151,6 +159,13 @@ class Interface(fvm.Interface):
         self.jac = None
         self.mass = None
         self.initialize()
+
+    def __del__():
+        if self.comm.MyPID()==0:
+            print('PID %d will now re-enable output to stdout'%(self.comm.MyPID()))
+            sys.stdout.close()
+            sys.stdout = self._original_stdout
+
 
     def get_teuchos_parameters(self):
         teuchos_parameters = convert_parameters(self.parameters)

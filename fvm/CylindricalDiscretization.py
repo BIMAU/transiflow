@@ -58,11 +58,11 @@ class CylindricalDiscretization(Discretization):
         if Re == 0:
             Re = 1
 
-        return 1 / Re * (self.iruscale(self.u_rr()) + self.iru2scale(- self.value_u())
+        return 1 / Re * (self.iruscale(self.u_rr()) + self.iru2scale(self.u_tt() - self.value_u() - 2 * self.v_t_u())
                          + self.u_zz()
-                         + self.irvscale(self.v_rr()) + self.irv2scale(- self.value_v())
+                         + self.irvscale(self.v_rr()) + self.irv2scale(self.v_tt() - self.value_v() + 2 * self.u_t_v())
                          + self.v_zz()
-                         + self.irvscale(self.w_rr()) + self.w_zz()) \
+                         + self.irvscale(self.w_rr()) + self.irv2scale(self.w_tt()) + self.w_zz()) \
             - (self.p_r() + self.irvscale(self.p_t()) + self.p_z()) \
             + self.div()
 

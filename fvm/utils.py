@@ -102,7 +102,7 @@ def create_uniform_coordinate_vector(start, end, nx):
     return numpy.roll(x, -2)
 
 def create_stretched_coordinate_vector(start, end, nx, sigma):
-    if start < 0 or end > 1:
+    if start != 0 or end != 1:
         raise ValueError('Grid stretching currently only works for a [0, 1] domain')
 
     x = create_uniform_coordinate_vector(start, end, nx)
@@ -125,14 +125,17 @@ def compute_velocity_magnitude(state, interface, axis=2):
     ny = interface.discretization.ny
 
     state_mtx = create_padded_state_mtx(state, interface=interface)
-    u = state_mtx[1:, 1:, 1, 0]
-    v = state_mtx[1:, 1:, 1, 1]
-    w = state_mtx[1:, 1:, 1, 1] * 0
+
+    center = interface.discretization.nz // 2 + 1
+    u = state_mtx[1:, 1:, center, 0]
+    v = state_mtx[1:, 1:, center, 1]
+    w = state_mtx[1:, 1:, center, 1] * 0
 
     if axis == 1:
-        u = state_mtx[1:, 1, 1:, 0]
-        v = state_mtx[1:, 1, 1:, 2]
-        w = state_mtx[1:, 1, 1:, 1]
+        center = interface.discretization.ny // 2 + 1
+        u = state_mtx[1:, center, 1:, 0]
+        v = state_mtx[1:, center, 1:, 2]
+        w = state_mtx[1:, center, 1:, 1]
         y = interface.discretization.z
         ny = interface.discretization.nz
 
@@ -167,12 +170,15 @@ def compute_streamfunction(state, interface, axis=2):
     ny = interface.discretization.ny
 
     state_mtx = create_padded_state_mtx(state, interface=interface)
-    u = state_mtx[1:, 1:, 1, 0]
-    v = state_mtx[1:, 1:, 1, 1]
+
+    center = interface.discretization.nz // 2 + 1
+    u = state_mtx[1:, 1:, center, 0]
+    v = state_mtx[1:, 1:, center, 1]
 
     if axis == 1:
-        u = state_mtx[1:, 1, 1:, 0]
-        v = state_mtx[1:, 1, 1:, 2]
+        center = interface.discretization.ny // 2 + 1
+        u = state_mtx[1:, center, 1:, 0]
+        v = state_mtx[1:, center, 1:, 2]
         y = interface.discretization.z
         ny = interface.discretization.nz
 
