@@ -3,7 +3,8 @@ from PyTrilinos import Amesos
 from PyTrilinos import Teuchos
 
 import numpy
-
+import sys
+import os
 import fvm
 
 import HYMLS
@@ -114,7 +115,14 @@ class Interface(fvm.Interface):
 
         self.comm = comm
 
+        # disables output from MPI ranks!=0
         HYMLS.Tools.InitializeIO(self.comm)
+
+        # do the same for Python output:
+        if self.comm.MyPID()!=0:
+            self._original_stdout = sys.stdout
+            print('PID %d will now disable output to stdout'%(self.comm.MyPID()))
+            sys.stdout = open(os.devnull, 'w')
 
         self.parameters = parameters
         self.teuchos_parameters = self.get_teuchos_parameters()
@@ -151,6 +159,13 @@ class Interface(fvm.Interface):
         self.jac = None
         self.mass = None
         self.initialize()
+
+    def __del__():
+        if self.comm.MyPID()==0:
+            print('PID %d will now re-enable output to stdout'%(self.comm.MyPID()))
+            sys.stdout.close()
+            sys.stdout = self._original_stdout
+
 
     def get_teuchos_parameters(self):
         teuchos_parameters = convert_parameters(self.parameters)
