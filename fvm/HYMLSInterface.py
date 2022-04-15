@@ -160,7 +160,7 @@ class Interface(fvm.Interface):
         self.mass = None
         self.initialize()
 
-    def __del__():
+    def __del__(self):
         if self.comm.MyPID()==0:
             print('PID %d will now re-enable output to stdout'%(self.comm.MyPID()))
             sys.stdout.close()
