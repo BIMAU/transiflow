@@ -119,9 +119,9 @@ class Interface(fvm.Interface):
         HYMLS.Tools.InitializeIO(self.comm)
 
         # do the same for Python output:
-        if self.comm.MyPID()!=0:
+        if self.comm.MyPID() != 0:
             self._original_stdout = sys.stdout
-            print('PID %d will now disable output to stdout'%(self.comm.MyPID()))
+            print('PID %d will now disable output to stdout' % (self.comm.MyPID()))
             sys.stdout = open(os.devnull, 'w')
 
         self.parameters = parameters
@@ -161,11 +161,10 @@ class Interface(fvm.Interface):
         self.initialize()
 
     def __del__(self):
-        if self.comm.MyPID()==0:
-            print('PID %d will now re-enable output to stdout'%(self.comm.MyPID()))
+        if self.comm.MyPID() == 0:
             sys.stdout.close()
             sys.stdout = self._original_stdout
-
+            print('PID %d re-enabled output to stdout' % (self.comm.MyPID()))
 
     def get_teuchos_parameters(self):
         teuchos_parameters = convert_parameters(self.parameters)
