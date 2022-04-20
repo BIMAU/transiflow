@@ -136,6 +136,12 @@ class CylindricalDiscretization(Discretization):
     # non-uniform grids. New discretizations such as derivatives have
     # to be implemented in a similar way.
 
+    def rvscale(self, atom):
+        '''Scale atom by r at the location of v'''
+        for i in range(self.nx):
+            atom[i, :, :, :, :, :, :, :] *= (self.x[i] + self.x[i-1]) / 2
+        return atom
+
     def iruscale(self, atom):
         '''Scale atom by 1/r at the location of u'''
         for i in range(self.nx):
@@ -302,8 +308,8 @@ class CylindricalDiscretization(Discretization):
 
     def div(self):
         if self.dim == 2:
-            return self.irvscale(self.u_r() + self.v_y())
-        return self.irvscale(self.u_r() + self.v_y()) + self.w_z()
+            return self.u_x() + self.v_y()
+        return self.u_x() + self.v_y() + self.rvscale(self.w_z())
 
     def u_u_r(self, atomJ, atomF, state):
         Discretization.u_u_x(self, atomJ, atomF, state)
