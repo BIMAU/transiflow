@@ -227,10 +227,15 @@ class Interface(fvm.Interface):
         x.Random()
         self.jacobian(x)
 
+        self.compute_scaling()
+        self.scale_jacobian()
+
         self.preconditioner = HYMLS.Preconditioner(self.jac, self.teuchos_parameters)
         self.preconditioner.Initialize()
 
         self.solver = HYMLS.BorderedSolver(self.jac, self.preconditioner, self.teuchos_parameters)
+
+        self.unscale_jacobian()
 
         # Put back the original parameters
         for i in parameter_names:
