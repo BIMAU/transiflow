@@ -83,7 +83,7 @@ class Interface(fvm.Interface):
         # HYMLS::Solver parameters
         solver_parameters = teuchos_parameters.sublist('Solver')
         solver_parameters.set('Initial Vector', 'Zero')
-        solver_parameters.set('Left or Right Preconditioning', 'Left')
+        solver_parameters.set('Left or Right Preconditioning', 'Right')
 
         iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
         iterative_solver_parameters.set('Output Stream', 0)
@@ -96,6 +96,14 @@ class Interface(fvm.Interface):
         set_default_parameter(iterative_solver_parameters, 'Show Maximum Residual Norm Only', False)
 
         # FIXME: Set default FROSch parameters
+        set_default_parameter(teuchos_parameters, 'Use Offset', False)
+
+        set_default_parameter(teuchos_parameters, 'OverlappingOperator Type', 'AlgebraicOverlappingOperator')
+        overlappigoperator_parameters = teuchos_parameters.sublist('AlgebraicOverlappingOperator')
+
+        set_default_parameter(teuchos_parameters, 'CoarseOperator Type', 'IPOUHarmonicCoarseOperator')
+        coarseoperator_parameters = teuchos_parameters.sublist('IPOUHarmonicCoarseOperator')
+        set_default_parameter(coarseoperator_parameters, 'Reuse: Coarse Basis' , True)
 
         return teuchos_parameters
 
@@ -133,19 +141,27 @@ class Interface(fvm.Interface):
         x.Random()
         self.jacobian(x)
 
+        self.preconditioner = FROSch.IfpackPreconditioner(self.jac, self.teuchos_parameters)
+
         u_map = self.create_dof_map(0, True)
         v_map = self.create_dof_map(1, True)
+        # solver_parameters.set('u_map', u_map)
+        # solver_parameters.set('v_map', v_map)
 
         if self.dim == 3:
             w_map = self.create_dof_map(2, True)
             p_map = self.create_dof_map(3, False)
             repeated_velocity_map = self.create_repeated_map([u_map, v_map, w_map])
+            # solver_parameters.set('w_map', w_map)
+            # solver_parameters.set('p_map', p_map)
+            # solver_parameters.set('repeated_velocity_map', repeated_velocity_map)
+            self.preconditioner.InitializeNew(repeated_velocity_map,u_map,v_map,w_map,p_map)
         else:
             p_map = self.create_dof_map(2, False)
             repeated_velocity_map = self.create_repeated_map([u_map, v_map])
-
-        self.preconditioner = FROSch.IfpackPreconditioner(self.jac, self.teuchos_parameters)
-        self.preconditioner.Initialize()
+            # solver_parameters.set('p_map', p_map)
+            # solver_parameters.set('repeated_velocity_map', repeated_velocity_map)
+            self.preconditioner.InitializeNew(repeated_velocity_map,u_map,v_map,u_map,p_map)
 
         self.solver = FROSch.Solver(self.jac, self.preconditioner, self.teuchos_parameters)
 

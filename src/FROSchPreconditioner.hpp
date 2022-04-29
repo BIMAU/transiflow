@@ -20,7 +20,13 @@ namespace FROSch
 
             int SetParameters(Teuchos::ParameterList &List) { return 0; }
 
-            int Initialize();
+            int Initialize() {FROSCH_ASSERT(false,"not implemented"); return 0;};
+
+            int InitializeNew(Teuchos::RCP<Epetra_Map> repeated_velocity_map,
+                           Teuchos::RCP<Epetra_Map> u_map,
+                           Teuchos::RCP<Epetra_Map> v_map,
+                           Teuchos::RCP<Epetra_Map> w_map,
+                           Teuchos::RCP<Epetra_Map> p_map);
 
             bool IsInitialized() const { return IsInitialized_; }
 
