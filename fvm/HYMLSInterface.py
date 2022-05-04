@@ -170,7 +170,7 @@ class Interface(fvm.Interface):
 
         solver_parameters = teuchos_parameters.sublist('Solver')
         solver_parameters.set('Initial Vector', 'Zero')
-        solver_parameters.set('Left or Right Preconditioning', 'Left')
+        solver_parameters.set('Left or Right Preconditioning', 'Right')
 
         iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
         iterative_solver_parameters.set('Output Stream', 0)
@@ -181,6 +181,8 @@ class Interface(fvm.Interface):
         set_default_parameter(iterative_solver_parameters, 'Convergence Tolerance', 1e-8)
         set_default_parameter(iterative_solver_parameters, 'Output Frequency', 1)
         set_default_parameter(iterative_solver_parameters, 'Show Maximum Residual Norm Only', False)
+        set_default_parameter(iterative_solver_parameters, 'Implicit Residual Scaling', 'Norm of RHS')
+        set_default_parameter(iterative_solver_parameters, 'Explicit Residual Scaling', 'Norm of RHS')
 
         prec_parameters = teuchos_parameters.sublist('Preconditioner')
         prec_parameters.set('Partitioner', 'Skew Cartesian')
