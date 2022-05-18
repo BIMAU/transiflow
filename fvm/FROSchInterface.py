@@ -96,14 +96,16 @@ class Interface(fvm.Interface):
         set_default_parameter(iterative_solver_parameters, 'Show Maximum Residual Norm Only', False)
 
         # FIXME: Set default FROSch parameters
+        teuchos_parameters.set('Dimension', self.dim)
         set_default_parameter(teuchos_parameters, 'Use Offset', False)
 
         set_default_parameter(teuchos_parameters, 'OverlappingOperator Type', 'AlgebraicOverlappingOperator')
         overlappigoperator_parameters = teuchos_parameters.sublist('AlgebraicOverlappingOperator')
 
         set_default_parameter(teuchos_parameters, 'CoarseOperator Type', 'IPOUHarmonicCoarseOperator')
+
         coarseoperator_parameters = teuchos_parameters.sublist('IPOUHarmonicCoarseOperator')
-        set_default_parameter(coarseoperator_parameters, 'Reuse: Coarse Basis' , True)
+        set_default_parameter(coarseoperator_parameters, 'Reuse: Coarse Basis', True)
 
         return teuchos_parameters
 
