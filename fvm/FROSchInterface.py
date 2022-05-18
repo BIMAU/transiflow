@@ -360,10 +360,21 @@ class Interface(fvm.Interface):
             if self.is_ghost(i):
                 continue
             row = self.assembly_map.GID64(i)
+
+            if self.dof > self.dim and row == self.pressure_row:
+                self.jac[row, row] = -1.0
+                continue
+
             for j in range(local_jac.begA[i], local_jac.begA[i+1]):
+                col = self.assembly_map.GID64(local_jac.jcoA[j])
+
+                if self.dof > self.dim and col == self.pressure_row:
+                    continue
+
                 # __setitem__ automatically calls ReplaceGlobalValues if the matrix is filled,
                 # InsertGlobalValues otherwise
-                self.jac[row, self.assembly_map.GID64(local_jac.jcoA[j])] = local_jac.coA[j]
+                self.jac[row, col] = local_jac.coA[j]
+
         self.jac.GlobalAssemble(True, Epetra.Insert)
 
         return self.jac
