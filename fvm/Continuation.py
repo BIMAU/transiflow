@@ -317,6 +317,7 @@ class Continuation:
         return dx, dmu
 
     def continuation(self, x0, parameter_name, start, target, ds,
+                     dx=None, dmu=None,
                      maxit=None, switched_branches=False):
         '''Perform a pseudo-arclength continuation in parameter_name from
         parameter value start to target with arclength step size ds,
@@ -340,8 +341,12 @@ class Continuation:
         self.delta = self.parameters.get('Delta', 1)
         self.zeta = 1 / x.size
 
-        # Get the initial tangent (2.2.5 - 2.2.7).
-        dx, dmu = self.initial_tangent(x, parameter_name, mu)
+        if not dx or not dmu:
+            # Get the initial tangent (2.2.5 - 2.2.7).
+            dx, dmu = self.initial_tangent(x, parameter_name, mu)
+        else:
+            dx /= ds
+            dmu /= ds
 
         eig = None
 
