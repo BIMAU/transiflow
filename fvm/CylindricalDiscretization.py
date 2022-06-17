@@ -15,17 +15,24 @@ class CylindricalDiscretization(Discretization):
     def __init__(self, parameters, nr, ntheta, nz, dim, dof, r=None, theta=None, z=None):
         self.parameters = parameters
 
+        ri = self.parameters.get('R-min', 1.0)
+        ro = self.parameters.get('R-max', 2.0)
+        self.eta = ri / ro
+
+        L = self.parameters.get('Z-max', 1.0) - self.parameters.get('Z-min', 0.0)
+
         if self.parameters.get('Grid Stretching', False) or 'Grid Stretching Factor' in self.parameters.keys():
             r = utils.create_stretched_coordinate_vector(
-                self.parameters.get('R-min', 0.0), self.parameters.get('R-max', 1.0), nr,
+                1, 1 / self.eta, nr,
                 self.parameters.get('Grid Stretching Factor', 1.5)) if r is None else r
         else:
-            r = utils.create_uniform_coordinate_vector(
-                self.parameters.get('R-min', 0.0), self.parameters.get('R-max', 1.0), nr) if r is None else r
+            r = utils.create_uniform_coordinate_vector(1, 1 / self.eta, nr) if r is None else r
 
         theta = utils.create_uniform_coordinate_vector(
             self.parameters.get('Theta-min', 0.0), self.parameters.get('Theta-max', 2 * numpy.pi), ntheta) \
             if theta is None else theta
+
+        z = utils.create_uniform_coordinate_vector(0, L / self.eta, nz) if z is None else z
 
         Discretization.__init__(self, parameters, nr, ntheta, nz, dim, dof, r, theta, z)
 
@@ -53,12 +60,14 @@ class CylindricalDiscretization(Discretization):
         In case Re = 0 we instead compute the linear part for the Stokes
         problem.'''
 
-        Re = self.get_parameter('Reynolds Number')
+        Ta = self.get_parameter('Taylor Number')
+        if Ta == 0:
+            Ta = self.get_parameter('Reynolds Number') / (1 / self.eta - 1)
 
-        if Re == 0:
-            Re = 1
+        if Ta == 0:
+            Ta = 1
 
-        return 1 / Re * (self.iruscale(self.u_rr()) + self.iru2scale(self.u_tt() - self.value_u() - 2 * self.v_t_u())
+        return 1 / Ta * (self.iruscale(self.u_rr()) + self.iru2scale(self.u_tt() - self.value_u() - 2 * self.v_t_u())
                          + self.u_zz()
                          + self.irvscale(self.v_rr()) + self.irv2scale(self.v_tt() - self.value_v() + 2 * self.u_t_v())
                          + self.v_zz()
@@ -76,8 +85,9 @@ class CylindricalDiscretization(Discretization):
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
 
+        Ta = self.get_parameter('Taylor Number')
         Re = self.get_parameter('Reynolds Number')
-        if Re == 0:
+        if Re == 0 and Ta == 0:
             return (atomJ, atomF)
 
         self.u_u_r(atomJ, atomF, state_mtx)
@@ -109,10 +119,16 @@ class CylindricalDiscretization(Discretization):
         frc = numpy.zeros(self.nx * self.ny * self.nz * self.dof)
 
         if self.problem_type_equals('Taylor-Couette'):
-            vo = self.get_parameter('Outer Angular Velocity', 2)
-            vi = self.get_parameter('Inner Angular Velocity', 1)
-            frc += boundary_conditions.moving_lid_east(atom, vo * self.x[self.nx-1])
-            frc += boundary_conditions.moving_lid_west(atom, vi * self.x[-1])
+            ri = self.parameters.get('R-min', 1.0)
+            ro = self.parameters.get('R-max', 2.0)
+            wo = self.get_parameter('Outer Angular Velocity', 0)
+            wi = self.get_parameter('Inner Angular Velocity', 1)
+
+            # This is not supported by the non-dimensionalization
+            assert wo == 0
+
+            frc += boundary_conditions.moving_lid_east(atom, (wo * ro) / (wi * ri))
+            frc += boundary_conditions.moving_lid_west(atom, 1)
 
             if self.dim <= 2 or self.nz <= 1:
                 return frc
