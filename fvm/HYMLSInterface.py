@@ -70,6 +70,8 @@ def set_default_parameter(parameterlist, name, value):
     if name not in parameterlist:
         parameterlist[name] = value
 
+    return parameterlist[name]
+
 def convert_parameters(parameters, teuchos_parameters=None):
     if teuchos_parameters is None:
         teuchos_parameters = Teuchos.ParameterList()
@@ -189,9 +191,9 @@ class Interface(fvm.Interface):
 
         iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
         iterative_solver_parameters.set('Output Stream', 0)
-        set_default_parameter(iterative_solver_parameters, 'Maximum Iterations', 1000)
-        set_default_parameter(iterative_solver_parameters, 'Maximum Restarts', 20)
-        set_default_parameter(iterative_solver_parameters, 'Num Blocks', 100)
+        maxit = set_default_parameter(iterative_solver_parameters, 'Maximum Iterations', 1000)
+        maxsize = set_default_parameter(iterative_solver_parameters, 'Num Blocks', 100)
+        set_default_parameter(iterative_solver_parameters, 'Maximum Restarts', maxit // maxsize)
         set_default_parameter(iterative_solver_parameters, 'Flexible Gmres', False)
         set_default_parameter(iterative_solver_parameters, 'Convergence Tolerance', 1e-8)
         set_default_parameter(iterative_solver_parameters, 'Output Frequency', 1)
