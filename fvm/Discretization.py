@@ -101,7 +101,12 @@ class Discretization:
 
     def get_coordinate_vector(self, start, end, nx):
         if self.parameters.get('Grid Stretching', False) or 'Grid Stretching Factor' in self.parameters.keys():
-            return utils.create_stretched_coordinate_vector(start, end, nx, self.parameters.get('Grid Stretching Factor', 1.5))
+            if self.parameters.get('Grid Stretching Method', 'tanh') == 'sin':
+                return utils.create_stretched_coordinate_vector2(
+                    start, end, nx, self.parameters.get('Grid Stretching Factor', 0.1))
+
+            return utils.create_stretched_coordinate_vector(
+                start, end, nx, self.parameters.get('Grid Stretching Factor', 1.5))
 
         return utils.create_uniform_coordinate_vector(start, end, nx)
 
