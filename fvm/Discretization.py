@@ -139,6 +139,9 @@ class Discretization:
         if Re == 0:
             Re = 1
 
+        if Gr == 0:
+            Gr = 1 / Pr
+
         atom = 1 / (Re * numpy.sqrt(Gr)) * (self.u_xx() + self.u_yy()
                                             + self.v_xx() + self.v_yy()) \
             - (self.p_x() + self.p_y()) \
@@ -170,6 +173,9 @@ class Discretization:
 
         if Re == 0:
             Re = 1
+
+        if Gr == 0:
+            Gr = 1 / Pr
 
         atom = 1 / (Re * numpy.sqrt(Gr)) * (self.u_xx() + self.u_yy() + self.u_zz()
                                             + self.v_xx() + self.v_yy() + self.v_zz()
