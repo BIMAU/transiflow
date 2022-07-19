@@ -21,16 +21,11 @@ class CylindricalDiscretization(Discretization):
 
         L = self.parameters.get('Z-max', 1.0) - self.parameters.get('Z-min', 0.0)
 
-        if self.parameters.get('Grid Stretching', False) or 'Grid Stretching Factor' in self.parameters.keys():
-            r = utils.create_stretched_coordinate_vector(
-                1, 1 / self.eta, nr,
-                self.parameters.get('Grid Stretching Factor', 1.5)) if r is None else r
-        else:
-            r = utils.create_uniform_coordinate_vector(1, 1 / self.eta, nr) if r is None else r
+        r = self.get_coordinate_vector(1, 1 / self.eta, nr) if r is None else r
 
-        theta = utils.create_uniform_coordinate_vector(
-            self.parameters.get('Theta-min', 0.0), self.parameters.get('Theta-max', 2 * numpy.pi), ntheta) \
-            if theta is None else theta
+        theta = utils.create_uniform_coordinate_vector(self.parameters.get('Theta-min', 0.0),
+                                                       self.parameters.get('Theta-max', 2 * numpy.pi),
+                                                       ntheta) if theta is None else theta
 
         z = utils.create_uniform_coordinate_vector(0, L / self.eta, nz) if z is None else z
 
