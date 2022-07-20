@@ -18,29 +18,68 @@ class Data:
         self.value.append(value)
 
 
-def postprocess(data, interface, x, mu, enable_output):
-    nx = interface.discretization.nx
-    ny = interface.discretization.ny
-    nz = interface.discretization.nz
+def compute_volume_averaged_kinetic_energy(x_local, interface):
+    # Because HYMLS uses local subdomains, we need a different interface for postprocessing purposes
+    # that operates on the global domain
+    postprocess_interface = Interface(interface.parameters,
+                                      interface.nx_global, interface.ny_global, interface.nz_global,
+                                      interface.discretization.dim, interface.discretization.dof)
 
-    # Store the solution at every continuation step
+    return utils.compute_volume_averaged_kinetic_energy(x_local.array, postprocess_interface)
+
+
+def write_solution(interface, x_local, mu, name=None):
+    nx = interface.nx_global
+    ny = interface.ny_global
+    nz = interface.nz_global
+
+    if not name:
+        name = mu
+
+    if interface.comm.MyPID() == 0:
+        ke = compute_volume_averaged_kinetic_energy(x_local, interface)
+
+        with open('ldc_' + str(name) + '_ke_' + str(nx) + '_' + str(ny) + '_' + str(nz) + '.npy', 'wb') as f:
+            numpy.save(f, ke)
+
+        with open('ldc_' + str(name) + '_mu_' + str(nx) + '_' + str(ny) + '_' + str(nz) + '.npy', 'wb') as f:
+            numpy.save(f, mu)
+
+        with open('ldc_' + str(name) + '_x_' + str(nx) + '_' + str(ny) + '_' + str(nz) + '.npy', 'wb') as f:
+            numpy.save(f, x_local.array)
+
+
+def read_solution(interface, name):
+    nx = interface.nx_global
+    ny = interface.ny_global
+    nz = interface.nz_global
+
+    mu = numpy.load('ldc_' + str(name) + '_mu_' + str(nx) + '_' + str(ny) + '_' + str(nz) + '.npy')
+    if interface.comm.MyPID() == 0:
+        x = numpy.load('ldc_' + str(name) + '_x_' + str(nx) + '_' + str(ny) + '_' + str(nz) + '.npy')
+    else:
+        x = []
+
+    x = HYMLSInterface.Vector.from_array(interface.map, x)
+
+    return x, mu
+
+
+def postprocess(data, interface, x, mu, enable_output):
+    nx = interface.nx_global
+    ny = interface.ny_global
+    nz = interface.nz_global
+
     x_local = x.gather()
-    if x.Comm().MyPID() == 0 and enable_output:
-        data.append(mu, utils.compute_volume_averaged_kinetic_energy(x_local.array, interface))
+    if interface.comm.MyPID() == 0 and enable_output:
+        # Store data for a bifurcation diagram at every continuation step
+        data.append(mu, utils.compute_volume_averaged_kinetic_energy(x_local, interface))
 
         with open('ldc_bif_' + str(nx) + '_' + str(ny) + '_' + str(nz) + '.obj', 'wb') as f:
             pickle.dump(data, f)
 
-        ke = utils.compute_volume_averaged_kinetic_energy(x_local.array, interface)
-
-        with open('ldc_' + str(mu) + '_ke_' + str(nx) + '_' + str(ny) + '_' + str(nz) + '.npy', 'wb') as f:
-            numpy.save(f, ke)
-
-        with open('ldc_' + str(mu) + '_mu_' + str(nx) + '_' + str(ny) + '_' + str(nz) + '.npy', 'wb') as f:
-            numpy.save(f, mu)
-
-        with open('ldc_' + str(mu) + '_x_' + str(nx) + '_' + str(ny) + '_' + str(nz) + '.npy', 'wb') as f:
-            numpy.save(f, x_local.array)
+        # Store the solution at every continuation step
+        write_solution(interface, x_local, mu)
 
 
 def main():
@@ -93,13 +132,8 @@ def main():
     interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
     m = interface.map
 
-    # Because HYMLS uses local subdomains, we need a different interface for postprocessing purposes
-    # that operates on the global domain
-    postprocess_interface = Interface(interface.parameters,
-                                      interface.nx_global, interface.ny_global, interface.nz_global,
-                                      interface.discretization.dim, interface.discretization.dof)
     data = Data()
-    parameters['Postprocess'] = lambda x, mu: postprocess(data, postprocess_interface, x, mu, enable_output)
+    parameters['Postprocess'] = lambda x, mu: postprocess(data, interface, x, mu, enable_output)
 
     continuation = Continuation(interface, parameters)
 
@@ -116,22 +150,12 @@ def main():
 
     # Store point b from which we start locating the bifurcation point
     x_local = x.gather()
-    if comm.MyPID() == 0 and enable_output:
-        with open('ldc_b_mu_' + str(nx) + '_' + str(ny) + '_' + str(nz) + '.npy', 'wb') as f:
-            numpy.save(f, mu)
-
-        with open('ldc_b_x_' + str(nx) + '_' + str(ny) + '_' + str(nz) + '.npy', 'wb') as f:
-            numpy.save(f, x_local.array)
+    if enable_output:
+        write_solution(interface, x_local, mu, 'b')
 
     # # Restart from point b. In this case the above code can be disabled
     # interface.set_parameter('Lid Velocity', 1)
-    # mu = numpy.load('ldc_b_mu_' + str(nx) + '_' + str(ny) + '_' + str(nz) + '.npy')
-    # if comm.MyPID() == 0:
-    #     x = numpy.load('ldc_b_x_' + str(nx) + '_' + str(ny) + '_' + str(nz) + '.npy')
-    # else:
-    #     x = []
-
-    # x = HYMLSInterface.Vector.from_array(m, x)
+    # x, mu = read_solution(interface, 'b')
 
     # Now detect the bifurcation point
     parameters['Newton Tolerance'] = 1e-6
@@ -150,17 +174,8 @@ def main():
 
     # Store the solution at the bifurcation point
     x_local = x2.gather()
-    if comm.MyPID() == 0 and enable_output:
-        ke = utils.compute_volume_averaged_kinetic_energy(x_local.array, interface)
-
-        with open('ldc_c_ke_' + str(nx) + '_' + str(ny) + '_' + str(nz) + '.npy', 'wb') as f:
-            numpy.save(f, ke)
-
-        with open('ldc_c_mu_' + str(nx) + '_' + str(ny) + '_' + str(nz) + '.npy', 'wb') as f:
-            numpy.save(f, mu2)
-
-        with open('ldc_c_x_' + str(nx) + '_' + str(ny) + '_' + str(nz) + '.npy', 'wb') as f:
-            numpy.save(f, x_local.array)
+    if enable_output:
+        write_solution(interface, x_local, mu, 'c')
 
 
 if __name__ == '__main__':
