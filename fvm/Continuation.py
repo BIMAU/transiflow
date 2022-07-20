@@ -140,6 +140,7 @@ class Continuation:
 
         if self.newton_iterations == maxit:
             print('Newton did not converge. Adjusting step size and trying again')
+            sys.stdout.flush()
             return x0, mu0
 
         self.interface.set_parameter(parameter_name, mu)
