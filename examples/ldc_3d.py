@@ -28,13 +28,21 @@ def compute_volume_averaged_kinetic_energy(x_local, interface):
     return utils.compute_volume_averaged_kinetic_energy(x_local.array, postprocess_interface)
 
 
-def write_solution(interface, x_local, mu, name=None):
+def write_solution(interface, x, mu, name=None, enable_output=True):
+    if not enable_output:
+        return
+
     nx = interface.nx_global
     ny = interface.ny_global
     nz = interface.nz_global
 
     if not name:
         name = mu
+
+    try:
+        x_local = x.gather()
+    except AttributeError:
+        x_local = x
 
     if interface.comm.MyPID() == 0:
         ke = compute_volume_averaged_kinetic_energy(x_local, interface)
@@ -66,12 +74,15 @@ def read_solution(interface, name):
 
 
 def postprocess(data, interface, x, mu, enable_output):
+    if not enable_output:
+        return
+
     nx = interface.nx_global
     ny = interface.ny_global
     nz = interface.nz_global
 
     x_local = x.gather()
-    if interface.comm.MyPID() == 0 and enable_output:
+    if interface.comm.MyPID() == 0:
         # Store data for a bifurcation diagram at every continuation step
         data.append(mu, utils.compute_volume_averaged_kinetic_energy(x_local, interface))
 
@@ -130,7 +141,6 @@ def main():
     # Define a HYMLS interface that handles everything that is different when using HYMLS+Trilinos
     # instead of NumPy as computational backend
     interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
-    m = interface.map
 
     data = Data()
     parameters['Postprocess'] = lambda x, mu: postprocess(data, interface, x, mu, enable_output)
@@ -138,7 +148,7 @@ def main():
     continuation = Continuation(interface, parameters)
 
     # Compute an initial guess
-    x0 = HYMLSInterface.Vector(m)
+    x0 = HYMLSInterface.Vector(interface.map)
     x0.PutScalar(0.0)
     x = continuation.continuation(x0, 'Lid Velocity', 0, 1, 1)[0]
 
@@ -146,12 +156,10 @@ def main():
     ds = 100
     target = 1800
     parameters['Newton Tolerance'] = 1e-3
-    x, mu = continuation.continuation(x0, 'Reynolds Number', 0, target, ds)
+    x, mu = continuation.continuation(x, 'Reynolds Number', 0, target, ds)
 
     # Store point b from which we start locating the bifurcation point
-    x_local = x.gather()
-    if enable_output:
-        write_solution(interface, x_local, mu, 'b')
+    write_solution(interface, x, mu, 'b', enable_output)
 
     # # Restart from point b. In this case the above code can be disabled
     # interface.set_parameter('Lid Velocity', 1)
@@ -173,9 +181,7 @@ def main():
     x2, mu2 = continuation.continuation(x, 'Reynolds Number', mu, target, ds)
 
     # Store the solution at the bifurcation point
-    x_local = x2.gather()
-    if enable_output:
-        write_solution(interface, x_local, mu, 'c')
+    write_solution(interface, x, mu, 'c', enable_output)
 
 
 if __name__ == '__main__':
