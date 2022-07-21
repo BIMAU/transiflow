@@ -143,7 +143,7 @@ def main():
     interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
 
     data = Data()
-    parameters['Postprocess'] = lambda x, mu: postprocess(data, interface, x, mu, enable_output)
+    parameters['Postprocess'] = lambda interface, x, mu: postprocess(data, interface, x, mu, enable_output)
 
     continuation = Continuation(interface, parameters)
 

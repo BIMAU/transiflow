@@ -234,7 +234,7 @@ class Continuation:
         sys.stdout.flush()
 
         if 'Postprocess' in self.parameters and self.parameters['Postprocess']:
-            self.parameters['Postprocess'](x, mu)
+            self.parameters['Postprocess'](self.interface, x, mu)
 
         # Set the new values computed by the corrector
         dmu = mu - mu0
