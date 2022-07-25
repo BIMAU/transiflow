@@ -164,6 +164,9 @@ class Interface(fvm.Interface):
         self.initialize()
 
     def __del__(self):
+        HYMLS.Tools.PrintTiming()
+        HYMLS.Tools.PrintMemUsage()
+
         if self.comm.MyPID() != 0:
             sys.stdout.close()
             sys.stdout = self._original_stdout
