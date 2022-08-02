@@ -103,49 +103,58 @@ class Interface(fvm.Interface):
         set_default_parameter(teuchos_parameters, 'Dimension', self.dim)
         set_default_parameter(preconditioner_parameters, 'Use Offset', False)
 
+        set_default_parameter(teuchos_parameters, 'Overlap', 1)
         set_default_parameter(preconditioner_parameters, 'OverlappingOperator Type', 'AlgebraicOverlappingOperator')
         overlappigoperator_parameters = preconditioner_parameters.sublist('AlgebraicOverlappingOperator')
-
-        set_default_parameter(teuchos_parameters, 'CoarseOperator Type', 'IPOUHarmonicCoarseOperator')
+        overlappigsolver_parameters = overlappigoperator_parameters.sublist('Solver')
+        set_default_parameter(overlappigsolver_parameters, 'SolverType', 'Amesos2')
+        set_default_parameter(overlappigsolver_parameters, 'Solver', 'Klu')
+        
+        set_default_parameter(preconditioner_parameters, 'CoarseOperator Type', 'IPOUHarmonicCoarseOperator')
         coarseoperator_parameters = preconditioner_parameters.sublist('IPOUHarmonicCoarseOperator')
         set_default_parameter(coarseoperator_parameters, 'Reuse: Coarse Basis' , True)
 
-        preconditioner_parameters.updateParametersFromXmlFile('frosch_preconditioner.xml');
+        blocks_parameters = coarseoperator_parameters.sublist('Blocks')
 
-        return teuchos_parameters
+        block1_parameters = blocks_parameters.sublist('1')
+        set_default_parameter(block1_parameters, 'Use For Coarse Space', True)
+        set_default_parameter(block1_parameters, 'Exclude', '2')
+        ipou1_parameters = block1_parameters.sublist('InterfacePartitionOfUnity')
+        set_default_parameter(ipou1_parameters, 'Type', 'GDSW')
+        gdswipou1_parameters = ipou1_parameters.sublist('GDSW')
+        set_default_parameter(gdswipou1_parameters, 'Type', 'Full')
+        rgdswipou1_parameters = ipou1_parameters.sublist('RGDSW')
+        set_default_parameter(rgdswipou1_parameters, 'Type', 'Full')
+        # set_default_parameter(rgdswipou1_parameters, 'Distance Function', 'Inverse Euclidean')
+        set_default_parameter(rgdswipou1_parameters, 'Distance Function', 'Constant')
+        
+        block2_parameters = blocks_parameters.sublist('2')
+        set_default_parameter(block2_parameters, 'Use For Coarse Space', True)
+        set_default_parameter(block2_parameters, 'Exclude', '1')
+        ipou2_parameters = block2_parameters.sublist('InterfacePartitionOfUnity')
+        set_default_parameter(ipou2_parameters, 'Type', 'GDSW')
+        gdswipou2_parameters = ipou2_parameters.sublist('GDSW')
+        set_default_parameter(gdswipou2_parameters, 'Type', 'Full')
+        rgdswipou2_parameters = ipou2_parameters.sublist('RGDSW')
+        set_default_parameter(rgdswipou2_parameters, 'Type', 'Full')
+        set_default_parameter(rgdswipou2_parameters, 'Distance Function', 'Inverse Euclidean')
 
-    def get_teuchos_parameters(self):
-        teuchos_parameters = convert_parameters(self.parameters)
-
-        # HYMLS::Solver parameters
-        solver_parameters = teuchos_parameters.sublist('Solver')
-        solver_parameters.set('Initial Vector', 'Zero')
-        solver_parameters.set('Left or Right Preconditioning', 'Right')
-
-        iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
-        iterative_solver_parameters.set('Output Stream', 0)
-        set_default_parameter(iterative_solver_parameters, 'Maximum Iterations', 1000)
-        set_default_parameter(iterative_solver_parameters, 'Maximum Restarts', 20)
-        set_default_parameter(iterative_solver_parameters, 'Num Blocks', 100)
-        set_default_parameter(iterative_solver_parameters, 'Flexible Gmres', False)
-        set_default_parameter(iterative_solver_parameters, 'Convergence Tolerance', 1e-8)
-        set_default_parameter(iterative_solver_parameters, 'Output Frequency', 1)
-        set_default_parameter(iterative_solver_parameters, 'Show Maximum Residual Norm Only', False)
-
-        # FIXME: Set default FROSch parameters
-        preconditioner_parameters = teuchos_parameters.sublist('Preconditioner')
-
-        set_default_parameter(preconditioner_parameters, 'Use Offset', False)
-
-        set_default_parameter(preconditioner_parameters, 'OverlappingOperator Type', 'AlgebraicOverlappingOperator')
-        overlappigoperator_parameters = preconditioner_parameters.sublist('AlgebraicOverlappingOperator')
-
-        set_default_parameter(teuchos_parameters, 'CoarseOperator Type', 'IPOUHarmonicCoarseOperator')
-        coarseoperator_parameters = preconditioner_parameters.sublist('IPOUHarmonicCoarseOperator')
-        set_default_parameter(coarseoperator_parameters, 'Reuse: Coarse Basis' , True)
-
-        preconditioner_parameters.updateParametersFromXmlFile('frosch_preconditioner.xml');
-
+        extensionsolver_parameters = coarseoperator_parameters.sublist('ExtensionSolver')
+        set_default_parameter(extensionsolver_parameters, 'SolverType', 'Amesos2')
+        set_default_parameter(extensionsolver_parameters, 'Solver', 'Klu')
+        
+        distribution_parameters = coarseoperator_parameters.sublist('Distribution')
+        set_default_parameter(distribution_parameters, 'Type', 'linear')
+        set_default_parameter(distribution_parameters, 'NumProcs', 1)
+        set_default_parameter(distribution_parameters, 'Factor', 1.0)
+        set_default_parameter(distribution_parameters, 'GatheringSteps', 1)
+        distributioncomm_parameters = distribution_parameters.sublist('Gathering Communication')
+        set_default_parameter(distributioncomm_parameters, 'Send type', 'Send')
+        
+        coarsesolver_parameters = coarseoperator_parameters.sublist('CoarseSolver')
+        set_default_parameter(coarsesolver_parameters, 'SolverType', 'Amesos2')
+        set_default_parameter(coarsesolver_parameters, 'Solver', 'Klu')
+        
         return teuchos_parameters
 
     def unset_parameter(self, name, original_parameters):
