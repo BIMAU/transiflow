@@ -1,12 +1,10 @@
 from PyTrilinos import Epetra
 
-import sys
-import os
 import numpy
 
 import fvm
 
-from fvm.HYMLSInterface import Vector, ind2sub, sub2ind, convert_parameters, set_default_parameter
+from fvm.HYMLSInterface import Vector, ind2sub, sub2ind, convert_parameters, set_default_parameter, get_local_coordinate_vector
 
 import FROSch
 
@@ -40,35 +38,17 @@ class Interface(fvm.Interface):
         self.solve_map = self.map
         self.solve_importer = Epetra.Import(self.solve_map, self.map)
 
-        # Create local coordinate vectors
-        x_length = self.parameters.get('X-max', 1.0) - self.parameters.get('X-min', 0.0)
-        x_start = self.parameters.get('X-min', 0.0) + self.nx_offset / self.nx_global * x_length
-        x_end = x_start + self.nx_local / self.nx_global * x_length
+        self.discretization.x = get_local_coordinate_vector(self.discretization.x, self.nx_offset, self.nx_local)
+        self.discretization.y = get_local_coordinate_vector(self.discretization.y, self.ny_offset, self.ny_local)
+        self.discretization.z = get_local_coordinate_vector(self.discretization.z, self.nz_offset, self.nz_local)
 
-        y_length = self.parameters.get('Y-max', 1.0) - self.parameters.get('Y-min', 0.0)
-        y_start = self.parameters.get('Y-min', 0.0) + self.ny_offset / self.ny_global * y_length
-        y_end = y_start + self.ny_local / self.ny_global * y_length
+        self.discretization.nx = self.nx_local
+        self.discretization.ny = self.ny_local
+        self.discretization.nz = self.nz_local
 
-        z_length = self.parameters.get('Z-max', 1.0) - self.parameters.get('Z-min', 0.0)
-        z_start = self.parameters.get('Z-min', 0.0) + self.nz_offset / self.nz_global * z_length
-        z_end = z_start + self.nz_local / self.nz_global * z_length
-
-        if self.parameters.get('Grid Stretching', False) or self.teuchos_parameters.isParameter('Grid Stretching Factor'):
-            sigma = self.parameters.get('Grid Stretching Factor', 1.5)
-            x = fvm.utils.create_stretched_coordinate_vector(x_start, x_end, self.nx_local, sigma) if x is None else x
-            y = fvm.utils.create_stretched_coordinate_vector(y_start, y_end, self.ny_local, sigma) if y is None else y
-            z = fvm.utils.create_stretched_coordinate_vector(z_start, z_end, self.nz_local, sigma) if z is None else z
-        else:
-            x = fvm.utils.create_uniform_coordinate_vector(x_start, x_end, self.nx_local) if x is None else x
-            y = fvm.utils.create_uniform_coordinate_vector(y_start, y_end, self.ny_local) if y is None else y
-            z = fvm.utils.create_uniform_coordinate_vector(z_start, z_end, self.nz_local) if z is None else z
-
-        # Re-initialize the fvm.Interface parameters
         self.nx = self.nx_local
         self.ny = self.ny_local
         self.nz = self.nz_local
-        self.discretization = fvm.Discretization(self.parameters, self.nx_local, self.ny_local, self.nz_local,
-                                                 self.dim, self.dof, x, y, z)
 
         self.left_scaling = None
         self.inv_left_scaling = None
@@ -109,10 +89,10 @@ class Interface(fvm.Interface):
         overlappigsolver_parameters = overlappigoperator_parameters.sublist('Solver')
         set_default_parameter(overlappigsolver_parameters, 'SolverType', 'Amesos2')
         set_default_parameter(overlappigsolver_parameters, 'Solver', 'Klu')
-        
+
         set_default_parameter(preconditioner_parameters, 'CoarseOperator Type', 'IPOUHarmonicCoarseOperator')
         coarseoperator_parameters = preconditioner_parameters.sublist('IPOUHarmonicCoarseOperator')
-        set_default_parameter(coarseoperator_parameters, 'Reuse: Coarse Basis' , True)
+        set_default_parameter(coarseoperator_parameters, 'Reuse: Coarse Basis', True)
 
         blocks_parameters = coarseoperator_parameters.sublist('Blocks')
 
@@ -127,7 +107,7 @@ class Interface(fvm.Interface):
         set_default_parameter(rgdswipou1_parameters, 'Type', 'Full')
         # set_default_parameter(rgdswipou1_parameters, 'Distance Function', 'Inverse Euclidean')
         set_default_parameter(rgdswipou1_parameters, 'Distance Function', 'Constant')
-        
+
         block2_parameters = blocks_parameters.sublist('2')
         set_default_parameter(block2_parameters, 'Use For Coarse Space', True)
         set_default_parameter(block2_parameters, 'Exclude', '1')
@@ -142,7 +122,7 @@ class Interface(fvm.Interface):
         extensionsolver_parameters = coarseoperator_parameters.sublist('ExtensionSolver')
         set_default_parameter(extensionsolver_parameters, 'SolverType', 'Amesos2')
         set_default_parameter(extensionsolver_parameters, 'Solver', 'Klu')
-        
+
         distribution_parameters = coarseoperator_parameters.sublist('Distribution')
         set_default_parameter(distribution_parameters, 'Type', 'linear')
         set_default_parameter(distribution_parameters, 'NumProcs', 1)
@@ -150,11 +130,11 @@ class Interface(fvm.Interface):
         set_default_parameter(distribution_parameters, 'GatheringSteps', 1)
         distributioncomm_parameters = distribution_parameters.sublist('Gathering Communication')
         set_default_parameter(distributioncomm_parameters, 'Send type', 'Send')
-        
+
         coarsesolver_parameters = coarseoperator_parameters.sublist('CoarseSolver')
         set_default_parameter(coarsesolver_parameters, 'SolverType', 'Amesos2')
         set_default_parameter(coarsesolver_parameters, 'Solver', 'Klu')
-        
+
         return teuchos_parameters
 
     def unset_parameter(self, name, original_parameters):
@@ -206,13 +186,13 @@ class Interface(fvm.Interface):
             # solver_parameters.set('w_map', w_map)
             # solver_parameters.set('p_map', p_map)
             # solver_parameters.set('repeated_velocity_map', repeated_velocity_map)
-            self.preconditioner.InitializeNew(repeated_velocity_map,u_map,v_map,w_map,p_map)
+            self.preconditioner.InitializeNew(repeated_velocity_map, u_map, v_map, w_map, p_map)
         else:
             p_map = self.create_dof_map(2, False)
             repeated_velocity_map = self.create_repeated_map([u_map, v_map])
             # solver_parameters.set('p_map', p_map)
             # solver_parameters.set('repeated_velocity_map', repeated_velocity_map)
-            self.preconditioner.InitializeNew(repeated_velocity_map,u_map,v_map,u_map,p_map)
+            self.preconditioner.InitializeNew(repeated_velocity_map, u_map, v_map, u_map, p_map)
 
         self.solver = FROSch.Solver(self.jac, self.preconditioner, self.teuchos_parameters)
 
