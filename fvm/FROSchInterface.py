@@ -110,16 +110,53 @@ class Interface(fvm.Interface):
         set_default_parameter(iterative_solver_parameters, 'Show Maximum Residual Norm Only', False)
 
         # FIXME: Set default FROSch parameters
-        teuchos_parameters.set('Dimension', self.dim)
-        set_default_parameter(teuchos_parameters, 'Use Offset', False)
+        preconditioner_parameters = teuchos_parameters.sublist('Preconditioner')
 
-        set_default_parameter(teuchos_parameters, 'OverlappingOperator Type', 'AlgebraicOverlappingOperator')
-        overlappigoperator_parameters = teuchos_parameters.sublist('AlgebraicOverlappingOperator')
+        set_default_parameter(teuchos_parameters, 'Dimension', self.dim)
+        set_default_parameter(preconditioner_parameters, 'Use Offset', False)
+
+        set_default_parameter(preconditioner_parameters, 'OverlappingOperator Type', 'AlgebraicOverlappingOperator')
+        overlappigoperator_parameters = preconditioner_parameters.sublist('AlgebraicOverlappingOperator')
 
         set_default_parameter(teuchos_parameters, 'CoarseOperator Type', 'IPOUHarmonicCoarseOperator')
+        coarseoperator_parameters = preconditioner_parameters.sublist('IPOUHarmonicCoarseOperator')
+        set_default_parameter(coarseoperator_parameters, 'Reuse: Coarse Basis' , True)
 
-        coarseoperator_parameters = teuchos_parameters.sublist('IPOUHarmonicCoarseOperator')
-        set_default_parameter(coarseoperator_parameters, 'Reuse: Coarse Basis', True)
+        preconditioner_parameters.updateParametersFromXmlFile('frosch_preconditioner.xml');
+
+        return teuchos_parameters
+
+    def get_teuchos_parameters(self):
+        teuchos_parameters = convert_parameters(self.parameters)
+
+        # HYMLS::Solver parameters
+        solver_parameters = teuchos_parameters.sublist('Solver')
+        solver_parameters.set('Initial Vector', 'Zero')
+        solver_parameters.set('Left or Right Preconditioning', 'Right')
+
+        iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
+        iterative_solver_parameters.set('Output Stream', 0)
+        set_default_parameter(iterative_solver_parameters, 'Maximum Iterations', 1000)
+        set_default_parameter(iterative_solver_parameters, 'Maximum Restarts', 20)
+        set_default_parameter(iterative_solver_parameters, 'Num Blocks', 100)
+        set_default_parameter(iterative_solver_parameters, 'Flexible Gmres', False)
+        set_default_parameter(iterative_solver_parameters, 'Convergence Tolerance', 1e-8)
+        set_default_parameter(iterative_solver_parameters, 'Output Frequency', 1)
+        set_default_parameter(iterative_solver_parameters, 'Show Maximum Residual Norm Only', False)
+
+        # FIXME: Set default FROSch parameters
+        preconditioner_parameters = teuchos_parameters.sublist('Preconditioner')
+
+        set_default_parameter(preconditioner_parameters, 'Use Offset', False)
+
+        set_default_parameter(preconditioner_parameters, 'OverlappingOperator Type', 'AlgebraicOverlappingOperator')
+        overlappigoperator_parameters = preconditioner_parameters.sublist('AlgebraicOverlappingOperator')
+
+        set_default_parameter(teuchos_parameters, 'CoarseOperator Type', 'IPOUHarmonicCoarseOperator')
+        coarseoperator_parameters = preconditioner_parameters.sublist('IPOUHarmonicCoarseOperator')
+        set_default_parameter(coarseoperator_parameters, 'Reuse: Coarse Basis' , True)
+
+        preconditioner_parameters.updateParametersFromXmlFile('frosch_preconditioner.xml');
 
         return teuchos_parameters
 
@@ -157,7 +194,8 @@ class Interface(fvm.Interface):
         x.Random()
         self.jacobian(x)
 
-        self.preconditioner = FROSch.IfpackPreconditioner(self.jac, self.teuchos_parameters)
+        preconditioner_parameters = self.teuchos_parameters.sublist('Preconditioner')
+        self.preconditioner = FROSch.IfpackPreconditioner(self.jac, preconditioner_parameters)
 
         u_map = self.create_dof_map(0, True)
         v_map = self.create_dof_map(1, True)
