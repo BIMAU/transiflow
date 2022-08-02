@@ -1,5 +1,7 @@
 from PyTrilinos import Epetra
 
+import sys
+import os
 import numpy
 
 import fvm
