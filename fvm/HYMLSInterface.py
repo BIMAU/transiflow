@@ -69,6 +69,8 @@ def set_default_parameter(parameterlist, name, value):
     if name not in parameterlist:
         parameterlist[name] = value
 
+    return parameterlist[name]
+
 def convert_parameters(parameters, teuchos_parameters=None):
     if teuchos_parameters is None:
         teuchos_parameters = Teuchos.ParameterList()
@@ -115,13 +117,13 @@ class Interface(fvm.Interface):
 
         self.comm = comm
 
-        # disables output from MPI ranks!=0
+        # Disable HYMLS output from MPI ranks != 0
         HYMLS.Tools.InitializeIO(self.comm)
 
-        # do the same for Python output:
+        # Do the same for Python output
+        self._original_stdout = sys.stdout
         if self.comm.MyPID() != 0:
-            self._original_stdout = sys.stdout
-            print('PID %d will now disable output to stdout' % (self.comm.MyPID()))
+            print('PID %d: Disable output to stdout' % self.comm.MyPID())
             sys.stdout = open(os.devnull, 'w')
 
         self.parameters = parameters
@@ -170,26 +172,33 @@ class Interface(fvm.Interface):
         teuchos_parameters = convert_parameters(self.parameters)
 
         problem_parameters = teuchos_parameters.sublist('Problem')
-        problem_parameters.set('nx', self.nx_global)
-        problem_parameters.set('ny', self.ny_global)
-        problem_parameters.set('nz', self.nz_global)
-        problem_parameters.set('Dimension', self.dim)
-        problem_parameters.set('Degrees of Freedom', self.dof)
-        problem_parameters.set('Equations', 'Stokes-C')
+        set_default_parameter(problem_parameters, 'nx', self.nx_global)
+        set_default_parameter(problem_parameters, 'ny', self.ny_global)
+        set_default_parameter(problem_parameters, 'nz', self.nz_global)
+
+        set_default_parameter(problem_parameters, 'Dimension', self.dim)
+        set_default_parameter(problem_parameters, 'Degrees of Freedom', self.dof)
+        set_default_parameter(problem_parameters, 'Equations', 'Stokes-C')
+
+        set_default_parameter(problem_parameters, 'x-periodic', self.discretization.x_periodic)
+        set_default_parameter(problem_parameters, 'y-periodic', self.discretization.y_periodic)
+        set_default_parameter(problem_parameters, 'z-periodic', self.discretization.z_periodic)
 
         solver_parameters = teuchos_parameters.sublist('Solver')
         solver_parameters.set('Initial Vector', 'Zero')
-        solver_parameters.set('Left or Right Preconditioning', 'Left')
+        solver_parameters.set('Left or Right Preconditioning', 'Right')
 
         iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
         iterative_solver_parameters.set('Output Stream', 0)
-        set_default_parameter(iterative_solver_parameters, 'Maximum Iterations', 1000)
-        set_default_parameter(iterative_solver_parameters, 'Maximum Restarts', 20)
-        set_default_parameter(iterative_solver_parameters, 'Num Blocks', 100)
+        maxit = set_default_parameter(iterative_solver_parameters, 'Maximum Iterations', 1000)
+        maxsize = set_default_parameter(iterative_solver_parameters, 'Num Blocks', 100)
+        set_default_parameter(iterative_solver_parameters, 'Maximum Restarts', maxit // maxsize)
         set_default_parameter(iterative_solver_parameters, 'Flexible Gmres', False)
         set_default_parameter(iterative_solver_parameters, 'Convergence Tolerance', 1e-8)
         set_default_parameter(iterative_solver_parameters, 'Output Frequency', 1)
         set_default_parameter(iterative_solver_parameters, 'Show Maximum Residual Norm Only', False)
+        set_default_parameter(iterative_solver_parameters, 'Implicit Residual Scaling', 'Norm of RHS')
+        set_default_parameter(iterative_solver_parameters, 'Explicit Residual Scaling', 'Norm of RHS')
 
         prec_parameters = teuchos_parameters.sublist('Preconditioner')
         prec_parameters.set('Partitioner', 'Skew Cartesian')
@@ -236,10 +245,15 @@ class Interface(fvm.Interface):
         x.Random()
         self.jacobian(x)
 
+        self.compute_scaling()
+        self.scale_jacobian()
+
         self.preconditioner = HYMLS.Preconditioner(self.jac, self.teuchos_parameters)
         self.preconditioner.Initialize()
 
         self.solver = HYMLS.BorderedSolver(self.jac, self.preconditioner, self.teuchos_parameters)
+
+        self.unscale_jacobian()
 
         # Put back the original parameters
         for i in parameter_names:

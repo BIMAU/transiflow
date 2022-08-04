@@ -452,6 +452,97 @@ def assemble_jacobian(atom, nx, ny, nz, dof):
 
     return CrsMatrix(coA, jcoA, begA)
 
+def rotate_atom(atom, nx, ny, nz, dof):
+    atom2 = numpy.zeros([nx, ny, nz, dof, dof, 3, 3, 3])
+    for k in range(nz):
+        for j in range(ny):
+            for i in range(nx):
+                for d1 in range(dof):
+                    for z in range(3):
+                        for y in range(3):
+                            for x in range(3):
+                                for d2 in range(dof):
+                                    d3 = [2, 1, 0, 3][d1]
+                                    d4 = [2, 1, 0, 3][d2]
+                                    atom2[k, j, i, d3, d4, z, y, x] = atom[i, j, k, d1, d2, x, y, z]
+
+    return atom2
+
+def rotate_state(state, nx, ny, nz, dof):
+    out = utils.create_state_mtx(state, nx, ny, nz, dof)
+    state_mtx = utils.create_state_mtx(state, nx, ny, nz, dof)
+    for k in range(nz):
+        for j in range(ny):
+            for i in range(nx):
+                for d in range(dof):
+                    d2 = [2, 1, 0, 3][d]
+                    out[k, j, i, d2] = state_mtx[i, j, k, d]
+
+    return utils.create_state_vec(out, nx, ny, nz, dof)
+
+def test_rotate_lin():
+    nx = 4
+    ny = nx
+    nz = nx
+    dim = 3
+    dof = 4
+    parameters = {'Reynolds Number': 100, 'Grid Stretching': True}
+
+    parameters['X-max'] = 6
+    parameters['Z-max'] = 1
+    discretization = Discretization(parameters, nx, ny, nz, dim, dof)
+    atom1 = discretization.linear_part()
+    discretization.boundaries(atom1)
+
+    parameters['X-max'] = 1
+    parameters['Z-max'] = 6
+    discretization = Discretization(parameters, nx, ny, nz, dim, dof)
+    atom2 = discretization.linear_part()
+    discretization.boundaries(atom2)
+
+    atom2 = rotate_atom(atom2, nx, ny, nz, dof)
+
+    tol = 1e-13
+    assert numpy.all(abs(atom1 - atom2) < tol)
+
+def test_rotate_bil():
+    nx = 4
+    ny = nx
+    nz = nx
+    dim = 3
+    dof = 4
+    parameters = {'Reynolds Number': 100, 'Grid Stretching': True}
+    n = nx * ny * nz * dof
+
+    state = numpy.zeros(n)
+    for i in range(n):
+        state[i] = i+1
+
+    parameters['X-max'] = 6
+    parameters['Z-max'] = 1
+    discretization = Discretization(parameters, nx, ny, nz, dim, dof)
+    atomJ1, atomF1 = discretization.nonlinear_part(state)
+    discretization.boundaries(atomJ1)
+    frc1 = discretization.boundaries(atomF1)
+
+    state = rotate_state(state, nx, ny, nz, dof)
+
+    parameters['X-max'] = 1
+    parameters['Z-max'] = 6
+    discretization = Discretization(parameters, nx, ny, nz, dim, dof)
+    atomJ2, atomF2 = discretization.nonlinear_part(state)
+    discretization.boundaries(atomJ2)
+    frc2 = discretization.boundaries(atomF2)
+
+    atomJ2 = rotate_atom(atomJ2, nx, ny, nz, dof)
+    atomF2 = rotate_atom(atomF2, nx, ny, nz, dof)
+    frc2 = rotate_state(frc2, nx, ny, nz, dof)
+
+    tol = 1e-13
+    assert numpy.all(abs(atomJ1 - atomJ2) < tol)
+    assert numpy.all(abs(atomF1 - atomF2) < tol)
+    assert numpy.all(abs(frc1 - frc2) < tol)
+
 def test_ldc_lin():
     nx = 4
     ny = nx

@@ -60,7 +60,8 @@ def main():
 
     # Store data for computing the bifurcation diagram using postprocessing
     data = Data()
-    parameters['Postprocess'] = lambda x, mu: data.append(mu, utils.compute_volume_averaged_kinetic_energy(x, interface))
+    parameters['Postprocess'] = lambda interface, x, mu: data.append(
+        mu, utils.compute_volume_averaged_kinetic_energy(x, interface))
 
     # Perform an initial continuation to Reynolds number 7000 without detecting bifurcation points
     ds = 100

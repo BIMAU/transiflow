@@ -43,7 +43,8 @@ def main():
 
     # Store data for computing the bifurcation diagram using postprocessing
     data = Data()
-    parameters['Postprocess'] = lambda x, t: data.append(t, utils.compute_volume_averaged_kinetic_energy(x, interface))
+    parameters['Postprocess'] = lambda interface, x, t: data.append(
+        t, utils.compute_volume_averaged_kinetic_energy(x, interface))
 
     x = numpy.random.random(n)
 

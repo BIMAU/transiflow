@@ -102,11 +102,23 @@ def create_uniform_coordinate_vector(start, end, nx):
     return numpy.roll(x, -2)
 
 def create_stretched_coordinate_vector(start, end, nx, sigma):
-    if start != 0 or end != 1:
-        raise ValueError('Grid stretching currently only works for a [0, 1] domain')
-
-    x = create_uniform_coordinate_vector(start, end, nx)
+    x = create_uniform_coordinate_vector(0, 1, nx)
     x = 0.5 * (1 + numpy.tanh(2 * sigma * (x - 0.5)) / numpy.tanh(sigma))
+    x = start + x * (end - start)
+
+    # Make cells inside and outside of the boundary the same size
+    # to make sure the boundary conditions are applied at the boundary
+    dx = x[0] - x[-1]
+    if start == 0:
+        x[-2] = x[-1] - dx
+    if end == 1:
+        x[-3] = x[-4] + dx
+    return x
+
+def create_stretched_coordinate_vector2(start, end, nx, sigma):
+    x = create_uniform_coordinate_vector(0, 1, nx)
+    x = x - sigma * numpy.sin(2 * numpy.pi * x)
+    x = start + x * (end - start)
 
     # Make cells inside and outside of the boundary the same size
     # to make sure the boundary conditions are applied at the boundary

@@ -55,7 +55,7 @@ class TimeIntegration:
 
     def postprocess(self, x, t):
         if 'Postprocess' in self.parameters and self.parameters['Postprocess']:
-            self.parameters['Postprocess'](x, t)
+            self.parameters['Postprocess'](self.interface, x, t)
 
     def integration(self, x0, dt, tmax):
         x = x0

@@ -55,7 +55,7 @@ def main():
     # Perform a continuation to Reynolds number 40 without detecting bifurcation points
     # and use this in the bifurcation diagram
     data2 = Data()
-    interface.set_parameter('Postprocess', lambda x, mu: data2.append(
+    interface.set_parameter('Postprocess', lambda interface, x, mu: data2.append(
         mu, numpy.max(utils.compute_streamfunction(x, interface))))
 
     ds = 5
@@ -88,7 +88,7 @@ def main():
     # Now compute the stable branch after the pitchfork bifurcation by going backwards
     # and use this in the bifurcation diagram
     data6 = Data()
-    interface.set_parameter('Postprocess', lambda x, mu: data6.append(
+    interface.set_parameter('Postprocess', lambda interface, x, mu: data6.append(
         mu, numpy.max(utils.compute_streamfunction(x, interface))))
 
     ds = -5

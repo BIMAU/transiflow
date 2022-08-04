@@ -80,8 +80,6 @@ def test_solve(interface, x, tol):
     x_sol = HYMLSInterface.Vector(interface.solve_map)
     x_sol.Import(x, interface.solve_importer, Epetra.Insert)
 
-    b = EpetraInterface.Vector(x_sol)
-
     # Create a test vector to remove the nonzero first pressure
     t = HYMLSInterface.Vector(x_sol)
     t.PutScalar(0.0)
@@ -93,6 +91,8 @@ def test_solve(interface, x, tol):
     jada_interface = JadaHYMLSInterface.JadaHYMLSInterface(interface, preconditioned_solve=True)
 
     op = Operator(jac_op)
+    b = op.matvec(x_sol)
+
     x = jada_interface.solve(op, b, tol, maxit=1)
 
     r = op.matvec(x) - b

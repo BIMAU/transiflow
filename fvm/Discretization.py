@@ -72,27 +72,12 @@ class Discretization:
         if self.nz == 1:
             self.z_periodic = True
 
-        if self.parameters.get('Grid Stretching', False) or 'Grid Stretching Factor' in self.parameters.keys():
-            self.x = utils.create_stretched_coordinate_vector(
-                self.parameters.get('X-min', 0.0), self.parameters.get('X-max', 1.0), self.nx,
-                self.parameters.get('Grid Stretching Factor', 1.5)) if x is None else x
-            self.y = utils.create_stretched_coordinate_vector(
-                self.parameters.get('Y-min', 0.0), self.parameters.get('Y-max', 1.0), self.ny,
-                self.parameters.get('Grid Stretching Factor', 1.5)) if y is None else y
-
-            # TODO: Maybe force this if dim = 2?
-            self.z = utils.create_stretched_coordinate_vector(
-                self.parameters.get('Z-min', 0.0), self.parameters.get('Z-max', 1.0), self.nz,
-                self.parameters.get('Grid Stretching Factor', 1.5)) if z is None else z
-        else:
-            self.x = utils.create_uniform_coordinate_vector(
-                self.parameters.get('X-min', 0.0), self.parameters.get('X-max', 1.0), self.nx) if x is None else x
-            self.y = utils.create_uniform_coordinate_vector(
-                self.parameters.get('Y-min', 0.0), self.parameters.get('Y-max', 1.0), self.ny) if y is None else y
-
-            # TODO: Maybe force this if dim = 2?
-            self.z = utils.create_uniform_coordinate_vector(
-                self.parameters.get('Z-min', 0.0), self.parameters.get('Z-max', 1.0), self.nz) if z is None else z
+        self.x = self.get_coordinate_vector(self.parameters.get('X-min', 0.0), self.parameters.get('X-max', 1.0),
+                                            self.nx) if x is None else x
+        self.y = self.get_coordinate_vector(self.parameters.get('Y-min', 0.0), self.parameters.get('Y-max', 1.0),
+                                            self.ny) if y is None else y
+        self.z = self.get_coordinate_vector(self.parameters.get('Z-min', 0.0), self.parameters.get('Z-max', 1.0),
+                                            self.nz) if z is None else z
 
         self.atom = None
         self.recompute_linear_part = True
@@ -112,7 +97,21 @@ class Discretization:
     def get_parameter(self, name, default=0):
         '''Get a parameter from self.parameters.'''
 
+        if name not in self.parameters:
+            return default
+
         return self.parameters.get(name, default)
+
+    def get_coordinate_vector(self, start, end, nx):
+        if self.parameters.get('Grid Stretching', False) or 'Grid Stretching Factor' in self.parameters.keys():
+            if self.parameters.get('Grid Stretching Method', 'tanh') == 'sin':
+                return utils.create_stretched_coordinate_vector2(
+                    start, end, nx, self.parameters.get('Grid Stretching Factor', 0.1))
+
+            return utils.create_stretched_coordinate_vector(
+                start, end, nx, self.parameters.get('Grid Stretching Factor', 1.5))
+
+        return utils.create_uniform_coordinate_vector(start, end, nx)
 
     def linear_part(self):
         '''Compute the linear part of the equation. Return a cached version if possible.'''
@@ -132,14 +131,19 @@ class Discretization:
         In case Re = 0 we instead compute the linear part for the Stokes
         problem.'''
 
-        Re = self.get_parameter('Reynolds Number')
-        Ra = self.get_parameter('Rayleigh Number')
+        Re = self.get_parameter('Reynolds Number', 1.0)
+        Ra = self.get_parameter('Rayleigh Number', 1.0)
+        Pr = self.get_parameter('Prandtl Number', 1.0)
+        Gr = self.get_parameter('Grashof Number', Ra / Pr)
 
         if Re == 0:
             Re = 1
 
-        atom = 1 / Re * (self.u_xx() + self.u_yy()
-                         + self.v_xx() + self.v_yy()) \
+        if Gr == 0:
+            Gr = 1 / Pr
+
+        atom = 1 / (Re * numpy.sqrt(Gr)) * (self.u_xx() + self.u_yy()
+                                            + self.v_xx() + self.v_yy()) \
             - (self.p_x() + self.p_y()) \
             + self.div()
 
@@ -148,8 +152,8 @@ class Discretization:
             atom -= beta * self.coriolis()
 
         if self.dof > 3:
-            atom += self.T_xx() + self.T_yy()
-            atom += Ra * self.forward_average_T_y()
+            atom += 1 / (Pr * numpy.sqrt(Gr)) * (self.T_xx() + self.T_yy())
+            atom += self.forward_average_T_y()
 
         if self.problem_type_equals('Rayleigh-Benard Perturbation'):
             Bi = self.get_parameter('Biot Number')
@@ -162,24 +166,29 @@ class Discretization:
         In case Re = 0 we instead compute the linear part for the Stokes
         problem.'''
 
-        Re = self.get_parameter('Reynolds Number')
-        Ra = self.get_parameter('Rayleigh Number')
+        Re = self.get_parameter('Reynolds Number', 1.0)
+        Ra = self.get_parameter('Rayleigh Number', 1.0)
+        Pr = self.get_parameter('Prandtl Number', 1.0)
+        Gr = self.get_parameter('Grashof Number', Ra / Pr)
 
         if Re == 0:
             Re = 1
 
-        atom = 1 / Re * (self.u_xx() + self.u_yy() + self.u_zz()
-                         + self.v_xx() + self.v_yy() + self.v_zz()
-                         + self.w_xx() + self.w_yy() + self.w_zz()) \
+        if Gr == 0:
+            Gr = 1 / Pr
+
+        atom = 1 / (Re * numpy.sqrt(Gr)) * (self.u_xx() + self.u_yy() + self.u_zz()
+                                            + self.v_xx() + self.v_yy() + self.v_zz()
+                                            + self.w_xx() + self.w_yy() + self.w_zz()) \
             - (self.p_x() + self.p_y() + self.p_z()) \
             + self.div()
 
         if self.dof > 4:
-            atom += self.T_xx() + self.T_yy() + self.T_zz()
+            atom += 1 / (Pr * numpy.sqrt(Gr)) * (self.T_xx() + self.T_yy() + self.T_zz())
             if self.nz > 1:
-                atom += Ra * self.forward_average_T_z()
+                atom += self.forward_average_T_z()
             else:
-                atom += Ra * self.forward_average_T_y()
+                atom += self.forward_average_T_y()
 
         if self.problem_type_equals('Rayleigh-Benard Perturbation'):
             Bi = self.get_parameter('Biot Number')
@@ -217,10 +226,6 @@ class Discretization:
             self.w_w_z(atomJ, atomF, state_mtx)
 
         if self.dof > self.dim + 1:
-            Pr = self.get_parameter('Prandtl Number', 1.0)
-            atomJ /= Pr
-            atomF /= Pr
-
             self.u_T_x(atomJ, atomF, state_mtx)
             self.v_T_y(atomJ, atomF, state_mtx)
 
@@ -258,8 +263,6 @@ class Discretization:
         if self.dim == 3:
             atom += self.mass_z()
         if self.dof > self.dim + 1:
-            Pr = self.get_parameter('Prandtl Number', 1.0)
-            atom /= Pr
             atom += self.mass_T()
         return self.assemble_mass_matrix(atom)
 
