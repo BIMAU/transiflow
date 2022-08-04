@@ -121,7 +121,7 @@ class Interface(fvm.Interface):
         overlappigsolver_parameters = overlappigoperator_parameters.sublist('Solver')
         set_default_parameter(overlappigsolver_parameters, 'SolverType', 'Amesos2')
         set_default_parameter(overlappigsolver_parameters, 'Solver', 'Klu')
-        
+
         set_default_parameter(preconditioner_parameters, 'CoarseOperator Type', 'IPOUHarmonicCoarseOperator')
         coarseoperator_parameters = preconditioner_parameters.sublist('IPOUHarmonicCoarseOperator')
         set_default_parameter(coarseoperator_parameters, 'Reuse: Coarse Basis' , True)
@@ -139,7 +139,7 @@ class Interface(fvm.Interface):
         set_default_parameter(rgdswipou1_parameters, 'Type', 'Full')
         # set_default_parameter(rgdswipou1_parameters, 'Distance Function', 'Inverse Euclidean')
         set_default_parameter(rgdswipou1_parameters, 'Distance Function', 'Constant')
-        
+
         block2_parameters = blocks_parameters.sublist('2')
         set_default_parameter(block2_parameters, 'Use For Coarse Space', True)
         set_default_parameter(block2_parameters, 'Exclude', '1')
@@ -154,7 +154,7 @@ class Interface(fvm.Interface):
         extensionsolver_parameters = coarseoperator_parameters.sublist('ExtensionSolver')
         set_default_parameter(extensionsolver_parameters, 'SolverType', 'Amesos2')
         set_default_parameter(extensionsolver_parameters, 'Solver', 'Klu')
-        
+
         distribution_parameters = coarseoperator_parameters.sublist('Distribution')
         set_default_parameter(distribution_parameters, 'Type', 'linear')
         set_default_parameter(distribution_parameters, 'NumProcs', 1)
@@ -162,11 +162,11 @@ class Interface(fvm.Interface):
         set_default_parameter(distribution_parameters, 'GatheringSteps', 1)
         distributioncomm_parameters = distribution_parameters.sublist('Gathering Communication')
         set_default_parameter(distributioncomm_parameters, 'Send type', 'Send')
-        
+
         coarsesolver_parameters = coarseoperator_parameters.sublist('CoarseSolver')
         set_default_parameter(coarsesolver_parameters, 'SolverType', 'Amesos2')
         set_default_parameter(coarsesolver_parameters, 'Solver', 'Klu')
-        
+
         return teuchos_parameters
 
     def unset_parameter(self, name, original_parameters):
@@ -215,16 +215,18 @@ class Interface(fvm.Interface):
             w_map = self.create_dof_map(2, True)
             p_map = self.create_dof_map(3, False)
             repeated_velocity_map = self.create_repeated_map([u_map, v_map, w_map])
-            # solver_parameters.set('w_map', w_map)
-            # solver_parameters.set('p_map', p_map)
-            # solver_parameters.set('repeated_velocity_map', repeated_velocity_map)
-            self.preconditioner.InitializeNew(repeated_velocity_map,u_map,v_map,w_map,p_map)
+
         else:
+            w_map = Teuchos.null
             p_map = self.create_dof_map(2, False)
             repeated_velocity_map = self.create_repeated_map([u_map, v_map])
-            # solver_parameters.set('p_map', p_map)
-            # solver_parameters.set('repeated_velocity_map', repeated_velocity_map)
-            self.preconditioner.InitializeNew(repeated_velocity_map,u_map,v_map,u_map,p_map)
+
+        if self.dof > self.dim + 1:
+            t_map = self.create_dof_map(self.dof, False)
+        else:
+            t_map = Teuchos.null
+
+        self.preconditioner.InitializeNew(repeated_velocity_map,u_map,v_map,w_map,p_map,t_map)
 
         self.solver = FROSch.Solver(self.jac, self.preconditioner, self.teuchos_parameters)
 

@@ -26,7 +26,8 @@ namespace FROSch
                            Teuchos::RCP<Epetra_Map> u_map,
                            Teuchos::RCP<Epetra_Map> v_map,
                            Teuchos::RCP<Epetra_Map> w_map,
-                           Teuchos::RCP<Epetra_Map> p_map);
+                           Teuchos::RCP<Epetra_Map> p_map,
+                           Teuchos::RCP<Epetra_Map> t_map);
 
             bool IsInitialized() const { return IsInitialized_; }
 
