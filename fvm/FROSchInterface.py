@@ -185,9 +185,9 @@ class Interface(fvm.Interface):
         # could be extended.
         t_map = u_map
         repeated_tracer_map = u_map
-        if self.dof>self.dim:
-            t_map = self.create_dof_map(4, False)
-            repeated_tracer_map = self.create_repeated_map(t_map)
+        if self.dof>self.dim+1:
+            t_map = self.create_dof_map(self.dim+1, False)
+            repeated_tracer_map = self.create_repeated_map([t_map])
 
         if self.dim == 3:
             w_map = self.create_dof_map(2, True)
