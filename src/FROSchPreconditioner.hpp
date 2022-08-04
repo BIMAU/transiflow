@@ -22,11 +22,16 @@ namespace FROSch
 
             int Initialize() {FROSCH_ASSERT(false,"not implemented"); return 0;};
 
+            // The map w_map is ignored if dim (the "Dimension" parameter) is 2.
+            // The maps t_map and repeated_tracer_map are ignored if
+            // dof==dim+1 (dof is the "Degrees of Freedom" parameter).
             int InitializeNew(Teuchos::RCP<Epetra_Map> repeated_velocity_map,
                            Teuchos::RCP<Epetra_Map> u_map,
                            Teuchos::RCP<Epetra_Map> v_map,
                            Teuchos::RCP<Epetra_Map> w_map,
-                           Teuchos::RCP<Epetra_Map> p_map);
+                           Teuchos::RCP<Epetra_Map> p_map,
+                           Teuchos::RCP<Epetra_Map> repeated_tracer_map,
+                           Teuchos::RCP<Epetra_Map> t_map);
 
             bool IsInitialized() const { return IsInitialized_; }
 

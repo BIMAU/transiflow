@@ -179,6 +179,16 @@ class Interface(fvm.Interface):
         # solver_parameters.set('u_map', u_map)
         # solver_parameters.set('v_map', v_map)
 
+        # these two maps will be ignored if "Degrees of Freedom"
+        # is "Dimension"+1 (Navier-Stokes case). We only support
+        # one tracer variable (temperature, say) for now, but this
+        # could be extended.
+        t_map = u_map
+        repeated_tracer_map = u_map
+        if self.dof>self.dim:
+            t_map = self.create_dof_map(4, False)
+            repeated_tracer_map = self.create_repeated_map(t_map)
+
         if self.dim == 3:
             w_map = self.create_dof_map(2, True)
             p_map = self.create_dof_map(3, False)
@@ -186,13 +196,13 @@ class Interface(fvm.Interface):
             # solver_parameters.set('w_map', w_map)
             # solver_parameters.set('p_map', p_map)
             # solver_parameters.set('repeated_velocity_map', repeated_velocity_map)
-            self.preconditioner.InitializeNew(repeated_velocity_map, u_map, v_map, w_map, p_map)
+            self.preconditioner.InitializeNew(repeated_velocity_map, u_map, v_map, w_map, p_map, repeated_tracer_map, t_map)
         else:
             p_map = self.create_dof_map(2, False)
             repeated_velocity_map = self.create_repeated_map([u_map, v_map])
             # solver_parameters.set('p_map', p_map)
             # solver_parameters.set('repeated_velocity_map', repeated_velocity_map)
-            self.preconditioner.InitializeNew(repeated_velocity_map, u_map, v_map, u_map, p_map)
+            self.preconditioner.InitializeNew(repeated_velocity_map, u_map, v_map, u_map, p_map, repeated_tracer_map, t_map)
 
         self.solver = FROSch.Solver(self.jac, self.preconditioner, self.teuchos_parameters)
 

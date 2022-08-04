@@ -32,7 +32,9 @@ namespace FROSch {
                                          Teuchos::RCP<Epetra_Map> u_map,
                                          Teuchos::RCP<Epetra_Map> v_map,
                                          Teuchos::RCP<Epetra_Map> w_map,
-                                         Teuchos::RCP<Epetra_Map> p_map)
+                                         Teuchos::RCP<Epetra_Map> p_map,
+                                         Teuchos::RCP<Epetra_Map> repeated_tracer_map,
+                                         Teuchos::RCP<Epetra_Map> t_map)
     {
         using namespace Teuchos;
         using namespace Xpetra;
@@ -40,22 +42,26 @@ namespace FROSch {
         unsigned dimension = ParameterList_->get("Dimension",3);
         FROSCH_ASSERT(dimension==2||dimension==3,"dimension is neither 2 nor 3.");
 
+        unsigned dof = ParameterList_->get("Degrees of Freedom",dimension+1);
+        FROSCH_ASSERT((dof==dimension+1)||(dof==dimension+2),"dof is neither dimension+1 nor dimension+2.");
+
+        int dim_T=dof-(dimension+1);
+        int have_T=dim_T? 1:0;
+
         ArrayRCP<unsigned> dofsPerNodeVector = ParameterList_->get("DofsPerNodeVector",Teuchos::null);
         if (dofsPerNodeVector.is_null()) {
-            dofsPerNodeVector = ArrayRCP<unsigned>(2);
-            if (dimension==2) {
-                dofsPerNodeVector[0] = 2;
-            } else if (dimension==3) {
-                dofsPerNodeVector[0] = 3;
-            }
+            dofsPerNodeVector = ArrayRCP<unsigned>(2+have_T);
+            dofsPerNodeVector[0] = dimension;
             dofsPerNodeVector[1] = 1;
+            if (have_T) dofsPerNodeVector[2] = dim_T;
         }
 
         ArrayRCP<FROSch::DofOrdering> dofOrderings = ParameterList_->get("DofOrderings",Teuchos::null);
         if (dofOrderings.is_null()) {
-            dofOrderings = ArrayRCP<FROSch::DofOrdering>(2);
+            dofOrderings = ArrayRCP<FROSch::DofOrdering>(2+have_T);
             dofOrderings[0] = FROSch::NodeWise;
             dofOrderings[1] = FROSch::NodeWise;
+            if (have_T) dofOrderings[2] = FROSch::NodeWise;
         }
 
         unsigned overlap = ParameterList_->get("Overlap",1);
@@ -76,11 +82,12 @@ namespace FROSch {
         FROSCH_ASSERT(!repeated_velocity_map.is_null(),"repeatedMap_velocity.is_null()");
         // FROSCH_ASSERT(!repeatedMap_pressure.is_null(),"repeatedMap_pressure.is_null()");
         FROSCH_ASSERT(!p_map.is_null(),"p_map.is_null()");
-        ArrayRCP<RCP<const Map<int,FROSch::DefaultGlobalOrdinal,KokkosClassic::DefaultNode::DefaultNodeType> > > repeatedMaps(2);
+        ArrayRCP<RCP<const Map<int,FROSch::DefaultGlobalOrdinal,KokkosClassic::DefaultNode::DefaultNodeType> > > repeatedMaps(2+have_T);
         // std::cout << repeatedMaps.size() << std::endl;
         // repeatedMaps[0] = FROSch::ConvertToXpetra<double,int,FROSch::DefaultGlobalOrdinal,KokkosClassic::DefaultNode::DefaultNodeType>::ConvertMap( Xpetra::UseEpetra, *repeated_velocity_map, TeuchosComm_ );
         repeatedMaps[0] = FROSch::ConvertToXpetra<double,int,FROSch::DefaultGlobalOrdinal,KokkosClassic::DefaultNode::DefaultNodeType>::ConvertMap( Xpetra::UseEpetra, *repeated_velocity_map, TeuchosComm_ );
         repeatedMaps[1] = FROSch::ConvertToXpetra<double,int,FROSch::DefaultGlobalOrdinal,KokkosClassic::DefaultNode::DefaultNodeType>::ConvertMap( Xpetra::UseEpetra, *p_map, TeuchosComm_ );
+        if (have_T) repeatedMaps[2] = FROSch::ConvertToXpetra<double,int,FROSch::DefaultGlobalOrdinal,KokkosClassic::DefaultNode::DefaultNodeType>::ConvertMap( Xpetra::UseEpetra, *repeated_tracer_map, TeuchosComm_ );
         // repeatedMaps[1] = FROSch::ConvertToXpetra<double,int,FROSch::DefaultGlobalOrdinal,KokkosClassic::DefaultNode::DefaultNodeType>::ConvertMap( Xpetra::UseEpetra, *p_map, TeuchosComm_ );
 
         // ArrayRCP<ArrayRCP<RCP<const Epetra_Map> > > dofMaps = ParameterList_->get("DofMaps",Teuchos::null);
@@ -96,7 +103,7 @@ namespace FROSch {
         //     dofMapsX[i] = tmpMaps;
         // }
 
-        ArrayRCP<ArrayRCP<RCP<const Map<int,FROSch::DefaultGlobalOrdinal,KokkosClassic::DefaultNode::DefaultNodeType> > > > dofMaps(2);
+        ArrayRCP<ArrayRCP<RCP<const Map<int,FROSch::DefaultGlobalOrdinal,KokkosClassic::DefaultNode::DefaultNodeType> > > > dofMaps(2+have_T);
         // std::cout << dofMaps.size() << " " << dimension << std::endl;
         if (dimension==2) {
             ArrayRCP<RCP<const Map<int,FROSch::DefaultGlobalOrdinal,KokkosClassic::DefaultNode::DefaultNodeType> > > velocityMaps(2);
@@ -125,6 +132,12 @@ namespace FROSch {
         FROSCH_ASSERT(!p_map.is_null(),"p_map.is_null()");
         pressureMaps[0] = FROSch::ConvertToXpetra<double,int,FROSch::DefaultGlobalOrdinal,KokkosClassic::DefaultNode::DefaultNodeType>::ConvertMap( Xpetra::UseEpetra, *p_map, TeuchosComm_ );
         dofMaps[1] = pressureMaps;
+        if (have_T){
+           ArrayRCP<RCP<const Map<int,FROSch::DefaultGlobalOrdinal,KokkosClassic::DefaultNode::DefaultNodeType> > > tracerMaps(1);
+           FROSCH_ASSERT(!t_map.is_null(),"t_map.is_null()");
+           tracerMaps[0] = FROSch::ConvertToXpetra<double,int,FROSch::DefaultGlobalOrdinal,KokkosClassic::DefaultNode::DefaultNodeType>::ConvertMap( Xpetra::UseEpetra, *t_map, TeuchosComm_ );
+           dofMaps[2] = tracerMaps;
+        }
 
         FROSchPreconditioner_->initialize(dimension,
                                           dofsPerNodeVector,
