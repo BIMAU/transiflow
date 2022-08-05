@@ -1,5 +1,7 @@
 from PyTrilinos import Epetra
 
+import os
+import sys
 import numpy
 
 import fvm
@@ -100,7 +102,7 @@ class Interface(fvm.Interface):
         overlappigoperator_parameters = preconditioner_parameters.sublist('AlgebraicOverlappingOperator')
         overlappigsolver_parameters = overlappigoperator_parameters.sublist('Solver')
         set_default_parameter(overlappigsolver_parameters, 'SolverType', 'Amesos2')
-        set_default_parameter(overlappigsolver_parameters, 'Solver', 'Klu')
+        set_default_parameter(overlappigsolver_parameters, 'Solver', 'pardisomkl')
 
         set_default_parameter(preconditioner_parameters, 'CoarseOperator Type', 'IPOUHarmonicCoarseOperator')
         coarseoperator_parameters = preconditioner_parameters.sublist('IPOUHarmonicCoarseOperator')
@@ -133,7 +135,7 @@ class Interface(fvm.Interface):
 
         extensionsolver_parameters = coarseoperator_parameters.sublist('ExtensionSolver')
         set_default_parameter(extensionsolver_parameters, 'SolverType', 'Amesos2')
-        set_default_parameter(extensionsolver_parameters, 'Solver', 'Klu')
+        set_default_parameter(extensionsolver_parameters, 'Solver', 'pardisomkl')
 
         distribution_parameters = coarseoperator_parameters.sublist('Distribution')
         set_default_parameter(distribution_parameters, 'Type', 'linear')
@@ -145,7 +147,7 @@ class Interface(fvm.Interface):
 
         coarsesolver_parameters = coarseoperator_parameters.sublist('CoarseSolver')
         set_default_parameter(coarsesolver_parameters, 'SolverType', 'Amesos2')
-        set_default_parameter(coarsesolver_parameters, 'Solver', 'Klu')
+        set_default_parameter(coarsesolver_parameters, 'Solver', 'pardisomkl')
 
         return teuchos_parameters
 
