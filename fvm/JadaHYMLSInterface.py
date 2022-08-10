@@ -24,6 +24,7 @@ class JadaHYMLSInterface(EpetraInterface.EpetraInterface):
         super().__init__(interface.solve_map)
         self.interface = interface
         self.parameters = interface.get_teuchos_parameters()
+        self.parameters.setParameters(self.parameters.sublist('Eigenvalue Solver'))
 
         self.preconditioned_solve = kwargs.get('preconditioned_solve', False)
 
@@ -82,6 +83,7 @@ class ComplexJadaHYMLSInterface(ComplexEpetraInterface.ComplexEpetraInterface):
         super().__init__(interface.solve_map)
         self.interface = interface
         self.parameters = interface.get_teuchos_parameters()
+        self.parameters.setParameters(self.parameters.sublist('Eigenvalue Solver'))
 
         self.preconditioned_solve = kwargs.get('preconditioned_solve', False)
 
@@ -147,6 +149,7 @@ class BorderedJadaHYMLSInterface(EpetraInterface.EpetraInterface):
         super().__init__(interface.solve_map)
         self.interface = interface
         self.parameters = interface.get_teuchos_parameters()
+        self.parameters.setParameters(self.parameters.sublist('Eigenvalue Solver'))
 
         self.preconditioned_solve = kwargs.get('preconditioned_solve', True)
 
@@ -190,6 +193,7 @@ class ComplexBorderedJadaHYMLSInterface(ComplexEpetraInterface.ComplexEpetraInte
         super().__init__(interface.solve_map)
         self.interface = interface
         self.parameters = interface.get_teuchos_parameters()
+        self.parameters.setParameters(self.parameters.sublist('Eigenvalue Solver'))
 
         self.preconditioned_solve = kwargs.get('preconditioned_solve', True)
 
