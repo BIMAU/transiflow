@@ -357,6 +357,7 @@ class Continuation:
         # Some configuration for the detection of bifurcations
         detect_bifurcations = self.parameters.get('Detect Bifurcation Points', False)
         enable_branch_switching = self.parameters.get('Enable Branch Switching', False)
+        enable_condest = self.parameters.get('Eigenvalue Condest', False)
         enable_recycling = False
 
         # Perform the continuation
@@ -367,7 +368,7 @@ class Continuation:
 
             if detect_bifurcations or (enable_branch_switching and not switched_branches):
                 eig_prev = eig
-                eigs, v = self.interface.eigs(x, return_eigenvectors=True, enable_recycling=enable_recycling)
+                eigs, v = self.interface.eigs(x, return_eigenvectors=True, enable_recycling=enable_recycling, enable_condest=enable_condest)
                 eig = eigs[0]
                 enable_recycling = True
 

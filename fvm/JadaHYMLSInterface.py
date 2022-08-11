@@ -34,7 +34,7 @@ class JadaHYMLSInterface(EpetraInterface.EpetraInterface):
 
         iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
         iterative_solver_parameters.set('Convergence Tolerance', tol if maxit > 1 else 1e-3)
-        # iterative_solver_parameters.set('Maximum Iterations', maxit)
+        iterative_solver_parameters.set('Maximum Iterations', maxit)
 
         if rhs.shape[1] == 2:
             solver_parameters.set('Complex', True)
@@ -45,9 +45,11 @@ class JadaHYMLSInterface(EpetraInterface.EpetraInterface):
 
         epetra_op = EpetraInterface.Operator(op)
         if self.preconditioned_solve:
+            print('JadaHYMLS: preconditioned_solve')
             epetra_precop = JadaHYMLSPrecOp(op, self.interface.preconditioner)
             solver = HYMLS.Solver(epetra_op, epetra_precop, self.parameters)
         else:
+            print('JadaHYMLS: no preconditioner')
             solver = HYMLS.Solver(epetra_op, epetra_op, self.parameters)
         solver.ApplyInverse(rhs, out)
 
@@ -157,7 +159,8 @@ class BorderedJadaHYMLSInterface(EpetraInterface.EpetraInterface):
 
         iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
         iterative_solver_parameters.set('Convergence Tolerance', tol if maxit > 1 else 1e-3)
-        # iterative_solver_parameters.set('Maximum Iterations', maxit)
+        maxit_orig=iterative_solver_parameters.get('Maximum Iterations', maxit)
+        iterative_solver_parameters.set('Maximum Iterations', maxit)
 
         if rhs.shape[1] == 2:
             solver_parameters.set('Complex', True)
@@ -172,7 +175,11 @@ class BorderedJadaHYMLSInterface(EpetraInterface.EpetraInterface):
             solver = HYMLS.Solver(epetra_op, self.interface.preconditioner, self.parameters)
             solver.SetBorder(op.Z, op.Q)
             self.interface.preconditioner.Compute()
-            solver.ApplyInverse(rhs, out)
+            try:
+                solver.ApplyInverse(rhs, out)
+            except:
+                pass
+            iterative_solver_parameters.set('Maximum Iterations', maxit_orig)
             solver.UnsetBorder()
         else:
             raise Exception('Not implemented')

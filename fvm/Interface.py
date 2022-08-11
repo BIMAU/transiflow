@@ -338,7 +338,7 @@ class Interface:
             eigs = numpy.array(sorted(alpha / beta, key=lambda x: -x.real if x.real < 100 else 100))
             return eigs[:num]
 
-    def eigs(self, state, return_eigenvectors=False, enable_recycling=False):
+    def eigs(self, state, return_eigenvectors=False, enable_recycling=False, enable_condest=False):
         '''Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v.'''
 
         from fvm.JadaInterface import JadaOp
@@ -346,7 +346,8 @@ class Interface:
         parameters = self.parameters.get('Eigenvalue Solver', {})
         arithmetic = parameters.get('Arithmetic', 'complex')
 
-        jac_op = JadaOp(self.jacobian(state))
+        jac = self.jacobian(state)
+        jac_op = JadaOp(jac)
         mass_op = JadaOp(self.mass_matrix())
         prec = None
 
@@ -362,5 +363,29 @@ class Interface:
         if not self.parameters.get('Bordered Solver', False):
             prec = jada_interface.shifted_prec
 
-        return self._eigs(jada_interface, jac_op, mass_op, prec,
+        result_r = self._eigs(jada_interface, jac_op, mass_op, prec,
                           state, return_eigenvectors, enable_recycling)
+
+        if enable_condest:
+            if return_eigenvectors:
+                eig_r, v_r = result_r[:]
+                jacT = jac.transpose(copy=True)
+                jac_op = JadaOp(jacT)
+                jada_interface = JadaInterface(self, jac_op, mass_op, jac_op.shape[0], numpy.complex128)
+                if arithmetic == 'real':
+                    jada_interface = JadaInterface(self, jac_op, mass_op, jac_op.shape[0])
+
+                    if not self.parameters.get('Bordered Solver', False):
+                        prec = jada_interface.shifted_prec
+                eig_l, v_l = self._eigs(jada_interface, jacT_op, mass_op, prec,
+                          state, return_eigenvectors=True, enable_recycling=True)
+                tol = parameters.get('Tolerance', 1e-7)
+                eigcond = numpy.full((length(eig_r)),1)
+                for i in range(len(eig_r)):
+                    for j in range(len(eig_l)):
+                        if abs(eig_r[i]-eig_l[j])/abs(eig_r[i]) < tol:
+                            eigcond[i] = 1 / abs(v_l.T @ v_r)
+                print('eig-condests: '+str(condest))
+            else:
+                warnings.warn('eigenvalue condition estimate not done because no eigenvectors were requested')
+        return result_right
