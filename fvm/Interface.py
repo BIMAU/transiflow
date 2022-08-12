@@ -369,7 +369,7 @@ class Interface:
         if enable_condest:
             if return_eigenvectors:
                 eig_r, v_r = result_r[:]
-                jacT = jac.transpose(copy=True)
+                jacT = jac.transpose()
                 jac_op = JadaOp(jacT)
                 jada_interface = JadaInterface(self, jac_op, mass_op, jac_op.shape[0], numpy.complex128)
                 if arithmetic == 'real':
@@ -377,15 +377,15 @@ class Interface:
 
                     if not self.parameters.get('Bordered Solver', False):
                         prec = jada_interface.shifted_prec
-                eig_l, v_l = self._eigs(jada_interface, jacT_op, mass_op, prec,
-                          state, return_eigenvectors=True, enable_recycling=True)
+                eig_l, v_l = self._eigs(jada_interface, jac_op, mass_op, prec,
+                          state, return_eigenvectors=True, enable_recycling=enable_recycling)
                 tol = parameters.get('Tolerance', 1e-7)
                 eigcond = numpy.full((length(eig_r)),1)
                 for i in range(len(eig_r)):
                     for j in range(len(eig_l)):
                         if abs(eig_r[i]-eig_l[j])/abs(eig_r[i]) < tol:
-                            eigcond[i] = 1 / abs(v_l.T @ v_r)
-                print('eig-condests: '+str(condest))
+                            eigcond[i] = 1 / abs(v_l[:,i].T @ v_r[:, j])
+                print('eig-condests: '+str(eigcond))
             else:
                 warnings.warn('eigenvalue condition estimate not done because no eigenvectors were requested')
         return result_r
