@@ -388,4 +388,4 @@ class Interface:
                 print('eig-condests: '+str(condest))
             else:
                 warnings.warn('eigenvalue condition estimate not done because no eigenvectors were requested')
-        return result_right
+        return result_r
