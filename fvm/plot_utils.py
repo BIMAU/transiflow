@@ -35,7 +35,11 @@ def plot_contour(x, y, value, axis=2, title=None, legend=True, grid=True,
         ax.hlines(y[:, 0], *x[0, [0, -1]], colors='0.3', linewidths=0.5)
 
     if labels:
-        ax.set_xlabel('x')
+        if axis == 0:
+            ax.set_xlabel('y')
+        else:
+            ax.set_xlabel('x')
+
         if axis == 2:
             ax.set_ylabel('y')
         else:
