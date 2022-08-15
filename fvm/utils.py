@@ -130,47 +130,49 @@ def create_stretched_coordinate_vector2(start, end, nx, sigma):
     return x
 
 def compute_velocity_magnitude(state, interface, axis=2):
-    x = interface.discretization.x
-    y = interface.discretization.y
-
     nx = interface.discretization.nx
     ny = interface.discretization.ny
+    nz = interface.discretization.nz
 
     state_mtx = create_padded_state_mtx(state, interface=interface)
 
-    center = interface.discretization.nz // 2 + 1
-    u = state_mtx[1:, 1:, center, 0]
-    v = state_mtx[1:, 1:, center, 1]
-    w = state_mtx[1:, 1:, center, 1] * 0
+    # FIXME: This assumes zero or periodic boundaries
+    if axis == 0:
+        m = numpy.zeros((ny, nz))
+        center = nx // 2 - 1
+        for j in range(ny):
+            for k in range(nz):
+                u = get_u_value(state_mtx, center, j, k, interface)
+                v = get_v_value(state_mtx, center, j, k, interface)
+                w = get_w_value(state_mtx, center, j, k, interface)
+                m[j, k] = sqrt(u * u + v * v + w * w)
+
+        return m
 
     if axis == 1:
-        center = interface.discretization.ny // 2 + 1
-        u = state_mtx[1:, center, 1:, 0]
-        v = state_mtx[1:, center, 1:, 2]
-        w = state_mtx[1:, center, 1:, 1]
-        y = interface.discretization.z
-        ny = interface.discretization.nz
+        m = numpy.zeros((nx, nz))
+        center = ny // 2 - 1
+        for i in range(nx):
+            for k in range(nz):
+                u = get_u_value(state_mtx, i, center, k, interface)
+                v = get_v_value(state_mtx, i, center, k, interface)
+                w = get_w_value(state_mtx, i, center, k, interface)
+                m[i, k] = sqrt(u * u + v * v + w * w)
+
+        return m
 
     m = numpy.zeros((nx, ny))
-
-    # FIXME: This assumes zero or periodic boundaries
+    center = nz // 2 - 1
     for i in range(nx):
         for j in range(ny):
-            dx0 = x[i] - x[i-1]
-            dy0 = y[j] - y[j-1]
-            dx1 = x[i+1] - x[i]
-            dy1 = y[j+1] - y[j]
+            u = get_u_value(state_mtx, i, j, center, interface)
+            v = get_v_value(state_mtx, i, j, center, interface)
 
-            ubar = u[i, j] * dy0 / (dy0 + dy1)
-            ubar += u[i, j+1] * dy1 / (dy0 + dy1)
+            w = 0
+            if interface.discretization.dim > 2:
+                w = get_w_value(state_mtx, i, j, center, interface)
 
-            vbar = v[i, j] * dx0 / (dx0 + dx1)
-            vbar += v[i+1, j] * dx1 / (dx0 + dx1)
-
-            wbar = w[i, j] * dx0 / (dx0 + dx1)
-            wbar += w[i+1, j] * dx1 / (dx0 + dx1)
-
-            m[i, j] = sqrt(ubar * ubar + vbar * vbar + wbar * wbar)
+            m[i, j] = sqrt(u * u + v * v + w * w)
 
     return m
 
@@ -256,7 +258,10 @@ def compute_volume_averaged_kinetic_energy(state, interface):
 def get_u_value(state, i, j, k, interface):
     '''Get the value of u at a grid point.'''
 
-    state_mtx = create_padded_state_mtx(state, interface=interface)
+    if len(state.shape) < 4:
+        state_mtx = create_padded_state_mtx(state, interface=interface)
+    else:
+        state_mtx = state
 
     y = interface.discretization.y
     dy1 = (y[j] - y[j-1]) / 2
@@ -274,7 +279,10 @@ def get_u_value(state, i, j, k, interface):
 def get_v_value(state, i, j, k, interface):
     '''Get the value of v at a grid point.'''
 
-    state_mtx = create_padded_state_mtx(state, interface=interface)
+    if len(state.shape) < 4:
+        state_mtx = create_padded_state_mtx(state, interface=interface)
+    else:
+        state_mtx = state
 
     x = interface.discretization.x
     dx1 = (x[i] - x[i-1]) / 2
@@ -292,7 +300,10 @@ def get_v_value(state, i, j, k, interface):
 def get_w_value(state, i, j, k, interface):
     '''Get the value of w at a grid point.'''
 
-    state_mtx = create_padded_state_mtx(state, interface=interface)
+    if len(state.shape) < 4:
+        state_mtx = create_padded_state_mtx(state, interface=interface)
+    else:
+        state_mtx = state
 
     x = interface.discretization.x
     dx1 = (x[i] - x[i-1]) / 2
