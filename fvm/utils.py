@@ -129,17 +129,27 @@ def create_stretched_coordinate_vector2(start, end, nx, sigma):
         x[-3] = x[-4] + dx
     return x
 
-def compute_velocity_magnitude(state, interface, axis=2):
+def compute_velocity_magnitude(state, interface, axis=2, position=None):
     nx = interface.discretization.nx
     ny = interface.discretization.ny
     nz = interface.discretization.nz
+
+    x = interface.discretization.x
+    y = interface.discretization.y
+    z = interface.discretization.z
 
     state_mtx = create_padded_state_mtx(state, interface=interface)
 
     # FIXME: This assumes zero or periodic boundaries
     if axis == 0:
         m = numpy.zeros((ny, nz))
+
         center = nx // 2 - 1
+        if position:
+            center = numpy.argmin(numpy.abs(x - position))
+
+        print('Using center: %e at %d' % (x[center], center))
+
         for j in range(ny):
             for k in range(nz):
                 u = get_u_value(state_mtx, center, j, k, interface)
@@ -151,7 +161,13 @@ def compute_velocity_magnitude(state, interface, axis=2):
 
     if axis == 1:
         m = numpy.zeros((nx, nz))
+
         center = ny // 2 - 1
+        if position:
+            center = numpy.argmin(numpy.abs(y - position))
+
+        print('Using center: %e at %d' % (y[center], center))
+
         for i in range(nx):
             for k in range(nz):
                 u = get_u_value(state_mtx, i, center, k, interface)
@@ -162,7 +178,13 @@ def compute_velocity_magnitude(state, interface, axis=2):
         return m
 
     m = numpy.zeros((nx, ny))
+
     center = nz // 2 - 1
+    if position:
+        center = numpy.argmin(numpy.abs(z - position))
+
+    print('Using center: %e at %d' % (z[center], center))
+
     for i in range(nx):
         for j in range(ny):
             u = get_u_value(state_mtx, i, j, center, interface)

@@ -53,8 +53,8 @@ def plot_contour(x, y, value, axis=2, title=None, legend=True, grid=True,
 
     return fig
 
-def plot_velocity_magnitude(state, interface, axis=2, title='Velocity magnitude', *args, **kwargs):
-    m = utils.compute_velocity_magnitude(state, interface, axis)
+def plot_velocity_magnitude(state, interface, axis=2, position=None, title='Velocity magnitude', *args, **kwargs):
+    m = utils.compute_velocity_magnitude(state, interface, axis, position)
 
     x, y = get_meshgrid(interface)
 
