@@ -369,23 +369,34 @@ class Interface:
         if enable_condest:
             if return_eigenvectors:
                 eig_r, v_r = result_r[:]
+                print('Computed right eigenvalues:')
+                print(eig_r)
+
                 jacT = jac.transpose()
-                jac_op = JadaOp(jacT)
-                jada_interface = JadaInterface(self, jac_op, mass_op, jac_op.shape[0], numpy.complex128)
+                # Convert the matrix to CSC format since splu expects that
+                At = sparse.csr_matrix((jacT.coA, jacT.jcoA, jacT.begA)).tocsc()
+
+                jacT.lu = linalg.splu(At)
+                jacT.bordered_lu = False
+                jacT_op = JadaOp(jacT)
+                precT = None
+                jada_interfaceT = JadaInterface(self, jacT_op, mass_op, jacT_op.shape[0], numpy.complex128)
                 if arithmetic == 'real':
-                    jada_interface = JadaInterface(self, jac_op, mass_op, jac_op.shape[0])
+                    jada_interfaceT = JadaInterface(self, jacT_op, mass_op, jacT_op.shape[0])
 
                     if not self.parameters.get('Bordered Solver', False):
-                        prec = jada_interface.shifted_prec
-                eig_l, v_l = self._eigs(jada_interface, jac_op, mass_op, prec,
+                        precT = jada_interfaceT.shifted_prec
+                eig_l, v_l = self._eigs(jada_interfaceT, jacT_op, mass_op, precT,
                           state, return_eigenvectors=True, enable_recycling=enable_recycling)
+                print('Computed left eigenvalues:')
+                print(eig_l)
                 tol = parameters.get('Tolerance', 1e-7)
                 eigcond = numpy.full((length(eig_r)),1)
                 for i in range(len(eig_r)):
                     for j in range(len(eig_l)):
                         if abs(eig_r[i]-eig_l[j])/abs(eig_r[i]) < tol:
                             eigcond[i] = 1 / abs(v_l[:,i].T @ v_r[:, j])
-                print('eig-condests: '+str(eigcond))
+                print('eigenvalue condests: '+str(eigcond))
             else:
                 warnings.warn('eigenvalue condition estimate not done because no eigenvectors were requested')
         return result_r
