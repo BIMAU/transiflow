@@ -3,7 +3,7 @@ import scipy
 import pymorton
 
 import scipy.sparse.linalg as spla
-from math import sqrt
+from math import sqrt, ceil, log
 
 def get_z_ordering(nx, ny, nz=1, dof=1):
     ''' reorder by a Morton (z-)curve to get subdomains with contguous indices:
@@ -20,19 +20,47 @@ def get_z_ordering(nx, ny, nz=1, dof=1):
     *--*  *--*
 
     Returns z_idx and z_inv such that if x is in cartesian ordering,
-    y=x(z_idx) is in z-ordering, and x=y(z_inv)
+    y=x[z_idx] is in z-ordering, and x=y[z_inv].
+    To reorder a sparse (scipy)  matrix, you can use A[z_idx,:][:,z_idx].
 
     This function works in 3D (octree) or 2D (nz=1, quadtree), and for
     problems with multiple degrees of freedom per grid point (dof>1).
     In that case, the dofs per grid point are kept together.
+
+    It is possible that the z ordering has 'holes' if the grid has dimensions
+    that are not a power of 2. For example, for nx=ny=3, we get
+
+    0 1 4
+    2 3 6
+    8 9 12
+
+    In that case, we re-map them to:
+
+    0 1 4
+    2 3 5
+    6 7 8
+
+    ... but this is not implemented,
+    so instead we will throw an exception if nx, ny or nz
+    are not powers of 2.
     '''
 
-    z_idx = numpy.zeros(nx*ny*nz*dof)
-    z_inv = numpy.zeros(nx*ny*nz*dof)
+    N = nx*ny*nz*dof
+    z_idx = numpy.zeros(N)
+    z_inv = numpy.zeros(N)
 
-    for k in range(nz):
-        for j in range(ny):
-            for i in range(nx):
+    nx0 = pow(2,(int(log(nx,2))))
+    ny0 = pow(2,(int(log(ny,2))))
+    nz0 = pow(2,(int(log(nz,2))))
+
+    if nx != nx0 or \
+       ny != ny0 or \
+       nz != nz0:
+         raise Exception('dimensions must be powers of 2 up to now')
+
+    for k in range(nz0):
+        for j in range(ny0):
+            for i in range(nx0):
                 c_id = (k*ny+j)*nx+i
                 if nz == 1:
                     z_id = pymorton.interleave2(i,j)
@@ -43,15 +71,8 @@ def get_z_ordering(nx, ny, nz=1, dof=1):
                     z_idx[z_id*dof+var] = c_id*dof+var
                     z_inv[c_id*dof+var] = z_id*dof+var
 
-    return z_idx, z_inv
 
-def get_separator_groups(nx,sx,ny,sy,nz=1,sz=1,dof=1):
-    '''
-    Returns a sparse matrix with N=nx*ny*nz*dof rows
-    and m<<N columns. Each column index represents a
-    'separator group'
-    '''
-    raise Exception('not implemented')
+    return z_idx, z_inv
 
 def get_subdomain_groups(dims, sd_dims, dof):
     '''
@@ -115,6 +136,54 @@ def get_subdomain_groups(dims, sd_dims, dof):
     V = scipy.sparse.csc_matrix( (valV, (rows, cols)), shape=[N,k])
     return V
 
+def get_separator_groups(nx,sx,ny,sy,nz=1,sz=1,dof=1):
+    '''
+    Returns a sparse matrix in CSC format with N=nx*ny*nz*dof rows
+    and m<<N columns. Each column index represents a 'separator group',
+    marked in the following sketch by its column index. Note that interior
+    variables are all grouped together in group 0.
+    For nx=ny=8, sx=sy=3:
+
+    0  0  1  0  0  4  0  0
+    0  0  1  0  0  4  0  0
+    2  2  3  5  5  6 14 14
+    0  0  7  0  0 10  0  0
+    0  0  7  0  0 10  0  0
+    8  8  9 11 11 12 16 16
+    0  0 17  0  0 20  0  0
+    0  0 17  0  0 20  0  0
+
+    These indices are obtained using a z-curve for the subdomains,
+    so there may be 'holes' in the indexing, e.g. at the right boundary
+    where there are no separators. We therefore renumber them after construction
+    to give coniguous column indices.
+
+    '''
+
+    dim = 2
+    if nz != 1:
+        dim = 3
+        raise Exception('not implemented for 3D yet')
+
+    if dof > dim:
+        raise Exception('not implemented for Stokes-like problems')
+
+
+    # we use z-ordering of the subdomain IDs, which will produce holes in the
+    # numbering of subdomains unless nx is a multiple of sx, etc. This can be
+    # fixed in a future 'proper' implementation.
+    if nx%sx or ny%sy:
+        raise Exception('up to now, nx must be a multiple of sx, and similar for ny resp. sy.')
+
+    num_sd_x = ceil(nx/sx)
+    num_sd_y = ceil(ny/sy)
+
+    sd_z_idx, sd_z_inv = get_z_ordering(num_sd_x, num_sd_y, dof=3*dof)
+
+    print(sd_z_idx)
+    print(sd_z_inv)
+
+
 class BlockJacobi(spla.LinearOperator):
 
     def indices(self, sd):
@@ -172,13 +241,14 @@ class ProjectedOperator(spla.LinearOperator):
 
 class DeflatedOperator(spla.LinearOperator):
 
-    def __init__(self, A, V):
+    def __init__(self, A, V, V0=None):
         '''
         Construct deflated operator with given space V. V is checked for orthonormality on input.
         The operator is defined as
 
-              op*x = (I - AQ)A(I-QA)x,
+              op*x = (I-Q0)(I - AQ)A(I-QA)(I-Q0)x,
         with Q     = V (V'AV)\V'
+             Q0    = V0*V0', with V0 an optinoal exact nullspace of A (if provided).
         
         '''
         if A.shape[0] != A.shape[1]:
@@ -190,6 +260,7 @@ class DeflatedOperator(spla.LinearOperator):
             raise Exception('input V to DeflatedOperator is not orthonormal: ||V^TV-I||=%g'%(ortho_err))
         self.A = A
         self.V = V
+        self.V0 = V0
         self.dtype = A.dtype
         self.shape = A.shape
 
@@ -206,17 +277,25 @@ class DeflatedOperator(spla.LinearOperator):
 
     def proj(self, x):
         '''
-        computes y = (I - QA)x
-        with Q = V(V'AV)\V'
+        computes y = (I - (QA+Q0))x
+        with Q = V(V'AV)\V', Q0=V0*V0'
         '''
-        return x - self.applyQ(self.A @ x)
+        if self.V0 is not None:
+            y = x - self.V0 @ (self.V0.T @ x)
+        else:
+            y = x
+        y = y - self.applyQ(self.A @ y)
+        return y
 
     def projT(self, x):
         '''
-        computes y = (I - AQ)x
+        computes y = (I - (AQ+Q0))x
         with Q = V(V'AV)\V'
         '''
-        return x - self.A @ self.applyQ(x)
+        y = x - self.A @ self.applyQ(x)
+        if self.V0 is not None:
+            y = y - self.V0 @ (self.V0.T @ y)
+        return y
 
     def _matvec(self, x):
         '''
