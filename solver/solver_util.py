@@ -5,8 +5,11 @@ import pymorton
 import scipy.sparse.linalg as spla
 from math import sqrt, ceil, log
 
-def get_z_ordering(nx, ny, nz=1, dof=1):
-    ''' reorder by a Morton (z-)curve to get subdomains with contguous indices:
+def get_z_ordering(nx, ny, dof=1, x_offset=0, y_offset=0):
+    '''
+    z_idx = get_z_ordering(nx,ny, dof=1) [last few arguments are only for internal use]
+    
+    Reorder by a Morton (z-)curve to get subdomains with contiguous indices:
 
     1--2  5--6  16...
       /  /  /   /
@@ -19,16 +22,16 @@ def get_z_ordering(nx, ny, nz=1, dof=1):
      /  /  /  /
     *--*  *--*
 
-    Returns z_idx and z_inv such that if x is in cartesian ordering,
-    y=x[z_idx] is in z-ordering, and x=y[z_inv].
+    Returns z_idx and z_inv such that if v is in cartesian ordering,
+    w=v[z_idx] is in z-ordering, and v=w[z_inv].
     To reorder a sparse (scipy)  matrix, you can use A[z_idx,:][:,z_idx].
 
-    This function works in 3D (octree) or 2D (nz=1, quadtree), and for
+    This function is currently restricted to 2D but allows
     problems with multiple degrees of freedom per grid point (dof>1).
     In that case, the dofs per grid point are kept together.
 
     It is possible that the z ordering has 'holes' if the grid has dimensions
-    that are not a power of 2. For example, for nx=ny=3, we get
+    that are unequal or not a power of 2. For example, for nx=ny=3, we get
 
     0 1 4
     2 3 6
@@ -40,39 +43,44 @@ def get_z_ordering(nx, ny, nz=1, dof=1):
     2 3 5
     6 7 8
 
-    ... but this is not implemented,
-    so instead we will throw an exception if nx, ny or nz
-    are not powers of 2.
+    This is done by recursively applying the z-ordering to
+    blocks of s^2 cells, where s is a power of 2.
+
     '''
 
-    N = nx*ny*nz*dof
+    if any(map(lambda item: item<=0, [nx,ny,dof])):
+        raise Exception('all input arguments must be strictly positive')
+
+    N = nx*ny*dof
     z_idx = numpy.zeros(N)
-    z_inv = numpy.zeros(N)
 
     nx0 = pow(2,(int(log(nx,2))))
     ny0 = pow(2,(int(log(ny,2))))
-    nz0 = pow(2,(int(log(nz,2))))
 
-    if nx != nx0 or \
-       ny != ny0 or \
-       nz != nz0:
-         raise Exception('dimensions must be powers of 2 up to now')
+    s=min(nx0,ny0)
 
-    for k in range(nz0):
-        for j in range(ny0):
-            for i in range(nx0):
-                c_id = (k*ny+j)*nx+i
-                if nz == 1:
-                    z_id = pymorton.interleave2(i,j)
-                else:
-                    z_id = pymorton.interleave3(i,j,k)
+    for j in range(s):
+        for i in range(s):
+            c_id = (j+y_offset)*(x_offset+nx)+x_offset+i
+            z_id = pymorton.interleave2(i,j)
+            for var in range(dof):
+                z_idx[z_id*dof+var] = c_id*dof+var
 
-                for var in range(dof):
-                    z_idx[z_id*dof+var] = c_id*dof+var
-                    z_inv[c_id*dof+var] = z_id*dof+var
+    offset=s*s*dof
 
+    if nx>s:
+        # east
+        z_idx2 = get_z_ordering(nx-s, s, dof, x_offset=x_offset+s,y_offset=y_offset)
+        len=z_idx2.size
+        z_idx[range(offset,offset+len)] = z_idx2
+        offset = offset + len
+    if ny>s:
+        # south
+        z_idx3 = get_z_ordering(nx, ny-s, dof, x_offset=x_offset, y_offset=y_offset+s)
+        len=z_idx3.size
+        z_idx[range(offset,offset+len)] = z_idx3
 
-    return z_idx, z_inv
+    return z_idx
 
 def get_subdomain_groups(dims, sd_dims, dof):
     '''
