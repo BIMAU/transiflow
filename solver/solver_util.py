@@ -52,7 +52,7 @@ def get_z_ordering(nx, ny, dof=1, x_offset=0, y_offset=0):
         raise Exception('all input arguments must be strictly positive')
 
     N = nx*ny*dof
-    z_idx = numpy.zeros(N)
+    z_idx = numpy.zeros(N,dtype='int')
 
     nx0 = pow(2,(int(log(nx,2))))
     ny0 = pow(2,(int(log(ny,2))))
@@ -81,6 +81,15 @@ def get_z_ordering(nx, ny, dof=1, x_offset=0, y_offset=0):
         z_idx[range(offset,offset+len)] = z_idx3
 
     return z_idx
+
+def get_inv_ordering(idx):
+    '''
+    Given a 1-to-1 mapping idx such that x = y[idx],
+    returns the inverse mapping inv: y = x[inv]
+    '''
+    inv = numpy.zeros(idx.size,idx.dtype)
+    inv[idx]=range(idx.size)
+    return inv
 
 def get_subdomain_groups(dims, sd_dims, dof):
     '''
