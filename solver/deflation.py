@@ -1,6 +1,20 @@
 import scipy
 import scipy.sparse.linalg as spla
 
+def dpcg(A_d, b, x0=None, tol=None, maxiter=None, M=None):
+
+    it = 0
+    def count_iter(xj):
+        nonlocal it
+        it += 1
+    xtil = A_d.applyQ(b)
+    btil = b - A_d.applyA(xtil)
+    xbar, flag = spla.cg(A_d, btil, x0, tol=tol, maxiter=maxiter, M=M, callback=count_iter)
+    x=A_d.proj(xbar) + xtil
+    return x, flag, it
+
+    
+
 class ProjectedOperator(spla.LinearOperator):
 
     def __init__(self, A, V):
@@ -42,6 +56,12 @@ class DeflatedOperator(spla.LinearOperator):
 
         self.E = scipy.sparse.csc_matrix(self.V.T @ (self.A @ self.V))
         self.Elu = spla.splu(self.E)
+
+    def applyA(self, x):
+        '''
+        apply the original matrix A to a vector (without deflation)
+        '''
+        return self.A @ x
 
     def applyQ(self, x):
         '''

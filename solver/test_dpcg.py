@@ -65,19 +65,14 @@ def main(nx, plot_matrices=False):
 
 
     # deflation
-    it = 0
     V = get_subdomain_groups((nx,ny), (sx,sy), dof=1)
     A_d = DeflatedOperator(A, V)
-    xtil = A_d.applyQ(rhs)
-    btil = rhs - A @ xtil
-    xbar, flag = spla.cg(A_d, btil, x0, tol, maxit, callback=count_iter)
-    x=A_d.proj(xbar) + xtil
+    x, flag, it = dpcg(A_d, rhs, x0, tol, maxiter=maxit)
     report('PAx=Pb',x,it);
 
 #  % deflated and preconditioned method
     it = 0
-    xbar, flag = spla.cg(A_d, btil, x0, tol, maxit, M=M_bj, callback=count_iter)
-    x=A_d.proj(xbar) + xtil
+    x, flag, it = dpcg(A_d, rhs, x0, tol, maxiter=maxit, M=M_bj)
     report('PAx=Pb',x,it);
 
 if __name__ == '__main__':
