@@ -13,7 +13,18 @@ def dpcg(A_d, b, x0=None, tol=None, maxiter=None, M=None):
     x=A_d.proj(xbar) + xtil
     return x, flag, it
 
-    
+def dgmres(A_d, b, x0=None, tol=None, maxiter=None, restart=None, M=None):
+
+    it = 0
+    def count_iter(xj):
+        nonlocal it
+        it += 1
+    xtil = A_d.applyQ(b)
+    btil = b - A_d.applyA(xtil)
+    xbar, flag = spla.gmres(A_d, btil, x0, tol=tol, maxiter=maxiter, M=M, restart=restart, callback=count_iter)
+    x=A_d.proj(xbar) + xtil
+    return x, flag, it
+
 
 class ProjectedOperator(spla.LinearOperator):
 

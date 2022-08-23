@@ -113,31 +113,21 @@ def main(nx, sx, plot_matrices=False):
 
 
     # deflation
-    it = 0
     V = get_subdomain_groups((nx,ny),(sx,sy),dof)
     A_d = DeflatedOperator(A, V)
-    xtil = A_d.applyQ(rhs)
-    btil = rhs - A @ xtil
-    xbar, flag = spla.gmres(A_d, btil, x0, tol, maxiter=maxit, restart=maxbas, callback=count_iter)
-    x=A_d.proj(xbar) + xtil
+    x, flag, it = dgmres(A_d, rhs, x0, tol, maxiter=maxit, restart=maxbas)
     report('PAx=Pb (gmres)',x,it);
 
     # deflated with explicit null-space removal
     A_d0 = DeflatedOperator(A, V, V0)
-    xtil = A_d0.applyQ(rhs)
-    btil = rhs - A @ xtil
-    xbar, flag = spla.cg(A_d0, btil, x0, tol, maxiter=maxit, callback=count_iter)
-    x=A_d.proj(xbar) + xtil
+    x, flag, it = dpcg(A_d0, rhs, x0, tol, maxiter=maxit)
     report('P0Ax=P0b (cg)',x,it);
 
 #  % deflated and preconditioned method
-    it = 0
-    xbar, flag = spla.gmres(A_d, btil, x0, tol, maxiter=maxit, restart=maxbas,M=M_bj, callback=count_iter)
-    x=A_d.proj(xbar) + xtil
-    x=proj(x,V0)
+    x, flag, it = dgmres(A_d, rhs, x0, tol, maxiter=maxit, restart=maxbas, M=M_bj)
     report('M\\PAx=M\\Pb (gmres)',x,it);
 
 if __name__ == '__main__':
 
-    for nx in [16, 32, 64, 128]:
+    for nx in [16, 32, 64]:
         main(nx, 4, False)
