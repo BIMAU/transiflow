@@ -9,6 +9,7 @@ from fvm import plot_utils
 from fvm import utils
 
 from solver_util import *
+from preconditioners import AdditiveSchwarz
 from test_dpcg import norm
 
 def stokes_matrix(nx, ny):
@@ -51,7 +52,7 @@ def main(nx, sx, plot_matrices=False):
     print('sx=%d, sy=%d'%(sx,sy))
 
     A0 = stokes_matrix(nx,ny)
-    [z_idx, z_inv] = get_z_ordering(nx,ny,dof=dof)
+    z_idx = get_z_ordering(nx,ny,dof=dof)
     A=A0[z_idx,:][:,z_idx]
 
     if plot_matrices:
@@ -105,7 +106,7 @@ def main(nx, sx, plot_matrices=False):
     it = 0
     sx = 4
     sy = 4
-    M_bj = BlockJacobi(A, sx*sy, dof)
+    M_bj = AdditiveSchwarz(A, sx*sy, dof)
     x, flag = spla.gmres(A,rhs,x0,tol,maxiter=maxit,restart=maxbas, M=M_bj,callback=count_iter)
     report('M\\Ax=M\\b (gmres)',x,it)
 

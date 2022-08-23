@@ -389,47 +389,6 @@ class StokesDD:
 
         return sorted(idx0), idx1, idx2, idx3
 
-class BlockJacobi(spla.LinearOperator):
-
-    def indices(self, sd):
-        return range(sd*self.block_size, (sd+1)*self.block_size)
-
-    def __init__(self, A, block_size, dof=1):
-        '''
-        Construct block Jacobi preconditioner with given block size.
-        If dof>1, the block size is multiplied by dof (that is, each
-        block will contain block_size grid points/cells with multiple
-        degrees of freedom each).
-        We use an LU factorization for the blocks because scipy doesn't
-        have Cholesky.
-        '''
-        if A.shape[0] != A.shape[1]:
-            raise Exception('A must be square!')
-        if A.shape[0] % (block_size*dof):
-            raise Exception('size of A must be a multiple of the block_size')
-
-        self.shape = A.shape
-        self.block_size = block_size*dof
-        self.num_blocks = int(A.shape[0] / self.block_size)
-        self.LU = []
-
-        for i in range(self.num_blocks):
-            idx = self.indices(i)
-            self.LU.append( spla.splu(scipy.sparse.csc_matrix(A[idx,:][:,idx])))
-
-    def solve(self,x):
-        '''
-        Apply inverse operator to solve a linear system with the block diagonal of A
-        '''
-        y = numpy.zeros(x.shape)
-        for i in range(self.num_blocks):
-            idx = self.indices(i)
-            y[idx]=self.LU[i].solve(x[idx])
-        return y
-
-    def _matvec(self, x):
-        return self.solve(x)
-
 class ProjectedOperator(spla.LinearOperator):
 
     def __init__(self, A, V):

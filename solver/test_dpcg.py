@@ -2,6 +2,7 @@ import numpy
 import scipy
 from math import sqrt
 from solver_util import *
+from preconditioners import AdditiveSchwarz
 
 def norm(x):
     '''
@@ -62,7 +63,7 @@ def main(nx, plot_matrices=False):
     it = 0
     sx=4
     sy=4
-    M_bj = BlockJacobi(A, sx*sy)
+    M_bj = AdditiveSchwarz(A, sx*sy, 1)
     x, flag = spla.cg(A,rhs,x0,tol,maxit,M=M_bj,callback=count_iter)
     report('M\\Ax=M\\b',x,it)
 

@@ -37,4 +37,4 @@ print(i0b)
 
 axs[0].set_aspect('equal', adjustable='box')
 axs[1].set_aspect('equal', adjustable='box')
-plt.show()
+plt.plot()
