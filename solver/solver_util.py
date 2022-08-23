@@ -209,8 +209,24 @@ class StokesDD:
         '''
         from matplotlib import pyplot as plt
 
-        if len(colors) != len(indices):
-            raise Exception('Usage: plot_cgrid([i1,i2,...],[c1,c2,...],title) with same length of the list of index lists and list of colors.')
+        if type(indices) is not list:
+            raise Exception('indices must be a list or list of lists')
+
+        if len(indices)==0:
+            return
+
+        if type(indices[0]) is not list:
+            indices = [indices]
+
+        if type(colors) is not list:
+            colors = [colors]
+
+        if type(markersize) is not list:
+            markersize = [markersize]
+
+        # cyclic extension of list of colors and markersize
+        while len(markersize) < len(indices):
+            markersize += markersize
 
         if ax is None:
             plotgrid=True
@@ -232,11 +248,12 @@ class StokesDD:
         for set in range(len(indices)):
             idx = indices[set]
             clr = colors[set]
+            ms  = markersize[set]
             for z_id in idx:
                 cell  = int(z_id/self.dof)
                 var   = z_id % self.dof
                 i, j = self.cell_coordinates(cell)
-                ax.plot([i+ioff[var]],[-j+joff[var]],MarkerDict[var], markersize=12, markerfacecolor=clr)
+                ax.plot([i+ioff[var]],[-j+joff[var]],MarkerDict[var], markersize=ms, markerfacecolor=clr)
         plt.draw()
 
 
@@ -333,10 +350,12 @@ class StokesDD:
         if jc > 0:
             jm1 += [jrng[0]-1]
 
+        print('im1='+str(im1))
+        print('jm1='+str(jm1))
         # all subdomain variables (including minimal overlap to neighboring subdomains):
         idx0  = []
         idx0 += list((0+self.dof*self.Z[im1+list(irng),:][:,jrng]).flat)
-        idx0 += list((1+self.dof*self.Z[im1+list(irng),:][:,jrng]).flat)
+        idx0 += list((1+self.dof*self.Z[irng,:][:,jm1+list(jrng)]).flat)
         idx0 += list((2+self.dof*self.Z[irng,:][:,list(jrng)]).flat)
 
         # interior nodes: u-velocities

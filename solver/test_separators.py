@@ -13,29 +13,27 @@ dof=3
 
 DD = StokesDD(nx,ny,sx,sy)
 
-sd=0
-i0, i1, i2, i3 =DD.indices(sd)
+sda=0
+i0a, i1a, i2a, i3a = DD.indices(sda)
+sdb=1
+i0b, i1b, i2b, i3b = DD.indices(sdb)
+sdc=2
+i0c, i1c, i2c, i3c = DD.indices(sdc)
+sdd=3
+i0d, i1d, i2d, i3d = DD.indices(sdd)
 
 fig, axs = plt.subplots(2)
-DD.plot_cgrid([i0],['yellow'],title='overlapping subdomain',markersize=12, ax=axs[0], plotgrid=True)
-DD.plot_cgrid([i1,flatten(i2),i3],['white','red','yellow'],title='groups',ax=axs[1], plotgrid=True)
+DD.plot_cgrid(i0a,'white',title='overlapping subdomain',markersize=15, ax=axs[0], plotgrid=True)
+DD.plot_cgrid(i0b,'green',markersize=12, ax=axs[0], plotgrid=False)
+DD.plot_cgrid(i0c,'blue',markersize=9, ax=axs[0], plotgrid=False)
+DD.plot_cgrid(i0d,'yellow',markersize=6, ax=axs[0], plotgrid=False)
 
-sd=1
-i0, i1, i2, i3 =DD.indices(sd)
-DD.plot_cgrid([i0],['blue'],markersize=10, ax=axs[0], plotgrid=False)
-
-#DD.plot_cgrid(nx,ny,i1,'interior of subdomain')
-#pDD.lot_cgrid(nx,ny,i2,'separators of subdomain')
-#DD.plot_cgrid(nx,ny,i2,'pressures of subdomain')
-
-#V2 = get_separator_groups(nx,sx,ny,sy,dof=dof)
-#numpy.set_printoptions(precision=3, linewidth=128, threshold=1000,edgeitems=200)
+DD.plot_cgrid([i1a,flatten(i2a),i3a],['white','red','yellow'],markersize=[12,12,9], title='groups',ax=axs[1], plotgrid=True)
 
 
-#print('nx=%d, sx=%d'%(nx,sx))
-#print('V2.shape='+str(V2.shape))
-#print('V2:')
-#print(V2.todense())
+print(i0a)
+print(i0b)
+
 
 axs[0].set_aspect('equal', adjustable='box')
 axs[1].set_aspect('equal', adjustable='box')

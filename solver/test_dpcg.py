@@ -29,7 +29,7 @@ def main(nx, plot_matrices=False):
     print('case    \titer  \terror')
 
     A0 = lap2_matrix(nx,ny)
-    [z_idx, z_inv] = get_z_ordering(nx,ny)
+    z_idx = get_z_ordering(nx,ny)
     A=A0[z_idx,:][:,z_idx]
 
     if plot_matrices:
