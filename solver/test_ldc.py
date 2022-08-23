@@ -10,7 +10,8 @@ from fvm import utils
 
 from solver_util import *
 from preconditioners import AdditiveSchwarz
-from test_dpcg import norm
+from deflation import *
+from numpy.linalg import norm
 
 def stokes_matrix(nx, ny):
 

@@ -1,14 +1,10 @@
 import numpy
 import scipy
+from numpy.linalg import norm
 from math import sqrt
 from solver_util import *
 from preconditioners import AdditiveSchwarz
-
-def norm(x):
-    '''
-    vector 2-norm
-    '''
-    return sqrt( x.T @ x )
+from deflation import *
 
 def lap2_matrix(nx,ny):
 
