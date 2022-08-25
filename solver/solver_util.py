@@ -8,7 +8,7 @@ from math import sqrt, ceil, log
 def get_z_ordering(nx, ny, dof=1, x_offset=0, y_offset=0):
     '''
     z_idx = get_z_ordering(nx,ny, dof=1) [last few arguments are only for internal use]
-    
+
     Reorder by a Morton (z-)curve to get subdomains with contiguous indices:
 
     1--2  5--6  16...
@@ -98,6 +98,39 @@ def flatten(list_of_lists):
     '''
     return [item for sublist in list_of_lists for item in sublist]
 
+def partition_of_unity(index_lists):
+    '''
+    Creates a sparse matrix V with
+    N rows and k columns, where
+    k is the number of sublists in 'index_lists',
+    and N-1 is the maximum index found in any sublist.
+
+    If lj = index_lists[j],
+    column j of V contains entries
+
+    V[i,j]=0                 if  i not in lj
+    V[i,j]=1/sqrt(len(lj))   if  i in lj
+
+    If the index sets are disjunct and non-empty, V is structurally orthonormal.
+    '''
+    k = len(index_lists)
+    N = max(i for lst in index_lists for i in lst)+1
+
+    rows = flatten(index_lists)
+    nnz=len(rows)
+
+    valV  = numpy.zeros(nnz)
+    cols = numpy.zeros(nnz,dtype='int')
+    pos = 0
+    for i in range(k):
+        idx = index_lists[i]
+        cols[range(pos,pos+len(idx))] = i
+        valV[range(pos,pos+len(idx))] = 1/sqrt(len(idx))
+        pos += len(idx)
+
+    V = scipy.sparse.csc_matrix( (valV, (rows, cols)), shape=[N,k])
+    return V
+
 def get_subdomain_groups(dims, sd_dims, dof):
     '''
     Returns an orthonormal sparse matrix V with, for block size=prod(sd_dims),
@@ -148,17 +181,11 @@ def get_subdomain_groups(dims, sd_dims, dof):
 
     def indices(sd, var):
         return range(sd*block_size*dof+var, (sd+1)*block_size*dof+var, dof)
-
-    valV  = numpy.ones(N) / sqrt(block_size)
-    rows = numpy.array(range(N),dtype='int')
-    cols = numpy.zeros(N,dtype='int')
-    for i in range(k):
-        var = i % dof
-        sd  = int(( i - var)/dof)
-        idx = indices(sd, var)
-        cols[idx] = i
-    V = scipy.sparse.csc_matrix( (valV, (rows, cols)), shape=[N,k])
-    return V
+    index_lists=[]
+    for sd in range(int(k/dof)):
+        for var in range(dof):
+            index_lists.append(indices(sd,var))
+    return partition_of_unity(index_lists)
 
 class StokesDD:
     '''
@@ -186,10 +213,11 @@ class StokesDD:
         self.ny=ny
         self.sx=sx
         self.sy=sy
+        self.group_ID=dict()
 
         self.z_idx = get_z_ordering(nx,ny,dof=1)
         self.z_inv = get_inv_ordering(self.z_idx)
-        self.Z = self.z_inv.reshape(nx,ny)
+        self.Z = self.z_inv.reshape(ny,nx).transpose()
 
         self.num_sd_x = ceil(nx/sx)
         self.num_sd_y = ceil(ny/sy)
@@ -197,9 +225,9 @@ class StokesDD:
         # create a z-ordering for the subdomains
         self.sd_idx = get_z_ordering(self.num_sd_x, self.num_sd_y, dof=1)
         self.sd_inv = get_inv_ordering(self.sd_idx)
-        self.Zsd = self.sd_inv.reshape(self.num_sd_x,self.num_sd_y)
+        self.Zsd = self.sd_inv.reshape(self.num_sd_y,self.num_sd_x).transpose()
 
-    def plot_cgrid(self, indices, colors, title=None, markersize=12, ax=None, plotgrid=True):
+    def plot_cgrid(self, indices, colors, title=None, markersize=12, ax=None, plotgrid=True, plotindices=False):
         '''
         given a set of indices into the c-grid
         (e.g. as returned by the indices() function),
@@ -254,6 +282,8 @@ class StokesDD:
                 var   = z_id % self.dof
                 i, j = self.cell_coordinates(cell)
                 ax.plot([i+ioff[var]],[-j+joff[var]],MarkerDict[var], markersize=ms, markerfacecolor=clr)
+                if plotindices:
+                    ax.text(i+ioff[var],-j+joff[var],str(z_id), ha='center',va='center',fontsize=ms-2)
         plt.draw()
 
 
@@ -264,11 +294,10 @@ class StokesDD:
         returns indices i and j of that subdomain
         in a Cartesian grid of subdomains.
         '''
-        # note that this can be implemented 'on-the-fly' using
-        # proper space-filling curve algorithms, but for now because
-        # we don't want discontiguous indices, we do it using thsi look-up:
-        ic,jc = numpy.where(self.Zsd==sd)
-        return ic[0], jc[0]
+        sd_cart = self.sd_idx[sd]
+        ic = sd_cart % self.num_sd_x
+        jc = int(sd_cart/self.num_sd_x)
+        return ic, jc
 
     def cell_coordinates(self, cell):
         '''
@@ -276,11 +305,37 @@ class StokesDD:
         returns indices i and j of that grid cell
         in a Cartesian grid of nx x ny cells.
         '''
-        # note that this can be implemented 'on-the-fly' using
-        # proper space-filling curve algorithms, but for now because
-        # we don't want discontiguous indices, we do it using thsi look-up:
-        ic,jc = numpy.where(self.Z==cell)
-        return ic[0], jc[0]
+        c_cart = self.z_idx[cell]
+        ic = c_cart % self.nx
+        jc = int(c_cart/self.nx)
+        return ic, jc
+
+
+    def num_subdomains(self):
+        return self.num_sd_x*self.num_sd_y
+
+
+    def get_group_id(index_list):
+        '''
+        Given a list of cell indices, returns
+        a group index. If the particular group
+        of variables does not have a group ID yet,
+        one is created and stored. 
+
+        Group IDs
+
+        - start at self.num_subdomains() to make sure subdomain
+          interiors can be handled consistently as groups, too
+        - are assigned incrementally, so two consecutive calls
+          with new index sets give ids j and j+1, j>=num_subdomains()
+        - are independent of the ordering of the unknowns,
+          so the groups [1,2,3] and [3,1,2], for instance,
+          will give the same group ID, but [1,2,3,4] will
+          receive a new one.
+        '''
+        key = tuple(index_list.sorted())
+        self.group_ID.setdefault(self.num_subdomains()+len(self.group_ID))
+        return self.group_ID[key]
 
     def indices(self, sd):
         '''
@@ -350,8 +405,6 @@ class StokesDD:
         if jc > 0:
             jm1 += [jrng[0]-1]
 
-        print('im1='+str(im1))
-        print('jm1='+str(jm1))
         # all subdomain variables (including minimal overlap to neighboring subdomains):
         idx0  = []
         idx0 += list((0+self.dof*self.Z[im1+list(irng),:][:,jrng]).flat)
@@ -377,16 +430,17 @@ class StokesDD:
             idx2.append(last_u1)
             idx2.append(last_v1)
         else:
-            idx1.append(last_u1[:])
-            idx1.append(last_v1[:])
+            idx1 += last_u1[:]
+            idx1 += last_v1[:]
+            print(idx1)
 
         if jc < self.num_sd_y-1:
             idx2.append(last_u2)
             idx2.append(last_v2)
         else:
-            idx1.append(last_u2[:])
-            idx1.append(last_v2[:])
+            idx1 += last_u2
+            idx1 += last_v2
 
-        return sorted(idx0), idx1, idx2, idx3
+        return sorted(idx0), sorted(idx1), idx2, idx3
 
 

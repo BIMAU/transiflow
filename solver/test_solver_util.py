@@ -71,8 +71,50 @@ def test_inv_ordering(nx,ny,dof):
         assert not wrong@wrong
 
 
+def test_StokesDD_sd_ordering_is_z():
+    nx=7
+    ny=11
+    sx=4
+    sy=4
+    DD=StokesDD(nx,ny,sx,sy)
+
+    assert DD.num_sd_x == 2
+    assert DD.num_sd_y == 3
+
+    assert DD.subdomain_coordinates(0) == (0,0)
+    assert(DD.Zsd[0,0]==0)
+    assert DD.subdomain_coordinates(1) == (1,0)
+    assert(DD.Zsd[1,0]==1)
+    assert DD.subdomain_coordinates(2) == (0,1)
+    assert(DD.Zsd[0,1]==2)
+    assert DD.subdomain_coordinates(3) == (1,1)
+    assert(DD.Zsd[1,1]==3)
+    assert DD.subdomain_coordinates(4) == (0,2)
+    assert(DD.Zsd[0,2]==4)
+    assert DD.subdomain_coordinates(5) == (1,2)
+    assert(DD.Zsd[1,2]==5)
+
+
+def test_StokesDD_cell_ordering_is_z():
+    nx=7
+    ny=11
+    sx=4
+    sy=4
+    DD=StokesDD(nx,ny,sx,sy)
+
+    assert DD.cell_coordinates(0) == (0,0)
+    assert(DD.Z[0,0]==0)
+    assert DD.cell_coordinates(1) == (1,0)
+    assert(DD.Z[1,0]==1)
+    assert DD.cell_coordinates(2) == (0,1)
+    assert(DD.Z[0,1]==2)
+    assert DD.cell_coordinates(3) == (1,1)
+    assert(DD.Z[1,1]==3)
+
 if __name__ == '__main__':
     test_z_order_2x2_1()
     test_z_order_2x2_2()
     test_z_order_2x4_1()
     test_z_order_4x2_1()
+    test_StokesDD_sd_ordering_is_z()
+    test_StokesDD_cell_ordering_is_z()
