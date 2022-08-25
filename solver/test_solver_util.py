@@ -26,6 +26,31 @@ testdata = ( (1,1,1), \
              (9,5,2), \
              (9,5,6) )
 
+def test_z_order_2x2_1():
+    z_idx = get_z_ordering(2,2,dof=1)
+    wrong = abs(z_idx - [range(4)])
+    assert not max(wrong)[0]
+
+def test_z_order_2x2_2():
+    z_idx = get_z_ordering(2,2,dof=2)
+    wrong = abs(z_idx - range(8))
+    assert not max(wrong)
+
+def test_z_order_4x2_1():
+    z_idx = get_z_ordering(4,2,dof=1)
+    wrong = abs(z_idx - [0,1,4,5,2,3,6,7])
+    assert not max(wrong)
+
+def test_z_order_2x4_1():
+    z_idx = get_z_ordering(2,4,dof=1)
+    wrong = abs(z_idx - range(8))
+    assert not max(wrong)
+
+def test_z_order_3x3_1():
+    z_idx = get_z_ordering(3,3,dof=1)
+    wrong = abs(z_idx - [0,1,3,4,2,5,6,7,8])
+    assert not max(wrong)
+
 @pytest.mark.parametrize("nx,ny,dof", testdata)
 def test_z_ordering_1_to_1(nx,ny,dof):
 
@@ -45,3 +70,9 @@ def test_inv_ordering(nx,ny,dof):
         wrong = x - x[z_idx][z_inv]
         assert not wrong@wrong
 
+
+if __name__ == '__main__':
+    test_z_order_2x2_1()
+    test_z_order_2x2_2()
+    test_z_order_2x4_1()
+    test_z_order_4x2_1()
