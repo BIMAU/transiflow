@@ -169,6 +169,8 @@ def froschlike_stokes_method(A, nx, ny, sx, sy, V0=None):
     # V has one column per separator group, and one for each pressure group
     k = DD.num_groups()
     V = scipy.sparse.csc_matrix( (valV, (rowV, colV)), shape=[N,k])
+    for j in range(k):
+        V[:,j] = V[:,j]/spla.norm(V[:,j])
 
     A_d=DeflatedOperator(A, V, V0)
     return M_as, A_d
