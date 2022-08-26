@@ -28,7 +28,7 @@ DD.plot_cgrid(i0b,'green',markersize=12, ax=axs[0], plotgrid=False)
 DD.plot_cgrid(i0c,'blue',markersize=9, ax=axs[0], plotgrid=False)
 DD.plot_cgrid(i0d,'yellow',markersize=6, ax=axs[0], plotgrid=False)
 
-DD.plot_cgrid([i1a,flatten(i2a),i3a],['white','red','yellow'],markersize=[12,12,9], title='groups',ax=axs[1], plotgrid=True)
+DD.plot_cgrid([i1a,flatten(i2a),i3a],['white','red','yellow'],markersize=[15,15,12], title='groups',ax=axs[1], plotgrid=True, plotindices=True)
 
 
 print(i0a)
@@ -37,4 +37,4 @@ print(i0b)
 
 axs[0].set_aspect('equal', adjustable='box')
 axs[1].set_aspect('equal', adjustable='box')
-plt.plot()
+plt.show()

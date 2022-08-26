@@ -9,7 +9,7 @@ from fvm import plot_utils
 from fvm import utils
 
 from solver_util import *
-from preconditioners import AdditiveSchwarz
+from preconditioners import *
 from deflation import *
 from numpy.linalg import norm
 
@@ -123,11 +123,20 @@ def main(nx, sx, plot_matrices=False):
     x, flag, it = dpcg(A_d0, rhs, x0, tol, maxiter=maxit)
     report('P0Ax=P0b (cg)',x,it);
 
-#  % deflated and preconditioned method
+#   # deflated and preconditioned method
     x, flag, it = dgmres(A_d, rhs, x0, tol, maxiter=maxit, restart=maxbas, M=M_bj)
     report('M\\PAx=M\\Pb (gmres)',x,it);
 
+    #2-level Schwarz method
+    M_as, A_d = build_stokes_preconditioner(A, nx, ny, sx, sy)
+
+    x, flag, it = dgmres(A_d, rhs, x0, tol, maxiter=maxit, restart=maxbas)
+    report('GDSW deflation (gmres)',x,it);
+
+    x, flag, it = dgmres(A_d, rhs, x0, tol, maxiter=maxit, restart=maxbas, M=M_as)
+    report('2-level Schwarz/GDSW (gmres)',x,it);
+
 if __name__ == '__main__':
 
-    for nx in [16, 32, 64]:
-        main(nx, 4, False)
+    for nx in [8,16, 32, 64]:
+        main(nx, 2, False)

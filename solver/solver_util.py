@@ -191,21 +191,13 @@ class StokesDD:
     '''
     Assuming a 2D Stokes equation on an nx x ny C-grid,
     and a subdomain size of sx*sy cells per subdomain,
-    and z-curve ordering, this function returns i1, i2 and i3
-    such that
-    A(i1,i1) represents interior variables of the subdomain,
-    and the i2 variables are the velocity separators. i3 are
-    the pressure indices, i3 is a subset of i1.
-
-    The intended use of these arrays is that
-
-    V2  with V2[i2,sd]=v2 is a partition of unity of the velocity separators of the domain,
-    and V1 = A11\(A12 V2) is the 'harmonic extension' to the interior variables.
-    V3 with
+    and z-curve ordering, this class offers utility functions
+    for creating and visualizing interior/separator/... orderings
+    that can be used to define preconditioning operations.
     '''
-
     def __init__(self, nx, ny, sx, sy):
         '''
+        Create StokesDD object for a 2D nx x ny domain and subdomain size of sx x sy.
         '''
         self.dim=2
         self.dof=3
@@ -339,7 +331,7 @@ class StokesDD:
 
     def indices(self, sd):
         '''
-        For subdomain 'sd' (0<=sd<=self.num_subdomains),
+        For subdomain 'sd' (0<=sd<=self.num_subdomains()),
         returns idx0, idx1, idx2  and idx3 such that, if A is the Jacobian of a 'Stokes-like' problem
         on a C-grid, 
 
