@@ -307,7 +307,7 @@ class StokesDD:
         return self.num_sd_x*self.num_sd_y
 
 
-    def get_group_id(index_list):
+    def get_group_id(self, index_list):
         '''
         Given a list of cell indices, returns
         a group index. If the particular group
@@ -325,9 +325,11 @@ class StokesDD:
           will give the same group ID, but [1,2,3,4] will
           receive a new one.
         '''
-        key = tuple(index_list.sorted())
-        self.group_ID.setdefault(self.num_subdomains()+len(self.group_ID))
-        return self.group_ID[key]
+        key = tuple(sorted(index_list))
+        try:
+            grp_id = self.group_ID[key]
+        except(KeyError):
+            self.group_ID[key] = self.num_subdomains()+len(self.group_ID)
 
     def indices(self, sd):
         '''
@@ -409,7 +411,6 @@ class StokesDD:
         idx1 += list((1+self.dof*self.Z[range(irng[0],irng[-1]),:][:,range(jrng[0],jrng[-1])]).flat)
         # pressure
         idx3 = list((2+self.dof*self.Z[irng,:][:,jrng]).flat)
-        idx1 += idx3
 
         # last row and column of u's / v's are either separator velocities or interior
         idx2 = []

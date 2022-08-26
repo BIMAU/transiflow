@@ -123,8 +123,8 @@ def build_stokes_preconditioner(A, nx, ny, sx, sy, V0=None):
     idx0 = [] # overlapping subdomains
 
     valV  = numpy.zeros(N)
-    rowsV = numpy.array(range(N),dtype='int')
-    colsV = numpy.zeros(N,dtype='int')
+    rowV = numpy.array(range(N),dtype='int')
+    colV = numpy.zeros(N,dtype='int')
 
     for sd in range(DD.num_subdomains()):
         i0, i1, i2, i3 = DD.indices(sd)
