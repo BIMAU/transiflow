@@ -40,7 +40,6 @@ def main(nx, sx, plot_matrices=False):
     maxit=4000
     maxbas=250
 
-    print('%16s\titer\tresidual\terror (error orth V0)'%('label'))
     def report(label,x,iter):
         err=x-xex
         err_u = norm(err[range(0,N,3)])
@@ -53,18 +52,17 @@ def main(nx, sx, plot_matrices=False):
         #print('V0^Txex = '+str(V0.T@xex))
         #print('V0^Tx   = '+str(V0.T@x))
 
-    def count_iter(xj):
-        nonlocal it
-        it += 1
-
     #2-level Schwarz method
-    M_as, A_d = build_stokes_preconditioner(A, nx, ny, sx, sy)
+    M_as, A_d = froschlike_stokes_method(A, nx, ny, sx, sy)
+
+
+    print('%16s\titer\tresidual\terror (error orth V0)'%('label'))
 
     x, flag, it = dgmres(A_d, rhs, x0, tol, maxiter=maxit, restart=maxbas)
     report('GDSW deflation (gmres)',x,it);
 
     x, flag, it = dgmres(A_d, rhs, x0, tol, maxiter=maxit, restart=maxbas, M=M_as)
-    report('2-level Schwarz/GDSW (gmres)',x,it);
+    report('FROSch-like    (gmres)',x,it);
 
 if __name__ == '__main__':
 

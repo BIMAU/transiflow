@@ -1,5 +1,6 @@
 import numpy
 import scipy
+from math import sqrt
 import sys
 
 import scipy.sparse.linalg as spla
@@ -106,9 +107,9 @@ class AdditiveSchwarz(spla.LinearOperator):
 
 
 
-def build_stokes_preconditioner(A, nx, ny, sx, sy, V0=None):
+def froschlike_stokes_method(A, nx, ny, sx, sy, V0=None):
     '''
-    M, A_d = build_stokes_preconditioner(nx,ny,sx,sy)
+    M, A_d = froschlike_stokes_method(nx,ny,sx,sy)
 
     will create an Additive Schwarz preconditioner M with minimal overlap,
     and a GDSW-type deflated operator A_d to be used with solvers like
@@ -149,10 +150,9 @@ def build_stokes_preconditioner(A, nx, ny, sx, sy, V0=None):
             breakpoint()
             raise Exception('singular interior matrix A11 encountered')
 
-        valV[i1] = 0
-        colV[i1] = sd
-
-        for sep_nodes in i2:
+        # add velocity separators (i2) and pressure group (i3)
+        # to V2, and compute V1 = A11\(A12*V2)
+        for sep_nodes in i2+[i3]:
             l = len(sep_nodes)
             sep_id = DD.get_group_id(sep_nodes)
             A12 = A[i1,:][:,sep_nodes]
@@ -161,12 +161,14 @@ def build_stokes_preconditioner(A, nx, ny, sx, sy, V0=None):
             colV[sep_nodes] = sep_id
             e1 = LU11.solve(A12 @ e2)
             valV[i1] += e1
+            colV[i1]  = sep_id
 
 
     # minimally overlapping Additive Schwarz preconditioner
     M_as=AdditiveSchwarz(A, idx0)
-
+    # V has one column per separator group, and one for each pressure group
+    k = DD.num_groups()
     V = scipy.sparse.csc_matrix( (valV, (rowV, colV)), shape=[N,k])
 
     A_d=DeflatedOperator(A, V, V0)
-    return M, A_d
+    return M_as, A_d

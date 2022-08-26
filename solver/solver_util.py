@@ -307,6 +307,17 @@ class StokesDD:
         return self.num_sd_x*self.num_sd_y
 
 
+    def num_groups(self):
+        '''
+        Return the number of distict groups (e.g. separators and pressure
+        per subdomain) registered in this object. Note that this value
+        is not precalculated by the constructor but taken
+        from the number of groups accessed via get_group_id(),
+        so you need to define the groups first by calling that function
+        for each group of nodes you want.
+        '''
+        return len(self.group_ID)
+
     def get_group_id(self, index_list):
         '''
         Given a list of cell indices, returns
@@ -316,8 +327,7 @@ class StokesDD:
 
         Group IDs
 
-        - start at self.num_subdomains() to make sure subdomain
-          interiors can be handled consistently as groups, too
+        - start at 0
         - are assigned incrementally, so two consecutive calls
           with new index sets give ids j and j+1, j>=num_subdomains()
         - are independent of the ordering of the unknowns,
@@ -329,7 +339,9 @@ class StokesDD:
         try:
             grp_id = self.group_ID[key]
         except(KeyError):
-            self.group_ID[key] = self.num_subdomains()+len(self.group_ID)
+            grp_id = len(self.group_ID)
+            self.group_ID[key] = grp_id
+        return grp_id
 
     def indices(self, sd):
         '''
@@ -425,7 +437,6 @@ class StokesDD:
         else:
             idx1 += last_u1[:]
             idx1 += last_v1[:]
-            print(idx1)
 
         if jc < self.num_sd_y-1:
             idx2.append(last_u2)

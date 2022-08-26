@@ -58,7 +58,7 @@ class DeflatedOperator(spla.LinearOperator):
         k = V.shape[1]
         ortho_err = spla.norm( (V.T @ V) - scipy.sparse.eye(k) )
         if ortho_err>1e-10:
-            raise Exception('input V to DeflatedOperator is not orthonormal: ||V^TV-I||=%g'%(ortho_err))
+            print('Warning: input V to DeflatedOperator is not orthonormal: ||V^TV-I||=%g'%(ortho_err))
         self.A = A
         self.V = V
         self.V0 = V0
