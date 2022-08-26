@@ -144,7 +144,8 @@ def build_stokes_preconditioner(A, nx, ny, sx, sy, V0=None):
         try:
             LU11 = spla.splu(A11, permc_spec='NATURAL', diag_pivot_thresh=0)
         except:
-            print('interior matrix %d is singular, going into debug mode'%(sd))
+            print('interior matrix A11 for subdomain %d is singular, going into debug mode'%(sd))
+            print('type e.g. print(A11.todense()) to see the matrix.')
             breakpoint()
             raise Exception('singular interior matrix A11 encountered')
 
