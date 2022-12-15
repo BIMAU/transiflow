@@ -82,7 +82,7 @@ def main():
     target = 10000
     x2, mu2 = continuation.continuation(x, 'Reynolds Number', mu, target, ds)
 
-    ke = utils.compute_volume_averaged_kinetic_energy(x, interface)
+    ke = utils.compute_volume_averaged_kinetic_energy(x2, interface)
 
     # Compute the unstable branch after the bifurcation
     parameters['Detect Bifurcation Points'] = False
