@@ -81,7 +81,7 @@ def main():
 
     # Now detect the bifurcation point
     ds = 1e8
-    target = 1e10
+    target = 3.5e9
     x2, mu2 = continuation.continuation(x, 'Rayleigh Number', mu, target, ds)
 
     ke = utils.compute_volume_averaged_kinetic_energy(x2, interface)
@@ -89,7 +89,6 @@ def main():
     # Compute the unstable branch after the bifurcation
     parameters['Detect Bifurcation Points'] = False
 
-    target = 4e9
     parameters['Newton Tolerance'] = 1e-4
     x3, mu3 = continuation.continuation(x2, 'Rayleigh Number', mu2, target, ds)
 
