@@ -1,5 +1,5 @@
 import sys
-import numpy
+import math
 
 from math import sqrt
 from fvm.utils import norm
@@ -159,7 +159,7 @@ class Continuation:
 
         ds *= factor
 
-        ds = numpy.sign(ds) * min(max(abs(ds), min_step_size), max_step_size)
+        ds = math.copysign(min(max(abs(ds), min_step_size), max_step_size), ds)
 
         if self.parameters.get('Verbose', False):
             print('New stepsize: ds=%e, factor=%e' % (ds, factor))
@@ -371,7 +371,7 @@ class Continuation:
                 eig = eigs[0]
                 enable_recycling = True
 
-                if eig_prev is not None and numpy.sign(eig.real) != numpy.sign(eig_prev.real):
+                if eig_prev is not None and eig.real * eig_prev.real < 0:
                     deig = eig - eig_prev
                     x, mu, v = self.detect_bifurcation(parameter_name, x, mu, dx, dmu, eig, deig, v, ds, maxit)
 
