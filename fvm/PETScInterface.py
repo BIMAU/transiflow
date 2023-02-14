@@ -2,6 +2,7 @@ import numpy
 from petsc4py import PETSc
 
 import fvm
+from fvm.ParallelBaseInterface import Interface as ParallelBaseInterface
 
 
 class Vector(PETSc.Vec):
@@ -20,36 +21,7 @@ class Vector(PETSc.Vec):
         return (self.size,)
 
 
-def ind2sub(nx, ny, nz, idx, dof=1):
-    rem = idx
-    var = rem % dof
-    rem = rem // dof
-    i = rem % nx
-    rem = rem // nx
-    j = rem % ny
-    rem = rem // ny
-    k = rem % nz
-    return (i, j, k, var)
-
-
-def sub2ind(nx, ny, nz, dof, i, j, k, var):
-    return ((k * ny + j) * nx + i) * dof + var
-
-
-def set_default_parameter(parameterlist, name, value):
-    if name not in parameterlist:
-        parameterlist[name] = value
-
-    return parameterlist[name]
-
-
-def get_local_coordinate_vector(x, nx_offset, nx_local):
-    x = numpy.roll(x, 2)
-    x = x[nx_offset : nx_offset + nx_local + 3]
-    return numpy.roll(x, -2)
-
-
-class Interface(fvm.Interface):
+class Interface(ParallelBaseInterface):
     """This class defines an interface to the PETSc backend for the
     discretization. We use this so we can write higher level methods
     such as pseudo-arclength continuation without knowing anything
@@ -62,18 +34,9 @@ class Interface(fvm.Interface):
     over multiple processors if MPI is used to run the application."""
 
     def __init__(self, comm, parameters, nx, ny, nz, dim, dof):
-        fvm.Interface.__init__(self, parameters, nx, ny, nz, dim, dof)
+        super().__init__(comm, parameters, nx, ny, nz, dim, dof)
 
         self.jac = None
-
-        self.nx_global = nx
-        self.ny_global = ny
-        self.nz_global = nz
-        self.dof = dof
-
-        self.comm = comm
-
-        self.parameters = parameters
 
     def rhs(self, state):
         """Right-hand side in M * du / dt = F(u) defined on the
