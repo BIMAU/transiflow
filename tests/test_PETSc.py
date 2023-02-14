@@ -3,6 +3,8 @@ import os
 import numpy
 import pytest
 
+from fvm import Continuation, utils
+
 
 def read_matrix(fname):
     from petsc4py import PETSc
@@ -103,3 +105,56 @@ def test_ldc():
     for i in range(n):
         print(i, rhs[i], rhs_B[i])
         assert rhs_B[i] == pytest.approx(rhs[i])
+
+
+def test_norm():
+    try:
+        from fvm import PETScInterface
+    except ImportError:
+        pytest.skip("PETSc not found")
+
+    nx = 4
+    ny = nx
+    nz = nx
+    dof = 4
+    n = nx * ny * nz * dof
+
+    state = numpy.zeros(n)
+    for i in range(n):
+        state[i] = i + 1
+
+    state_dist = PETScInterface.Vector.from_array(state)
+    assert utils.norm(state) == utils.norm(state_dist)
+
+
+def test_PETSc(nx=4):
+    try:
+        from mpi4py import MPI
+
+        from fvm import PETScInterface
+    except ImportError:
+        pytest.skip("PETSc not found")
+
+    numpy.random.seed(1234)
+
+    dim = 3
+    dof = 4
+    ny = nx
+    nz = nx
+    parameters = {"Reynolds Number": 0}
+
+    comm = MPI.COMM_WORLD
+    interface = PETScInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+
+    continuation = Continuation(interface, parameters)
+
+    n = nx * ny * nz * dof
+    x0 = PETScInterface.Vector().createMPI(n, comm=comm)
+    x0 = continuation.newton(x0)
+
+    start = 0
+    target = 2000
+    ds = 100
+    x = continuation.continuation(x0, "Reynolds Number", start, target, ds)[0]
+
+    assert utils.norm(x) > 0

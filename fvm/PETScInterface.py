@@ -1,6 +1,3 @@
-import os
-import sys
-
 import numpy
 from petsc4py import PETSc
 
@@ -12,11 +9,15 @@ class Vector(PETSc.Vec):
 
     @staticmethod
     def from_array(x):
-        vec = PETSc.Vec().createSeq(len(x))
+        vec = Vector().createMPI(len(x))
         vec.setArray(x)
         return vec
 
     size = property(PETSc.Vec.getSize)
+
+    @property
+    def shape(self):
+        return (self.size,)
 
 
 def ind2sub(nx, ny, nz, idx, dof=1):
@@ -72,18 +73,7 @@ class Interface(fvm.Interface):
 
         self.comm = comm
 
-        self._original_stdout = sys.stdout
-        if self.comm.rank != 0:
-            self.debug_print("PID %d: Disable output to stdout" % self.comm.rank)
-            sys.stdout = open(os.devnull, "w")
-
         self.parameters = parameters
-
-    def __del__(self):
-        if self.comm.rank != 0:
-            sys.stdout.close()
-            sys.stdout = self._original_stdout
-            self.debug_print("PID %d: Re-enable output to stdout" % self.comm.rank)
 
     def rhs(self, state):
         """Right-hand side in M * du / dt = F(u) defined on the
@@ -104,7 +94,7 @@ class Interface(fvm.Interface):
             self.jac = PETSc.Mat().createAIJ((state.size, state.size), comm=self.comm)
             self.jac.setUp()
         else:
-            self.jac.zerosEntries()
+            self.jac.zeroEntries()
 
         self.jac.setValuesCSR(
             numpy.array(local_jac.begA, dtype=numpy.int32),
@@ -128,10 +118,12 @@ class Interface(fvm.Interface):
         ksp.setType("preonly")
         pc = ksp.getPC()
         pc.setType("lu")
+        pc.setFactorSolverType("mumps")
+
         ksp.setFromOptions()
 
         ksp.setOperators(jac)
-        x = Vector(rhs)
+        x = rhs.copy()
 
         ksp.solve(rhs, x)
         return x
