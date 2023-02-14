@@ -69,7 +69,7 @@ def get_local_coordinate_vector(x, nx_offset, nx_local):
     return numpy.roll(x, -2)
 
 
-class EpetraInterface(fvm.Interface):
+class Interface(fvm.Interface):
     '''This class defines an interface to the Epetra backend for the
     discretization. We use this so we can write higher level methods
     such as pseudo-arclength continuation without knowing anything

@@ -6,7 +6,7 @@ import sys
 import os
 
 from fvm.EpetraInterface import Vector
-from fvm.EpetraInterface import EpetraInterface
+from fvm.EpetraInterface import Interface as EpetraInterface
 
 import HYMLS
 
