@@ -1,2 +1,6 @@
 [build-system]
 requires = ["setuptools", "wheel"]
+[tool.black]
+line-length = 96
+[tool.yapf]
+column_limit = 96
