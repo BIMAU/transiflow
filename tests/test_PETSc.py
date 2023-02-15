@@ -56,8 +56,6 @@ def extract_sorted_row(A, i):
 
 def test_ldc():
     try:
-        from mpi4py import MPI
-
         from fvm.interface import PETSc as PETScInterface
     except ImportError:
         pytest.skip("PETSc not found")
@@ -74,8 +72,7 @@ def test_ldc():
     for i in range(n):
         state[i] = i + 1
 
-    comm = MPI.COMM_WORLD
-    interface = PETScInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof)
 
     state = PETScInterface.Vector.from_array(state)
 
@@ -129,8 +126,6 @@ def test_norm():
 
 def test_PETSc(nx=4):
     try:
-        from mpi4py import MPI
-
         from fvm.interface import PETSc as PETScInterface
     except ImportError:
         pytest.skip("PETSc not found")
@@ -143,13 +138,12 @@ def test_PETSc(nx=4):
     nz = nx
     parameters = {"Reynolds Number": 0}
 
-    comm = MPI.COMM_WORLD
-    interface = PETScInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof)
 
     continuation = Continuation(interface, parameters)
 
     n = nx * ny * nz * dof
-    x0 = PETScInterface.Vector().createMPI(n, comm=comm)
+    x0 = PETScInterface.Vector().createMPI(n)
     x0 = continuation.newton(x0)
 
     start = 0
