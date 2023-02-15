@@ -4,8 +4,10 @@ import pytest
 from fvm import TimeIntegration
 from fvm import Continuation
 from fvm import plot_utils
-from fvm import Interface
 from fvm import utils
+
+from fvm.interface.SciPy import Interface
+
 
 def test_continuation(nx=4, interactive=False):
     numpy.random.seed(1234)

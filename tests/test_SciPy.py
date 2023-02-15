@@ -1,6 +1,7 @@
 import numpy
 
-from fvm import Interface
+from fvm.interface.SciPy import Interface
+
 
 def test_solve(nx=4):
     dim = 3

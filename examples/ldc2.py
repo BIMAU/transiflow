@@ -1,11 +1,13 @@
+
 import numpy
 
 import matplotlib.pyplot as plt
 
 from fvm import Continuation
-from fvm import Interface
 from fvm import plot_utils
 from fvm import utils
+
+from fvm.interface.SciPy import Interface
 
 
 class Data:
