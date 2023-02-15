@@ -1,5 +1,7 @@
 import numpy
+
 from petsc4py import PETSc
+from mpi4py import MPI
 
 import fvm
 
@@ -34,7 +36,7 @@ class Interface(ParallelBaseInterface):
     with the C-grid discretization. The subdomains will be distributed
     over multiple processors if MPI is used to run the application."""
 
-    def __init__(self, comm, parameters, nx, ny, nz, dim, dof):
+    def __init__(self, parameters, nx, ny, nz, dim, dof, comm=MPI.COMM_WORLD):
         super().__init__(comm, parameters, nx, ny, nz, dim, dof)
 
         self.jac = None
