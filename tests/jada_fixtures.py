@@ -14,7 +14,7 @@ from fvm.interface.SciPy import Interface
 @pytest.fixture(autouse=True, scope='module')
 def import_test():
     try:
-        from fvm import JadaInterface # noqa: F401
+        from fvm.interface import JaDa # noqa: F401
     except ImportError:
         pytest.skip('jadapy not found')
 
@@ -74,10 +74,10 @@ def check_eigenvalues(A_op, B_op, eigs, v, num_evs, tol):
 
 @pytest.fixture(scope='module')
 def arpack_eigs(numpy_interface, numpy_x, num_evs, tol, atol):
-    from fvm import JadaInterface
+    from fvm.interface import JaDa
 
-    A_op = JadaInterface.JadaOp(numpy_interface.jacobian(numpy_x))
-    B_op = JadaInterface.JadaOp(numpy_interface.mass_matrix())
+    A_op = JaDa.Op(numpy_interface.jacobian(numpy_x))
+    B_op = JaDa.Op(numpy_interface.mass_matrix())
 
     # A_mat = A_op.mat.todense()
     # B_mat = B_op.mat.todense()

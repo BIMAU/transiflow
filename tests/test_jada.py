@@ -12,7 +12,7 @@ from tests.jada_fixtures import check_eigenvalues
 @pytest.fixture(autouse=True, scope='module')
 def import_test():
     try:
-        from fvm import JadaInterface # noqa: F401
+        from fvm.interface import JaDa # noqa: F401
     except ImportError:
         pytest.skip('jadapy not found')
 
@@ -41,14 +41,14 @@ def check_divfree(discretization, state):
             assert abs(x[i]) < 1e-14
 
 def test_solve(interface, x, tol):
-    from fvm import JadaInterface
+    from fvm.interface import JaDa
     from jadapy.utils import norm
 
     numpy.random.seed(1234)
 
-    jac_op = JadaInterface.JadaOp(interface.jacobian(x))
-    mass_op = JadaInterface.JadaOp(interface.mass_matrix())
-    jada_interface = JadaInterface.JadaInterface(interface, jac_op, mass_op, len(x), preconditioned_solve=True)
+    jac_op = JaDa.Op(interface.jacobian(x))
+    mass_op = JaDa.Op(interface.mass_matrix())
+    jada_interface = JaDa.Interface(interface, jac_op, mass_op, len(x), preconditioned_solve=True)
 
     assert norm(x) > tol
 
@@ -67,7 +67,7 @@ def test_solve(interface, x, tol):
     assert norm(r) / norm(b) < tol
 
 def test_shifted_solve(interface, x, tol):
-    from fvm import JadaInterface
+    from fvm.interface import JaDa
     from jadapy.utils import norm
 
     numpy.random.seed(1234)
@@ -75,13 +75,13 @@ def test_shifted_solve(interface, x, tol):
     check_divfree(interface.discretization, x)
     assert norm(x) > tol
 
-    jac_op = JadaInterface.JadaOp(interface.jacobian(x))
-    mass_op = JadaInterface.JadaOp(interface.mass_matrix())
+    jac_op = JaDa.Op(interface.jacobian(x))
+    mass_op = JaDa.Op(interface.mass_matrix())
 
     b = numpy.zeros((x.shape[0], 1))
     b[:, 0] = x
 
-    jada_interface = JadaInterface.JadaInterface(interface, jac_op, mass_op, len(x), preconditioned_solve=True)
+    jada_interface = JaDa.Interface(interface, jac_op, mass_op, len(x), preconditioned_solve=True)
 
     op = Operator(jac_op, mass_op, 1, 2)
     x = jada_interface.solve(op, b, tol, maxit=1)
@@ -92,7 +92,7 @@ def test_shifted_solve(interface, x, tol):
     assert norm(x) > tol
     assert norm(r) / norm(b) > tol
 
-    jada_interface = JadaInterface.JadaInterface(interface, jac_op, mass_op, len(x), preconditioned_solve=True, shifted=True)
+    jada_interface = JaDa.Interface(interface, jac_op, mass_op, len(x), preconditioned_solve=True, shifted=True)
 
     op = Operator(jac_op, mass_op, 1, 2)
     x = jada_interface.solve(op, b, tol, maxit=1)
@@ -104,13 +104,13 @@ def test_shifted_solve(interface, x, tol):
     assert norm(r) / norm(b) < tol
 
 def test_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
-    from fvm import JadaInterface
+    from fvm.interface import JaDa
     from jadapy import jdqz
 
     numpy.random.seed(1234)
 
-    jac_op = JadaInterface.JadaOp(interface.jacobian(x))
-    mass_op = JadaInterface.JadaOp(interface.mass_matrix())
+    jac_op = JaDa.Op(interface.jacobian(x))
+    mass_op = JaDa.Op(interface.mass_matrix())
 
     alpha, beta = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[20, 40])
     jdqz_eigs = numpy.array(sorted(alpha / beta, key=lambda x: abs(x)))
@@ -127,13 +127,13 @@ def test_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
     plt.show()
 
 def test_complex_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
-    from fvm import JadaInterface
+    from fvm.interface import JaDa
     from jadapy import jdqz
 
     numpy.random.seed(1234)
 
-    jac_op = JadaInterface.JadaOp(interface.jacobian(x))
-    mass_op = JadaInterface.JadaOp(interface.mass_matrix())
+    jac_op = JaDa.Op(interface.jacobian(x))
+    mass_op = JaDa.Op(interface.mass_matrix())
 
     alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
                                arithmetic='complex', return_eigenvectors=True)
@@ -152,14 +152,14 @@ def test_complex_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=F
     plt.show()
 
 def test_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
-    from fvm import JadaInterface
+    from fvm.interface import JaDa
     from jadapy import jdqz
 
     numpy.random.seed(1234)
 
-    jac_op = JadaInterface.JadaOp(interface.jacobian(x))
-    mass_op = JadaInterface.JadaOp(interface.mass_matrix())
-    jada_interface = JadaInterface.JadaInterface(interface, jac_op, mass_op, len(x))
+    jac_op = JaDa.Op(interface.jacobian(x))
+    mass_op = JaDa.Op(interface.mass_matrix())
+    jada_interface = JaDa.Interface(interface, jac_op, mass_op, len(x))
 
     alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
                                return_eigenvectors=True, prec=jada_interface.prec)
@@ -178,14 +178,14 @@ def test_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=Fals
     plt.show()
 
 def test_complex_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
-    from fvm import JadaInterface
+    from fvm.interface import JaDa
     from jadapy import jdqz
 
     numpy.random.seed(1234)
 
-    jac_op = JadaInterface.JadaOp(interface.jacobian(x))
-    mass_op = JadaInterface.JadaOp(interface.mass_matrix())
-    jada_interface = JadaInterface.JadaInterface(interface, jac_op, mass_op, len(x), numpy.complex128)
+    jac_op = JaDa.Op(interface.jacobian(x))
+    mass_op = JaDa.Op(interface.mass_matrix())
+    jada_interface = JaDa.Interface(interface, jac_op, mass_op, len(x), numpy.complex128)
 
     alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
                                arithmetic='complex', return_eigenvectors=True, prec=jada_interface.prec)
@@ -204,14 +204,14 @@ def test_complex_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interact
     plt.show()
 
 def test_complex_shifted_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
-    from fvm import JadaInterface
+    from fvm.interface import JaDa
     from jadapy import jdqz
 
     numpy.random.seed(1234)
 
-    jac_op = JadaInterface.JadaOp(interface.jacobian(x))
-    mass_op = JadaInterface.JadaOp(interface.mass_matrix())
-    jada_interface = JadaInterface.JadaInterface(interface, jac_op, mass_op, len(x), numpy.complex128)
+    jac_op = JaDa.Op(interface.jacobian(x))
+    mass_op = JaDa.Op(interface.mass_matrix())
+    jada_interface = JaDa.Interface(interface, jac_op, mass_op, len(x), numpy.complex128)
 
     alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
                                arithmetic='complex', return_eigenvectors=True, prec=jada_interface.shifted_prec)
@@ -230,14 +230,14 @@ def test_complex_shifted_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, 
     plt.show()
 
 def test_complex_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
-    from fvm import JadaInterface
+    from fvm.interface import JaDa
     from jadapy import jdqz
 
     numpy.random.seed(1234)
 
-    jac_op = JadaInterface.JadaOp(interface.jacobian(x))
-    mass_op = JadaInterface.JadaOp(interface.mass_matrix())
-    jada_interface = JadaInterface.JadaInterface(interface, jac_op, mass_op, len(x), numpy.complex128)
+    jac_op = JaDa.Op(interface.jacobian(x))
+    mass_op = JaDa.Op(interface.mass_matrix())
+    jada_interface = JaDa.Interface(interface, jac_op, mass_op, len(x), numpy.complex128)
 
     assert not jada_interface.preconditioned_solve
     assert not jada_interface.shifted
@@ -259,14 +259,14 @@ def test_complex_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, interac
     plt.show()
 
 def test_complex_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
-    from fvm import JadaInterface
+    from fvm.interface import JaDa
     from jadapy import jdqz
 
     numpy.random.seed(1234)
 
-    jac_op = JadaInterface.JadaOp(interface.jacobian(x))
-    mass_op = JadaInterface.JadaOp(interface.mass_matrix())
-    jada_interface = JadaInterface.JadaInterface(interface, jac_op, mass_op, len(x), numpy.complex128,
+    jac_op = JaDa.Op(interface.jacobian(x))
+    mass_op = JaDa.Op(interface.mass_matrix())
+    jada_interface = JaDa.Interface(interface, jac_op, mass_op, len(x), numpy.complex128,
                                                  preconditioned_solve=True)
 
     assert jada_interface.preconditioned_solve
@@ -289,14 +289,14 @@ def test_complex_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, in
     plt.show()
 
 def test_complex_shifted_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
-    from fvm import JadaInterface
+    from fvm.interface import JaDa
     from jadapy import jdqz
 
     numpy.random.seed(1234)
 
-    jac_op = JadaInterface.JadaOp(interface.jacobian(x))
-    mass_op = JadaInterface.JadaOp(interface.mass_matrix())
-    jada_interface = JadaInterface.JadaInterface(interface, jac_op, mass_op, len(x), numpy.complex128,
+    jac_op = JaDa.Op(interface.jacobian(x))
+    mass_op = JaDa.Op(interface.mass_matrix())
+    jada_interface = JaDa.Interface(interface, jac_op, mass_op, len(x), numpy.complex128,
                                                  preconditioned_solve=True, shifted=True)
 
     assert jada_interface.preconditioned_solve
@@ -319,14 +319,14 @@ def test_complex_shifted_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, 
     plt.show()
 
 def test_complex_shifted_prec_bordered_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
-    from fvm import JadaInterface
+    from fvm.interface import JaDa
     from jadapy import jdqz
 
     numpy.random.seed(1234)
 
-    jac_op = JadaInterface.JadaOp(interface.jacobian(x))
-    mass_op = JadaInterface.JadaOp(interface.mass_matrix())
-    jada_interface = JadaInterface.BorderedJadaInterface(interface, jac_op, mass_op, len(x), numpy.complex128)
+    jac_op = JaDa.Op(interface.jacobian(x))
+    mass_op = JaDa.Op(interface.mass_matrix())
+    jada_interface = JaDa.BorderedInterface(interface, jac_op, mass_op, len(x), numpy.complex128)
 
     alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
                                arithmetic='complex', return_eigenvectors=True, interface=jada_interface)

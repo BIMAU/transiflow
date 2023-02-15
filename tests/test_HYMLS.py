@@ -627,7 +627,7 @@ def test_HYMLS_rayleigh_benard(nx=8):
         pytest.skip("HYMLS not found")
 
     try:
-        from fvm import JadaInterface # noqa: F401
+        from fvm.interface import JaDa # noqa: F401
     except ImportError:
         pytest.skip('jadapy not found')
 
@@ -680,7 +680,7 @@ def test_HYMLS_double_gyre(nx=8):
         pytest.skip("HYMLS not found")
 
     try:
-        from fvm import JadaInterface # noqa: F401
+        from fvm.interface import JaDa # noqa: F401
     except ImportError:
         pytest.skip('jadapy not found')
 

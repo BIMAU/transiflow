@@ -22,7 +22,7 @@ def _get_scalars(alpha, beta):
 
     return alpha, beta
 
-class JadaOp:
+class Op:
     def __init__(self, mat):
         self.fvm_mat = mat
         self.mat = sparse.csr_matrix((mat.coA, mat.jcoA, mat.begA), shape=(mat.n, mat.n))
@@ -97,7 +97,7 @@ class MatrixCache:
 
         return shifted_matrix
 
-class JadaPrecOp(object):
+class PrecOp(object):
     def __init__(self, op, prec_op):
         self.op = op
         self.prec_op = prec_op
@@ -108,7 +108,7 @@ class JadaPrecOp(object):
     def matvec(self, x):
         return self.op.proj(self.prec_op(x, self.op.alpha, self.op.beta))
 
-class JadaInterface(NumPyInterface.NumPyInterface):
+class Interface(NumPyInterface.NumPyInterface):
     def __init__(self, interface, jac_op, mass_op, *args, **kwargs):
         super().__init__(*args)
         self.interface = interface
@@ -131,9 +131,9 @@ class JadaInterface(NumPyInterface.NumPyInterface):
         prec_op = None
         if self.preconditioned_solve:
             if self.shifted:
-                prec_op = JadaPrecOp(op, self.shifted_prec)
+                prec_op = PrecOp(op, self.shifted_prec)
             else:
-                prec_op = JadaPrecOp(op, self.prec)
+                prec_op = PrecOp(op, self.prec)
 
         out = x.copy()
         for i in range(x.shape[1]):
@@ -154,7 +154,7 @@ class JadaInterface(NumPyInterface.NumPyInterface):
         shifted_matrix = self._matrix_cache.get_shifted_matrix(alpha, beta)
         return self.interface.solve(shifted_matrix, x)
 
-class BorderedJadaPrecOp(object):
+class BorderedPrecOp(object):
     def __init__(self, interface, prec):
         self.interface = interface
         self.prec = prec
@@ -165,7 +165,7 @@ class BorderedJadaPrecOp(object):
     def matvec(self, x):
         return self.interface.solve(self.prec, x)
 
-class BorderedJadaInterface(NumPyInterface.NumPyInterface):
+class BorderedInterface(NumPyInterface.NumPyInterface):
     def __init__(self, interface, jac_op, mass_op, *args, **kwargs):
         super().__init__(*args)
         self.interface = interface
@@ -191,10 +191,10 @@ class BorderedJadaInterface(NumPyInterface.NumPyInterface):
         mat = beta * self.jac_op.mat - alpha * self.mass_op.mat
         shifted_matrix = CrsMatrix(mat.data, mat.indices, mat.indptr, False)
         shifted_bordered_matrix = self.interface.compute_bordered_matrix(shifted_matrix, op.Z, op.Q)
-        shifted_bordered_op = JadaOp(shifted_bordered_matrix)
+        shifted_bordered_op = Op(shifted_bordered_matrix)
 
         prec = self._matrix_cache.get_shifted_matrix(alpha, beta, shifted_bordered_matrix)
-        prec_op = BorderedJadaPrecOp(self.interface, prec)
+        prec_op = BorderedPrecOp(self.interface, prec)
 
         out = x.copy()
         for i in range(x.shape[1]):

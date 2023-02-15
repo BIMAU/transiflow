@@ -13,7 +13,7 @@ from tests.jada_fixtures import * # noqa: F401, F403
 @pytest.fixture(autouse=True, scope='module')
 def import_test():
     try:
-        from fvm import JadaInterface # noqa: F401
+        from fvm.interface import JaDa # noqa: F401
     except ImportError:
         pytest.skip('jadapy not found')
 
