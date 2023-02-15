@@ -1,8 +1,6 @@
 from PyTrilinos import Epetra
 from PyTrilinos import Amesos
 
-import fvm
-
 from fvm.interface.ParallelBaseInterface import Interface as ParallelBaseInterface
 
 
@@ -92,7 +90,7 @@ class Interface(ParallelBaseInterface):
         state_ass = Vector(self.assembly_map)
         state_ass.Import(state, self.assembly_importer, Epetra.Insert)
 
-        rhs = fvm.Interface.rhs(self, state_ass)
+        rhs = self.discretization.rhs(state_ass)
         rhs_ass = Vector(Epetra.Copy, self.assembly_map, rhs)
         rhs = Vector(self.map)
         rhs.Export(rhs_ass, self.assembly_importer, Epetra.Zero)
@@ -105,7 +103,7 @@ class Interface(ParallelBaseInterface):
         state_ass = Vector(self.assembly_map)
         state_ass.Import(state, self.assembly_importer, Epetra.Insert)
 
-        local_jac = fvm.Interface.jacobian(self, state_ass)
+        local_jac = self.discretization.jacobian(state_ass)
 
         if self.jac is None:
             self.jac = Epetra.FECrsMatrix(Epetra.Copy, self.solve_map, 27)
@@ -128,7 +126,7 @@ class Interface(ParallelBaseInterface):
         '''Mass matrix M in M * du / dt = F(u) defined on the
         domain map used by Epetra.'''
 
-        local_mass = fvm.Interface.mass_matrix(self)
+        local_mass = self.discretization.mass_matrix()
 
         if self.mass is None:
             self.mass = Epetra.FECrsMatrix(Epetra.Copy, self.solve_map, 1)
