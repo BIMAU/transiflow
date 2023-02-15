@@ -195,7 +195,7 @@ def test_continuation_time_integration(nx=4):
 
 def test_continuation_rayleigh_benard(nx=8):
     try:
-        from fvm import JadaInterface # noqa: F401
+        from fvm.interface import JaDa # noqa: F401
     except ImportError:
         pytest.skip('jadapy not found')
 
@@ -257,7 +257,7 @@ def test_continuation_rayleigh_benard(nx=8):
 
 def test_continuation_double_gyre(nx=8):
     try:
-        from fvm import JadaInterface # noqa: F401
+        from fvm.interface import JaDa # noqa: F401
     except ImportError:
         pytest.skip('jadapy not found')
 
@@ -298,7 +298,7 @@ def test_continuation_double_gyre(nx=8):
 
 def test_continuation_2D_tc(nx=8):
     try:
-        from fvm import JadaInterface # noqa: F401
+        from fvm.interface import JaDa # noqa: F401
     except ImportError:
         pytest.skip('jadapy not found')
 
