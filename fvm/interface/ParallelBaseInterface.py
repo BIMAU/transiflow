@@ -1,6 +1,6 @@
 import numpy
 
-import fvm
+from fvm.interface import BaseInterface
 
 
 def ind2sub(nx, ny, nz, idx, dof=1):
@@ -25,7 +25,7 @@ def get_local_coordinate_vector(x, nx_offset, nx_local):
     return numpy.roll(x, -2)
 
 
-class Interface(fvm.Interface):
+class Interface(BaseInterface):
     '''This class defines an interface to the Epetra backend for the
     discretization. We use this so we can write higher level methods
     such as pseudo-arclength continuation without knowing anything
@@ -37,7 +37,7 @@ class Interface(fvm.Interface):
     with the C-grid discretization. The subdomains will be distributed
     over multiple processors if MPI is used to run the application.'''
     def __init__(self, comm, parameters, nx, ny, nz, dim, dof):
-        fvm.Interface.__init__(self, parameters, nx, ny, nz, dim, dof)
+        BaseInterface.__init__(self, parameters, nx, ny, nz, dim, dof)
 
         self.nx_global = nx
         self.ny_global = ny
