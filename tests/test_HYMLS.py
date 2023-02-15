@@ -3,9 +3,11 @@ import numpy
 import os
 
 from fvm import Continuation
-from fvm import Interface
 from fvm import plot_utils
 from fvm import utils
+
+from fvm.interface import SciPy as SciPyInterface
+
 
 def gather(x):
     from PyTrilinos import Epetra
@@ -222,7 +224,7 @@ def test_ldc_stretched(nx=4):
     for i in range(n):
         state[i] = i+1
 
-    interface = Interface(parameters, nx, ny, nz, dim, dof)
+    interface = SciPyInterface.Interface(parameters, nx, ny, nz, dim, dof)
     B = interface.jacobian(state)
     rhs_B = interface.rhs(state)
 

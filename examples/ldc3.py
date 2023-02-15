@@ -3,8 +3,9 @@ import numpy
 import matplotlib.pyplot as plt
 
 from fvm import TimeIntegration
-from fvm import Interface
 from fvm import utils
+
+from fvm.interface.SciPy import Interface
 
 
 class Data:

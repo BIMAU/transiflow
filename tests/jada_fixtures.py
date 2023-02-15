@@ -7,7 +7,9 @@ from numpy.testing import assert_allclose
 from scipy import sparse
 
 from fvm import Continuation
-from fvm import Interface
+
+from fvm.interface.SciPy import Interface
+
 
 @pytest.fixture(autouse=True, scope='module')
 def import_test():

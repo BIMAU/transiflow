@@ -7,13 +7,13 @@ from fvm import CrsMatrix
 
 from fvm.interface import BaseInterface
 
+
 class Interface(BaseInterface):
-    '''This class defines an interface to the NumPy backend for the
+    '''This class defines an interface to the SciPy backend for the
     discretization. We use this so we can write higher level methods
     such as pseudo-arclength continuation without knowing anything
     about the underlying methods such as the solvers that are present
     in the backend we are interfacing with.'''
-
     def __init__(self, parameters, nx, ny, nz, dim, dof, x=None, y=None, z=None):
         super().__init__(parameters, nx, ny, nz, dim, dof, x, y, z)
 
@@ -49,27 +49,28 @@ class Interface(BaseInterface):
 
         # Fix one pressure node
         if self.dof > self.dim and self.pressure_row is not None:
-            self.debug_print('Fixing pressure at row %d of the Jacobian matrix' % self.pressure_row)
+            self.debug_print('Fixing pressure at row %d of the Jacobian matrix' %
+                             self.pressure_row)
 
             coA = numpy.zeros(jac.begA[-1] + 1, dtype=jac.coA.dtype)
             jcoA = numpy.zeros(jac.begA[-1] + 1, dtype=int)
             begA = numpy.zeros(len(jac.begA), dtype=int)
 
             idx = 0
-            for i in range(len(jac.begA)-1):
+            for i in range(len(jac.begA) - 1):
                 if i == self.pressure_row:
                     coA[idx] = -1.0
                     jcoA[idx] = i
                     idx += 1
-                    begA[i+1] = idx
+                    begA[i + 1] = idx
                     continue
-                for j in range(jac.begA[i], jac.begA[i+1]):
+                for j in range(jac.begA[i], jac.begA[i + 1]):
                     if jac.jcoA[j] != self.pressure_row:
                         coA[idx] = jac.coA[j]
                         jcoA[idx] = jac.jcoA[j]
                         idx += 1
 
-                begA[i+1] = idx
+                begA[i + 1] = idx
 
         # Convert the matrix to CSC format since splu expects that
         A = sparse.csr_matrix((coA, jcoA, begA)).tocsc()
@@ -81,13 +82,14 @@ class Interface(BaseInterface):
 
         # Cache the factorization for use in the iterative solver
         self._lu = jac.lu
-        self._prec = linalg.LinearOperator((jac.n, jac.n), matvec=self._lu.solve, dtype=jac.dtype)
+        self._prec = linalg.LinearOperator((jac.n, jac.n),
+                                           matvec=self._lu.solve,
+                                           dtype=jac.dtype)
 
         self.debug_print('Done computing the sparse LU factorization of the Jacobian matrix')
 
     def compute_bordered_matrix(self, jac, V, W=None, C=None, fix_pressure_row=False):
         '''Helper to compute a bordered matrix of the form [A, V; W', C]'''
-
         def _get_value(V, i, j):
             if not hasattr(V, 'shape') or len(V.shape) < 1:
                 return V
@@ -101,7 +103,9 @@ class Interface(BaseInterface):
             raise Exception('V is None')
 
         if fix_pressure_row:
-            self.debug_print('Fixing pressure at row %d of the Jacobian matrix and adding the border' % self.pressure_row)
+            self.debug_print(
+                'Fixing pressure at row %d of the Jacobian matrix and adding the border' %
+                self.pressure_row)
         else:
             self.debug_print('Adding the border to the Jacobian matrix')
 
@@ -127,10 +131,10 @@ class Interface(BaseInterface):
                 coA[idx] = -1.0
                 jcoA[idx] = i
                 idx += 1
-                begA[i+1] = idx
+                begA[i + 1] = idx
                 continue
 
-            for j in range(jac.begA[i], jac.begA[i+1]):
+            for j in range(jac.begA[i], jac.begA[i + 1]):
                 if not fix_pressure_row or jac.jcoA[j] != self.pressure_row:
                     coA[idx] = jac.coA[j]
                     jcoA[idx] = jac.jcoA[j]
@@ -141,7 +145,7 @@ class Interface(BaseInterface):
                 jcoA[idx] = jac.n + j
                 idx += 1
 
-            begA[i+1] = idx
+            begA[i + 1] = idx
 
         for i in range(border_size):
             for j in range(jac.n):
@@ -154,7 +158,7 @@ class Interface(BaseInterface):
                 jcoA[idx] = jac.n + j
                 idx += 1
 
-            begA[jac.n+1+i] = idx
+            begA[jac.n + 1 + i] = idx
 
         return CrsMatrix(coA, jcoA, begA, False)
 
@@ -171,16 +175,20 @@ class Interface(BaseInterface):
         # Convert the matrix to CSC format since splu expects that
         A = sparse.csr_matrix((A.coA, A.jcoA, A.begA)).tocsc()
 
-        self.debug_print('Computing the sparse LU factorization of the bordered Jacobian matrix')
+        self.debug_print(
+            'Computing the sparse LU factorization of the bordered Jacobian matrix')
 
         jac.lu = linalg.splu(A)
         jac.bordered_lu = True
 
         # Cache the factorization for use in the iterative solver
         self._lu = jac.lu
-        self._prec = linalg.LinearOperator((jac.n, jac.n), matvec=self._lu.solve, dtype=jac.dtype)
+        self._prec = linalg.LinearOperator((jac.n, jac.n),
+                                           matvec=self._lu.solve,
+                                           dtype=jac.dtype)
 
-        self.debug_print('Done computing the sparse LU factorization of the bordered Jacobian matrix')
+        self.debug_print(
+            'Done computing the sparse LU factorization of the bordered Jacobian matrix')
 
     def solve(self, jac, rhs, rhs2=None, V=None, W=None, C=None):
         '''Solve J y = x for y.'''
@@ -197,7 +205,13 @@ class Interface(BaseInterface):
         # direct solver as preconditioner
         if self._prec and jac.dtype == x.dtype and jac.dtype == self._prec.dtype and \
            self.parameters.get('Use Iterative Solver', False):
-            out, info = linalg.gmres(jac, x, restart=5, maxiter=1, tol=1e-8, atol=0, M=self._prec)
+            out, info = linalg.gmres(jac,
+                                     x,
+                                     restart=5,
+                                     maxiter=1,
+                                     tol=1e-8,
+                                     atol=0,
+                                     M=self._prec)
             if info == 0:
                 return out
 
@@ -259,5 +273,5 @@ class Interface(BaseInterface):
         if not self.parameters.get('Bordered Solver', False):
             prec = jada_interface.shifted_prec
 
-        return self._eigs(jada_interface, jac_op, mass_op, prec,
-                          state, return_eigenvectors, enable_recycling)
+        return self._eigs(jada_interface, jac_op, mass_op, prec, state, return_eigenvectors,
+                          enable_recycling)

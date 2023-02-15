@@ -1,7 +1,8 @@
 import numpy
 
 from fvm import Continuation
-from fvm import Interface
+
+from fvm.interface.SciPy import Interface
 
 from jadapy import jdqz
 
