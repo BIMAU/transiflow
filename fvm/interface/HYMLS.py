@@ -235,10 +235,10 @@ class Interface(EpetraInterface):
 
         if arithmetic == 'complex':
             from jadapy import ComplexEpetraInterface as EpetraInterface
-            from fvm.JadaHYMLSInterface import ComplexJadaHYMLSInterface as JadaHYMLSInterface
+            from fvm.interface.JaDaHYMLS import ComplexInterface as JaDaHYMLSInterface
         else:
             from jadapy import EpetraInterface
-            from fvm.JadaHYMLSInterface import BorderedJadaHYMLSInterface as JadaHYMLSInterface
+            from fvm.interface.JaDaHYMLS import BorderedInterface as JaDaHYMLSInterface
 
         jac_op = EpetraInterface.CrsMatrix(self.jacobian(state))
         mass_op = EpetraInterface.CrsMatrix(self.mass_matrix())
@@ -249,10 +249,10 @@ class Interface(EpetraInterface):
         self.scale_jacobian()
 
         if arithmetic == 'complex':
-            jada_interface = JadaHYMLSInterface(self)
+            jada_interface = JaDaHYMLSInterface(self)
             prec = jada_interface.prec
         else:
-            jada_interface = JadaHYMLSInterface(self, preconditioned_solve=True)
+            jada_interface = JaDaHYMLSInterface(self, preconditioned_solve=True)
             prec = None
 
         ret = self._eigs(jada_interface, jac_op, mass_op, prec,
