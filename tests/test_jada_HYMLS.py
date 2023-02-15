@@ -18,13 +18,13 @@ def import_test():
         pytest.skip('jadapy not found')
 
     try:
-        from fvm import HYMLSInterface # noqa: F401
+        from fvm.interface import HYMLS as HYMLSInterface # noqa: F401
     except ImportError:
         pytest.skip('HYMLS not found')
 
 @pytest.fixture(scope='module')
 def interface(nx):
-    from fvm import HYMLSInterface
+    from fvm.interface import HYMLS as HYMLSInterface
     from PyTrilinos import Epetra
     from PyTrilinos import Teuchos
 
@@ -44,7 +44,7 @@ def interface(nx):
 
 @pytest.fixture(scope='module')
 def x(interface):
-    from fvm import HYMLSInterface
+    from fvm.interface import HYMLS as HYMLSInterface
 
     continuation = Continuation(interface, interface.parameters)
 
@@ -67,7 +67,8 @@ class Operator:
         return x
 
 def test_solve(interface, x, tol):
-    from fvm import HYMLSInterface, JadaHYMLSInterface
+    from fvm.interface import HYMLS as HYMLSInterface
+    from fvm import JadaHYMLSInterface
 
     from jadapy import EpetraInterface
     from jadapy.utils import norm
