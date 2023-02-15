@@ -124,7 +124,7 @@ def test_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=Fals
     assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
 
     if not interactive:
-        return x
+        return
 
     fig, ax = plt.subplots()
     ax.scatter(jdqz_eigs.real, jdqz_eigs.imag, marker='+')
@@ -150,7 +150,7 @@ def test_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactiv
     assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
 
     if not interactive:
-        return x
+        return
 
     fig, ax = plt.subplots()
     ax.scatter(jdqz_eigs.real, jdqz_eigs.imag, marker='+')
@@ -176,7 +176,7 @@ def test_complex_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interact
     assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
 
     if not interactive:
-        return x
+        return
 
     fig, ax = plt.subplots()
     ax.scatter(jdqz_eigs.real, jdqz_eigs.imag, marker='+')
@@ -202,7 +202,7 @@ def test_complex_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, in
     assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
 
     if not interactive:
-        return x
+        return
 
     fig, ax = plt.subplots()
     ax.scatter(jdqz_eigs.real, jdqz_eigs.imag, marker='+')
@@ -228,7 +228,7 @@ def test_bordered_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, i
     assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
 
     if not interactive:
-        return x
+        return
 
     fig, ax = plt.subplots()
     ax.scatter(jdqz_eigs.real, jdqz_eigs.imag, marker='+')
