@@ -1,7 +1,7 @@
 from PyTrilinos import Epetra
 from PyTrilinos import Amesos
 
-from fvm.interface.ParallelBaseInterface import Interface as ParallelBaseInterface
+from fvm.interface import ParallelBaseInterface
 
 
 class Vector(Epetra.Vector):
