@@ -3,10 +3,9 @@ import numpy
 from fvm import Continuation
 
 from fvm.interface.SciPy import Interface
+from fvm.interface import JaDa
 
 from jadapy import jdqz
-
-from fvm.JadaInterface import JadaInterface, JadaOp
 
 import matplotlib.pyplot as plt
 
@@ -47,9 +46,9 @@ def main():
         x0 = x
 
         # Compute the eigenvalues of the generalized eigenvalue problem near a target 2.8i
-        jac_op = JadaOp(interface.jacobian(x))
-        mass_op = JadaOp(interface.mass_matrix())
-        jada_interface = JadaInterface(interface, jac_op, mass_op, n, numpy.complex128)
+        jac_op = JaDa.Op(interface.jacobian(x))
+        mass_op = JaDa.Op(interface.mass_matrix())
+        jada_interface = JaDa.Interface(interface, jac_op, mass_op, n, numpy.complex128)
 
         alpha, beta, q, z = jdqz.jdqz(jac_op, mass_op, eigs.shape[1], tol=1e-7, subspace_dimensions=[30, 60], target=2.8j,
                                       interface=jada_interface, arithmetic='complex', prec=jada_interface.shifted_prec,
