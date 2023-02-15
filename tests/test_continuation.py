@@ -137,7 +137,7 @@ def test_continuation_2D_stretched(nx=4, interactive=False):
     assert numpy.linalg.norm(x) > 0
 
     if not interactive:
-        return x
+        return
 
     print(x)
 

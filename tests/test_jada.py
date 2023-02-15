@@ -120,7 +120,7 @@ def test_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
     assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
 
     if not interactive:
-        return x
+        return
 
     fig, ax = plt.subplots()
     ax.scatter(jdqz_eigs.real, jdqz_eigs.imag, marker='+')
@@ -145,7 +145,7 @@ def test_complex_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=F
     assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
 
     if not interactive:
-        return x
+        return
 
     fig, ax = plt.subplots()
     ax.scatter(jdqz_eigs.real, jdqz_eigs.imag, marker='+')
@@ -171,7 +171,7 @@ def test_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=Fals
     assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
 
     if not interactive:
-        return x
+        return
 
     fig, ax = plt.subplots()
     ax.scatter(jdqz_eigs.real, jdqz_eigs.imag, marker='+')
@@ -197,7 +197,7 @@ def test_complex_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interact
     assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
 
     if not interactive:
-        return x
+        return
 
     fig, ax = plt.subplots()
     ax.scatter(jdqz_eigs.real, jdqz_eigs.imag, marker='+')
@@ -223,7 +223,7 @@ def test_complex_shifted_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, 
     assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
 
     if not interactive:
-        return x
+        return
 
     fig, ax = plt.subplots()
     ax.scatter(jdqz_eigs.real, jdqz_eigs.imag, marker='+')
@@ -252,7 +252,7 @@ def test_complex_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, interac
     assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
 
     if not interactive:
-        return x
+        return
 
     fig, ax = plt.subplots()
     ax.scatter(jdqz_eigs.real, jdqz_eigs.imag, marker='+')
@@ -267,7 +267,7 @@ def test_complex_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, in
     jac_op = JaDa.Op(interface.jacobian(x))
     mass_op = JaDa.Op(interface.mass_matrix())
     jada_interface = JaDa.Interface(interface, jac_op, mass_op, len(x), numpy.complex128,
-                                                 preconditioned_solve=True)
+                                    preconditioned_solve=True)
 
     assert jada_interface.preconditioned_solve
     assert not jada_interface.shifted
@@ -282,7 +282,7 @@ def test_complex_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, in
     assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
 
     if not interactive:
-        return x
+        return
 
     fig, ax = plt.subplots()
     ax.scatter(jdqz_eigs.real, jdqz_eigs.imag, marker='+')
@@ -297,7 +297,7 @@ def test_complex_shifted_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, 
     jac_op = JaDa.Op(interface.jacobian(x))
     mass_op = JaDa.Op(interface.mass_matrix())
     jada_interface = JaDa.Interface(interface, jac_op, mass_op, len(x), numpy.complex128,
-                                                 preconditioned_solve=True, shifted=True)
+                                    preconditioned_solve=True, shifted=True)
 
     assert jada_interface.preconditioned_solve
     assert jada_interface.shifted
@@ -312,7 +312,7 @@ def test_complex_shifted_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, 
     assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
 
     if not interactive:
-        return x
+        return
 
     fig, ax = plt.subplots()
     ax.scatter(jdqz_eigs.real, jdqz_eigs.imag, marker='+')
