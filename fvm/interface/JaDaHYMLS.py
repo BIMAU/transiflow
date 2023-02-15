@@ -5,7 +5,7 @@ from PyTrilinos import Epetra
 from jadapy import EpetraInterface
 from jadapy import ComplexEpetraInterface
 
-class JadaHYMLSPrecOp(EpetraInterface.Operator):
+class PrecOp(EpetraInterface.Operator):
     def __init__(self, op, prec):
         super().__init__(op)
         self.prec = prec
@@ -18,7 +18,7 @@ class JadaHYMLSPrecOp(EpetraInterface.Operator):
         z = self.op.proj(z)
         return y.Update(1.0, z, 0.0)
 
-class JadaHYMLSInterface(EpetraInterface.EpetraInterface):
+class Interface(EpetraInterface.EpetraInterface):
 
     def __init__(self, interface, *args, **kwargs):
         super().__init__(interface.solve_map)
@@ -46,7 +46,7 @@ class JadaHYMLSInterface(EpetraInterface.EpetraInterface):
 
         epetra_op = EpetraInterface.Operator(op)
         if self.preconditioned_solve:
-            epetra_precop = JadaHYMLSPrecOp(op, self.interface.preconditioner)
+            epetra_precop = PrecOp(op, self.interface.preconditioner)
             solver = HYMLS.Solver(epetra_op, epetra_precop, self.parameters)
         else:
             solver = HYMLS.Solver(epetra_op, epetra_op, self.parameters)
@@ -59,7 +59,7 @@ class JadaHYMLSInterface(EpetraInterface.EpetraInterface):
         self.interface.preconditioner.ApplyInverse(x, out)
         return out
 
-class ComplexJadaHYMLSPrecOp(EpetraInterface.Operator):
+class ComplexPrecOp(EpetraInterface.Operator):
     def __init__(self, op, prec):
         super().__init__(op)
         self.prec = prec
@@ -77,7 +77,7 @@ class ComplexJadaHYMLSPrecOp(EpetraInterface.Operator):
         y += z
         return 0
 
-class ComplexJadaHYMLSInterface(ComplexEpetraInterface.ComplexEpetraInterface):
+class ComplexInterface(ComplexEpetraInterface.ComplexEpetraInterface):
 
     def __init__(self, interface, *args, **kwargs):
         super().__init__(interface.solve_map)
@@ -105,7 +105,7 @@ class ComplexJadaHYMLSInterface(ComplexEpetraInterface.ComplexEpetraInterface):
 
         epetra_op = ComplexEpetraInterface.Operator(op)
         if self.preconditioned_solve:
-            epetra_precop = ComplexJadaHYMLSPrecOp(op, self.interface.preconditioner)
+            epetra_precop = ComplexPrecOp(op, self.interface.preconditioner)
             solver = HYMLS.Solver(epetra_op, epetra_precop, self.parameters)
         else:
             solver = HYMLS.Solver(epetra_op, epetra_op, self.parameters)
@@ -143,7 +143,7 @@ class ShiftedOperator(object):
     def matvec(self, x):
         return (self.A @ x) * self.beta - (self.B @ x) * self.alpha
 
-class BorderedJadaHYMLSInterface(EpetraInterface.EpetraInterface):
+class BorderedInterface(EpetraInterface.EpetraInterface):
 
     def __init__(self, interface, *args, **kwargs):
         super().__init__(interface.solve_map)
@@ -187,7 +187,7 @@ class BorderedJadaHYMLSInterface(EpetraInterface.EpetraInterface):
         self.interface.preconditioner.ApplyInverse(x, out)
         return out
 
-class ComplexBorderedJadaHYMLSInterface(ComplexEpetraInterface.ComplexEpetraInterface):
+class ComplexBorderedInterface(ComplexEpetraInterface.ComplexEpetraInterface):
 
     def __init__(self, interface, *args, **kwargs):
         super().__init__(interface.solve_map)
