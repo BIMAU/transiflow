@@ -35,7 +35,7 @@ def read_matrix(fname):
 
 
 def read_vector(fname):
-    from fvm import PETScInterface
+    from fvm.interface import PETSc as PETScInterface
 
     values = []
     dirname = os.path.dirname(__file__)
@@ -58,7 +58,7 @@ def test_ldc():
     try:
         from mpi4py import MPI
 
-        from fvm import PETScInterface
+        from fvm.interface import PETSc as PETScInterface
     except ImportError:
         pytest.skip("PETSc not found")
 
@@ -109,7 +109,7 @@ def test_ldc():
 
 def test_norm():
     try:
-        from fvm import PETScInterface
+        from fvm.interface import PETSc as PETScInterface
     except ImportError:
         pytest.skip("PETSc not found")
 
@@ -131,7 +131,7 @@ def test_PETSc(nx=4):
     try:
         from mpi4py import MPI
 
-        from fvm import PETScInterface
+        from fvm.interface import PETSc as PETScInterface
     except ImportError:
         pytest.skip("PETSc not found")
 
