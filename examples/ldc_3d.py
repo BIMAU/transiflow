@@ -2,8 +2,9 @@ import numpy
 import pickle
 
 from fvm import Continuation
-from fvm import Interface, HYMLSInterface
+from fvm import Interface
 from fvm import utils
+from fvm.interface import HYMLS as HYMLSInterface
 
 from PyTrilinos import Epetra
 
