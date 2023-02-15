@@ -40,7 +40,7 @@ def read_matrix(fname, m):
 
 
 def read_vector(fname, m):
-    from fvm import EpetraInterface
+    from fvm.interface import Epetra as EpetraInterface
 
     vec = EpetraInterface.Vector(m)
 
@@ -90,7 +90,7 @@ def extract_sorted_local_row(A, i):
 
 def test_ldc():
     try:
-        from fvm import EpetraInterface
+        from fvm.interface import Epetra as EpetraInterface
         from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("Epetra not found")
@@ -154,7 +154,7 @@ def test_ldc():
 
 def test_ldc_stretched_file():
     try:
-        from fvm import EpetraInterface
+        from fvm.interface import Epetra as EpetraInterface
         from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("Epetra not found")
@@ -220,7 +220,7 @@ def test_ldc_stretched_file():
 
 def test_ldc_stretched(nx=4):
     try:
-        from fvm import EpetraInterface
+        from fvm.interface import Epetra as EpetraInterface
         from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("Epetra not found")
@@ -288,7 +288,7 @@ def test_ldc8_stretched():
 
 def test_norm():
     try:
-        from fvm import EpetraInterface
+        from fvm.interface import Epetra as EpetraInterface
         from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("Epetra not found")
@@ -318,7 +318,7 @@ def test_norm():
 
 def test_Epetra(nx=4):
     try:
-        from fvm import EpetraInterface
+        from fvm.interface import Epetra as EpetraInterface
         from PyTrilinos import Epetra
         from PyTrilinos import Teuchos
     except ImportError:
@@ -355,7 +355,7 @@ def test_Epetra(nx=4):
 
 def _test_Epetra_2D(nx=8):
     try:
-        from fvm import EpetraInterface
+        from fvm.interface import Epetra as EpetraInterface
         from PyTrilinos import Epetra
         from PyTrilinos import Teuchos
     except ImportError:
@@ -393,7 +393,7 @@ def _test_Epetra_2D(nx=8):
 
 def _test_Epetra_2D_stretched(nx=8):
     try:
-        from fvm import EpetraInterface
+        from fvm.interface import Epetra as EpetraInterface
         from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("Epetra not found")
@@ -433,7 +433,7 @@ def _test_Epetra_2D_stretched(nx=8):
 
 def _test_Epetra_rayleigh_benard(nx=8):
     try:
-        from fvm import EpetraInterface
+        from fvm.interface import Epetra as EpetraInterface
         from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("Epetra not found")
@@ -490,7 +490,7 @@ def _test_Epetra_rayleigh_benard(nx=8):
 
 def _test_Epetra_double_gyre(nx=8):
     try:
-        from fvm import EpetraInterface
+        from fvm.interface import Epetra as EpetraInterface
         from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("Epetra not found")

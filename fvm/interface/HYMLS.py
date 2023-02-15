@@ -5,8 +5,8 @@ import numpy
 import sys
 import os
 
-from fvm.EpetraInterface import Vector
-from fvm.EpetraInterface import Interface as EpetraInterface
+from fvm.interface.Epetra import Vector
+from fvm.interface.Epetra import Interface as EpetraInterface
 
 import HYMLS
 
