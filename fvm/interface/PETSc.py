@@ -2,7 +2,8 @@ import numpy
 from petsc4py import PETSc
 
 import fvm
-from fvm.ParallelBaseInterface import Interface as ParallelBaseInterface
+
+from fvm.interface.ParallelBaseInterface import Interface as ParallelBaseInterface
 
 
 class Vector(PETSc.Vec):
