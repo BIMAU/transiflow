@@ -3,8 +3,6 @@ import numpy
 from petsc4py import PETSc
 from mpi4py import MPI
 
-import fvm
-
 from fvm.interface.ParallelBaseInterface import Interface as ParallelBaseInterface
 
 
@@ -45,7 +43,7 @@ class Interface(ParallelBaseInterface):
         """Right-hand side in M * du / dt = F(u) defined on the
         non-overlapping discretization domain map."""
 
-        rhs = fvm.Interface.rhs(self, state.getArray())
+        rhs = self.discretization.rhs(state.getArray())
         rhs = Vector.from_array(rhs)
 
         return rhs
@@ -54,7 +52,7 @@ class Interface(ParallelBaseInterface):
         """Jacobian J of F in M * du / dt = F(u) defined on the
         domain map used by PETSc."""
 
-        local_jac = fvm.Interface.jacobian(self, state.getArray())
+        local_jac = self.discretization.jacobian(state.getArray())
 
         if self.jac is None:
             self.jac = PETSc.Mat().createAIJ((state.size, state.size), comm=self.comm)
