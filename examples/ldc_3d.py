@@ -4,7 +4,6 @@ import pickle
 from fvm import Continuation
 from fvm import Interface
 from fvm import utils
-from fvm.interface import HYMLS as HYMLSInterface
 
 
 class Data:
@@ -136,7 +135,7 @@ def main():
 
     # Define a HYMLS interface that handles everything that is different when using HYMLS+Trilinos
     # instead of NumPy as computational backend
-    interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
+    interface = Interface(parameters, nx, ny, nz, dim, dof, backend='HYMLS')
 
     data = Data()
     parameters['Postprocess'] = lambda interface, x, mu: postprocess(data, interface, x, mu, enable_output)
