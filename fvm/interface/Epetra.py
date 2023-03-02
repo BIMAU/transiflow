@@ -79,6 +79,12 @@ class Interface(ParallelBaseInterface):
         self.jac = None
         self.mass = None
 
+    def vector(self, *args):
+        if len(args) == 0:
+            return Vector(self.map)
+
+        return Vector(args)
+
     def create_map(self, overlapping=False):
         '''Create a map on which the local discretization domain is defined.
         The overlapping part is only used for computing the discretization.'''

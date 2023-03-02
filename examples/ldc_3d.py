@@ -144,8 +144,7 @@ def main():
     continuation = Continuation(interface, parameters)
 
     # Compute an initial guess
-    x0 = HYMLSInterface.Vector(interface.map)
-    x0.PutScalar(0.0)
+    x0 = interface.vector()
     x = continuation.continuation(x0, 'Lid Velocity', 0, 1, 1)[0]
 
     # Perform an initial continuation to Reynolds number 1700 without detecting bifurcation points

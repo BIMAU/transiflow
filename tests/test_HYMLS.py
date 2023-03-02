@@ -492,12 +492,9 @@ def test_HYMLS(nx=4, interactive=False):
     parameters.set('Reynolds Number', 0)
 
     interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
-    m = interface.map
-
     continuation = Continuation(interface, parameters)
 
-    x0 = HYMLSInterface.Vector(m)
-    x0.PutScalar(0.0)
+    x0 = interface.vector()
     x0 = continuation.newton(x0)
 
     start = 0
@@ -535,12 +532,9 @@ def test_HYMLS_2D(nx=8, interactive=False):
     parameters.set('Bordered Solver', True)
 
     interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
-    m = interface.map
-
     continuation = Continuation(interface, parameters)
 
-    x0 = HYMLSInterface.Vector(m)
-    x0.PutScalar(0.0)
+    x0 = interface.vector()
     x0 = continuation.newton(x0)
 
     start = 0
@@ -578,12 +572,9 @@ def test_HYMLS_2D_stretched(nx=8, interactive=False):
                   'Verbose': True}
 
     interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
-    m = interface.map
-
     continuation = Continuation(interface, parameters)
 
-    x0 = HYMLSInterface.Vector(m)
-    x0.PutScalar(0.0)
+    x0 = interface.vector()
     x0 = continuation.newton(x0)
 
     start = 0
@@ -627,12 +618,9 @@ def test_HYMLS_rayleigh_benard(nx=8):
                   'Bordered Solver': True}
 
     interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
-    m = interface.map
-
     continuation = Continuation(interface, parameters)
 
-    x0 = HYMLSInterface.Vector(m)
-    x0.PutScalar(0.0)
+    x0 = interface.vector()
     x0 = continuation.newton(x0)
 
     start = 0
@@ -680,12 +668,9 @@ def test_HYMLS_double_gyre(nx=8):
     parameters['Preconditioner']['Number of Levels'] = 0
 
     interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
-    m = interface.map
-
     continuation = Continuation(interface, parameters)
 
-    x0 = HYMLSInterface.Vector(m)
-    x0.PutScalar(0.0)
+    x0 = interface.vector()
 
     start = 0
     target = 1000

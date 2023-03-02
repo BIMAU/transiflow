@@ -321,11 +321,9 @@ def test_Epetra(nx=4):
     parameters.set('Reynolds Number', 0)
 
     interface = EpetraInterface.Interface(parameters, nx, ny, nz, dim, dof)
-    m = interface.map
-
     continuation = Continuation(interface, parameters)
 
-    x0 = EpetraInterface.Vector(m)
+    x0 = interface.vector()
     x0.PutScalar(0.0)
     x0 = continuation.newton(x0)
 
@@ -356,11 +354,9 @@ def _test_Epetra_2D(nx=8):
     parameters.set('Bordered Solver', True)
 
     interface = EpetraInterface.Interface(parameters, nx, ny, nz, dim, dof)
-    m = interface.map
-
     continuation = Continuation(interface, parameters)
 
-    x0 = EpetraInterface.Vector(m)
+    x0 = interface.vector()
     x0.PutScalar(0.0)
     x0 = continuation.newton(x0)
 
@@ -393,11 +389,9 @@ def _test_Epetra_2D_stretched(nx=8):
     }
 
     interface = EpetraInterface.Interface(parameters, nx, ny, nz, dim, dof)
-    m = interface.map
-
     continuation = Continuation(interface, parameters)
 
-    x0 = EpetraInterface.Vector(m)
+    x0 = interface.vector()
     x0.PutScalar(0.0)
     x0 = continuation.newton(x0)
 
@@ -436,11 +430,9 @@ def _test_Epetra_rayleigh_benard(nx=8):
     }
 
     interface = EpetraInterface.Interface(parameters, nx, ny, nz, dim, dof)
-    m = interface.map
-
     continuation = Continuation(interface, parameters)
 
-    x0 = EpetraInterface.Vector(m)
+    x0 = interface.vector()
     x0.PutScalar(0.0)
     x0 = continuation.newton(x0)
 
@@ -492,11 +484,9 @@ def _test_Epetra_double_gyre(nx=8):
     parameters['Preconditioner']['Number of Levels'] = 0
 
     interface = EpetraInterface.Interface(parameters, nx, ny, nz, dim, dof)
-    m = interface.map
-
     continuation = Continuation(interface, parameters)
 
-    x0 = EpetraInterface.Vector(m)
+    x0 = interface.vector()
     x0.PutScalar(0.0)
 
     start = 0
