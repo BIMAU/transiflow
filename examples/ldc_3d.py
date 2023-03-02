@@ -6,8 +6,6 @@ from fvm import Interface
 from fvm import utils
 from fvm.interface import HYMLS as HYMLSInterface
 
-from PyTrilinos import Epetra
-
 
 class Data:
     def __init__(self):
@@ -136,12 +134,9 @@ def main():
     parameters['Preconditioner'] = {}
     parameters['Preconditioner']['Number of Levels'] = 1
 
-    # Define a communicator that is used to communicate between processors
-    comm = Epetra.PyComm()
-
     # Define a HYMLS interface that handles everything that is different when using HYMLS+Trilinos
     # instead of NumPy as computational backend
-    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+    interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
 
     data = Data()
     parameters['Postprocess'] = lambda interface, x, mu: postprocess(data, interface, x, mu, enable_output)

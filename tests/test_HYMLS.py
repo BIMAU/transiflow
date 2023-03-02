@@ -85,7 +85,6 @@ def extract_sorted_local_row(A, i):
 def test_ldc():
     try:
         from fvm.interface import HYMLS as HYMLSInterface
-        from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("HYMLS not found")
 
@@ -101,8 +100,7 @@ def test_ldc():
     for i in range(n):
         state[i] = i+1
 
-    comm = Epetra.PyComm()
-    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+    interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
 
     state = HYMLSInterface.Vector.from_array(interface.map, state)
 
@@ -147,7 +145,6 @@ def test_ldc():
 def test_ldc_stretched_file():
     try:
         from fvm.interface import HYMLS as HYMLSInterface
-        from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("HYMLS not found")
 
@@ -163,8 +160,7 @@ def test_ldc_stretched_file():
     for i in range(n):
         state[i] = i+1
 
-    comm = Epetra.PyComm()
-    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+    interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
 
     state = HYMLSInterface.Vector.from_array(interface.map, state)
 
@@ -209,7 +205,6 @@ def test_ldc_stretched_file():
 def test_ldc_stretched(nx=4):
     try:
         from fvm.interface import HYMLS as HYMLSInterface
-        from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("HYMLS not found")
 
@@ -228,8 +223,7 @@ def test_ldc_stretched(nx=4):
     B = interface.jacobian(state)
     rhs_B = interface.rhs(state)
 
-    comm = Epetra.PyComm()
-    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+    interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
 
     state = HYMLSInterface.Vector.from_array(interface.map, state)
 
@@ -291,8 +285,7 @@ def test_prec(nx=4, parameters=None):
     for i in range(n):
         state[i] = i+1
 
-    comm = Epetra.PyComm()
-    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+    interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
 
     state = HYMLSInterface.Vector.from_array(interface.map, state)
 
@@ -343,8 +336,7 @@ def test_prec_stretched(nx=4, parameters=None):
     for i in range(n):
         state[i] = i+1
 
-    comm = Epetra.PyComm()
-    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+    interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
 
     state = HYMLSInterface.Vector.from_array(interface.map, state)
 
@@ -408,8 +400,7 @@ def test_bordered_prec():
 
     rhs_2 = 4
 
-    comm = Epetra.PyComm()
-    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+    interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
 
     state = HYMLSInterface.Vector.from_array(interface.map, state)
     V = HYMLSInterface.Vector.from_array(interface.map, V)
@@ -460,7 +451,6 @@ def test_bordered_prec():
 def test_norm():
     try:
         from fvm.interface import HYMLS as HYMLSInterface
-        from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("HYMLS not found")
 
@@ -476,8 +466,7 @@ def test_norm():
     for i in range(n):
         state[i] = i+1
 
-    comm = Epetra.PyComm()
-    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+    interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
 
     state_dist = HYMLSInterface.Vector.from_array(interface.map, state)
     assert utils.norm(state) == utils.norm(state_dist)
@@ -488,7 +477,6 @@ def test_norm():
 def test_HYMLS(nx=4, interactive=False):
     try:
         from fvm.interface import HYMLS as HYMLSInterface
-        from PyTrilinos import Epetra
         from PyTrilinos import Teuchos
     except ImportError:
         pytest.skip("HYMLS not found")
@@ -503,8 +491,7 @@ def test_HYMLS(nx=4, interactive=False):
     parameters = Teuchos.ParameterList()
     parameters.set('Reynolds Number', 0)
 
-    comm = Epetra.PyComm()
-    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+    interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
     m = interface.map
 
     continuation = Continuation(interface, parameters)
@@ -532,7 +519,6 @@ def test_HYMLS(nx=4, interactive=False):
 def test_HYMLS_2D(nx=8, interactive=False):
     try:
         from fvm.interface import HYMLS as HYMLSInterface
-        from PyTrilinos import Epetra
         from PyTrilinos import Teuchos
     except ImportError:
         pytest.skip("HYMLS not found")
@@ -548,8 +534,7 @@ def test_HYMLS_2D(nx=8, interactive=False):
     parameters.set('Reynolds Number', 0)
     parameters.set('Bordered Solver', True)
 
-    comm = Epetra.PyComm()
-    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+    interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
     m = interface.map
 
     continuation = Continuation(interface, parameters)
@@ -577,7 +562,6 @@ def test_HYMLS_2D(nx=8, interactive=False):
 def test_HYMLS_2D_stretched(nx=8, interactive=False):
     try:
         from fvm.interface import HYMLS as HYMLSInterface
-        from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("HYMLS not found")
 
@@ -593,8 +577,7 @@ def test_HYMLS_2D_stretched(nx=8, interactive=False):
                   'Grid Stretching': True,
                   'Verbose': True}
 
-    comm = Epetra.PyComm()
-    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+    interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
     m = interface.map
 
     continuation = Continuation(interface, parameters)
@@ -622,7 +605,6 @@ def test_HYMLS_2D_stretched(nx=8, interactive=False):
 def test_HYMLS_rayleigh_benard(nx=8):
     try:
         from fvm.interface import HYMLS as HYMLSInterface
-        from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("HYMLS not found")
 
@@ -644,8 +626,7 @@ def test_HYMLS_rayleigh_benard(nx=8):
                   'X-max': 10,
                   'Bordered Solver': True}
 
-    comm = Epetra.PyComm()
-    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+    interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
     m = interface.map
 
     continuation = Continuation(interface, parameters)
@@ -675,7 +656,6 @@ def test_HYMLS_rayleigh_benard(nx=8):
 def test_HYMLS_double_gyre(nx=8):
     try:
         from fvm.interface import HYMLS as HYMLSInterface
-        from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("HYMLS not found")
 
@@ -699,8 +679,7 @@ def test_HYMLS_double_gyre(nx=8):
     parameters['Preconditioner'] = {}
     parameters['Preconditioner']['Number of Levels'] = 0
 
-    comm = Epetra.PyComm()
-    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+    interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
     m = interface.map
 
     continuation = Continuation(interface, parameters)
