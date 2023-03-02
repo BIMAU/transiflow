@@ -25,7 +25,6 @@ def import_test():
 @pytest.fixture(scope='module')
 def interface(nx):
     from fvm.interface import HYMLS as HYMLSInterface
-    from PyTrilinos import Epetra
     from PyTrilinos import Teuchos
 
     dim = 2
@@ -37,8 +36,7 @@ def interface(nx):
     parameters.set('Reynolds Number', 0)
     parameters.set('Bordered Solver', True)
 
-    comm = Epetra.PyComm()
-    interface = HYMLSInterface.Interface(comm, parameters, nx, ny, nz, dim, dof)
+    interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
 
     return interface
 
