@@ -1,5 +1,3 @@
-import numpy
-
 import matplotlib.pyplot as plt
 
 from fvm import Continuation
@@ -36,7 +34,6 @@ def main():
     nx = 32
     ny = nx
     nz = 1
-    n = dof * nx * ny * nz
 
     # Define the problem
     parameters = {'Problem Type': 'Differentially Heated Cavity',
@@ -59,7 +56,7 @@ def main():
     continuation = Continuation(interface, parameters)
 
     # Compute an initial guess
-    x0 = numpy.zeros(n)
+    x0 = interface.vector()
 
     # Store data for computing the bifurcation diagram using postprocessing
     data = Data()

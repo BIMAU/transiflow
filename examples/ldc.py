@@ -26,11 +26,10 @@ def main():
                   'Lid Velocity': 0}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof)
-
     continuation = Continuation(interface, parameters)
 
     # Compute an initial guess
-    x0 = numpy.zeros(dof * nx * ny * nz)
+    x0 = interface.vector()
     x0 = continuation.continuation(x0, 'Lid Velocity', 0, 1, 1)[0]
 
     previous_subspaces = None

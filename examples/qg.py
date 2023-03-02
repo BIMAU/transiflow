@@ -28,7 +28,6 @@ def main():
     nx = 32
     ny = nx
     nz = 1
-    n = dof * nx * ny * nz
 
     # Define the problem
     parameters = {'Problem Type': 'Double Gyre',
@@ -40,11 +39,10 @@ def main():
                   'Verbose': False}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof)
-
     continuation = Continuation(interface, parameters)
 
     # First activate the wind stress
-    x0 = numpy.zeros(n)
+    x0 = interface.vector()
 
     ds = 100
     target = 1000
