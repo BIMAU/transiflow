@@ -6,7 +6,8 @@ from fvm import Continuation
 from fvm import plot_utils
 from fvm import utils
 
-from fvm.interface.SciPy import Interface
+from fvm.interface.SciPy import Interface as SciPyInterface
+from fvm.interface import create as Interface
 
 
 def test_continuation(nx=4, interactive=False):
@@ -19,10 +20,9 @@ def test_continuation(nx=4, interactive=False):
 
     parameters = {}
     interface = Interface(parameters, nx, ny, nz, dim, dof)
-
     continuation = Continuation(interface, parameters)
 
-    x0 = numpy.zeros(dof * nx * ny * nz)
+    x0 = interface.vector()
     x0 = continuation.newton(x0)
 
     start = 0
@@ -49,10 +49,9 @@ def continuation_semi_2D(nx=4, interactive=False):
 
     parameters = {}
     interface = Interface(parameters, nx, ny, nz, dim, dof)
-
     continuation = Continuation(interface, parameters)
 
-    x0 = numpy.zeros(dof * nx * ny * nz)
+    x0 = interface.vector()
     x0 = continuation.newton(x0)
 
     start = 0
@@ -79,10 +78,9 @@ def continuation_2D(nx=4, interactive=False):
 
     parameters = {}
     interface = Interface(parameters, nx, ny, nz, dim, dof)
-
     continuation = Continuation(interface, parameters)
 
-    x0 = numpy.zeros(dof * nx * ny * nz)
+    x0 = interface.vector()
     x0 = continuation.newton(x0)
 
     start = 0
@@ -122,11 +120,10 @@ def test_continuation_2D_stretched(nx=4, interactive=False):
     ypos = utils.create_stretched_coordinate_vector(0, 1, ny, 1.5)
 
     parameters = {}
-    interface = Interface(parameters, nx, ny, nz, dim, dof, xpos, ypos)
-
+    interface = SciPyInterface(parameters, nx, ny, nz, dim, dof, xpos, ypos)
     continuation = Continuation(interface, parameters)
 
-    x0 = numpy.zeros(dof * nx * ny * nz)
+    x0 = interface.vector()
     x0 = continuation.newton(x0)
 
     start = 0
@@ -153,10 +150,9 @@ def test_continuation_time_integration(nx=4):
 
     parameters = {'Newton Tolerance': 1e-8}
     interface = Interface(parameters, nx, ny, nz, dim, dof)
-
     continuation = Continuation(interface, parameters)
 
-    x0 = numpy.zeros(dof * nx * ny * nz)
+    x0 = interface.vector()
     x0 = continuation.newton(x0)
 
     start = 0
@@ -213,10 +209,9 @@ def test_continuation_rayleigh_benard(nx=8):
                   'Bordered Solver': True}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof)
-
     continuation = Continuation(interface, parameters)
 
-    x0 = numpy.zeros(dof * nx * ny * nz)
+    x0 = interface.vector()
     x0 = continuation.newton(x0)
 
     start = 0
@@ -274,10 +269,9 @@ def test_continuation_double_gyre(nx=8):
                   'Wind Stress Parameter': 0}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof)
-
     continuation = Continuation(interface, parameters)
 
-    x0 = numpy.zeros(dof * nx * ny * nz)
+    x0 = interface.vector()
 
     start = 0
     target = 1000
@@ -322,10 +316,9 @@ def test_continuation_2D_tc(nx=8):
                   'Outer Angular Velocity': 0}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof)
-
     continuation = Continuation(interface, parameters)
 
-    x0 = numpy.zeros(dof * nx * ny * nz)
+    x0 = interface.vector()
 
     start = 0
     target = 80
