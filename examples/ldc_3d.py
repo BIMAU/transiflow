@@ -67,7 +67,7 @@ def read_solution(interface, name):
     else:
         x = []
 
-    x = HYMLSInterface.Vector.from_array(interface.map, x)
+    x = interface.vector_from_array(x)
 
     return x, mu
 

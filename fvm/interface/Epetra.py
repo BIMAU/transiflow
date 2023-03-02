@@ -85,6 +85,9 @@ class Interface(ParallelBaseInterface):
 
         return Vector(args)
 
+    def vector_from_array(self, array):
+        return Vector.from_array(self.map, array)
+
     def create_map(self, overlapping=False):
         '''Create a map on which the local discretization domain is defined.
         The overlapping part is only used for computing the discretization.'''

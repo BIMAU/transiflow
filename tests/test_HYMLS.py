@@ -101,8 +101,7 @@ def test_ldc():
         state[i] = i+1
 
     interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
-
-    state = HYMLSInterface.Vector.from_array(interface.map, state)
+    state = interface.vector_from_array(state)
 
     A = interface.jacobian(state)
     rhs = interface.rhs(state)
@@ -161,8 +160,7 @@ def test_ldc_stretched_file():
         state[i] = i+1
 
     interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
-
-    state = HYMLSInterface.Vector.from_array(interface.map, state)
+    state = interface.vector_from_array(state)
 
     A = interface.jacobian(state)
     rhs = interface.rhs(state)
@@ -224,8 +222,7 @@ def test_ldc_stretched(nx=4):
     rhs_B = interface.rhs(state)
 
     interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
-
-    state = HYMLSInterface.Vector.from_array(interface.map, state)
+    state = interface.vector_from_array(state)
 
     A = interface.jacobian(state)
     rhs = interface.rhs(state)
@@ -286,8 +283,7 @@ def test_prec(nx=4, parameters=None):
         state[i] = i+1
 
     interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
-
-    state = HYMLSInterface.Vector.from_array(interface.map, state)
+    state = interface.vector_from_array(state)
 
     interface.jacobian(state)
     rhs = interface.rhs(state)
@@ -337,8 +333,7 @@ def test_prec_stretched(nx=4, parameters=None):
         state[i] = i+1
 
     interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
-
-    state = HYMLSInterface.Vector.from_array(interface.map, state)
+    state = interface.vector_from_array(state)
 
     interface.jacobian(state)
     rhs = interface.rhs(state)
@@ -401,10 +396,9 @@ def test_bordered_prec():
     rhs_2 = 4
 
     interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
-
-    state = HYMLSInterface.Vector.from_array(interface.map, state)
-    V = HYMLSInterface.Vector.from_array(interface.map, V)
-    W = HYMLSInterface.Vector.from_array(interface.map, W)
+    state = interface.vector_from_array(state)
+    V = interface.vector_from_array(V)
+    W = interface.vector_from_array(W)
 
     interface.jacobian(state)
     rhs = interface.rhs(state)
