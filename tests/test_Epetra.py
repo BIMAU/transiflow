@@ -108,8 +108,7 @@ def test_ldc():
         state[i] = i + 1
 
     interface = EpetraInterface.Interface(parameters, nx, ny, nz, dim, dof)
-
-    state = EpetraInterface.Vector.from_array(interface.map, state)
+    state = interface.vector_from_array(state)
 
     A = interface.jacobian(state)
     rhs = interface.rhs(state)
@@ -169,8 +168,7 @@ def test_ldc_stretched_file():
         state[i] = i + 1
 
     interface = EpetraInterface.Interface(parameters, nx, ny, nz, dim, dof)
-
-    state = EpetraInterface.Vector.from_array(interface.map, state)
+    state = interface.vector_from_array(state)
 
     A = interface.jacobian(state)
     rhs = interface.rhs(state)
@@ -233,8 +231,7 @@ def test_ldc_stretched(nx=4):
     rhs_B = interface.rhs(state)
 
     interface = EpetraInterface.Interface(parameters, nx, ny, nz, dim, dof)
-
-    state = EpetraInterface.Vector.from_array(interface.map, state)
+    state = interface.vector_from_array(state)
 
     A = interface.jacobian(state)
     rhs = interface.rhs(state)
@@ -357,7 +354,6 @@ def _test_Epetra_2D(nx=8):
     continuation = Continuation(interface, parameters)
 
     x0 = interface.vector()
-    x0.PutScalar(0.0)
     x0 = continuation.newton(x0)
 
     start = 0
@@ -392,7 +388,6 @@ def _test_Epetra_2D_stretched(nx=8):
     continuation = Continuation(interface, parameters)
 
     x0 = interface.vector()
-    x0.PutScalar(0.0)
     x0 = continuation.newton(x0)
 
     start = 0
@@ -433,7 +428,6 @@ def _test_Epetra_rayleigh_benard(nx=8):
     continuation = Continuation(interface, parameters)
 
     x0 = interface.vector()
-    x0.PutScalar(0.0)
     x0 = continuation.newton(x0)
 
     start = 0
@@ -487,7 +481,6 @@ def _test_Epetra_double_gyre(nx=8):
     continuation = Continuation(interface, parameters)
 
     x0 = interface.vector()
-    x0.PutScalar(0.0)
 
     start = 0
     target = 1000
