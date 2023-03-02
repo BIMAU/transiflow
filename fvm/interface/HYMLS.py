@@ -48,7 +48,7 @@ class Interface(EpetraInterface):
     over multiple processors if MPI is used to run the application.'''
 
     def __init__(self, comm, parameters, nx, ny, nz, dim, dof):
-        EpetraInterface.__init__(self, comm, parameters, nx, ny, nz, dim, dof)
+        EpetraInterface.__init__(self, parameters, nx, ny, nz, dim, dof, comm)
 
         # Disable HYMLS output from MPI ranks != 0
         HYMLS.Tools.InitializeIO(self.comm)
