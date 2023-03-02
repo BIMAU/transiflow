@@ -92,7 +92,6 @@ def extract_sorted_local_row(A, i):
 def test_ldc():
     try:
         from fvm.interface import Epetra as EpetraInterface
-        from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("Epetra not found")
 
@@ -108,9 +107,7 @@ def test_ldc():
     for i in range(n):
         state[i] = i + 1
 
-    comm = Epetra.PyComm()
-    interface = EpetraInterface.Interface(comm, parameters, nx, ny, nz, dim,
-                                          dof)
+    interface = EpetraInterface.Interface(parameters, nx, ny, nz, dim, dof)
 
     state = EpetraInterface.Vector.from_array(interface.map, state)
 
@@ -156,7 +153,6 @@ def test_ldc():
 def test_ldc_stretched_file():
     try:
         from fvm.interface import Epetra as EpetraInterface
-        from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("Epetra not found")
 
@@ -172,19 +168,15 @@ def test_ldc_stretched_file():
     for i in range(n):
         state[i] = i + 1
 
-    comm = Epetra.PyComm()
-    interface = EpetraInterface.Interface(comm, parameters, nx, ny, nz, dim,
-                                          dof)
+    interface = EpetraInterface.Interface(parameters, nx, ny, nz, dim, dof)
 
     state = EpetraInterface.Vector.from_array(interface.map, state)
 
     A = interface.jacobian(state)
     rhs = interface.rhs(state)
 
-    B = read_matrix('ldc_stretched_%sx%sx%s.txt' % (nx, ny, nz),
-                    interface.solve_map)
-    rhs_B = read_vector('ldc_stretched_rhs_%sx%sx%s.txt' % (nx, ny, nz),
-                        interface.map)
+    B = read_matrix('ldc_stretched_%sx%sx%s.txt' % (nx, ny, nz), interface.solve_map)
+    rhs_B = read_vector('ldc_stretched_rhs_%sx%sx%s.txt' % (nx, ny, nz), interface.map)
 
     for i in range(n):
         lid = interface.solve_map.LID(i)
@@ -222,7 +214,6 @@ def test_ldc_stretched_file():
 def test_ldc_stretched(nx=4):
     try:
         from fvm.interface import Epetra as EpetraInterface
-        from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("Epetra not found")
 
@@ -241,9 +232,7 @@ def test_ldc_stretched(nx=4):
     B = interface.jacobian(state)
     rhs_B = interface.rhs(state)
 
-    comm = Epetra.PyComm()
-    interface = EpetraInterface.Interface(comm, parameters, nx, ny, nz, dim,
-                                          dof)
+    interface = EpetraInterface.Interface(parameters, nx, ny, nz, dim, dof)
 
     state = EpetraInterface.Vector.from_array(interface.map, state)
 
@@ -290,7 +279,6 @@ def test_ldc8_stretched():
 def test_norm():
     try:
         from fvm.interface import Epetra as EpetraInterface
-        from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("Epetra not found")
 
@@ -306,9 +294,7 @@ def test_norm():
     for i in range(n):
         state[i] = i + 1
 
-    comm = Epetra.PyComm()
-    interface = EpetraInterface.Interface(comm, parameters, nx, ny, nz, dim,
-                                          dof)
+    interface = EpetraInterface.Interface(parameters, nx, ny, nz, dim, dof)
 
     state_dist = EpetraInterface.Vector.from_array(interface.map, state)
     assert utils.norm(state) == utils.norm(state_dist)
@@ -320,7 +306,6 @@ def test_norm():
 def test_Epetra(nx=4):
     try:
         from fvm.interface import Epetra as EpetraInterface
-        from PyTrilinos import Epetra
         from PyTrilinos import Teuchos
     except ImportError:
         pytest.skip("Epetra not found")
@@ -335,9 +320,7 @@ def test_Epetra(nx=4):
     parameters = Teuchos.ParameterList()
     parameters.set('Reynolds Number', 0)
 
-    comm = Epetra.PyComm()
-    interface = EpetraInterface.Interface(comm, parameters, nx, ny, nz, dim,
-                                          dof)
+    interface = EpetraInterface.Interface(parameters, nx, ny, nz, dim, dof)
     m = interface.map
 
     continuation = Continuation(interface, parameters)
@@ -357,7 +340,6 @@ def test_Epetra(nx=4):
 def _test_Epetra_2D(nx=8):
     try:
         from fvm.interface import Epetra as EpetraInterface
-        from PyTrilinos import Epetra
         from PyTrilinos import Teuchos
     except ImportError:
         pytest.skip("Epetra not found")
@@ -373,9 +355,7 @@ def _test_Epetra_2D(nx=8):
     parameters.set('Reynolds Number', 0)
     parameters.set('Bordered Solver', True)
 
-    comm = Epetra.PyComm()
-    interface = EpetraInterface.Interface(comm, parameters, nx, ny, nz, dim,
-                                          dof)
+    interface = EpetraInterface.Interface(parameters, nx, ny, nz, dim, dof)
     m = interface.map
 
     continuation = Continuation(interface, parameters)
@@ -395,7 +375,6 @@ def _test_Epetra_2D(nx=8):
 def _test_Epetra_2D_stretched(nx=8):
     try:
         from fvm.interface import Epetra as EpetraInterface
-        from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("Epetra not found")
 
@@ -413,9 +392,7 @@ def _test_Epetra_2D_stretched(nx=8):
         'Verbose': True
     }
 
-    comm = Epetra.PyComm()
-    interface = EpetraInterface.Interface(comm, parameters, nx, ny, nz, dim,
-                                          dof)
+    interface = EpetraInterface.Interface(parameters, nx, ny, nz, dim, dof)
     m = interface.map
 
     continuation = Continuation(interface, parameters)
@@ -435,7 +412,6 @@ def _test_Epetra_2D_stretched(nx=8):
 def _test_Epetra_rayleigh_benard(nx=8):
     try:
         from fvm.interface import Epetra as EpetraInterface
-        from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("Epetra not found")
 
@@ -459,9 +435,7 @@ def _test_Epetra_rayleigh_benard(nx=8):
         'Bordered Solver': True
     }
 
-    comm = Epetra.PyComm()
-    interface = EpetraInterface.Interface(comm, parameters, nx, ny, nz, dim,
-                                          dof)
+    interface = EpetraInterface.Interface(parameters, nx, ny, nz, dim, dof)
     m = interface.map
 
     continuation = Continuation(interface, parameters)
@@ -492,7 +466,6 @@ def _test_Epetra_rayleigh_benard(nx=8):
 def _test_Epetra_double_gyre(nx=8):
     try:
         from fvm.interface import Epetra as EpetraInterface
-        from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("Epetra not found")
 
@@ -518,9 +491,7 @@ def _test_Epetra_double_gyre(nx=8):
     parameters['Preconditioner'] = {}
     parameters['Preconditioner']['Number of Levels'] = 0
 
-    comm = Epetra.PyComm()
-    interface = EpetraInterface.Interface(comm, parameters, nx, ny, nz, dim,
-                                          dof)
+    interface = EpetraInterface.Interface(parameters, nx, ny, nz, dim, dof)
     m = interface.map
 
     continuation = Continuation(interface, parameters)
@@ -531,8 +502,7 @@ def _test_Epetra_double_gyre(nx=8):
     start = 0
     target = 1000
     ds = 200
-    x, mu = continuation.continuation(x0, 'Wind Stress Parameter', start,
-                                      target, ds)
+    x, mu = continuation.continuation(x0, 'Wind Stress Parameter', start, target, ds)
 
     parameters['Detect Bifurcation Points'] = True
     parameters['Destination Tolerance'] = 1e-4
