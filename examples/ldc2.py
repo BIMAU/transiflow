@@ -1,6 +1,3 @@
-
-import numpy
-
 import matplotlib.pyplot as plt
 
 from fvm import Continuation
@@ -37,7 +34,6 @@ def main():
     nx = 32
     ny = nx
     nz = 1
-    n = dof * nx * ny * nz
 
     # Define the problem
     parameters = {'Problem Type': 'Lid-driven Cavity',
@@ -52,11 +48,10 @@ def main():
                   'Verbose': False}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof)
-
     continuation = Continuation(interface, parameters)
 
     # Compute an initial guess
-    x0 = numpy.zeros(n)
+    x0 = interface.vector()
     x0 = continuation.continuation(x0, 'Lid Velocity', 0, 1, 1)[0]
 
     # Store data for computing the bifurcation diagram using postprocessing
