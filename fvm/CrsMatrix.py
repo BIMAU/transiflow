@@ -6,7 +6,9 @@ class CrsMatrix:
         self.jcoA = jcoA
         self.begA = begA
 
-        if compress:
+        self._tmp = None
+
+        if compress and coA is not None:
             self.compress()
 
         self.lu = None
@@ -111,10 +113,14 @@ class CrsMatrix:
         return CrsMatrix(coA, jcoA, begA, False)
 
     def __iadd__(self, B):
-        A = self + B
-        self.coA = A.coA
-        self.jcoA = A.jcoA
-        self.begA = A.begA
+        if self.coA is not None:
+            A = self + B
+            self.coA = A.coA
+            self.jcoA = A.jcoA
+            self.begA = A.begA
+            return self
+
+        self._tmp = B
         return self
 
     def __neg__(self):
@@ -242,6 +248,12 @@ class CrsMatrix:
         iidx = self._get_index_list(key[0], self.m)
         jidx = self._get_index_list(key[1], self.n)
 
+        if self.coA is None:
+            # We must be using +=, which is implemented as
+            # self.__setitem__(key, self.__getitem__(key).__iadd__(b))
+            # so just return self here
+            return CrsMatrix(m=len(iidx), n=len(jidx))
+
         coA = numpy.zeros(self.begA[-1], dtype=self.dtype)
         jcoA = numpy.zeros(self.begA[-1], dtype=int)
         begA = [0]
@@ -270,3 +282,54 @@ class CrsMatrix:
 
         return CrsMatrix(coA[:idx], jcoA[:idx], numpy.array(begA),
                          compress=False, m=len(iidx), n=len(jidx))
+
+    def assemble(self):
+        assert self._tmp
+
+        iidx = numpy.concatenate([i[0] for i in self._tmp])
+        jidx = numpy.concatenate([i[1] for i in self._tmp])
+        vals = numpy.concatenate([i[2] for i in self._tmp])
+
+        sorted_idx = numpy.argsort(iidx)
+
+        coA = numpy.zeros(len(iidx), dtype=vals[0].dtype)
+        jcoA = numpy.zeros(len(iidx), dtype=int)
+        begA = numpy.zeros(self.m + 1, dtype=int)
+
+        idx = 0
+        for i in range(self.m):
+            for j in sorted_idx[idx:]:
+                if iidx[j] > i:
+                    break
+
+                coA[idx] = vals[j]
+                jcoA[idx] = jidx[j]
+                idx += 1
+
+            begA[i+1] = idx
+
+        self._tmp = None
+
+        self.coA = coA
+        self.jcoA = jcoA
+        self.begA = begA
+
+        self.compress()
+
+    def __setitem__(self, key, A):
+        if not self._tmp:
+            self._tmp = []
+
+        iidx = self._get_index_list(key[0], self.m)
+        jidx = self._get_index_list(key[1], self.n)
+
+        if isinstance(A, CrsMatrix) and A._tmp is not None:
+            self[key] = A._tmp
+        elif isinstance(A, CrsMatrix):
+            tmp = A.to_coo()
+            self._tmp.append((iidx[tmp[1]], jidx[tmp[2]], tmp[0]))
+        elif hasattr(A, 'shape'):
+            tmp = list(numpy.where(abs(A) > 1e-14))
+            self._tmp.append((iidx[tmp[0]], jidx[tmp[1]], A[tmp[0], tmp[1]]))
+        else:
+            self._tmp.append(([iidx[0]], [jidx[0]], [A]))
