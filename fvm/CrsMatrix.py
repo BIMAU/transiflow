@@ -117,9 +117,11 @@ class CrsMatrix:
         self.begA = A.begA
         return self
 
+    def __neg__(self):
+        return CrsMatrix(-self.coA[:self.begA[-1]], self.jcoA[:self.begA[-1]], self.begA, False)
+
     def __sub__(self, B):
-        A = CrsMatrix(-B.coA[:B.begA[-1]], B.jcoA[:B.begA[-1]], B.begA, False)
-        return self + A
+        return self + -B
 
     def __mul__(self, x):
         A = CrsMatrix(self.coA[:self.begA[-1]].copy(), self.jcoA[:self.begA[-1]].copy(),
