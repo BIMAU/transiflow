@@ -1,7 +1,7 @@
 import numpy
 
 class CrsMatrix:
-    def __init__(self, coA=None, jcoA=None, begA=None, compress=True):
+    def __init__(self, coA=None, jcoA=None, begA=None, compress=True, m=None, n=None):
         self.coA = coA
         self.jcoA = jcoA
         self.begA = begA
@@ -12,13 +12,27 @@ class CrsMatrix:
         self.lu = None
         self.bordered_lu = False
 
-    def _get_n(self):
+        self._m = m
+        self._n = n
+
+    def _get_m(self):
+        if self._m:
+            return self._m
+
         return len(self.begA) - 1
+
+    m = property(_get_m)
+
+    def _get_n(self):
+        if self._n:
+            return self._n
+
+        return self.m
 
     n = property(_get_n)
 
     def _get_shape(self):
-        return (self.n, self.n)
+        return (self.m, self.n)
 
     shape = property(_get_shape)
 
