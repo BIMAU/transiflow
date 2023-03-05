@@ -1,6 +1,7 @@
 from fvm import CrsMatrix
 
 import numpy
+import pytest
 
 def get_test_matrix():
     coA = numpy.array([1, 2, 3, 4, 5], dtype=int)
@@ -54,6 +55,8 @@ def test_to_dense():
             assert A[i, j] == B[i, j]
 
 def test_matvec():
+    numpy.random.seed(1234)
+
     A = get_test_matrix()
     A2 = A.to_dense()
 
@@ -61,15 +64,17 @@ def test_matvec():
     b = A.matvec(x)
     b2 = numpy.matmul(A2, x)
 
-    assert (b == b2).all()
+    assert b == pytest.approx(b2)
 
     x = numpy.random.random((A.n, 4))
     b = A.matvec(x)
     b2 = numpy.matmul(A2, x)
 
-    assert (b == b2).all()
+    assert b == pytest.approx(b2)
 
 def test_matmul():
+    numpy.random.seed(1234)
+
     A = get_test_matrix()
     A2 = A.to_dense()
 
@@ -77,10 +82,42 @@ def test_matmul():
     b = A @ x
     b2 = A2 @ x
 
-    assert (b == b2).all()
+    assert b == pytest.approx(b2)
 
     x = numpy.random.random((A.n, 4))
     b = A @ x
     b2 = A2 @ x
 
-    assert (b == b2).all()
+    assert b == pytest.approx(b2)
+
+def test_transpose():
+    A = get_test_matrix()
+    B = A.transpose()
+
+    for i in range(A.m):
+        for j in range(A.n):
+            assert B[i, j] == A[j, i]
+
+def test_add():
+    A = get_test_matrix()
+    B = A.to_dense()
+
+    A2 = A + A
+    B2 = B + B
+
+    for i in range(A.m):
+        for j in range(A.n):
+            assert A2[i, j] == B2[i, j]
+            assert A2[i, j] == A[i, j] + A[i, j]
+
+def test_sub():
+    A = get_test_matrix()
+    B = A.to_dense()
+
+    A2 = A - A.transpose()
+    B2 = B - B.T
+
+    for i in range(A.m):
+        for j in range(A.n):
+            assert A2[i, j] == B2[i, j]
+            assert A2[i, j] == A[i, j] - A[j, i]
