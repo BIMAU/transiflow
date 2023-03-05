@@ -63,17 +63,13 @@ class CrsMatrix:
             self.begA[i+1] = idx
 
     def solve(self, rhs):
-        if len(rhs.shape) < 2:
-            if self.lu.L.dtype != rhs.dtype and numpy.dtype(rhs.dtype.char.upper()) == rhs.dtype:
-                x = rhs.copy()
-                x.real = self.solve(rhs.real)
-                x.imag = self.solve(rhs.imag)
-            else:
-                x = self.lu.solve(rhs)
-        else:
+        if self.lu.L.dtype != rhs.dtype and numpy.dtype(rhs.dtype.char.upper()) == rhs.dtype:
             x = rhs.copy()
-            for i in range(x.shape[1]):
-                x[:, i] = self.solve(rhs[:, i])
+            x.real = self.solve(rhs.real)
+            x.imag = self.solve(rhs.imag)
+        else:
+            x = self.lu.solve(rhs)
+
         return x
 
     def __add__(self, B):
