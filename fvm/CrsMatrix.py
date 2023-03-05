@@ -131,7 +131,16 @@ class CrsMatrix:
         return self * (1 / x)
 
     def matvec(self, x):
-        b = numpy.zeros(x.shape, dtype=x.dtype)
+        if len(x.shape) > 1:
+            shape = list(x.shape)
+            shape[0] = self.m
+            b = numpy.zeros(shape, dtype=x.dtype)
+            for i in range(self.m):
+                for j in range(self.begA[i], self.begA[i+1]):
+                    b[i, :] += self.coA[j] * x[self.jcoA[j], :]
+            return b
+
+        b = numpy.zeros(self.m, dtype=x.dtype)
         for i in range(self.m):
             for j in range(self.begA[i], self.begA[i+1]):
                 b[i] += self.coA[j] * x[self.jcoA[j]]
