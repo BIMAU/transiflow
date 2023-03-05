@@ -110,6 +110,19 @@ def test_add():
             assert A2[i, j] == B2[i, j]
             assert A2[i, j] == A[i, j] + A[i, j]
 
+def test_iadd():
+    A = get_test_matrix()
+    A2 = get_test_matrix()
+    B = A.to_dense()
+
+    A2 += A
+    B2 = B + B
+
+    for i in range(A.m):
+        for j in range(A.n):
+            assert A2[i, j] == B2[i, j]
+            assert A2[i, j] == A[i, j] + A[i, j]
+
 def test_sub():
     A = get_test_matrix()
     B = A.to_dense()
