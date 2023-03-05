@@ -110,6 +110,13 @@ class CrsMatrix:
 
         return CrsMatrix(coA, jcoA, begA, False)
 
+    def __iadd__(self, B):
+        A = self + B
+        self.coA = A.coA
+        self.jcoA = A.jcoA
+        self.begA = A.begA
+        return self
+
     def __sub__(self, B):
         A = CrsMatrix(-B.coA[:B.begA[-1]], B.jcoA[:B.begA[-1]], B.begA, False)
         return self + A
