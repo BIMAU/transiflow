@@ -52,3 +52,35 @@ def test_to_dense():
     for i in range(A.m):
         for j in range(A.n):
             assert A[i, j] == B[i, j]
+
+def test_matvec():
+    A = get_test_matrix()
+    A2 = A.to_dense()
+
+    x = numpy.random.random(A.n)
+    b = A.matvec(x)
+    b2 = numpy.matmul(A2, x)
+
+    assert (b == b2).all()
+
+    x = numpy.random.random((A.n, 4))
+    b = A.matvec(x)
+    b2 = numpy.matmul(A2, x)
+
+    assert (b == b2).all()
+
+def test_matmul():
+    A = get_test_matrix()
+    A2 = A.to_dense()
+
+    x = numpy.random.random(A.n)
+    b = A @ x
+    b2 = A2 @ x
+
+    assert (b == b2).all()
+
+    x = numpy.random.random((A.n, 4))
+    b = A @ x
+    b2 = A2 @ x
+
+    assert (b == b2).all()
