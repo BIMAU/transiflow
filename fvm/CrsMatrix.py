@@ -209,3 +209,55 @@ class CrsMatrix:
                 for j in range(self.begA[i], self.begA[i+1]):
                     out += '%d %d %e\n' % (i+1, self.jcoA[j]+1, self.coA[j])
             f.write(out)
+
+    def _get_index_list(self, idx, n):
+        if isinstance(idx, int):
+            idx = [idx]
+        elif isinstance(idx, slice):
+            start = idx.start
+            if start is None:
+                start = 0
+
+            stop = idx.stop
+            if stop is None:
+                stop = n
+
+            idx = numpy.arange(start, stop)
+
+        return numpy.array(idx)
+
+    def __getitem__(self, key):
+        if not isinstance(key, tuple) or len(key) != 2:
+            raise Exception('Key should be a tuple')
+
+        iidx = self._get_index_list(key[0], self.m)
+        jidx = self._get_index_list(key[1], self.n)
+
+        coA = numpy.zeros(self.begA[-1], dtype=self.dtype)
+        jcoA = numpy.zeros(self.begA[-1], dtype=int)
+        begA = [0]
+
+        index_list = -numpy.ones(self.n, dtype=int)
+        for i, j in enumerate(jidx):
+            index_list[j] = i
+
+        idx = 0
+        for i in iidx:
+            for j in range(self.begA[i], self.begA[i+1]):
+                if index_list[self.jcoA[j]] < 0:
+                    continue
+
+                coA[idx] = self.coA[j]
+                jcoA[idx] = index_list[self.jcoA[j]]
+                idx += 1
+
+            begA.append(idx)
+
+        if begA[-1] == 0:
+            return 0
+
+        if begA[-1] == 1:
+            return coA[0]
+
+        return CrsMatrix(coA[:idx], jcoA[:idx], numpy.array(begA),
+                         compress=False, m=len(iidx), n=len(jidx))
