@@ -162,6 +162,14 @@ class CrsMatrix:
 
         return coA, icoA, jcoA
 
+    def to_dense(self):
+        A = numpy.zeros(self.shape, dtype=self.dtype)
+        for i in range(self.m):
+            for j in range(self.begA[i], self.begA[i+1]):
+                A[i, self.jcoA[j]] = self.coA[j]
+
+        return A
+
     def transpose(self):
         coA, icoA, jcoA = self.to_coo()
         indices = sorted(range(self.begA[-1]), key=lambda i: jcoA[i])
