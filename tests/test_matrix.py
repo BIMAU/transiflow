@@ -134,3 +134,16 @@ def test_sub():
         for j in range(A.n):
             assert A2[i, j] == B2[i, j]
             assert A2[i, j] == A[i, j] - A[j, i]
+
+def test_isub():
+    A = get_test_matrix()
+    A2 = A.transpose()
+    B = A.to_dense()
+
+    A2 -= A
+    B2 = B.T - B
+
+    for i in range(A.m):
+        for j in range(A.n):
+            assert A2[i, j] == B2[i, j]
+            assert A2[i, j] == A[j, i] - A[i, j]
