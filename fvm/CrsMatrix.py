@@ -132,7 +132,7 @@ class CrsMatrix:
 
     def matvec(self, x):
         b = numpy.zeros(x.shape, dtype=x.dtype)
-        for i in range(self.n):
+        for i in range(self.m):
             for j in range(self.begA[i], self.begA[i+1]):
                 b[i] += self.coA[j] * x[self.jcoA[j]]
         return b
@@ -142,7 +142,7 @@ class CrsMatrix:
 
     def __str__(self):
         out = ''
-        for i in range(self.n):
+        for i in range(self.m):
             for j in range(self.begA[i], self.begA[i+1]):
                 out += '%5d %5d %e\n' % (i, self.jcoA[j], self.coA[j])
         return out
@@ -153,7 +153,7 @@ class CrsMatrix:
         jcoA = numpy.zeros(self.begA[-1], dtype=int)
 
         idx = 0
-        for i in range(self.n):
+        for i in range(self.m):
             for j in range(self.begA[i], self.begA[i+1]):
                 icoA[idx] = i
                 jcoA[idx] = self.jcoA[j]
@@ -195,8 +195,8 @@ class CrsMatrix:
 
     def dump(self, name):
         with open(name, 'w') as f:
-            out = '%%%%MatrixMarket matrix coordinate real general\n%d %d %d\n' % (self.n, self.n, self.begA[self.n])
-            for i in range(self.n):
+            out = '%%%%MatrixMarket matrix coordinate real general\n%d %d %d\n' % (self.m, self.n, self.begA[self.m])
+            for i in range(self.m):
                 for j in range(self.begA[i], self.begA[i+1]):
                     out += '%d %d %e\n' % (i+1, self.jcoA[j]+1, self.coA[j])
             f.write(out)
