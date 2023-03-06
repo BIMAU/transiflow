@@ -3,23 +3,10 @@ import numpy
 import os
 
 from fvm import Continuation
-from fvm import plot_utils
 from fvm import utils
 
 from fvm.interface import SciPy as SciPyInterface
 
-
-def gather(x):
-    from PyTrilinos import Epetra
-
-    local_elements = []
-    if x.Comm().MyPID() == 0:
-        local_elements = range(x.Map().NumGlobalElements())
-    local_map = Epetra.Map(-1, local_elements, 0, x.Comm())
-    importer = Epetra.Import(local_map, x.Map())
-    out = Epetra.Vector(local_map)
-    out.Import(x, importer, Epetra.Insert)
-    return out
 
 def read_matrix(fname, m):
     from PyTrilinos import Epetra
@@ -468,7 +455,7 @@ def test_norm():
     state_dist = HYMLSInterface.Vector.from_array(interface.solve_map, state)
     assert utils.norm(state) == utils.norm(state_dist)
 
-def test_HYMLS(nx=4, interactive=False):
+def test_HYMLS(nx=4):
     try:
         from fvm.interface import HYMLS as HYMLSInterface
         from PyTrilinos import Teuchos
@@ -498,16 +485,7 @@ def test_HYMLS(nx=4, interactive=False):
 
     assert x.Norm2() > 0
 
-    if not interactive:
-        return
-
-    x = gather(x)
-    if comm.MyPID() == 0:
-        print(x)
-
-        plot_utils.plot_velocity_magnitude(x, interface)
-
-def test_HYMLS_2D(nx=8, interactive=False):
+def test_HYMLS_2D(nx=8):
     try:
         from fvm.interface import HYMLS as HYMLSInterface
         from PyTrilinos import Teuchos
@@ -538,16 +516,7 @@ def test_HYMLS_2D(nx=8, interactive=False):
 
     assert x.Norm2() > 0
 
-    if not interactive:
-        return
-
-    x = gather(x)
-    if comm.MyPID() == 0:
-        print(x)
-
-        plot_utils.plot_velocity_magnitude(x, interface)
-
-def test_HYMLS_2D_stretched(nx=8, interactive=False):
+def test_HYMLS_2D_stretched(nx=8):
     try:
         from fvm.interface import HYMLS as HYMLSInterface
     except ImportError:
@@ -577,15 +546,6 @@ def test_HYMLS_2D_stretched(nx=8, interactive=False):
     x = continuation.continuation(x0, 'Reynolds Number', start, target, ds)[0]
 
     assert x.Norm2() > 0
-
-    if not interactive:
-        return
-
-    x = gather(x)
-    if comm.MyPID() == 0:
-        print(x)
-
-        plot_utils.plot_velocity_magnitude(x, interface)
 
 def test_HYMLS_rayleigh_benard(nx=8):
     try:
@@ -683,10 +643,3 @@ def test_HYMLS_double_gyre(nx=8):
     assert x.Norm2() > 0
     assert mu > 16
     assert mu < target
-
-
-if __name__ == '__main__':
-    # test_HYMLS(8, True)
-    # test_HYMLS_2D(16, True)
-    # test_HYMLS_2D_stretched(32, True)
-    test_HYMLS_double_gyre()
