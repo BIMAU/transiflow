@@ -8,19 +8,6 @@ from fvm import utils
 from fvm.interface import SciPy as SciPyInterface
 
 
-def gather(x):
-    from PyTrilinos import Epetra
-
-    local_elements = []
-    if x.Comm().MyPID() == 0:
-        local_elements = range(x.Map().NumGlobalElements())
-    local_map = Epetra.Map(-1, local_elements, 0, x.Comm())
-    importer = Epetra.Import(local_map, x.Map())
-    out = Epetra.Vector(local_map)
-    out.Import(x, importer, Epetra.Insert)
-    return out
-
-
 def read_matrix(fname, m):
     from PyTrilinos import Epetra
 
@@ -52,28 +39,6 @@ def read_vector(fname, m):
             if lid != -1:
                 vec[lid] = float(v.strip())
     return vec
-
-
-def write_vector(vec, fname):
-    dirname = os.path.dirname(__file__)
-    with open(os.path.join(dirname, fname), 'w') as f:
-        for i in range(len(vec)):
-            f.write('%.16e\n' % vec[i])
-
-
-def read_value(fname):
-    val = 0
-    dirname = os.path.dirname(__file__)
-    with open(os.path.join(dirname, fname), 'r') as f:
-        for v in f.readlines():
-            val = float(v.strip())
-    return val
-
-
-def write_value(val, fname):
-    dirname = os.path.dirname(__file__)
-    with open(os.path.join(dirname, fname), 'w') as f:
-        f.write('%.16e\n' % val)
 
 
 def extract_sorted_row(A, i):
