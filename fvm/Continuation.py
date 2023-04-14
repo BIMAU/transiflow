@@ -1,4 +1,3 @@
-import sys
 import math
 
 from math import sqrt
@@ -30,8 +29,7 @@ class Continuation:
                 fnorm = norm(fval)
 
             if residual_check == 'F' and fnorm < tol:
-                print('Newton converged in %d iterations with ||F||=%e' % (k, fnorm))
-                sys.stdout.flush()
+                print('Newton converged in %d iterations with ||F||=%e' % (k, fnorm), flush=True)
                 break
 
             jac = self.interface.jacobian(x)
@@ -43,13 +41,11 @@ class Continuation:
                 dxnorm = norm(dx)
 
             if residual_check != 'F' and dxnorm < tol:
-                print('Newton converged in %d iterations with ||dx||=%e' % (k, dxnorm))
-                sys.stdout.flush()
+                print('Newton converged in %d iterations with ||dx||=%e' % (k, dxnorm), flush=True)
                 break
 
             if verbose:
-                print('Newton status at iteration %d: ||F||=%e, ||dx||=%e' % (k, fnorm, dxnorm))
-                sys.stdout.flush()
+                print('Newton status at iteration %d: ||F||=%e, ||dx||=%e' % (k, fnorm, dxnorm), flush=True)
 
         self.newton_iterations = k
 
@@ -79,8 +75,7 @@ class Continuation:
                 fnorm = norm(fval)
 
             if residual_check == 'F' and fnorm < tol:
-                print('Newton corrector converged in %d iterations with ||F||=%e' % (k, fnorm))
-                sys.stdout.flush()
+                print('Newton corrector converged in %d iterations with ||F||=%e' % (k, fnorm), flush=True)
                 break
 
             if residual_check == 'F' and prev_norm is not None and prev_norm < fnorm:
@@ -126,21 +121,18 @@ class Continuation:
                 dxnorm = norm(dx)
 
             if residual_check != 'F' and dxnorm < tol:
-                print('Newton corrector converged in %d iterations with ||dx||=%e' % (k, dxnorm))
-                sys.stdout.flush()
+                print('Newton corrector converged in %d iterations with ||dx||=%e' % (k, dxnorm), flush=True)
                 break
 
             if verbose:
-                print('Newton corrector status at iteration %d: ||F||=%e, ||dx||=%e' % (k, fnorm, dxnorm))
-                sys.stdout.flush()
+                print('Newton corrector status at iteration %d: ||F||=%e, ||dx||=%e' % (k, fnorm, dxnorm), flush=True)
 
             if residual_check != 'F' and prev_norm is not None and prev_norm < dxnorm:
                 self.newton_iterations = maxit
                 break
 
         if self.newton_iterations == maxit:
-            print('Newton did not converge. Adjusting step size and trying again')
-            sys.stdout.flush()
+            print('Newton did not converge. Adjusting step size and trying again', flush=True)
             return x0, mu0
 
         self.interface.set_parameter(parameter_name, mu)
@@ -162,8 +154,7 @@ class Continuation:
         ds = math.copysign(min(max(abs(ds), min_step_size), max_step_size), ds)
 
         if self.parameters.get('Verbose', False):
-            print('New stepsize: ds=%e, factor=%e' % (ds, factor))
-            sys.stdout.flush()
+            print('New stepsize: ds=%e, factor=%e' % (ds, factor), flush=True)
 
         return ds
 
@@ -175,8 +166,7 @@ class Continuation:
         for j in range(maxit):
             if abs(eig.real) < tol:
                 print("Bifurcation found at %s = %f with eigenvalue %e + %ei" % (
-                    parameter_name, mu, eig.real, eig.imag))
-                sys.stdout.flush()
+                    parameter_name, mu, eig.real, eig.imag), flush=True)
                 break
 
             # Secant method
@@ -198,8 +188,7 @@ class Continuation:
         for j in range(maxit):
             if abs(target - mu) < tol:
                 self.interface.set_parameter(parameter_name, target)
-                print("Convergence achieved onto target %s = %f" % (parameter_name, mu))
-                sys.stdout.flush()
+                print("Convergence achieved onto target %s = %f" % (parameter_name, mu), flush=True)
                 break
 
             # Secant method
@@ -230,8 +219,7 @@ class Continuation:
 
             return self.step(parameter_name, x0, mu0, dx, dmu, ds)
 
-        print("%s: %f" % (parameter_name, mu))
-        sys.stdout.flush()
+        print("%s: %f" % (parameter_name, mu), flush=True)
 
         if 'Postprocess' in self.parameters and self.parameters['Postprocess']:
             self.parameters['Postprocess'](self.interface, x, mu)

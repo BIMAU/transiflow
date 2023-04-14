@@ -1,4 +1,3 @@
-import sys
 import numpy
 
 from fvm.utils import norm
@@ -32,8 +31,7 @@ class BaseInterface:
 
     def debug_print(self, *args):
         if self.parameters.get('Verbose', False):
-            print('Debug:', *args)
-            sys.stdout.flush()
+            print('Debug:', *args, flush=True)
 
     def debug_print_residual(self, string, jac, x, rhs):
         if self.parameters.get('Verbose', False):

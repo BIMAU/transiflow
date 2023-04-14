@@ -1,5 +1,3 @@
-import sys
-
 from fvm.utils import norm
 
 class TimeIntegration:
@@ -29,8 +27,7 @@ class TimeIntegration:
                 fnorm = norm(fval)
 
             if residual_check == 'F' and fnorm < tol:
-                print('Newton converged in %d iterations with ||F||=%e' % (k, fnorm))
-                sys.stdout.flush()
+                print('Newton converged in %d iterations with ||F||=%e' % (k, fnorm), flush=True)
                 break
 
             # J - 1 / (theta * dt) * M
@@ -43,13 +40,11 @@ class TimeIntegration:
                 dxnorm = norm(dx)
 
             if residual_check != 'F' and dxnorm < tol:
-                print('Newton converged in %d iterations with ||dx||=%e' % (k, dxnorm))
-                sys.stdout.flush()
+                print('Newton converged in %d iterations with ||dx||=%e' % (k, dxnorm), flush=True)
                 break
 
             if verbose:
-                print('Newton status at iteration %d: ||F||=%e, ||dx||=%e' % (k, fnorm, dxnorm))
-                sys.stdout.flush()
+                print('Newton status at iteration %d: ||F||=%e, ||dx||=%e' % (k, fnorm, dxnorm), flush=True)
 
         return x
 
@@ -67,8 +62,7 @@ class TimeIntegration:
             x = self.newton(x, dt)
             t += dt
 
-            print("t = %f" % t)
-            sys.stdout.flush()
+            print("t = %f" % t, flush=True)
 
             self.postprocess(x, t)
 
