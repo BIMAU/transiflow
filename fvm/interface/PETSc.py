@@ -1,18 +1,24 @@
 import numpy
-
+import petsc4py
 from petsc4py import PETSc
-from mpi4py import MPI
 
 from fvm.interface import ParallelBaseInterface
 
+petsc4py.init()
+
 
 class Vector(PETSc.Vec):
-    """Distributed Epetra_Vector with some extra methods added to it for convenience."""
+    """Distributed ghosted PETSc Vector with some extra methods added to it for convenience."""
 
     @staticmethod
-    def from_array(x):
-        vec = Vector().createMPI(len(x))
-        vec.setArray(x)
+    def from_array(m, x, ghosts=(), comm=PETSc.COMM_WORLD):
+        vec = Vector().createGhost(ghosts, len(x), comm=comm)
+        vec.setLGMap(m)
+        with vec.localForm() as lf:
+            lf.set(0.0)
+        vec.setValues(range(*vec.getOwnershipRange()), x[m.getIndices()])
+        vec.assemble()
+        vec.ghostUpdate(PETSc.InsertMode.INSERT, PETSc.ScatterMode.FORWARD)
         return vec
 
     size = property(PETSc.Vec.getSize)
@@ -34,17 +40,41 @@ class Interface(ParallelBaseInterface):
     with the C-grid discretization. The subdomains will be distributed
     over multiple processors if MPI is used to run the application."""
 
-    def __init__(self, parameters, nx, ny, nz, dim, dof, comm=MPI.COMM_WORLD):
+    def __init__(self, parameters, nx, ny, nz, dim, dof, comm=PETSc.COMM_WORLD):
         super().__init__(comm, parameters, nx, ny, nz, dim, dof)
 
+        self.map = self.create_map()
+        self.assembly_map = self.create_map(True)
+        self.ghosts = list(set(self.assembly_map.indices).difference(self.map.indices))
+
         self.jac = None
+
+    def create_map(self, overlapping=False):
+        """Create a PETSc map on which the local discretization domain is defined.
+        The overlapping part is only used for computing the discretization."""
+
+        local_elements = ParallelBaseInterface.create_map(self, overlapping)
+        return PETSc.LGMap().create(local_elements, bsize=None, comm=self.comm)
 
     def rhs(self, state):
         """Right-hand side in M * du / dt = F(u) defined on the
         non-overlapping discretization domain map."""
 
-        rhs = self.discretization.rhs(state.getArray())
-        rhs = Vector.from_array(rhs)
+        state.ghostUpdate(PETSc.InsertMode.INSERT, PETSc.ScatterMode.FORWARD)
+        rhs = state.duplicate()
+        with rhs.localForm() as local_rhs, state.localForm() as local_state:
+            # all entries after n = rhs.size are ghost points
+            # permute local_state such that indices are in correct order (sorted, ascending)
+            indices = numpy.r_[
+                rhs.getOwnershipRange()[0] : rhs.getOwnershipRange()[1],
+                numpy.array(self.ghosts, dtype=int),
+            ]
+            ind_permute = numpy.argsort(indices)
+            local_arr = numpy.empty_like(local_rhs.array)
+            local_arr[ind_permute] = self.discretization.rhs(local_state.array[ind_permute])
+            local_rhs.setArray(local_arr)
+
+        rhs.assemble()
 
         return rhs
 
@@ -52,21 +82,38 @@ class Interface(ParallelBaseInterface):
         """Jacobian J of F in M * du / dt = F(u) defined on the
         domain map used by PETSc."""
 
-        local_jac = self.discretization.jacobian(state.getArray())
+        with state.localForm() as lf:
+            local_jac = self.discretization.jacobian(lf.getArray())
 
         if self.jac is None:
-            self.jac = PETSc.Mat().createAIJ((state.size, state.size), comm=self.comm)
+            self.jac = PETSc.Mat().create(comm=self.comm)
+            self.jac.setType("aij")
+            N = state.size
+            self.jac.setSizes((N, N))
+            self.jac.setLGMap(self.map)
             self.jac.setUp()
         else:
             self.jac.zeroEntries()
 
-        self.jac.setValuesCSR(
-            numpy.array(local_jac.begA, dtype=numpy.int32),
-            numpy.array(local_jac.jcoA[: local_jac.begA[-1]], dtype=numpy.int32),
-            local_jac.coA[: local_jac.begA[-1]],
-        )
+        self.jac.assemblyBegin()
+        if self.comm.size > 1:
+            for i in range(len(local_jac.begA) - 1):
+                if self.is_ghost(i):
+                    continue
 
-        self.jac.assemble()
+                col_idx = numpy.array(
+                    local_jac.jcoA[local_jac.begA[i] : local_jac.begA[i + 1]],
+                    dtype=PETSc.IntType,
+                )
+                values = local_jac.coA[local_jac.begA[i] : local_jac.begA[i + 1]]
+                self.jac.setValues(i, col_idx, values)
+        else:
+            self.jac.setValuesCSR(
+                numpy.array(local_jac.begA, dtype=numpy.int32),
+                numpy.array(local_jac.jcoA[: local_jac.begA[-1]], dtype=numpy.int32),
+                local_jac.coA[: local_jac.begA[-1]],
+            )
+        self.jac.assemblyEnd()
 
         return self.jac
 
@@ -82,7 +129,7 @@ class Interface(ParallelBaseInterface):
         ksp.setType("preonly")
         pc = ksp.getPC()
         pc.setType("lu")
-        pc.setFactorSolverType("mumps")
+        pc.setFactorSolverType("superlu_dist")
 
         ksp.setFromOptions()
 

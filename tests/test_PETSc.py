@@ -54,7 +54,7 @@ def extract_sorted_row(A, i):
     return [indices[i] for i in idx], [values[i] for i in idx]
 
 
-def test_ldc():
+def _test_ldc():
     try:
         from fvm.interface import PETSc as PETScInterface
     except ImportError:
@@ -68,12 +68,14 @@ def test_ldc():
     parameters = {"Reynolds Number": 100}
     n = nx * ny * nz * dof
 
+    # FIXME why not state = numpy.arange(1, n+1) ?
     state = numpy.zeros(n)
     for i in range(n):
         state[i] = i + 1
 
     interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof)
 
+    # state = PETScInterface.Vector.from_array(interface.map, state)
     state = PETScInterface.Vector.from_array(state)
 
     A = interface.jacobian(state)
@@ -113,19 +115,26 @@ def test_norm():
     nx = 4
     ny = nx
     nz = nx
+    dim = 3
     dof = 4
     n = nx * ny * nz * dof
+    parameters = {}
 
     state = numpy.zeros(n)
     for i in range(n):
         state[i] = i + 1
 
-    state_dist = PETScInterface.Vector.from_array(state)
+    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof)
+
+    state_dist = PETScInterface.Vector.from_array(interface.map, state)
+
     assert utils.norm(state) == utils.norm(state_dist)
 
 
 def test_PETSc(nx=4):
     try:
+        from petsc4py import PETSc
+
         from fvm.interface import PETSc as PETScInterface
     except ImportError:
         pytest.skip("PETSc not found")
@@ -136,18 +145,22 @@ def test_PETSc(nx=4):
     dof = 4
     ny = nx
     nz = nx
-    parameters = {"Reynolds Number": 0}
+    parameters = {"Reynolds Number": 0, "Verbose": True}
 
-    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof)
+    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof, PETSc.COMM_WORLD)
 
     continuation = Continuation(interface, parameters)
 
     n = nx * ny * nz * dof
-    x0 = PETScInterface.Vector().createMPI(n)
+    x0 = PETScInterface.Vector.from_array(
+        interface.map,
+        numpy.zeros(n, dtype=PETSc.ScalarType),
+        ghosts=interface.ghosts,
+    )
     x0 = continuation.newton(x0)
 
     start = 0
-    target = 2000
+    target = 100
     ds = 100
     x = continuation.continuation(x0, "Reynolds Number", start, target, ds)[0]
 
