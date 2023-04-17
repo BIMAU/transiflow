@@ -34,16 +34,18 @@ def read_matrix(fname):
     return A
 
 
-def read_vector(fname):
+def read_vector(fname, m):
+    from petsc4py import PETSc
+
     from fvm.interface import PETSc as PETScInterface
 
     values = []
     dirname = os.path.dirname(__file__)
     with open(os.path.join(dirname, fname), "r") as f:
-        for i, v in enumerate(f.readlines()):
+        for v in f.readlines():
             values.append(float(v.strip()))
 
-    vec = PETScInterface.Vector.from_array(values)
+    vec = PETScInterface.Vector.from_array(m, numpy.array(values, dtype=PETSc.ScalarType))
 
     return vec
 
@@ -54,8 +56,10 @@ def extract_sorted_row(A, i):
     return [indices[i] for i in idx], [values[i] for i in idx]
 
 
-def _test_ldc():
+def test_ldc():
     try:
+        from petsc4py import PETSc
+
         from fvm.interface import PETSc as PETScInterface
     except ImportError:
         pytest.skip("PETSc not found")
@@ -68,23 +72,26 @@ def _test_ldc():
     parameters = {"Reynolds Number": 100}
     n = nx * ny * nz * dof
 
-    # FIXME why not state = numpy.arange(1, n+1) ?
-    state = numpy.zeros(n)
+    state = numpy.zeros(n, dtype=PETSc.ScalarType)
     for i in range(n):
         state[i] = i + 1
 
-    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof)
-
-    # state = PETScInterface.Vector.from_array(interface.map, state)
-    state = PETScInterface.Vector.from_array(state)
+    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof, PETSc.COMM_WORLD)
+    state = PETScInterface.Vector.from_array(interface.map, state, ghosts=interface.ghosts)
 
     A = interface.jacobian(state)
     rhs = interface.rhs(state)
 
     B = read_matrix("ldc_%sx%sx%s.txt" % (nx, ny, nz))
-    rhs_B = read_vector("ldc_rhs_%sx%sx%s.txt" % (nx, ny, nz))
+    rhs_B = read_vector("ldc_rhs_%sx%sx%s.txt" % (nx, ny, nz), interface.map)
 
     for i in range(n):
+        if i not in interface.map.indices:
+            continue
+
+        lid = numpy.where(interface.map.indices == i)[0][0]
+        print(f"rank {interface.comm.rank}: {i = } {lid = }")
+
         indices_A, values_A = extract_sorted_row(A, i)
         indices_B, values_B = extract_sorted_row(B, i)
 
@@ -102,8 +109,15 @@ def _test_ldc():
             assert values_A[j] == pytest.approx(values_B[j])
 
     for i in range(n):
-        print(i, rhs[i], rhs_B[i])
+        if i not in interface.map.indices:
+            continue
+
+        lid = numpy.where(interface.map.indices == i)[0][0]
+
+        print(f"rank {interface.comm.rank}: {i}, {lid}, {rhs[i]}, {rhs_B[i]}")
+
         assert rhs_B[i] == pytest.approx(rhs[i])
+        assert rhs_B.array[lid] == pytest.approx(rhs.array[lid])
 
 
 def test_norm():
