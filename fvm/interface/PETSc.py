@@ -65,10 +65,7 @@ class Interface(ParallelBaseInterface):
         with rhs.localForm() as local_rhs, state.localForm() as local_state:
             # all entries after n = rhs.size are ghost points
             # permute local_state such that indices are in correct order (sorted, ascending)
-            indices = numpy.r_[
-                rhs.getOwnershipRange()[0] : rhs.getOwnershipRange()[1],
-                numpy.array(self.ghosts, dtype=int),
-            ]
+            indices = numpy.r_[self.map.indices, numpy.array(self.ghosts, dtype=int)]
             ind_permute = numpy.argsort(indices)
             local_arr = numpy.empty_like(local_rhs.array)
             local_arr[ind_permute] = self.discretization.rhs(local_state.array[ind_permute])
@@ -83,7 +80,9 @@ class Interface(ParallelBaseInterface):
         domain map used by PETSc."""
 
         with state.localForm() as lf:
-            local_jac = self.discretization.jacobian(lf.getArray())
+            indices = numpy.r_[self.map.indices, numpy.array(self.ghosts, dtype=int)]
+            ind_permute = numpy.argsort(indices)
+            local_jac = self.discretization.jacobian(lf.array[ind_permute])
 
         if self.jac is None:
             self.jac = PETSc.Mat().create(comm=self.comm)
