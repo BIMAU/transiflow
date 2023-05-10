@@ -43,58 +43,7 @@ class Interface(BaseInterface):
         '''Mass matrix M in M * du / dt = F(u).'''
         return self.discretization.mass_matrix()
 
-    def _compute_factorization(self, jac):
-        '''Compute the LU factorization of jac.'''
-        self._lu = None
-        self._prec = None
-        jac.lu = None
-
-        coA = jac.coA
-        jcoA = jac.jcoA
-        begA = jac.begA
-
-        # Fix one pressure node
-        if self.dof > self.dim and self.pressure_row is not None:
-            self.debug_print('Fixing pressure at row %d of the Jacobian matrix' %
-                             self.pressure_row)
-
-            coA = numpy.zeros(jac.begA[-1] + 1, dtype=jac.coA.dtype)
-            jcoA = numpy.zeros(jac.begA[-1] + 1, dtype=int)
-            begA = numpy.zeros(len(jac.begA), dtype=int)
-
-            idx = 0
-            for i in range(len(jac.begA) - 1):
-                if i == self.pressure_row:
-                    coA[idx] = -1.0
-                    jcoA[idx] = i
-                    idx += 1
-                    begA[i + 1] = idx
-                    continue
-                for j in range(jac.begA[i], jac.begA[i + 1]):
-                    if jac.jcoA[j] != self.pressure_row:
-                        coA[idx] = jac.coA[j]
-                        jcoA[idx] = jac.jcoA[j]
-                        idx += 1
-
-                begA[i + 1] = idx
-
-        # Convert the matrix to CSC format since splu expects that
-        A = sparse.csr_matrix((coA, jcoA, begA)).tocsc()
-
-        self.debug_print('Computing the sparse LU factorization of the Jacobian matrix')
-
-        jac.lu = linalg.splu(A)
-        jac.bordered_lu = False
-
-        # Cache the factorization for use in the iterative solver
-        self._lu = jac.lu
-        self._prec = linalg.LinearOperator((jac.n, jac.n),
-                                           matvec=self._lu.solve,
-                                           dtype=jac.dtype)
-
-        self.debug_print('Done computing the sparse LU factorization of the Jacobian matrix')
-
-    def compute_bordered_matrix(self, jac, V, W=None, C=None, fix_pressure_row=False):
+    def compute_bordered_matrix(self, jac, V=None, W=None, C=None, fix_pressure_row=False):
         '''Helper to compute a bordered matrix of the form [A, V; W', C]'''
         def _get_value(V, i, j):
             if not hasattr(V, 'shape') or len(V.shape) < 1:
@@ -105,9 +54,6 @@ class Interface(BaseInterface):
 
             return V[i, j]
 
-        if V is None:
-            raise Exception('V is None')
-
         if fix_pressure_row:
             self.debug_print(
                 'Fixing pressure at row %d of the Jacobian matrix and adding the border' %
@@ -115,19 +61,24 @@ class Interface(BaseInterface):
         else:
             self.debug_print('Adding the border to the Jacobian matrix')
 
-        border_size = 1
-        if len(V.shape) > 1:
+        border_size = 0
+        dtype = jac.dtype
+        if V is not None and len(V.shape) > 1:
             border_size = V.shape[1]
+            dtype = V.dtype
+        elif V is not None:
+            border_size = 1
+            dtype = V.dtype
 
         extra_border_space = jac.n * border_size * 2 + border_size * border_size
 
         if W is None:
             W = V
 
-        if C is None:
+        if C is None and border_size:
             C = numpy.zeros((border_size, border_size), dtype=jac.coA.dtype)
 
-        coA = numpy.zeros(jac.begA[-1] + extra_border_space + 1, dtype=V.dtype)
+        coA = numpy.zeros(jac.begA[-1] + extra_border_space + 1, dtype=dtype)
         jcoA = numpy.zeros(jac.begA[-1] + extra_border_space + 1, dtype=int)
         begA = numpy.zeros(len(jac.begA) + border_size, dtype=int)
 
@@ -168,7 +119,7 @@ class Interface(BaseInterface):
 
         return CrsMatrix(coA, jcoA, begA, False)
 
-    def _compute_bordered_factorization(self, jac, V, W, C):
+    def _compute_bordered_factorization(self, jac, V=None, W=None, C=None):
         '''Compute the LU factorization of the bordered jacobian.'''
 
         self._lu = None
@@ -185,7 +136,7 @@ class Interface(BaseInterface):
             'Computing the sparse LU factorization of the bordered Jacobian matrix')
 
         jac.lu = linalg.splu(A)
-        jac.bordered_lu = True
+        jac.bordered_lu = V is not None
 
         # Cache the factorization for use in the iterative solver
         self._lu = jac.lu
@@ -226,7 +177,7 @@ class Interface(BaseInterface):
 
         # Use a direct solver instead
         if rhs2 is None and (not jac.lu or jac.bordered_lu):
-            self._compute_factorization(jac)
+            self._compute_bordered_factorization(jac)
         elif rhs2 is not None and (not jac.lu or not jac.bordered_lu):
             self._compute_bordered_factorization(jac, V, W, C)
 
