@@ -67,6 +67,13 @@ def plot_streamfunction(state, interface, axis=2, title='Streamfunction', *args,
 
     return plot_contour(x, y, psi, axis=axis, title=title, *args, **kwargs)
 
+def plot_vorticity(state, interface, axis=2, title='Vorticity', *args, **kwargs):
+    psi = utils.compute_vorticity(state, interface, axis)
+
+    x, y = get_meshgrid(interface)
+
+    return plot_contour(x, y, psi, axis=axis, title=title, *args, **kwargs)
+
 def plot_value(t, interface=None, x=None, y=None, title=None, *args, **kwargs):
     x, y = get_meshgrid(interface, x, y)
 

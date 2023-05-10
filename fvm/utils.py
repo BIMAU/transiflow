@@ -237,6 +237,39 @@ def compute_streamfunction(state, interface, axis=2):
 
     return (psiu - psiv) / 2
 
+def compute_vorticity(state, interface, axis=2):
+    x = interface.discretization.x
+    y = interface.discretization.y
+
+    nx = interface.discretization.nx
+    ny = interface.discretization.ny
+
+    state_mtx = create_padded_state_mtx(state, interface=interface)
+
+    center = interface.discretization.nz // 2 + 1
+    u = state_mtx[1:, 1:, center, 0]
+    v = state_mtx[1:, 1:, center, 1]
+
+    assert axis == 2
+
+    zeta = numpy.zeros((nx, ny))
+
+    # Integration using the midpoint rule
+    for i in range(nx):
+        for j in range(ny):
+            dx = (x[i+1] - x[i-1]) / 2
+            dy = (y[j+1] - y[j-1]) / 2
+
+            if i < nx - 1:
+                zeta[i, j] += v[i+1, j] / dx
+                zeta[i, j] -= v[i, j] / dx
+
+            if j < ny - 1:
+                zeta[i, j] += u[i, j+1] / dy
+                zeta[i, j] -= u[i, j] / dy
+
+    return zeta
+
 def compute_volume_averaged_kinetic_energy(state, interface):
     x = interface.discretization.x
     y = interface.discretization.y
