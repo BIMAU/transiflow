@@ -119,8 +119,8 @@ class Interface(BaseInterface):
 
         return CrsMatrix(coA, jcoA, begA, False)
 
-    def _compute_bordered_factorization(self, jac, V=None, W=None, C=None):
-        '''Compute the LU factorization of the bordered jacobian.'''
+    def _compute_factorization(self, jac, V=None, W=None, C=None):
+        '''Compute the LU factorization of the (bordered) jacobian.'''
 
         self._lu = None
         self._prec = None
@@ -133,7 +133,8 @@ class Interface(BaseInterface):
         A = sparse.csr_matrix((A.coA, A.jcoA, A.begA)).tocsc()
 
         self.debug_print(
-            'Computing the sparse LU factorization of the bordered Jacobian matrix')
+            'Computing the sparse LU factorization of the %s Jacobian matrix' % (
+                'bordered ' if V is not None else ''))
 
         jac.lu = linalg.splu(A)
         jac.bordered_lu = V is not None
@@ -145,7 +146,8 @@ class Interface(BaseInterface):
                                            dtype=jac.dtype)
 
         self.debug_print(
-            'Done computing the sparse LU factorization of the bordered Jacobian matrix')
+            'Done computing the sparse LU factorization of the %s Jacobian matrix' % (
+                'bordered ' if V is not None else ''))
 
     def solve(self, jac, rhs, rhs2=None, V=None, W=None, C=None):
         '''Solve J y = x for y.'''
@@ -177,9 +179,9 @@ class Interface(BaseInterface):
 
         # Use a direct solver instead
         if rhs2 is None and (not jac.lu or jac.bordered_lu):
-            self._compute_bordered_factorization(jac)
+            self._compute_factorization(jac)
         elif rhs2 is not None and (not jac.lu or not jac.bordered_lu):
-            self._compute_bordered_factorization(jac, V, W, C)
+            self._compute_factorization(jac, V, W, C)
 
         if jac.bordered_lu:
             self.debug_print('Solving a bordered linear system')
