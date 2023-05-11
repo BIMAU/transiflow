@@ -288,12 +288,13 @@ class Interface(BaseInterface):
             y1 = y[:-border_size]
             y2 = y[-border_size:] * self.border_scaling
 
-            self.debug_print_residual('Done solving a bordered linear system in %d iterations with residual' % self._gmres_iterations,
-                                      jac, y1, rhs - V * y2)
+            self.debug_print_residual('Done solving a bordered linear system in %d iterations with residual' %
+                                      self._gmres_iterations, jac, y1, rhs - V * y2)
 
             return y1, y2
 
-        self.debug_print_residual('Done solving a linear system in %d iterations with residual' % self._gmres_iterations, jac, y, rhs)
+        self.debug_print_residual('Done solving a linear system in %d iterations with residual' %
+                                  self._gmres_iterations, jac, y, rhs)
 
         return y
 
