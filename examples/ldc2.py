@@ -1,51 +1,29 @@
-import matplotlib.pyplot as plt
+import numpy
 
 from fvm import Continuation
 from fvm import Interface
-from fvm import plot_utils
-from fvm import utils
 
+from fvm.interface import JaDa
 
-class Data:
-    def __init__(self):
-        self.mu = []
-        self.value = []
+from jadapy import jdqz
 
-    def append(self, mu, value):
-        self.mu.append(mu)
-        self.value.append(value)
+import matplotlib.pyplot as plt
 
-    def filter(self):
-        '''Filter out values obtained while converging onto a target'''
-        idx = []
-        for i, mu in enumerate(self.mu):
-            if idx:
-                idx = [j for j in idx if self.mu[j] < mu]
-
-            idx.append(i)
-
-        self.mu = [self.mu[i] for i in idx]
-        self.value = [self.value[i] for i in idx]
 
 def main():
-    ''' An example of performing a continuation for a 2D lid-driven cavity and detecting a bifurcation point'''
+    ''' An example of performing a continuation for a 2D lid-driven cavity and computing eigenvalues along the way'''
     dim = 2
     dof = 3
-    nx = 32
+    nx = 16
     ny = nx
     nz = 1
+    n = dof * nx * ny * nz
 
     # Define the problem
     parameters = {'Problem Type': 'Lid-driven Cavity',
-                  # Problem parameters
+                  # Problem parametes
                   'Reynolds Number': 1,
-                  'Lid Velocity': 0,
-                  # Use a stretched grid
-                  'Grid Stretching Factor': 1.5,
-                  # Set a maximum step size ds
-                  'Maximum Step Size': 500,
-                  # Give back extra output (this is also more expensive)
-                  'Verbose': False}
+                  'Lid Velocity': 0}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof)
     continuation = Continuation(interface, parameters)
@@ -54,64 +32,51 @@ def main():
     x0 = interface.vector()
     x0 = continuation.continuation(x0, 'Lid Velocity', 0, 1, 1)[0]
 
-    # Store data for computing the bifurcation diagram using postprocessing
-    data = Data()
-    parameters['Postprocess'] = lambda interface, x, mu: data.append(
-        mu, utils.compute_volume_averaged_kinetic_energy(x, interface))
+    previous_subspaces = None
 
-    # Perform an initial continuation to Reynolds number 7000 without detecting bifurcation points
-    ds = 100
-    target = 6000
-    x, mu = continuation.continuation(x0, 'Reynolds Number', 0, target, ds)
+    # Perform a continuation to Reynolds numbers 7000-10000 with steps of 1000
+    data_points = range(7000, 11000, 1000)
+    eigs = numpy.zeros([len(data_points), 20], dtype=numpy.complex128)
 
-    parameters['Newton Tolerance'] = 1e-12
-    parameters['Destination Tolerance'] = 1e-4
-    parameters['Detect Bifurcation Points'] = True
-    parameters['Maximum Step Size'] = 100
+    mu = 1
+    for i, target in enumerate(data_points):
+        ds = 100
+        x, mu = continuation.continuation(x0, 'Reynolds Number', mu, target, ds)
+        x0 = x
 
-    parameters['Eigenvalue Solver'] = {}
-    parameters['Eigenvalue Solver']['Target'] = 3j
-    parameters['Eigenvalue Solver']['Tolerance'] = 1e-9
-    parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 5
+        # Compute the eigenvalues of the generalized eigenvalue problem near a target 2.8i
+        jac_op = JaDa.Op(interface.jacobian(x))
+        mass_op = JaDa.Op(interface.mass_matrix())
+        jada_interface = JaDa.Interface(interface, jac_op, mass_op, n, numpy.complex128)
 
-    # Now detect the bifurcation point
-    target = 10000
-    x2, mu2 = continuation.continuation(x, 'Reynolds Number', mu, target, ds)
+        alpha, beta, q, z = jdqz.jdqz(jac_op, mass_op, eigs.shape[1], tol=1e-7, subspace_dimensions=[30, 60], target=2.8j,
+                                      interface=jada_interface, arithmetic='complex', prec=jada_interface.shifted_prec,
+                                      return_subspaces=True, initial_subspaces=previous_subspaces)
 
-    ke = utils.compute_volume_averaged_kinetic_energy(x2, interface)
+        # Store the eigenvalues
+        eigs[i, :] = numpy.array(sorted(alpha / beta, key=lambda x: abs(x)))
+        eigs[i, :] = alpha / beta
 
-    # Compute the unstable branch after the bifurcation
-    parameters['Detect Bifurcation Points'] = False
-    parameters['Maximum Step Size'] = 2000
+        # Use the subspaces in JDQZ computed for this Reynolds number as initial guesses for JDQZ at the next Reynolds number
+        previous_subspaces = (q, z)
 
-    target = 10000
-    parameters['Newton Tolerance'] = 1e-4
-    x3, mu3 = continuation.continuation(x2, 'Reynolds Number', mu2, target, ds)
+    # Plot the eigenvalues
+    fig, ax = plt.subplots()
+    for i in range(eigs.shape[0]):
+        ax.scatter(eigs[i, :].real, eigs[i, :].imag, marker='+')
 
-    # Plot a bifurcation diagram. Filter out the part where we
-    # have to go back an forth when converging onto a target
-    data.filter()
+    ax.set_ylim(abs(eigs.imag).min() - 0.1, abs(eigs.imag).max() + 0.1)
+    ax.set_xlabel('$\\sigma_r$')
+    ax.set_ylabel('$\\sigma_i$')
 
-    bif = plt.scatter(mu2, ke, marker='^')
-    plt.plot(data.mu, data.value)
+    legend = []
+    for i in data_points:
+        legend.append('Re='+str(i))
 
-    plt.title('Bifurcation diagram for the lid-driven cavity with $n_x=n_z={}$'.format(nx))
-    plt.xlabel('Reynolds number')
-    plt.ylabel('Volume averaged kinetic energy')
-    plt.legend([bif], ['First Hopf bifurcation'])
+    ax.legend(legend)
+
+    plt.title('Complex conjugate eigenvalues in the upper half-plane')
     plt.show()
-
-    # Add a perturbation based on the eigenvector
-    interface.set_parameter('Reynolds Number', mu2)
-    _, v = interface.eigs(x2, True)
-    v = v[:, 0].real
-
-    # Plot the velocity magnitude
-    plot_utils.plot_velocity_magnitude(v, interface, title='Velocity magnitude of the bifurcating eigenvector')
-
-    # Plot the pressure
-    v = plot_utils.create_state_mtx(v, nx, ny, nz, dof)
-    plot_utils.plot_value(v[:, :, 0, 2], interface, title='Pressure component of the bifurcating eigenvector')
 
 
 if __name__ == '__main__':
