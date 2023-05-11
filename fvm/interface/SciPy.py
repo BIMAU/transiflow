@@ -154,39 +154,32 @@ class Interface(BaseInterface):
             'Done computing the sparse LU factorization of the %s Jacobian matrix' % (
                 'bordered ' if V is not None else ''))
 
-    def _compute_preconditioner(self, jac, V=None, W=None, C=None):
+    def _compute_preconditioner(self, jac, A):
         '''Compute the ILU factorization of the (bordered) jacobian.'''
 
         self._lu = None
         self._prec = None
         jac.lu = None
 
-        fix_pressure_row = self.dof > self.dim and self.pressure_row is not None
-        A = self.compute_bordered_matrix(jac, V, W, C, fix_pressure_row)
-
         # Convert the matrix to CSC format since spilu expects that
         A = sparse.csr_matrix((A.coA, A.jcoA, A.begA)).tocsc()
 
-        self.debug_print(
-            'Computing the sparse ILU factorization of the %s Jacobian matrix' % (
-                'bordered ' if V is not None else ''))
+        self.debug_print('Computing the sparse ILU factorization of the Jacobian matrix')
 
         parameters = self.parameters.get('Preconditioner', {})
         jac.lu = linalg.spilu(A,
                               drop_tol=parameters.get('Drop Tolerance', None),
                               fill_factor=parameters.get('Fill Factor', None),
                               drop_rule=parameters.get('Drop Rule', None))
-        jac.bordered_lu = V is not None
+        jac.bordered_lu = A.shape != jac.shape
 
         # Cache the factorization for use in the iterative solver
         self._lu = jac.lu
-        self._prec = linalg.LinearOperator((jac.n, jac.n),
+        self._prec = linalg.LinearOperator(A.shape,
                                            matvec=self._lu.solve,
-                                           dtype=jac.dtype)
+                                           dtype=A.dtype)
 
-        self.debug_print(
-            'Done computing the sparse ILU factorization of the %s Jacobian matrix' % (
-                'bordered ' if V is not None else ''))
+        self.debug_print('Done computing the sparse ILU factorization of the Jacobian matrix')
 
     def direct_solve(self, jac, rhs, rhs2=None, V=None, W=None, C=None):
         '''Solve J y = x for y.'''
@@ -261,10 +254,13 @@ class Interface(BaseInterface):
         if rhs2 is not None:
             x = numpy.append(rhs, rhs2 * self.border_scaling)
 
+        fix_pressure_row = self.dof > self.dim and self.pressure_row is not None
+        A = self.compute_bordered_matrix(jac, V, W, C, fix_pressure_row)
+
         if rhs2 is None and (not jac.lu or jac.bordered_lu):
-            self._compute_preconditioner(jac)
+            self._compute_preconditioner(jac, A)
         elif rhs2 is not None and (not jac.lu or not jac.bordered_lu):
-            self._compute_preconditioner(jac, V, W, C)
+            self._compute_preconditioner(jac, A)
 
         self.debug_print('Solving a linear system')
 
@@ -278,7 +274,7 @@ class Interface(BaseInterface):
         maxiter = parameters.get('Maximum Iterations', 1000) / restart
         tol = parameters.get('Convergence Tolerance', 1e-6)
 
-        y, info = linalg.gmres(jac, x, restart=restart, maxiter=maxiter,
+        y, info = linalg.gmres(A, x, restart=restart, maxiter=maxiter,
                                tol=tol, atol=0, M=self._prec,
                                callback=callback, callback_type='pr_norm')
         if info != 0:
