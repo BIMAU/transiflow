@@ -49,6 +49,7 @@ def main():
     x1 = continuation.continuation(x0, 'Wind Stress Parameter', 0, target, ds)[0]
 
     plot_utils.plot_streamfunction(x1, interface, title='Streamfunction at Re=16')
+    plot_utils.plot_vorticity(x1, interface, title='Vorticity at Re=16')
 
     # Perform a continuation to Reynolds number 40 without detecting bifurcation points
     # and use this in the bifurcation diagram
