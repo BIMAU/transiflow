@@ -24,7 +24,10 @@ def test_solve(nx=4):
     y = interface.solve(A, b)
 
     assert numpy.linalg.norm(y) > 0
-    assert numpy.linalg.norm(y - x) - nx * ny * nz * x[dim] < 1e-11
+
+    y[dim::dof] += x[dim]
+    assert numpy.linalg.norm(y) > 0
+    assert numpy.linalg.norm(y - x) < 1e-11
 
 def test_bordered_matrix(nx=4):
     dim = 3
