@@ -53,16 +53,17 @@ def test_iterative_solve(nx=4):
     print(y)
     print(x)
 
+    assert numpy.linalg.norm(b) > 0
     assert numpy.linalg.norm(y) > 0
 
     tol = parameters['Iterative Solver']['Convergence Tolerance']
 
     y[dim::dof] += x[dim]
     assert numpy.linalg.norm(y) > 0
-    assert numpy.linalg.norm(y - x) > tol * 10 # The pressure is inaccurate
-    assert numpy.linalg.norm(y[0::dof] - x[0::dof]) < tol * 10
-    assert numpy.linalg.norm(y[1::dof] - x[1::dof]) < tol * 10
-    assert numpy.linalg.norm(y[2::dof] - x[2::dof]) < tol * 10
+    assert numpy.linalg.norm(y - x) > tol * numpy.linalg.norm(b) # The pressure is inaccurate
+    assert numpy.linalg.norm(y[0::dof] - x[0::dof]) < tol * numpy.linalg.norm(b)
+    assert numpy.linalg.norm(y[1::dof] - x[1::dof]) < tol * numpy.linalg.norm(b)
+    assert numpy.linalg.norm(y[2::dof] - x[2::dof]) < tol * numpy.linalg.norm(b)
 
 def test_bordered_matrix(nx=4):
     dim = 3
