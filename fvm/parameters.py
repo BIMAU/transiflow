@@ -1,7 +1,30 @@
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import Any, Literal, Optional, Callable
 
 import numpy as np
+
+
+@dataclass
+class EigenvalueSettings:
+    """
+    args:
+        arithmetic: Arithmetic
+        target: Target
+        initial_subspace_dimension: Initial Subspace Dimension
+        minimum_subspace_dimension: Minimum Subspace Dimension
+        maximum_subspace_dimension: Maximum Subspace Dimension
+        recycle_subspaces: Recycle Subspaces
+        tolerance: Tolerance
+        number_of_eigenvalues: Number of Eigenvalues
+    """
+    arithmetic: str = "complex"
+    target: float = 0.0
+    initial_subspace_dimension: int = 0
+    minimum_subspace_dimension: int = 30
+    maximum_subspace_dimension: int = 60
+    recycle_subspaces: bool = True
+    tolerance: float = 1e-7
+    number_of_eigenvalues: int = 5
 
 
 # TODO: nothing is being validated yet.
@@ -40,14 +63,6 @@ class Parameters:
         grid_stretching_factor: Grid Stretching Factor
         theta: Theta
         eigenvalue_solver: Eigenvalue Solver
-        arithmetic: Arithmetic
-        target: Target
-        initial_subspace_dimension: Initial Subspace Dimension
-        minimum_subspace_dimension: Minimum Subspace Dimension
-        maximum_subspace_dimension: Maximum Subspace Dimension
-        recycle_subspaces: Recycle Subspaces
-        tolerance: Tolerance
-        number_of_eigenvalues: Number of Eigenvalues
         preconditioner: Preconditioner
         drop_tolerance: Drop Tolerance
         fill_factor: Fill Factor
@@ -59,6 +74,7 @@ class Parameters:
         convergence_tolerance: Convergence Tolerance
     """
 
+    problem_type: Literal["Rayleigh-Benard", "Rayleigh-Benard Perturbation", "Lid-driven Cavity", "Differentially Heated Cavity", "Double Gyre"] = "Lid-driven Cavity"
     residual_check: Literal["F", "T"] = "F"
     verbose: bool = False
     maximum_newton_iterations: int = 10
@@ -88,15 +104,7 @@ class Parameters:
     grid_stretching_method: str = "tanh"
     grid_stretching_factor: float = 0.1
     theta: float = 1.0
-    eigenvalue_solver: dict = field(default_factory=dict)
-    arithmetic: str = "complex"
-    target: float = 0.0
-    initial_subspace_dimension: int = 0
-    minimum_subspace_dimension: int = 30
-    maximum_subspace_dimension: int = 60
-    recycle_subspaces: bool = True
-    tolerance: float = 1e-7
-    number_of_eigenvalues: int = 5
+    eigenvalue_solver: EigenvalueSettings = field(default_factory=EigenvalueSettings)
     preconditioner: dict = field(default_factory=dict)
     drop_tolerance: Any = None
     fill_factor: Any = None
@@ -106,3 +114,16 @@ class Parameters:
     restart: int = 100
     maximum_iterations: int = 1000
     convergence_tolerance: float = 1e-6
+    postprocess: Optional[Callable] = None
+    reynolds_number: float = 1.0
+    rayleigh_number: float = 1.0
+    prandtl_number: float = 1.0
+    grashof_number: float = 1.0
+    rossby_parameter: Optional[float] = None
+    biot_number: Optional[float] = None
+    asymmetry_parameter: float = 0.0
+    wind_stress_parameter: float = 0.0
+    lid_velocity: float = 1.0
+    taylor_number: float = 0.0
+    outer_angular_velocity: float = 0.0
+    inner_angular_velocity: float = 1.0

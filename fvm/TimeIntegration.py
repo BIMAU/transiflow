@@ -1,18 +1,20 @@
 from fvm.utils import norm
+from fvm.parameters import Parameters
+from fvm.interface import BaseInterface
 
 class TimeIntegration:
-    def __init__(self, interface, parameters):
+    def __init__(self, interface: BaseInterface, parameters: Parameters):
         self.interface = interface
         self.parameters = parameters
 
     def newton(self, x0, dt):
-        residual_check = self.parameters.get('Residual Check', 'F')
-        verbose = self.parameters.get('Verbose', False)
-        theta = self.parameters.get('Theta', 1)
+        residual_check = self.parameters.residual_check
+        verbose = self.parameters.verbose
+        theta = self.parameters.theta
 
         # Set Newton some parameters
-        maxit = self.parameters.get('Maximum Newton Iterations', 10)
-        tol = self.parameters.get('Newton Tolerance', 1e-10)
+        maxit = self.parameters.maximum_newton_iterations
+        tol = self.parameters.newton_tolerance
 
         x = x0
         b0 = self.interface.rhs(x0)
@@ -49,8 +51,8 @@ class TimeIntegration:
         return x
 
     def postprocess(self, x, t):
-        if 'Postprocess' in self.parameters and self.parameters['Postprocess']:
-            self.parameters['Postprocess'](self.interface, x, t)
+        if self.parameters.postprocess is not None:
+            self.parameters.postprocess(self.interface, x, t)
 
     def integration(self, x0, dt, tmax):
         x = x0

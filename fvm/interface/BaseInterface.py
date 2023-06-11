@@ -3,6 +3,7 @@ import numpy
 from fvm.utils import norm
 
 from fvm import Discretization, CylindricalDiscretization
+from fvm.parameters import Parameters
 
 
 class BaseInterface:
@@ -12,7 +13,7 @@ class BaseInterface:
     about the underlying methods such as the solvers that are present
     in the backend we are interfacing with.'''
 
-    def __init__(self, parameters, nx, ny, nz, dim, dof, x=None, y=None, z=None):
+    def __init__(self, parameters: Parameters, nx, ny, nz, dim, dof, x=None, y=None, z=None):
         self.nx = nx
         self.ny = ny
         self.nz = nz
@@ -21,7 +22,7 @@ class BaseInterface:
 
         self.discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
 
-        if 'Problem Type' in parameters and 'Taylor-Couette' in parameters['Problem Type']:
+        if 'Taylor-Couette' in parameters.problem_type:
             self.discretization = CylindricalDiscretization(parameters, nx, ny, nz, dim, dof, x, y, z)
 
         self.parameters = parameters
@@ -30,11 +31,11 @@ class BaseInterface:
         self._subspaces = None
 
     def debug_print(self, *args):
-        if self.parameters.get('Verbose', False):
+        if self.parameters.verbose:
             print('Debug:', *args, flush=True)
 
     def debug_print_residual(self, string, jac, x, rhs):
-        if self.parameters.get('Verbose', False):
+        if self.parameters.verbose:
             r = norm(jac @ x - rhs)
             self.debug_print(string, '{}'.format(r))
 
@@ -68,15 +69,15 @@ class BaseInterface:
 
         from jadapy import jdqz, orthogonalization
 
-        parameters = self.parameters.get('Eigenvalue Solver', {})
-        arithmetic = parameters.get('Arithmetic', 'complex')
-        target = parameters.get('Target', 0.0)
-        initial_subspace_dimension = parameters.get('Initial Subspace Dimension', 0)
-        subspace_dimensions = [parameters.get('Minimum Subspace Dimension', 30),
-                               parameters.get('Maximum Subspace Dimension', 60)]
-        enable_recycling = parameters.get('Recycle Subspaces', enable_recycling)
-        tol = parameters.get('Tolerance', 1e-7)
-        num = parameters.get('Number of Eigenvalues', 5)
+        parameters = self.parameters.eigenvalue_solver
+        arithmetic = parameters.arithmetic
+        target = parameters.target
+        initial_subspace_dimension = parameters.initial_subspace_dimension
+        subspace_dimensions = [parameters.minimum_subspace_dimension,
+                               parameters.maximum_subspace_dimension]
+        enable_recycling = parameters.recycle_subspaces
+        tol = parameters.tolerance
+        num = parameters.number_of_eigenvalues
 
         if not enable_recycling:
             self._subspaces = None

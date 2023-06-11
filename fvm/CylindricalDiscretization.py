@@ -3,6 +3,7 @@ import numpy
 from fvm import utils
 from fvm import BoundaryConditions
 from fvm import Discretization
+from fvm.parameters import Parameters
 
 class CylindricalDiscretization(Discretization):
     '''Finite volume discretization of the incompressible Navier-Stokes
@@ -12,19 +13,19 @@ class CylindricalDiscretization(Discretization):
 
     '''
 
-    def __init__(self, parameters, nr, ntheta, nz, dim, dof, r=None, theta=None, z=None):
+    def __init__(self, parameters: Parameters, nr, ntheta, nz, dim, dof, r=None, theta=None, z=None):
         self.parameters = parameters
 
-        ri = self.parameters.get('R-min', 1.0)
-        ro = self.parameters.get('R-max', 2.0)
+        ri = self.parameters.r_min
+        ro = self.parameters.r_max
         self.eta = ri / ro
 
-        L = self.parameters.get('Z-max', 1.0) - self.parameters.get('Z-min', 0.0)
+        L = self.parameters.z_max - self.parameters.z_min
 
         r = self.get_coordinate_vector(1, 1 / self.eta, nr) if r is None else r
 
-        theta = utils.create_uniform_coordinate_vector(self.parameters.get('Theta-min', 0.0),
-                                                       self.parameters.get('Theta-max', 2 * numpy.pi),
+        theta = utils.create_uniform_coordinate_vector(self.parameters.theta_min,
+                                                       self.parameters.theta_max,
                                                        ntheta) if theta is None else theta
 
         z = utils.create_uniform_coordinate_vector(0, L / self.eta, nz) if z is None else z
@@ -32,7 +33,7 @@ class CylindricalDiscretization(Discretization):
         Discretization.__init__(self, parameters, nr, ntheta, nz, dim, dof, r, theta, z)
 
         self.y_periodic = True
-        if self.parameters.get('Z-periodic', False):
+        if self.parameters.z_periodic:
             self.z_periodic = True
 
     def _linear_part_2D(self):
@@ -40,7 +41,7 @@ class CylindricalDiscretization(Discretization):
         In case Re = 0 we instead compute the linear part for the Stokes
         problem.'''
 
-        Re = self.get_parameter('Reynolds Number')
+        Re = self.parameters.reynolds_number
 
         if Re == 0:
             Re = 1
@@ -55,9 +56,9 @@ class CylindricalDiscretization(Discretization):
         In case Re = 0 we instead compute the linear part for the Stokes
         problem.'''
 
-        Ta = self.get_parameter('Taylor Number')
+        Ta = self.parameters.taylor_number
         if Ta == 0:
-            Ta = self.get_parameter('Reynolds Number') / (1 / self.eta - 1)
+            Ta = self.parameters.reynolds_number / (1 / self.eta - 1)
 
         if Ta == 0:
             Ta = 1
@@ -80,8 +81,8 @@ class CylindricalDiscretization(Discretization):
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
 
-        Ta = self.get_parameter('Taylor Number')
-        Re = self.get_parameter('Reynolds Number')
+        Ta = self.parameters.taylor_number
+        Re = self.parameters.reynolds_number
         if Re == 0 and Ta == 0:
             return (atomJ, atomF)
 
@@ -114,10 +115,10 @@ class CylindricalDiscretization(Discretization):
         frc = numpy.zeros(self.nx * self.ny * self.nz * self.dof)
 
         if self.problem_type_equals('Taylor-Couette'):
-            ri = self.parameters.get('R-min', 1.0)
-            ro = self.parameters.get('R-max', 2.0)
-            wo = self.get_parameter('Outer Angular Velocity', 0)
-            wi = self.get_parameter('Inner Angular Velocity', 1)
+            ri = self.parameters.r_min
+            ro = self.parameters.r_max
+            wo = self.parameters.outer_angular_velocity
+            wi = self.parameters.inner_angular_velocity
 
             # This is not supported by the non-dimensionalization
             assert wo == 0
@@ -128,7 +129,7 @@ class CylindricalDiscretization(Discretization):
             if self.dim <= 2 or self.nz <= 1:
                 return frc
 
-            asym = self.get_parameter('Asymmetry Parameter')
+            asym = self.parameters.asymmetry_parameter
             frc2 = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
             frc2[self.nx-1, 0, :, 2] = asym * numpy.cos(self.z[0:self.nz] / self.z[self.nz-1] * numpy.pi)
             frc += utils.create_state_vec(frc2, self.nx, self.ny, self.nz, self.dof)
@@ -138,7 +139,7 @@ class CylindricalDiscretization(Discretization):
                 boundary_conditions.no_slip_bottom(atom)
 
         else:
-            raise Exception('Invalid problem type %s' % self.get_parameter('Problem Type'))
+            raise Exception('Invalid problem type %s' % self.parameters.problem_type)
 
         return frc
 
