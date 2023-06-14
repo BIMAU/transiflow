@@ -3,6 +3,7 @@ import numpy
 from fvm import utils
 from fvm import BoundaryConditions
 from fvm import CrsMatrix
+from fvm.parameters import Parameters
 
 class Discretization:
     '''Finite volume discretization of the incompressible Navier-Stokes
@@ -55,7 +56,7 @@ class Discretization:
 
     '''
 
-    def __init__(self, parameters, nx, ny, nz, dim, dof, x=None, y=None, z=None):
+    def __init__(self, parameters: Parameters, nx, ny, nz, dim, dof, x=None, y=None, z=None):
         self.parameters = parameters
 
         self.nx = nx
@@ -72,11 +73,11 @@ class Discretization:
         if self.nz == 1:
             self.z_periodic = True
 
-        self.x = self.get_coordinate_vector(self.parameters.get('X-min', 0.0), self.parameters.get('X-max', 1.0),
+        self.x = self.get_coordinate_vector(self.parameters.x_min, self.parameters.x_max,
                                             self.nx) if x is None else x
-        self.y = self.get_coordinate_vector(self.parameters.get('Y-min', 0.0), self.parameters.get('Y-max', 1.0),
+        self.y = self.get_coordinate_vector(self.parameters.y_min, self.parameters.y_max,
                                             self.ny) if y is None else y
-        self.z = self.get_coordinate_vector(self.parameters.get('Z-min', 0.0), self.parameters.get('Z-max', 1.0),
+        self.z = self.get_coordinate_vector(self.parameters.z_min, self.parameters.z_max,
                                             self.nz) if z is None else z
 
         self.atom = None
@@ -88,28 +89,20 @@ class Discretization:
         the value in self.parameters from outside this class will
         likely result in wrong answers.'''
 
-        if name in self.parameters and self.get_parameter(name) == value:
+        if self.parameters.get(name) == value:
             return
 
         self.parameters[name] = value
         self.recompute_linear_part = True
 
-    def get_parameter(self, name, default=0):
-        '''Get a parameter from self.parameters.'''
-
-        if name not in self.parameters:
-            return default
-
-        return self.parameters.get(name, default)
-
     def get_coordinate_vector(self, start, end, nx):
-        if self.parameters.get('Grid Stretching', False) or 'Grid Stretching Factor' in self.parameters.keys():
-            if self.parameters.get('Grid Stretching Method', 'tanh') == 'sin':
+        if self.parameters.grid_stretching:
+            if self.parameters.grid_stretching_method == 'sin':
                 return utils.create_stretched_coordinate_vector2(
-                    start, end, nx, self.parameters.get('Grid Stretching Factor', 0.1))
+                    start, end, nx, self.parameters.grid_stretching_factor)
 
             return utils.create_stretched_coordinate_vector(
-                start, end, nx, self.parameters.get('Grid Stretching Factor', 1.5))
+                start, end, nx, self.parameters.grid_stretching_factor)
 
         return utils.create_uniform_coordinate_vector(start, end, nx)
 
@@ -131,10 +124,10 @@ class Discretization:
         In case Re = 0 we instead compute the linear part for the Stokes
         problem.'''
 
-        Re = self.get_parameter('Reynolds Number', 1.0)
-        Ra = self.get_parameter('Rayleigh Number', 1.0)
-        Pr = self.get_parameter('Prandtl Number', 1.0)
-        Gr = self.get_parameter('Grashof Number', Ra / Pr)
+        Re = self.parameters.reynolds_number
+        Ra = self.parameters.rayleigh_number
+        Pr = self.parameters.prandtl_number
+        Gr = self.parameters.grashof_number
 
         if Re == 0:
             Re = 1
@@ -147,7 +140,7 @@ class Discretization:
             - (self.p_x() + self.p_y()) \
             + self.div()
 
-        beta = self.get_parameter('Rossby Parameter')
+        beta = self.parameters.rossby_parameter
         if beta:
             atom -= beta * self.coriolis()
 
@@ -155,8 +148,8 @@ class Discretization:
             atom += 1 / (Pr * numpy.sqrt(Gr)) * (self.T_xx() + self.T_yy())
             atom += self.forward_average_T_y()
 
-        if self.problem_type_equals('Rayleigh-Benard Perturbation'):
-            Bi = self.get_parameter('Biot Number')
+        if self.parameters.problem_type == 'Rayleigh-Benard Perturbation':
+            Bi = self.parameters.biot_number
             atom += Bi / (Bi + 1) * self.backward_average_v_y()
 
         return atom
@@ -166,10 +159,10 @@ class Discretization:
         In case Re = 0 we instead compute the linear part for the Stokes
         problem.'''
 
-        Re = self.get_parameter('Reynolds Number', 1.0)
-        Ra = self.get_parameter('Rayleigh Number', 1.0)
-        Pr = self.get_parameter('Prandtl Number', 1.0)
-        Gr = self.get_parameter('Grashof Number', Ra / Pr)
+        Re = self.parameters.reynolds_number
+        Ra = self.parameters.rayleigh_number
+        Pr = self.parameters.prandtl_number
+        Gr = self.parameters.grashof_number
 
         if Re == 0:
             Re = 1
@@ -190,8 +183,8 @@ class Discretization:
             else:
                 atom += self.forward_average_T_y()
 
-        if self.problem_type_equals('Rayleigh-Benard Perturbation'):
-            Bi = self.get_parameter('Biot Number')
+        if self.parameters.problem_type == 'Rayleigh-Benard Perturbation':
+            Bi = self.parameters.biot_number
             if self.nz > 1:
                 atom += Bi / (Bi + 1) * self.backward_average_v_y()
             else:
@@ -209,7 +202,7 @@ class Discretization:
         atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
         atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
 
-        Re = self.get_parameter('Reynolds Number')
+        Re = self.parameters.reynolds_number
         if Re == 0 and not self.dof > self.dim + 1:
             return (atomJ, atomF)
 
@@ -374,10 +367,6 @@ class Discretization:
 
         return CrsMatrix(coA, jcoA, begA)
 
-    def problem_type_equals(self, second):
-        first = self.get_parameter('Problem Type', 'Lid-driven Cavity')
-        return first.lower() == second.lower()
-
     def boundaries(self, atom):
         '''Compute boundary conditions for the currently defined problem type.'''
 
@@ -387,8 +376,8 @@ class Discretization:
 
         frc = numpy.zeros(self.nx * self.ny * self.nz * self.dof)
 
-        if self.problem_type_equals('Lid-driven Cavity'):
-            v = self.get_parameter('Lid Velocity', 1)
+        if self.parameters.problem_type == 'Lid-driven Cavity':
+            v = self.parameters.lid_velocity
             boundary_conditions.no_slip_east(atom)
             boundary_conditions.no_slip_west(atom)
 
@@ -401,18 +390,18 @@ class Discretization:
 
             boundary_conditions.no_slip_bottom(atom)
             frc += boundary_conditions.moving_lid_top(atom, v)
-        elif (self.problem_type_equals('Rayleigh-Benard')
-              or self.problem_type_equals('Rayleigh-Benard Perturbation')):
-            asym = self.get_parameter('Asymmetry Parameter')
+        elif (self.parameters.problem_type == 'Rayleigh-Benard'
+              or self.parameters.problem_type == 'Rayleigh-Benard Perturbation'):
+            asym = self.parameters.asymmetry_parameter
             frc += boundary_conditions.heatflux_east(atom, asym)
             frc += boundary_conditions.heatflux_west(atom, 0)
             boundary_conditions.no_slip_east(atom)
             boundary_conditions.no_slip_west(atom)
 
-            bottom_temperature = 1 if self.problem_type_equals('Rayleigh-Benard') else 0
+            bottom_temperature = 1 if self.parameters.problem_type == 'Rayleigh-Benard' else 0
 
             if self.dim == 2 or self.nz <= 1:
-                Bi = self.get_parameter('Biot Number')
+                Bi = self.parameters.biot_number
                 frc += boundary_conditions.heatflux_north(atom, 0, Bi)
                 frc += boundary_conditions.temperature_south(atom, bottom_temperature)
                 boundary_conditions.free_slip_north(atom)
@@ -428,7 +417,7 @@ class Discretization:
             frc += boundary_conditions.temperature_bottom(atom, 0)
             boundary_conditions.no_slip_top(atom)
             boundary_conditions.no_slip_bottom(atom)
-        elif self.problem_type_equals('Differentially Heated Cavity'):
+        elif self.parameters.problem_type == 'Differentially Heated Cavity':
             frc += boundary_conditions.temperature_east(atom, -1/2)
             frc += boundary_conditions.temperature_west(atom, 1/2)
             boundary_conditions.no_slip_east(atom)
@@ -444,7 +433,7 @@ class Discretization:
                 frc += boundary_conditions.heatflux_bottom(atom, 0)
                 boundary_conditions.no_slip_top(atom)
                 boundary_conditions.no_slip_bottom(atom)
-        elif self.problem_type_equals('Double Gyre'):
+        elif self.parameters.problem_type == 'Double Gyre':
             frc = self.wind_stress()
 
             boundary_conditions.no_slip_east(atom)
@@ -453,7 +442,7 @@ class Discretization:
             boundary_conditions.free_slip_north(atom)
             boundary_conditions.free_slip_south(atom)
         else:
-            raise Exception('Invalid problem type %s' % self.get_parameter('Problem Type'))
+            raise Exception('Invalid problem type %s' % self.parameters.problem_type)
 
         return frc
 
@@ -794,8 +783,8 @@ class Discretization:
         return atom
 
     def wind_stress(self):
-        tau_0 = self.get_parameter('Wind Stress Parameter')
-        asym = self.get_parameter('Asymmetry Parameter')
+        tau_0 = self.parameters.wind_stress_parameter
+        asym = self.parameters.asymmetry_parameter
 
         frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
         for i in range(self.nx-1):

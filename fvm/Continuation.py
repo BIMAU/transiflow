@@ -2,10 +2,12 @@ import math
 
 from math import sqrt
 from fvm.utils import norm
+from fvm.interface import BaseInterface
+from fvm.parameters import Parameters
 
 class Continuation:
 
-    def __init__(self, interface, parameters):
+    def __init__(self, interface: BaseInterface, parameters: Parameters):
         self.interface = interface
         self.parameters = parameters
 
@@ -14,12 +16,12 @@ class Continuation:
         self.zeta = None
 
     def newton(self, x0):
-        residual_check = self.parameters.get('Residual Check', 'F')
-        verbose = self.parameters.get('Verbose', False)
+        residual_check = self.parameters.residual_check
+        verbose = self.parameters.verbose
 
         # Set Newton some parameters
-        maxit = self.parameters.get('Maximum Newton Iterations', 10)
-        tol = self.parameters.get('Newton Tolerance', 1e-10)
+        maxit = self.parameters.maximum_newton_iterations
+        tol = self.parameters.newton_tolerance
 
         x = x0
         for k in range(maxit):
@@ -52,12 +54,12 @@ class Continuation:
         return x
 
     def newtoncorrector(self, parameter_name, ds, x, x0, mu, mu0):
-        residual_check = self.parameters.get('Residual Check', 'F')
-        verbose = self.parameters.get('Verbose', False)
+        residual_check = self.parameters.residual_check
+        verbose = self.parameters.verbose
 
         # Set Newton some parameters
-        maxit = self.parameters.get('Maximum Newton Iterations', 10)
-        tol = self.parameters.get('Newton Tolerance', 1e-4)
+        maxit = self.parameters.maximum_newton_iterations
+        tol = self.parameters.newton_tolerance
 
         self.newton_iterations = 0
 
@@ -94,7 +96,7 @@ class Continuation:
             dflval = (self.interface.rhs(x) - fval) / self.delta
             self.interface.set_parameter(parameter_name, mu)
 
-            if self.parameters.get("Bordered Solver", False):
+            if self.parameters.bordered_solver:
                 # Solve the entire bordered system in one go (2.2.9)
                 dx, dmu = self.interface.solve(jac, -fval, -rnp1, dflval, 2 * self.zeta * diff,
                                                2 * (1 - self.zeta) * (mu - mu0))
@@ -142,9 +144,9 @@ class Continuation:
     def adjust_step_size(self, ds):
         ''' Step size control, see [Seydel p 188.] '''
 
-        min_step_size = self.parameters.get('Minimum Step Size', 0.01)
-        max_step_size = self.parameters.get('Maximum Step Size', 2000)
-        optimal_newton_iterations = self.parameters.get('Optimal Newton Iterations', 3)
+        min_step_size = self.parameters.minimum_step_size
+        max_step_size = self.parameters.maximum_step_size
+        optimal_newton_iterations = self.parameters.optimal_newton_iterations
 
         factor = optimal_newton_iterations / max(self.newton_iterations, 1)
         factor = min(max(factor, 0.5), 2.0)
@@ -153,7 +155,7 @@ class Continuation:
 
         ds = math.copysign(min(max(abs(ds), min_step_size), max_step_size), ds)
 
-        if self.parameters.get('Verbose', False):
+        if self.parameters.verbose:
             print('New stepsize: ds=%e, factor=%e' % (ds, factor), flush=True)
 
         return ds
@@ -161,7 +163,7 @@ class Continuation:
     def detect_bifurcation(self, parameter_name, x, mu, dx, dmu, eig, deig, v, ds, maxit):
         ''' Converge onto a bifurcation '''
 
-        tol = self.parameters.get('Destination Tolerance', 1e-4)
+        tol = self.parameters.destination_tolerance
 
         for j in range(maxit):
             if abs(eig.real) < tol:
@@ -183,7 +185,7 @@ class Continuation:
     def converge(self, parameter_name, x, mu, dx, dmu, target, ds, maxit):
         ''' Converge onto the target value '''
 
-        tol = self.parameters.get('Destination Tolerance', 1e-4)
+        tol = self.parameters.destination_tolerance
 
         for j in range(maxit):
             if abs(target - mu) < tol:
@@ -221,8 +223,8 @@ class Continuation:
 
         print("%s: %f" % (parameter_name, mu), flush=True)
 
-        if 'Postprocess' in self.parameters and self.parameters['Postprocess']:
-            self.parameters['Postprocess'](self.interface, x, mu)
+        if self.parameters.postprocess is not None:
+            self.parameters.postprocess(self.interface, x, mu)
 
         # Set the new values computed by the corrector
         dmu = mu - mu0
@@ -251,7 +253,7 @@ class Continuation:
         dflval = (self.interface.rhs(x) - fval) / self.delta
         self.interface.set_parameter(parameter_name, mu)
 
-        if self.parameters.get("Bordered Solver", False):
+        if self.parameters.bordered_solver:
             # Solve the entire bordered system in one go (5.16)
             dx, dmu = self.interface.solve(jac, 0 * x, 0, dflval, dx, dmu)
         else:
@@ -262,7 +264,7 @@ class Continuation:
 
         if abs(dmu) < 1e-12:
             dmu = dmu0
-            ds = self.parameters.get('Minimum Step Size', 0.01)
+            ds = self.parameters.minimum_step_size
 
         return x, mu, dx, dmu, ds
 
@@ -277,7 +279,7 @@ class Continuation:
         return x, mu, dx, dmu, ds
 
     def switch_branches(self, parameter_name, x, mu, dx, dmu, v, ds):
-        branch_switching_method = self.parameters.get('Branch Switching Method', 'Tangent')
+        branch_switching_method = self.parameters.branch_switching_method
         if branch_switching_method == 'Asymmetry':
             return self.switch_branches_asymmetry(parameter_name, x, mu, ds)
 
@@ -327,7 +329,7 @@ class Continuation:
         mu = start
 
         # Set some parameters
-        self.delta = self.parameters.get('Delta', 1)
+        self.delta = self.parameters.delta
         self.zeta = 1 / x.size
 
         if not dx or not dmu:
@@ -340,11 +342,11 @@ class Continuation:
         eig = None
 
         if not maxit:
-            maxit = self.parameters.get('Maximum Continuation Steps', 1000)
+            maxit = self.parameters.maximum_continuation_steps
 
         # Some configuration for the detection of bifurcations
-        detect_bifurcations = self.parameters.get('Detect Bifurcation Points', False)
-        enable_branch_switching = self.parameters.get('Enable Branch Switching', False)
+        detect_bifurcations = self.parameters.detect_bifurcation_points
+        enable_branch_switching = self.parameters.enable_branch_switching
         enable_recycling = False
 
         # Perform the continuation
