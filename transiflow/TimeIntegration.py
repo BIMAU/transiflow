@@ -1,4 +1,4 @@
-from fvm.utils import norm
+from transiflow.utils import norm
 
 class TimeIntegration:
     def __init__(self, interface, parameters):

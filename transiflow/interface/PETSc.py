@@ -3,7 +3,7 @@ import numpy
 from petsc4py import PETSc
 from mpi4py import MPI
 
-from fvm.interface import ParallelBaseInterface
+from transiflow.interface import ParallelBaseInterface
 
 
 class Vector(PETSc.Vec):

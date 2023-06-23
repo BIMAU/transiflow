@@ -5,7 +5,7 @@ from numpy.testing import assert_allclose
 
 import matplotlib.pyplot as plt
 
-from fvm import Continuation
+from transiflow import Continuation
 
 # Import common fixtures
 from tests.jada_fixtures import * # noqa: F401, F403
@@ -13,18 +13,18 @@ from tests.jada_fixtures import * # noqa: F401, F403
 @pytest.fixture(autouse=True, scope='module')
 def import_test():
     try:
-        from fvm.interface import JaDa # noqa: F401
+        from transiflow.interface import JaDa # noqa: F401
     except ImportError:
         pytest.skip('jadapy not found')
 
     try:
-        from fvm.interface import HYMLS as HYMLSInterface # noqa: F401
+        from transiflow.interface import HYMLS as HYMLSInterface # noqa: F401
     except ImportError:
         pytest.skip('HYMLS not found')
 
 @pytest.fixture(scope='module')
 def interface(nx):
-    from fvm.interface import HYMLS as HYMLSInterface
+    from transiflow.interface import HYMLS as HYMLSInterface
     from PyTrilinos import Teuchos
 
     dim = 2
@@ -42,7 +42,7 @@ def interface(nx):
 
 @pytest.fixture(scope='module')
 def x(interface):
-    from fvm.interface import HYMLS as HYMLSInterface
+    from transiflow.interface import HYMLS as HYMLSInterface
 
     continuation = Continuation(interface, interface.parameters)
 
@@ -65,8 +65,8 @@ class Operator:
         return x
 
 def test_solve(interface, x, tol):
-    from fvm.interface import HYMLS as HYMLSInterface
-    from fvm.interface import JaDaHYMLS
+    from transiflow.interface import HYMLS as HYMLSInterface
+    from transiflow.interface import JaDaHYMLS
 
     from jadapy import EpetraInterface
     from jadapy.utils import norm
@@ -103,7 +103,7 @@ def test_solve(interface, x, tol):
     assert norm(r) / norm(b) < tol
 
 def test_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
-    from fvm.interface import JaDaHYMLS
+    from transiflow.interface import JaDaHYMLS
 
     from jadapy import EpetraInterface
     from jadapy import jdqz
@@ -129,7 +129,7 @@ def test_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=Fals
     plt.show()
 
 def test_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
-    from fvm.interface import JaDaHYMLS
+    from transiflow.interface import JaDaHYMLS
 
     from jadapy import EpetraInterface
     from jadapy import jdqz
@@ -155,7 +155,7 @@ def test_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactiv
     plt.show()
 
 def test_complex_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
-    from fvm.interface import JaDaHYMLS
+    from transiflow.interface import JaDaHYMLS
 
     from jadapy import ComplexEpetraInterface
     from jadapy import jdqz
@@ -181,7 +181,7 @@ def test_complex_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interact
     plt.show()
 
 def test_complex_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
-    from fvm.interface import JaDaHYMLS
+    from transiflow.interface import JaDaHYMLS
 
     from jadapy import ComplexEpetraInterface
     from jadapy import jdqz
@@ -207,7 +207,7 @@ def test_complex_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, in
     plt.show()
 
 def test_bordered_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
-    from fvm.interface import JaDaHYMLS
+    from transiflow.interface import JaDaHYMLS
 
     from jadapy import EpetraInterface
     from jadapy import jdqz

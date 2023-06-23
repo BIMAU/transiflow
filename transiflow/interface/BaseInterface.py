@@ -1,8 +1,8 @@
 import numpy
 
-from fvm.utils import norm
+from transiflow.utils import norm
 
-from fvm import Discretization, CylindricalDiscretization
+from transiflow import Discretization, CylindricalDiscretization
 
 
 class BaseInterface:

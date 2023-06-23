@@ -1,7 +1,7 @@
 import math
 
 from math import sqrt
-from fvm.utils import norm
+from transiflow.utils import norm
 
 class Continuation:
 

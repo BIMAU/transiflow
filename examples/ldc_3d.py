@@ -1,9 +1,9 @@
 import numpy
 import pickle
 
-from fvm import Continuation
-from fvm import Interface
-from fvm import utils
+from transiflow import Continuation
+from transiflow import Interface
+from transiflow import utils
 
 
 class Data:

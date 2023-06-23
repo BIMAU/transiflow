@@ -1,6 +1,6 @@
 import numpy
 
-from fvm.interface.SciPy import Interface
+from transiflow.interface.SciPy import Interface
 
 
 def test_solve(nx=4):

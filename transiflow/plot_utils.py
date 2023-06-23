@@ -1,8 +1,8 @@
 import numpy
 import matplotlib.pyplot as plt
 
-from fvm import utils
-from fvm.utils import create_state_mtx # noqa: F401
+from transiflow import utils
+from transiflow.utils import create_state_mtx # noqa: F401
 
 def get_meshgrid(interface, x=None, y=None):
     if x is None:
