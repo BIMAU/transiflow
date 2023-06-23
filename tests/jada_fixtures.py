@@ -6,15 +6,15 @@ from numpy.testing import assert_allclose
 
 from scipy import sparse
 
-from fvm import Continuation
+from transiflow import Continuation
 
-from fvm.interface.SciPy import Interface
+from transiflow.interface.SciPy import Interface
 
 
 @pytest.fixture(autouse=True, scope='module')
 def import_test():
     try:
-        from fvm.interface import JaDa # noqa: F401
+        from transiflow.interface import JaDa # noqa: F401
     except ImportError:
         pytest.skip('jadapy not found')
 
@@ -74,7 +74,7 @@ def check_eigenvalues(A_op, B_op, eigs, v, num_evs, tol):
 
 @pytest.fixture(scope='module')
 def arpack_eigs(numpy_interface, numpy_x, num_evs, tol, atol):
-    from fvm.interface import JaDa
+    from transiflow.interface import JaDa
 
     A_op = JaDa.Op(numpy_interface.jacobian(numpy_x))
     B_op = JaDa.Op(numpy_interface.mass_matrix())

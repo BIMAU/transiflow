@@ -1,6 +1,6 @@
-# FVM
+# TransiFlow
 
-FVM is a Python package that implements several standard test cases in computational fluid dynamics using the finite volume method.
+TransiFlow is a Python package that implements several standard test cases in computational fluid dynamics using the finite volume method.
 We provide an interface to compute a right-hand side, Jacobian matrix, and mass matrix for these problems, which allows us to perform time integration, or a continuation to compute a bifurcation diagram for the problem at hand.
 
 ## Continuation
@@ -32,7 +32,7 @@ An example of how to perform a continuation and compute eigenvalues can be found
 
 ## Installation
 
-FVM is best installed in a [virtual environment](https://docs.python.org/3/library/venv.html).
+TransiFlow is best installed in a [virtual environment](https://docs.python.org/3/library/venv.html).
 We state the most common steps for creating and using a virtual environment here.
 Refer to the documentation for more details.
 
@@ -46,7 +46,7 @@ and to activate the virtual environment, run
 source /path/to/new/virtual/environment/bin/activate
 ```
 
-After this, we can upgrade pip and install FVM in editable mode from the fvm source directory.
+After this, we can upgrade pip and install TransiFlow in editable mode from the transiflow source directory.
 ```
 pip install --upgrade pip
 pip install -e .

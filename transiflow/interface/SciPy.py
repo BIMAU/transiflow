@@ -3,9 +3,9 @@ import numpy
 from scipy import sparse
 from scipy.sparse import linalg
 
-from fvm import CrsMatrix
+from transiflow import CrsMatrix
 
-from fvm.interface import BaseInterface
+from transiflow.interface import BaseInterface
 
 
 class Interface(BaseInterface):
@@ -307,7 +307,7 @@ class Interface(BaseInterface):
     def eigs(self, state, return_eigenvectors=False, enable_recycling=False):
         '''Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v.'''
 
-        from fvm.interface.JaDa import Op
+        from transiflow.interface.JaDa import Op
 
         parameters = self.parameters.get('Eigenvalue Solver', {})
         arithmetic = parameters.get('Arithmetic', 'complex')
@@ -317,9 +317,9 @@ class Interface(BaseInterface):
         prec = None
 
         if self.parameters.get('Bordered Solver', False):
-            from fvm.interface.JaDa import BorderedInterface as JaDaInterface
+            from transiflow.interface.JaDa import BorderedInterface as JaDaInterface
         else:
-            from fvm.interface.JaDa import Interface as JaDaInterface
+            from transiflow.interface.JaDa import Interface as JaDaInterface
 
         jada_interface = JaDaInterface(self, jac_op, mass_op, jac_op.shape[0], numpy.complex128)
         if arithmetic == 'real':

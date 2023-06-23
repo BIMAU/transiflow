@@ -1,8 +1,8 @@
 import numpy
 
-from fvm import utils
-from fvm import BoundaryConditions
-from fvm import Discretization
+from transiflow import utils
+from transiflow import BoundaryConditions
+from transiflow import Discretization
 
 class CylindricalDiscretization(Discretization):
     '''Finite volume discretization of the incompressible Navier-Stokes

@@ -1,9 +1,9 @@
 import numpy
 
-from fvm import Continuation
-from fvm import Interface
+from transiflow import Continuation
+from transiflow import Interface
 
-from fvm.interface import JaDa
+from transiflow.interface import JaDa
 
 from jadapy import jdqz
 

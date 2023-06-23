@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 
-from fvm import Continuation
-from fvm import Interface
-from fvm import plot_utils
-from fvm import utils
+from transiflow import Continuation
+from transiflow import Interface
+from transiflow import plot_utils
+from transiflow import utils
 
 
 class Data:

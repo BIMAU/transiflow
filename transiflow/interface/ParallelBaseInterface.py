@@ -1,6 +1,6 @@
 import numpy
 
-from fvm.interface import BaseInterface
+from transiflow.interface import BaseInterface
 
 
 def ind2sub(nx, ny, nz, idx, dof=1):
