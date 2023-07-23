@@ -1,13 +1,13 @@
 import numpy
 import pytest
 
-from fvm import TimeIntegration
-from fvm import Continuation
-from fvm import plot_utils
-from fvm import utils
+from transiflow import TimeIntegration
+from transiflow import Continuation
+from transiflow import plot_utils
+from transiflow import utils
 
-from fvm.interface.SciPy import Interface as SciPyInterface
-from fvm.interface import create as Interface
+from transiflow.interface.SciPy import Interface as SciPyInterface
+from transiflow.interface import create as Interface
 
 
 def test_continuation(nx=4, interactive=False):
@@ -191,7 +191,7 @@ def test_continuation_time_integration(nx=4):
 
 def test_continuation_rayleigh_benard(nx=8):
     try:
-        from fvm.interface import JaDa # noqa: F401
+        from transiflow.interface import JaDa # noqa: F401
     except ImportError:
         pytest.skip('jadapy not found')
 
@@ -252,7 +252,7 @@ def test_continuation_rayleigh_benard(nx=8):
 
 def test_continuation_double_gyre(nx=8):
     try:
-        from fvm.interface import JaDa # noqa: F401
+        from transiflow.interface import JaDa # noqa: F401
     except ImportError:
         pytest.skip('jadapy not found')
 
@@ -292,7 +292,7 @@ def test_continuation_double_gyre(nx=8):
 
 def test_continuation_2D_tc(nx=8):
     try:
-        from fvm.interface import JaDa # noqa: F401
+        from transiflow.interface import JaDa # noqa: F401
     except ImportError:
         pytest.skip('jadapy not found')
 

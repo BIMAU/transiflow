@@ -2,9 +2,9 @@ import numpy
 
 import matplotlib.pyplot as plt
 
-from fvm import Interface
-from fvm import TimeIntegration
-from fvm import utils
+from transiflow import Interface
+from transiflow import TimeIntegration
+from transiflow import utils
 
 
 class Data:

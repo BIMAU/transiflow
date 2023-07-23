@@ -1,4 +1,4 @@
-from fvm import CrsMatrix
+from transiflow import CrsMatrix
 
 import numpy
 import pytest

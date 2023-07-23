@@ -2,7 +2,7 @@ import numpy
 import petsc4py
 from petsc4py import PETSc
 
-from fvm.interface import ParallelBaseInterface
+from transiflow.interface import ParallelBaseInterface
 
 petsc4py.init()
 

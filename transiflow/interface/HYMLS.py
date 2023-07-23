@@ -5,8 +5,8 @@ import numpy
 import sys
 import os
 
-from fvm.interface.Epetra import Vector
-from fvm.interface.Epetra import Interface as EpetraInterface
+from transiflow.interface.Epetra import Vector
+from transiflow.interface.Epetra import Interface as EpetraInterface
 
 import HYMLS
 
@@ -235,10 +235,10 @@ class Interface(EpetraInterface):
 
         if arithmetic == 'complex':
             from jadapy import ComplexEpetraInterface as EpetraInterface
-            from fvm.interface.JaDaHYMLS import ComplexInterface as JaDaHYMLSInterface
+            from transiflow.interface.JaDaHYMLS import ComplexInterface as JaDaHYMLSInterface
         else:
             from jadapy import EpetraInterface
-            from fvm.interface.JaDaHYMLS import BorderedInterface as JaDaHYMLSInterface
+            from transiflow.interface.JaDaHYMLS import BorderedInterface as JaDaHYMLSInterface
 
         jac_op = EpetraInterface.CrsMatrix(self.jacobian(state))
         mass_op = EpetraInterface.CrsMatrix(self.mass_matrix())

@@ -2,9 +2,9 @@ import os
 import numpy
 import pytest
 
-from fvm import utils
-from fvm import CrsMatrix
-from fvm import Discretization, CylindricalDiscretization
+from transiflow import utils
+from transiflow import CrsMatrix
+from transiflow import Discretization, CylindricalDiscretization
 
 def create_coordinate_vector(nx):
     dx = 1 / (nx + 1)

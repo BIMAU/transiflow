@@ -2,10 +2,10 @@ import pytest
 import numpy
 import os
 
-from fvm import Continuation
-from fvm import utils
+from transiflow import Continuation
+from transiflow import utils
 
-from fvm.interface import SciPy as SciPyInterface
+from transiflow.interface import SciPy as SciPyInterface
 
 
 def read_matrix(fname, m):
@@ -28,7 +28,7 @@ def read_matrix(fname, m):
 
 
 def read_vector(fname, m):
-    from fvm.interface import Epetra as EpetraInterface
+    from transiflow.interface import Epetra as EpetraInterface
 
     vec = EpetraInterface.Vector(m)
 
@@ -56,7 +56,7 @@ def extract_sorted_local_row(A, i):
 
 def test_ldc():
     try:
-        from fvm.interface import Epetra as EpetraInterface
+        from transiflow.interface import Epetra as EpetraInterface
     except ImportError:
         pytest.skip("Epetra not found")
 
@@ -116,7 +116,7 @@ def test_ldc():
 
 def test_ldc_stretched_file():
     try:
-        from fvm.interface import Epetra as EpetraInterface
+        from transiflow.interface import Epetra as EpetraInterface
     except ImportError:
         pytest.skip("Epetra not found")
 
@@ -176,7 +176,7 @@ def test_ldc_stretched_file():
 
 def test_ldc_stretched(nx=4):
     try:
-        from fvm.interface import Epetra as EpetraInterface
+        from transiflow.interface import Epetra as EpetraInterface
     except ImportError:
         pytest.skip("Epetra not found")
 
@@ -240,7 +240,7 @@ def test_ldc8_stretched():
 
 def test_norm():
     try:
-        from fvm.interface import Epetra as EpetraInterface
+        from transiflow.interface import Epetra as EpetraInterface
     except ImportError:
         pytest.skip("Epetra not found")
 
@@ -267,7 +267,7 @@ def test_norm():
 
 def test_Epetra(nx=4):
     try:
-        from fvm.interface import Epetra as EpetraInterface
+        from transiflow.interface import Epetra as EpetraInterface
         from PyTrilinos import Teuchos
     except ImportError:
         pytest.skip("Epetra not found")
@@ -299,7 +299,7 @@ def test_Epetra(nx=4):
 
 def _test_Epetra_2D(nx=8):
     try:
-        from fvm.interface import Epetra as EpetraInterface
+        from transiflow.interface import Epetra as EpetraInterface
         from PyTrilinos import Teuchos
     except ImportError:
         pytest.skip("Epetra not found")
@@ -331,7 +331,7 @@ def _test_Epetra_2D(nx=8):
 
 def _test_Epetra_2D_stretched(nx=8):
     try:
-        from fvm.interface import Epetra as EpetraInterface
+        from transiflow.interface import Epetra as EpetraInterface
     except ImportError:
         pytest.skip("Epetra not found")
 
@@ -365,12 +365,12 @@ def _test_Epetra_2D_stretched(nx=8):
 
 def _test_Epetra_rayleigh_benard(nx=8):
     try:
-        from fvm.interface import Epetra as EpetraInterface
+        from transiflow.interface import Epetra as EpetraInterface
     except ImportError:
         pytest.skip("Epetra not found")
 
     try:
-        from fvm import JadaInterface  # noqa: F401
+        from transiflow import JadaInterface  # noqa: F401
     except ImportError:
         pytest.skip('jadapy not found')
 
@@ -416,12 +416,12 @@ def _test_Epetra_rayleigh_benard(nx=8):
 
 def _test_Epetra_double_gyre(nx=8):
     try:
-        from fvm.interface import Epetra as EpetraInterface
+        from transiflow.interface import Epetra as EpetraInterface
     except ImportError:
         pytest.skip("Epetra not found")
 
     try:
-        from fvm import JadaInterface  # noqa: F401
+        from transiflow import JadaInterface  # noqa: F401
     except ImportError:
         pytest.skip('jadapy not found')
 

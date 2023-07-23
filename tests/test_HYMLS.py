@@ -2,10 +2,10 @@ import pytest
 import numpy
 import os
 
-from fvm import Continuation
-from fvm import utils
+from transiflow import Continuation
+from transiflow import utils
 
-from fvm.interface import SciPy as SciPyInterface
+from transiflow.interface import SciPy as SciPyInterface
 
 
 def read_matrix(fname, m):
@@ -27,7 +27,7 @@ def read_matrix(fname, m):
     return A
 
 def read_vector(fname, m):
-    from fvm.interface import HYMLS as HYMLSInterface
+    from transiflow.interface import HYMLS as HYMLSInterface
 
     vec = HYMLSInterface.Vector(m)
 
@@ -71,7 +71,7 @@ def extract_sorted_local_row(A, i):
 
 def test_ldc():
     try:
-        from fvm.interface import HYMLS as HYMLSInterface
+        from transiflow.interface import HYMLS as HYMLSInterface
     except ImportError:
         pytest.skip("HYMLS not found")
 
@@ -130,7 +130,7 @@ def test_ldc():
 
 def test_ldc_stretched_file():
     try:
-        from fvm.interface import HYMLS as HYMLSInterface
+        from transiflow.interface import HYMLS as HYMLSInterface
     except ImportError:
         pytest.skip("HYMLS not found")
 
@@ -189,7 +189,7 @@ def test_ldc_stretched_file():
 
 def test_ldc_stretched(nx=4):
     try:
-        from fvm.interface import HYMLS as HYMLSInterface
+        from transiflow.interface import HYMLS as HYMLSInterface
     except ImportError:
         pytest.skip("HYMLS not found")
 
@@ -251,7 +251,7 @@ def test_ldc8_stretched():
 
 def test_prec(nx=4, parameters=None):
     try:
-        from fvm.interface import HYMLS as HYMLSInterface
+        from transiflow.interface import HYMLS as HYMLSInterface
         from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("HYMLS not found")
@@ -301,7 +301,7 @@ def test_multilevel_prec():
 
 def test_prec_stretched(nx=4, parameters=None):
     try:
-        from fvm.interface import HYMLS as HYMLSInterface
+        from transiflow.interface import HYMLS as HYMLSInterface
         from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("HYMLS not found")
@@ -352,7 +352,7 @@ def test_multilevel_prec_stretched():
 
 def test_bordered_prec():
     try:
-        from fvm.interface import HYMLS as HYMLSInterface
+        from transiflow.interface import HYMLS as HYMLSInterface
         from PyTrilinos import Epetra
     except ImportError:
         pytest.skip("HYMLS not found")
@@ -431,7 +431,7 @@ def test_bordered_prec():
 
 def test_norm():
     try:
-        from fvm.interface import HYMLS as HYMLSInterface
+        from transiflow.interface import HYMLS as HYMLSInterface
     except ImportError:
         pytest.skip("HYMLS not found")
 
@@ -457,7 +457,7 @@ def test_norm():
 
 def test_HYMLS(nx=4):
     try:
-        from fvm.interface import HYMLS as HYMLSInterface
+        from transiflow.interface import HYMLS as HYMLSInterface
         from PyTrilinos import Teuchos
     except ImportError:
         pytest.skip("HYMLS not found")
@@ -487,7 +487,7 @@ def test_HYMLS(nx=4):
 
 def test_HYMLS_2D(nx=8):
     try:
-        from fvm.interface import HYMLS as HYMLSInterface
+        from transiflow.interface import HYMLS as HYMLSInterface
         from PyTrilinos import Teuchos
     except ImportError:
         pytest.skip("HYMLS not found")
@@ -518,7 +518,7 @@ def test_HYMLS_2D(nx=8):
 
 def test_HYMLS_2D_stretched(nx=8):
     try:
-        from fvm.interface import HYMLS as HYMLSInterface
+        from transiflow.interface import HYMLS as HYMLSInterface
     except ImportError:
         pytest.skip("HYMLS not found")
 
@@ -549,12 +549,12 @@ def test_HYMLS_2D_stretched(nx=8):
 
 def test_HYMLS_rayleigh_benard(nx=8):
     try:
-        from fvm.interface import HYMLS as HYMLSInterface
+        from transiflow.interface import HYMLS as HYMLSInterface
     except ImportError:
         pytest.skip("HYMLS not found")
 
     try:
-        from fvm.interface import JaDa # noqa: F401
+        from transiflow.interface import JaDa # noqa: F401
     except ImportError:
         pytest.skip('jadapy not found')
 
@@ -597,12 +597,12 @@ def test_HYMLS_rayleigh_benard(nx=8):
 
 def test_HYMLS_double_gyre(nx=8):
     try:
-        from fvm.interface import HYMLS as HYMLSInterface
+        from transiflow.interface import HYMLS as HYMLSInterface
     except ImportError:
         pytest.skip("HYMLS not found")
 
     try:
-        from fvm.interface import JaDa # noqa: F401
+        from transiflow.interface import JaDa # noqa: F401
     except ImportError:
         pytest.skip('jadapy not found')
 

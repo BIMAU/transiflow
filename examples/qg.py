@@ -2,10 +2,10 @@ import numpy
 
 import matplotlib.pyplot as plt
 
-from fvm import Continuation
-from fvm import Interface
-from fvm import plot_utils
-from fvm import utils
+from transiflow import Continuation
+from transiflow import Interface
+from transiflow import plot_utils
+from transiflow import utils
 
 
 class Data:
@@ -49,6 +49,7 @@ def main():
     x1 = continuation.continuation(x0, 'Wind Stress Parameter', 0, target, ds)[0]
 
     plot_utils.plot_streamfunction(x1, interface, title='Streamfunction at Re=16')
+    plot_utils.plot_vorticity(x1, interface, title='Vorticity at Re=16')
 
     # Perform a continuation to Reynolds number 40 without detecting bifurcation points
     # and use this in the bifurcation diagram
@@ -67,7 +68,7 @@ def main():
     ds = 10
     target = 1
     interface.set_parameter('Postprocess', None)
-    interface.set_parameter('Maximum Iterations', 1)
+    interface.set_parameter('Maximum Continuation Steps', 1)
     interface.set_parameter('Reynolds Number', 16)
     x3, mu3 = continuation.continuation(x1, 'Asymmetry Parameter', 0, target, ds)
 
@@ -75,7 +76,7 @@ def main():
     # meaning we can't stay on the unstable branch
     ds = 5
     target = 40
-    interface.set_parameter('Maximum Iterations', 1000)
+    interface.set_parameter('Maximum Continuation Steps', 1000)
     x4, mu4 = continuation.continuation(x3, 'Reynolds Number', 16, target, ds)
 
     # Go back to the symmetric problem

@@ -3,7 +3,7 @@ import os
 import numpy
 import pytest
 
-from fvm import Continuation, utils
+from transiflow import Continuation, utils
 
 
 def read_matrix(fname):
@@ -37,7 +37,7 @@ def read_matrix(fname):
 def read_vector(fname, m):
     from petsc4py import PETSc
 
-    from fvm.interface import PETSc as PETScInterface
+    from transiflow.interface import PETSc as PETScInterface
 
     values = []
     dirname = os.path.dirname(__file__)
@@ -60,7 +60,7 @@ def test_ldc():
     try:
         from petsc4py import PETSc
 
-        from fvm.interface import PETSc as PETScInterface
+        from transiflow.interface import PETSc as PETScInterface
     except ImportError:
         pytest.skip("PETSc not found")
 
@@ -122,7 +122,7 @@ def test_ldc():
 
 def test_norm():
     try:
-        from fvm.interface import PETSc as PETScInterface
+        from transiflow.interface import PETSc as PETScInterface
     except ImportError:
         pytest.skip("PETSc not found")
 
@@ -149,7 +149,7 @@ def test_PETSc(nx=4):
     try:
         from petsc4py import PETSc
 
-        from fvm.interface import PETSc as PETScInterface
+        from transiflow.interface import PETSc as PETScInterface
     except ImportError:
         pytest.skip("PETSc not found")
 

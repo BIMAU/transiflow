@@ -1,8 +1,8 @@
 import numpy
 
-from fvm import utils
-from fvm import BoundaryConditions
-from fvm import CrsMatrix
+from transiflow import utils
+from transiflow import BoundaryConditions
+from transiflow import CrsMatrix
 
 class Discretization:
     '''Finite volume discretization of the incompressible Navier-Stokes

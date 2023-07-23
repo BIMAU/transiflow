@@ -1,8 +1,8 @@
 import numpy
 import matplotlib.pyplot as plt
 
-from fvm import utils
-from fvm.utils import create_state_mtx # noqa: F401
+from transiflow import utils
+from transiflow.utils import create_state_mtx # noqa: F401
 
 def get_meshgrid(interface, x=None, y=None):
     if x is None:
@@ -62,6 +62,13 @@ def plot_velocity_magnitude(state, interface, axis=2, position=None, title='Velo
 
 def plot_streamfunction(state, interface, axis=2, title='Streamfunction', *args, **kwargs):
     psi = utils.compute_streamfunction(state, interface, axis)
+
+    x, y = get_meshgrid(interface)
+
+    return plot_contour(x, y, psi, axis=axis, title=title, *args, **kwargs)
+
+def plot_vorticity(state, interface, axis=2, title='Vorticity', *args, **kwargs):
+    psi = utils.compute_vorticity(state, interface, axis)
 
     x, y = get_meshgrid(interface)
 

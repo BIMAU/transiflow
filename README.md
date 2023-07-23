@@ -1,6 +1,6 @@
-# FVM
+# TransiFlow
 
-FVM is a Python package that implements several standard test cases in computational fluid dynamics using the finite volume method.
+TransiFlow is a Python package that implements several standard test cases in computational fluid dynamics using the finite volume method.
 We provide an interface to compute a right-hand side, Jacobian matrix, and mass matrix for these problems, which allows us to perform time integration, or a continuation to compute a bifurcation diagram for the problem at hand.
 
 ## Continuation
@@ -17,7 +17,7 @@ Given a continuation parameters and a target value, the continuation can be call
     continuation = Continuation(interface, parameters)
 
     # Compute an initial guess
-    x0 = numpy.zeros(dof * nx * ny * nz)
+    x0 = interface.vector()
     x0 = continuation.newton(x0)
 
     # Perform the continuation. x will be the state at the target Reynolds number.
@@ -32,7 +32,7 @@ An example of how to perform a continuation and compute eigenvalues can be found
 
 ## Installation
 
-FVM is best installed in a [virtual environment](https://docs.python.org/3/library/venv.html).
+TransiFlow is best installed in a [virtual environment](https://docs.python.org/3/library/venv.html).
 We state the most common steps for creating and using a virtual environment here.
 Refer to the documentation for more details.
 
@@ -46,25 +46,17 @@ and to activate the virtual environment, run
 source /path/to/new/virtual/environment/bin/activate
 ```
 
-After this, we can install fvm from the fvm source directory.
+After this, we can upgrade pip and install TransiFlow in editable mode from the transiflow source directory.
 ```
-pip install .
+pip install --upgrade pip
+pip install -e .
 ```
+This will also install all of the dependencies.
+The same can be done for JaDaPy in the same virtual environment.
 
-This will also install all of the requirements.
 Now one should be able to run an example.
 ```
 python examples/ldc.py
-```
-
-If one does not want to install fvm, but instead just wants to run it from the source directory, one can install the requirements by running
-```
-pip install -r requirements.txt
-```
-
-And one can run the example with
-```
-PYTHONPATH=. python examples/ldc.py
 ```
 
 If the example fails with

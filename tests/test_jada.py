@@ -12,7 +12,7 @@ from tests.jada_fixtures import check_eigenvalues
 @pytest.fixture(autouse=True, scope='module')
 def import_test():
     try:
-        from fvm.interface import JaDa # noqa: F401
+        from transiflow.interface import JaDa # noqa: F401
     except ImportError:
         pytest.skip('jadapy not found')
 
@@ -41,7 +41,7 @@ def check_divfree(discretization, state):
             assert abs(x[i]) < 1e-14
 
 def test_solve(interface, x, tol):
-    from fvm.interface import JaDa
+    from transiflow.interface import JaDa
     from jadapy.utils import norm
 
     numpy.random.seed(1234)
@@ -67,7 +67,7 @@ def test_solve(interface, x, tol):
     assert norm(r) / norm(b) < tol
 
 def test_shifted_solve(interface, x, tol):
-    from fvm.interface import JaDa
+    from transiflow.interface import JaDa
     from jadapy.utils import norm
 
     numpy.random.seed(1234)
@@ -104,7 +104,7 @@ def test_shifted_solve(interface, x, tol):
     assert norm(r) / norm(b) < tol
 
 def test_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
-    from fvm.interface import JaDa
+    from transiflow.interface import JaDa
     from jadapy import jdqz
 
     numpy.random.seed(1234)
@@ -127,7 +127,7 @@ def test_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
     plt.show()
 
 def test_complex_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
-    from fvm.interface import JaDa
+    from transiflow.interface import JaDa
     from jadapy import jdqz
 
     numpy.random.seed(1234)
@@ -152,7 +152,7 @@ def test_complex_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=F
     plt.show()
 
 def test_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
-    from fvm.interface import JaDa
+    from transiflow.interface import JaDa
     from jadapy import jdqz
 
     numpy.random.seed(1234)
@@ -178,7 +178,7 @@ def test_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=Fals
     plt.show()
 
 def test_complex_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
-    from fvm.interface import JaDa
+    from transiflow.interface import JaDa
     from jadapy import jdqz
 
     numpy.random.seed(1234)
@@ -204,7 +204,7 @@ def test_complex_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interact
     plt.show()
 
 def test_complex_shifted_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
-    from fvm.interface import JaDa
+    from transiflow.interface import JaDa
     from jadapy import jdqz
 
     numpy.random.seed(1234)
@@ -230,7 +230,7 @@ def test_complex_shifted_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, 
     plt.show()
 
 def test_complex_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
-    from fvm.interface import JaDa
+    from transiflow.interface import JaDa
     from jadapy import jdqz
 
     numpy.random.seed(1234)
@@ -259,7 +259,7 @@ def test_complex_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, interac
     plt.show()
 
 def test_complex_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
-    from fvm.interface import JaDa
+    from transiflow.interface import JaDa
     from jadapy import jdqz
 
     numpy.random.seed(1234)
@@ -289,7 +289,7 @@ def test_complex_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, in
     plt.show()
 
 def test_complex_shifted_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
-    from fvm.interface import JaDa
+    from transiflow.interface import JaDa
     from jadapy import jdqz
 
     numpy.random.seed(1234)
@@ -319,7 +319,7 @@ def test_complex_shifted_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, 
     plt.show()
 
 def test_complex_shifted_prec_bordered_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
-    from fvm.interface import JaDa
+    from transiflow.interface import JaDa
     from jadapy import jdqz
 
     numpy.random.seed(1234)
