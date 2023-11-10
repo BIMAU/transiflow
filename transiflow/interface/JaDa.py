@@ -25,7 +25,6 @@ def _get_scalars(alpha, beta):
 class Op:
     def __init__(self, mat):
         self.mat = mat
-        self.fvm_mat = CrsMatrix(mat.data, mat.indices, mat.indptr, False)
         self.dtype = mat.data.dtype
         self.shape = mat.shape
 
@@ -74,7 +73,7 @@ class MatrixCache:
         alpha, beta = _get_scalars(alpha, beta)
 
         if shifted_matrix is None and alpha == 0.0 and beta == 1.0:
-            return self.jac_op.fvm_mat
+            return self.jac_op.mat
 
         # Cache previous preconditioners
         for i, cached_matrix in enumerate(self.matrices):
@@ -148,7 +147,7 @@ class Interface(NumPyInterface.NumPyInterface):
         return out
 
     def prec(self, x, *args):
-        return self.interface.solve(self.jac_op.fvm_mat, x)
+        return self.interface.solve(self.jac_op.mat, x)
 
     def shifted_prec(self, x, alpha, beta):
         shifted_matrix = self._matrix_cache.get_shifted_matrix(alpha, beta)
@@ -215,4 +214,4 @@ class BorderedInterface(NumPyInterface.NumPyInterface):
         return out
 
     def prec(self, x, *args):
-        return self.interface.solve(self.jac_op.fvm_mat, x)
+        return self.interface.solve(self.jac_op.mat, x)
