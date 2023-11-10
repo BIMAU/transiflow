@@ -38,12 +38,12 @@ class Interface(BaseInterface):
     def jacobian(self, state):
         '''Jacobian J of F in M * du / dt = F(u).'''
         jac = self.discretization.jacobian(state)
-        return sparse.csr_matrix((jac.coA, jac.jcoA, jac.begA))
+        return sparse.csr_matrix((jac.coA, jac.jcoA, jac.begA)).tocsc()
 
     def mass_matrix(self):
         '''Mass matrix M in M * du / dt = F(u).'''
         mass = self.discretization.mass_matrix()
-        return sparse.csr_matrix((mass.coA, mass.jcoA, mass.begA), (mass.n, mass.n))
+        return sparse.csr_matrix((mass.coA, mass.jcoA, mass.begA), (mass.n, mass.n)).tocsc()
 
     def compute_bordered_matrix(self, jac, V=None, W=None, C=None, fix_pressure_row=False):
         '''Helper to compute a bordered matrix of the form [A, V; W', C]'''
@@ -84,14 +84,14 @@ class Interface(BaseInterface):
             C = numpy.zeros((border_size, border_size), dtype=jac.data.dtype)
 
         coA = numpy.zeros(jac.indptr[-1] + extra_border_space + 1, dtype=dtype)
-        jcoA = numpy.zeros(jac.indptr[-1] + extra_border_space + 1, dtype=int)
+        icoA = numpy.zeros(jac.indptr[-1] + extra_border_space + 1, dtype=int)
         begA = numpy.zeros(len(jac.indptr) + border_size, dtype=int)
 
         idx = 0
         for i in range(jac.shape[0]):
             if fix_pressure_row and i == self.pressure_row:
                 coA[idx] = -1.0
-                jcoA[idx] = i
+                icoA[idx] = i
                 idx += 1
                 begA[i + 1] = idx
                 continue
@@ -99,31 +99,31 @@ class Interface(BaseInterface):
             for j in range(jac.indptr[i], jac.indptr[i + 1]):
                 if not fix_pressure_row or jac.indices[j] != self.pressure_row:
                     coA[idx] = jac.data[j]
-                    jcoA[idx] = jac.indices[j]
+                    icoA[idx] = jac.indices[j]
                     idx += 1
 
             for j in range(border_size):
-                coA[idx] = self.border_scaling * _get_value(V, i, j)
-                jcoA[idx] = jac.shape[0] + j
+                coA[idx] = self.border_scaling * _get_value(W, i, j)
+                icoA[idx] = jac.shape[0] + j
                 idx += 1
 
             begA[i + 1] = idx
 
         for i in range(border_size):
             for j in range(jac.shape[0]):
-                coA[idx] = self.border_scaling * _get_value(W, j, i)
-                jcoA[idx] = j
+                coA[idx] = self.border_scaling * _get_value(V, j, i)
+                icoA[idx] = j
                 idx += 1
 
             for j in range(border_size):
-                coA[idx] = self.border_scaling * self.border_scaling * _get_value(C, i, j)
-                jcoA[idx] = jac.shape[0] + j
+                coA[idx] = self.border_scaling * self.border_scaling * _get_value(C, j, i)
+                icoA[idx] = jac.shape[0] + j
                 idx += 1
 
             begA[jac.shape[0] + 1 + i] = idx
 
         n = len(begA) - 1
-        return sparse.csr_matrix((coA, jcoA, begA), (n, n))
+        return sparse.csc_matrix((coA, icoA, begA), (n, n))
 
     def _compute_factorization(self, jac, V, W, C):
         '''Compute the LU factorization of the (bordered) jacobian.'''
