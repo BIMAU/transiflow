@@ -43,36 +43,56 @@ class CrsMatrix:
 
     dtype = property(_get_dtype)
 
-    def compress(self):
+    @property
+    def data(self):
+        return self.coA
+
+    @property
+    def indices(self):
+        return self.jcoA
+
+    @property
+    def indptr(self):
+        return self.begA
+
+    @staticmethod
+    def _compress(coA, jcoA, begA):
         ''' Remove zeros and merge duplicate entries, which may occur in the case of periodic
         boundary conditions.'''
         idx = 0
-        beg = self.begA[0]
-        for i in range(len(self.begA) - 1):
-            unique_indices, inverse_indices = numpy.unique(self.jcoA[beg:self.begA[i+1]], return_inverse=True)
+        beg = begA[0]
+        for i in range(len(begA) - 1):
+            unique_indices, inverse_indices = numpy.unique(jcoA[beg:begA[i+1]], return_inverse=True)
 
-            values = numpy.zeros(len(unique_indices), dtype=self.coA.dtype)
+            values = numpy.zeros(len(unique_indices), dtype=coA.dtype)
             for orig_idx, inverse_idx in enumerate(inverse_indices):
-                values[inverse_idx] += self.coA[beg + orig_idx]
+                values[inverse_idx] += coA[beg + orig_idx]
 
             for j in range(len(unique_indices)):
                 if abs(values[j]) > 1e-14:
-                    self.jcoA[idx] = unique_indices[j]
-                    self.coA[idx] = values[j]
+                    jcoA[idx] = unique_indices[j]
+                    coA[idx] = values[j]
                     idx += 1
 
-            beg = self.begA[i+1]
-            self.begA[i+1] = idx
+            beg = begA[i+1]
+            begA[i+1] = idx
 
-    def solve(self, rhs):
-        if self.lu.L.dtype != rhs.dtype and numpy.dtype(rhs.dtype.char.upper()) == rhs.dtype:
+    def compress(self):
+        self._compress(self.coA, self.jcoA, self.begA)
+
+    @staticmethod
+    def _solve(A, rhs):
+        if A.lu.L.dtype != rhs.dtype and numpy.dtype(rhs.dtype.char.upper()) == rhs.dtype:
             x = rhs.copy()
-            x.real = self.solve(rhs.real)
-            x.imag = self.solve(rhs.imag)
+            x.real = A.solve(rhs.real)
+            x.imag = A.solve(rhs.imag)
         else:
-            x = self.lu.solve(rhs)
+            x = A.lu.solve(rhs)
 
         return x
+
+    def solve(self, rhs):
+        return self._solve(self, rhs)
 
     def __add__(self, B):
         coA = numpy.zeros(self.begA[-1] + B.begA[-1], dtype=self.dtype)
