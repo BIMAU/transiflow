@@ -52,7 +52,6 @@ class Interface(BaseInterface):
 
         matrix.bordered_lu = None
         matrix.lu = None
-        matrix.n = matrix.shape[0]
 
     def compute_bordered_matrix(self, jac, V=None, W=None, C=None, fix_pressure_row=False):
         '''Helper to compute a bordered matrix of the form [A, V; W', C]'''
@@ -86,7 +85,7 @@ class Interface(BaseInterface):
             border_size = 1
             dtype = V.dtype
 
-        extra_border_space = jac.n * border_size * 2 + border_size * border_size
+        extra_border_space = jac.shape[0] * border_size * 2 + border_size * border_size
 
         if W is None:
             W = V
@@ -99,7 +98,7 @@ class Interface(BaseInterface):
         begA = numpy.zeros(len(jac.indptr) + border_size, dtype=int)
 
         idx = 0
-        for i in range(jac.n):
+        for i in range(jac.shape[0]):
             if fix_pressure_row and i == self.pressure_row:
                 coA[idx] = -1.0
                 jcoA[idx] = i
@@ -115,23 +114,23 @@ class Interface(BaseInterface):
 
             for j in range(border_size):
                 coA[idx] = self.border_scaling * _get_value(V, i, j)
-                jcoA[idx] = jac.n + j
+                jcoA[idx] = jac.shape[0] + j
                 idx += 1
 
             begA[i + 1] = idx
 
         for i in range(border_size):
-            for j in range(jac.n):
+            for j in range(jac.shape[0]):
                 coA[idx] = self.border_scaling * _get_value(W, j, i)
                 jcoA[idx] = j
                 idx += 1
 
             for j in range(border_size):
                 coA[idx] = self.border_scaling * self.border_scaling * _get_value(C, i, j)
-                jcoA[idx] = jac.n + j
+                jcoA[idx] = jac.shape[0] + j
                 idx += 1
 
-            begA[jac.n + 1 + i] = idx
+            begA[jac.shape[0] + 1 + i] = idx
 
         n = len(begA) - 1
         return sparse.csr_matrix((coA, jcoA, begA), (n, n))
@@ -155,7 +154,7 @@ class Interface(BaseInterface):
 
         # Cache the factorization for use in the iterative solver
         self._lu = jac.lu
-        self._prec = linalg.LinearOperator((jac.n, jac.n),
+        self._prec = linalg.LinearOperator(jac.shape,
                                            matvec=self._lu.solve,
                                            dtype=jac.dtype)
 
