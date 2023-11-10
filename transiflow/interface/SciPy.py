@@ -1,10 +1,7 @@
 import numpy
-import functools
 
 from scipy import sparse
 from scipy.sparse import linalg
-
-from transiflow import CrsMatrix
 
 from transiflow.interface import BaseInterface
 
@@ -53,7 +50,6 @@ class Interface(BaseInterface):
         if hasattr(matrix, 'lu'):
             return
 
-        matrix.solve = functools.partial(CrsMatrix._solve, matrix)
         matrix.bordered_lu = None
         matrix.lu = None
         matrix.n = matrix.shape[0]
@@ -191,6 +187,16 @@ class Interface(BaseInterface):
 
         self.debug_print('Done computing the sparse ILU factorization of the Jacobian matrix')
 
+    def _lu_solve(self, A, rhs):
+        if A.lu.L.dtype != rhs.dtype and numpy.dtype(rhs.dtype.char.upper()) == rhs.dtype:
+            x = rhs.copy()
+            x.real = self._lu_solve(A, rhs.real)
+            x.imag = self._lu_solve(A, rhs.imag)
+        else:
+            x = A.lu.solve(rhs)
+
+        return x
+
     def direct_solve(self, jac, rhs, rhs2=None, V=None, W=None, C=None):
         '''Solve J y = x for y.'''
         x = rhs.copy()
@@ -230,7 +236,7 @@ class Interface(BaseInterface):
         if jac.bordered_lu:
             self.debug_print('Solving a bordered linear system')
 
-            y = jac.solve(x)
+            y = self._lu_solve(jac, x)
 
             border_size = 1
             if hasattr(rhs2, 'shape') and len(rhs2.shape) > 0:
@@ -246,7 +252,7 @@ class Interface(BaseInterface):
 
         self.debug_print('Solving a linear system')
 
-        y = jac.solve(x)
+        y = self._lu_solve(jac, x)
 
         self.debug_print_residual('Done solving a linear system with residual', jac, y, rhs)
 
