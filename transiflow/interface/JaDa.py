@@ -24,10 +24,10 @@ def _get_scalars(alpha, beta):
 
 class Op:
     def __init__(self, mat):
-        self.fvm_mat = mat
-        self.mat = sparse.csr_matrix((mat.coA, mat.jcoA, mat.begA), shape=(mat.n, mat.n))
-        self.dtype = mat.coA.dtype
-        self.shape = (mat.n, mat.n)
+        self.mat = mat
+        self.fvm_mat = CrsMatrix(mat.data, mat.indices, mat.indptr, False)
+        self.dtype = mat.data.dtype
+        self.shape = mat.shape
 
     def matvec(self, x):
         return self.mat * x
@@ -191,6 +191,8 @@ class BorderedInterface(NumPyInterface.NumPyInterface):
         mat = beta * self.jac_op.mat - alpha * self.mass_op.mat
         shifted_matrix = CrsMatrix(mat.data, mat.indices, mat.indptr, False)
         shifted_bordered_matrix = self.interface.compute_bordered_matrix(shifted_matrix, op.Z, op.Q)
+        shifted_bordered_matrix = sparse.csr_matrix((shifted_bordered_matrix.coA, shifted_bordered_matrix.jcoA,
+                                                     shifted_bordered_matrix.begA))
         shifted_bordered_op = Op(shifted_bordered_matrix)
 
         prec = self._matrix_cache.get_shifted_matrix(alpha, beta, shifted_bordered_matrix)
