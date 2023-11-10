@@ -135,8 +135,14 @@ class Interface(BaseInterface):
         n = len(begA) - 1
         return sparse.csr_matrix((coA, jcoA, begA), (n, n))
 
-    def _compute_factorization(self, jac, V=None, W=None, C=None):
+    def _compute_factorization(self, jac, V, W, C):
         '''Compute the LU factorization of the (bordered) jacobian.'''
+
+        if V is not None and hasattr(jac, 'lu') and jac.lu is not None and jac.bordered_lu:
+            return
+
+        if V is None and hasattr(jac, 'lu') and jac.lu is not None and not jac.bordered_lu:
+            return
 
         self._lu = None
         self._prec = None
@@ -224,13 +230,8 @@ class Interface(BaseInterface):
         if rhs2 is not None:
             x = numpy.append(rhs, rhs2 * self.border_scaling)
 
-        self._add_custom_methods(jac)
-
         # Use a direct solver instead
-        if rhs2 is None and (not jac.lu or jac.bordered_lu):
-            self._compute_factorization(jac)
-        elif rhs2 is not None and (not jac.lu or not jac.bordered_lu):
-            self._compute_factorization(jac, V, W, C)
+        self._compute_factorization(jac, V, W, C)
 
         if jac.bordered_lu:
             self.debug_print('Solving a bordered linear system')
