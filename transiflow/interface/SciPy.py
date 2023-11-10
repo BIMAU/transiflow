@@ -168,8 +168,14 @@ class Interface(BaseInterface):
             'Done computing the sparse LU factorization of the %s Jacobian matrix' % (
                 'bordered ' if V is not None else ''))
 
-    def _compute_preconditioner(self, jac, A):
+    def _compute_preconditioner(self, jac, A, V, _W, _C):
         '''Compute the ILU factorization of the (bordered) jacobian.'''
+
+        if V is not None and hasattr(jac, 'lu') and jac.lu is not None and jac.bordered_lu:
+            return
+
+        if V is None and hasattr(jac, 'lu') and jac.lu is not None and not jac.bordered_lu:
+            return
 
         self._lu = None
         self._prec = None
@@ -275,12 +281,7 @@ class Interface(BaseInterface):
         fix_pressure_row = self.dof > self.dim and self.pressure_row is not None
         A = self.compute_bordered_matrix(jac, V, W, C, fix_pressure_row)
 
-        self._add_custom_methods(jac)
-
-        if rhs2 is None and (not jac.lu or jac.bordered_lu):
-            self._compute_preconditioner(jac, A)
-        elif rhs2 is not None and (not jac.lu or not jac.bordered_lu):
-            self._compute_preconditioner(jac, A)
+        self._compute_preconditioner(jac, A, V, W, C)
 
         self.debug_print('Solving a linear system')
 
