@@ -1,4 +1,5 @@
 import numpy
+import functools
 
 from scipy import sparse
 from scipy.sparse import linalg
@@ -39,11 +40,23 @@ class Interface(BaseInterface):
 
     def jacobian(self, state):
         '''Jacobian J of F in M * du / dt = F(u).'''
-        return self.discretization.jacobian(state)
+        jac = self.discretization.jacobian(state)
+        return sparse.csr_matrix((jac.coA, jac.jcoA, jac.begA))
 
     def mass_matrix(self):
         '''Mass matrix M in M * du / dt = F(u).'''
-        return self.discretization.mass_matrix()
+        mass = self.discretization.mass_matrix()
+        return sparse.csr_matrix((mass.coA, mass.jcoA, mass.begA), (mass.n, mass.n))
+
+    @staticmethod
+    def _add_custom_methods(matrix):
+        if hasattr(matrix, 'lu'):
+            return
+
+        matrix.solve = functools.partial(CrsMatrix._solve, matrix)
+        matrix.bordered_lu = None
+        matrix.lu = None
+        matrix.n = matrix.shape[0]
 
     def compute_bordered_matrix(self, jac, V=None, W=None, C=None, fix_pressure_row=False):
         '''Helper to compute a bordered matrix of the form [A, V; W', C]'''
@@ -55,6 +68,8 @@ class Interface(BaseInterface):
                 return V[i]
 
             return V[i, j]
+
+        self._add_custom_methods(jac)
 
         if fix_pressure_row and V is not None:
             self.debug_print(
@@ -81,11 +96,11 @@ class Interface(BaseInterface):
             W = V
 
         if C is None and border_size:
-            C = numpy.zeros((border_size, border_size), dtype=jac.coA.dtype)
+            C = numpy.zeros((border_size, border_size), dtype=jac.data.dtype)
 
-        coA = numpy.zeros(jac.begA[-1] + extra_border_space + 1, dtype=dtype)
-        jcoA = numpy.zeros(jac.begA[-1] + extra_border_space + 1, dtype=int)
-        begA = numpy.zeros(len(jac.begA) + border_size, dtype=int)
+        coA = numpy.zeros(jac.indptr[-1] + extra_border_space + 1, dtype=dtype)
+        jcoA = numpy.zeros(jac.indptr[-1] + extra_border_space + 1, dtype=int)
+        begA = numpy.zeros(len(jac.indptr) + border_size, dtype=int)
 
         idx = 0
         for i in range(jac.n):
@@ -96,10 +111,10 @@ class Interface(BaseInterface):
                 begA[i + 1] = idx
                 continue
 
-            for j in range(jac.begA[i], jac.begA[i + 1]):
-                if not fix_pressure_row or jac.jcoA[j] != self.pressure_row:
-                    coA[idx] = jac.coA[j]
-                    jcoA[idx] = jac.jcoA[j]
+            for j in range(jac.indptr[i], jac.indptr[i + 1]):
+                if not fix_pressure_row or jac.indices[j] != self.pressure_row:
+                    coA[idx] = jac.data[j]
+                    jcoA[idx] = jac.indices[j]
                     idx += 1
 
             for j in range(border_size):
@@ -209,6 +224,8 @@ class Interface(BaseInterface):
         if rhs2 is not None:
             x = numpy.append(rhs, rhs2 * self.border_scaling)
 
+        self._add_custom_methods(jac)
+
         # Use a direct solver instead
         if rhs2 is None and (not jac.lu or jac.bordered_lu):
             self._compute_factorization(jac)
@@ -256,6 +273,8 @@ class Interface(BaseInterface):
 
         fix_pressure_row = self.dof > self.dim and self.pressure_row is not None
         A = self.compute_bordered_matrix(jac, V, W, C, fix_pressure_row)
+
+        self._add_custom_methods(jac)
 
         if rhs2 is None and (not jac.lu or jac.bordered_lu):
             self._compute_preconditioner(jac, A)
