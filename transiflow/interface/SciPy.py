@@ -137,7 +137,8 @@ class Interface(BaseInterface):
 
             begA[jac.n + 1 + i] = idx
 
-        return CrsMatrix(coA, jcoA, begA, False)
+        n = len(begA) - 1
+        return sparse.csr_matrix((coA, jcoA, begA), (n, n))
 
     def _compute_factorization(self, jac, V=None, W=None, C=None):
         '''Compute the LU factorization of the (bordered) jacobian.'''
@@ -148,9 +149,6 @@ class Interface(BaseInterface):
 
         fix_pressure_row = self.dof > self.dim and self.pressure_row is not None
         A = self.compute_bordered_matrix(jac, V, W, C, fix_pressure_row)
-
-        # Convert the matrix to CSC format since splu expects that
-        A = sparse.csr_matrix((A.coA, A.jcoA, A.begA)).tocsc()
 
         self.debug_print(
             'Computing the sparse LU factorization of the %s Jacobian matrix' % (
@@ -175,9 +173,6 @@ class Interface(BaseInterface):
         self._lu = None
         self._prec = None
         jac.lu = None
-
-        # Convert the matrix to CSC format since spilu expects that
-        A = sparse.csr_matrix((A.coA, A.jcoA, A.begA)).tocsc()
 
         self.debug_print('Computing the sparse ILU factorization of the Jacobian matrix')
 
