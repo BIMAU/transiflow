@@ -1,5 +1,3 @@
-from transiflow import CrsMatrix
-
 import time
 import numpy
 import warnings
@@ -186,8 +184,7 @@ class BorderedInterface(NumPyInterface.NumPyInterface):
 
         alpha, beta = _get_scalars(alpha, beta)
 
-        mat = beta * self.jac_op.mat - alpha * self.mass_op.mat
-        shifted_matrix = CrsMatrix(mat.data, mat.indices, mat.indptr, False)
+        shifted_matrix = beta * self.jac_op.mat - alpha * self.mass_op.mat
         shifted_bordered_matrix = self.interface.compute_bordered_matrix(shifted_matrix, op.Z, op.Q)
         shifted_bordered_op = Op(shifted_bordered_matrix)
 
