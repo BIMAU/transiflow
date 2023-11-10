@@ -45,14 +45,6 @@ class Interface(BaseInterface):
         mass = self.discretization.mass_matrix()
         return sparse.csr_matrix((mass.coA, mass.jcoA, mass.begA), (mass.n, mass.n))
 
-    @staticmethod
-    def _add_custom_methods(matrix):
-        if hasattr(matrix, 'lu'):
-            return
-
-        matrix.bordered_lu = None
-        matrix.lu = None
-
     def compute_bordered_matrix(self, jac, V=None, W=None, C=None, fix_pressure_row=False):
         '''Helper to compute a bordered matrix of the form [A, V; W', C]'''
         def _get_value(V, i, j):
@@ -63,8 +55,6 @@ class Interface(BaseInterface):
                 return V[i]
 
             return V[i, j]
-
-        self._add_custom_methods(jac)
 
         if fix_pressure_row and V is not None:
             self.debug_print(
