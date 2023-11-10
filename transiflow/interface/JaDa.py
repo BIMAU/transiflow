@@ -88,8 +88,7 @@ class MatrixCache:
                 self.matrices.pop(0)
 
         if shifted_matrix is None:
-            mat = beta * self.jac_op.mat - alpha * self.mass_op.mat
-            shifted_matrix = CrsMatrix(mat.data, mat.indices, mat.indptr, False)
+            shifted_matrix = beta * self.jac_op.mat - alpha * self.mass_op.mat
 
         if self.max_matrices > 0:
             self.matrices.append(CachedMatrix(shifted_matrix, alpha, beta))
