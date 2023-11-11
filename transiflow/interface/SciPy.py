@@ -241,6 +241,9 @@ class Interface(BaseInterface):
             y1 = y[:-border_size]
             y2 = y[-border_size:] * self.border_scaling
 
+            if numpy.isscalar(rhs2):
+                y2 = y2.item()
+
             self.debug_print_residual('Done solving a bordered linear system with residual',
                                       jac, y1, rhs - V * y2)
 
