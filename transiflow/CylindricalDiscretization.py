@@ -399,7 +399,7 @@ class CylindricalDiscretization(Discretization):
             for j in range(self.ny):
                 for k in range(self.nz):
                     Discretization._mass_x(atom_value, j, i, k, self.y, self.x, self.z)
-                    atomF[i, j, k, 1, 1, 1, 1, 1] -= atom_value * averages_u[i, j, k+1]
+                    atomF[i, j, k, 1, 1, 1, 1:2, 1] -= atom_value * averages_u[i, j, k+1]
 
                     Discretization._weighted_average(atom_average, j, self.y)
                     atomJ[i, j, k, 1, 0, 0, 1:3, 1] -= atom_value * atom_average * averages_v[i, j, k] * 1 / 2
