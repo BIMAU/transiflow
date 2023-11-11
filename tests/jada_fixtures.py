@@ -35,7 +35,7 @@ def num_evs():
     return 10
 
 @pytest.fixture(scope='module')
-def numpy_interface(nx):
+def scipy_interface(nx):
     dim = 2
     dof = 3
     ny = nx
@@ -47,11 +47,11 @@ def numpy_interface(nx):
     return interface
 
 @pytest.fixture(scope='module')
-def numpy_x(numpy_interface):
-    n = numpy_interface.dof * numpy_interface.nx * numpy_interface.ny * numpy_interface.nz
+def scipy_x(scipy_interface):
+    n = scipy_interface.dof * scipy_interface.nx * scipy_interface.ny * scipy_interface.nz
 
     parameters = {}
-    continuation = Continuation(numpy_interface, parameters)
+    continuation = Continuation(scipy_interface, parameters)
 
     x0 = numpy.zeros(n)
     x0 = continuation.newton(x0)
@@ -73,11 +73,11 @@ def check_eigenvalues(A_op, B_op, eigs, v, num_evs, tol):
         assert_allclose(norm(A_op @ v[:, j] - B_op @ v[:, j] * eigs[j]), 0, rtol=0, atol=tol)
 
 @pytest.fixture(scope='module')
-def arpack_eigs(numpy_interface, numpy_x, num_evs, tol, atol):
+def arpack_eigs(scipy_interface, scipy_x, num_evs, tol, atol):
     from transiflow.interface import JaDa
 
-    A_op = JaDa.Op(numpy_interface.jacobian(numpy_x))
-    B_op = JaDa.Op(numpy_interface.mass_matrix())
+    A_op = JaDa.Op(scipy_interface.jacobian(scipy_x))
+    B_op = JaDa.Op(scipy_interface.mass_matrix())
 
     # A_mat = A_op.mat.todense()
     # B_mat = B_op.mat.todense()
@@ -90,9 +90,9 @@ def arpack_eigs(numpy_interface, numpy_x, num_evs, tol, atol):
     return eigs[:num_evs]
 
 @pytest.fixture(scope='module')
-def interface(numpy_interface):
-    return numpy_interface
+def interface(scipy_interface):
+    return scipy_interface
 
 @pytest.fixture(scope='module')
-def x(numpy_x):
-    return numpy_x
+def x(scipy_x):
+    return scipy_x
