@@ -139,7 +139,7 @@ class Interface(NumPyInterface.NumPyInterface):
             out[:, i], info = sparse.linalg.gmres(op, x[:, i], restart=restart, maxiter=maxiter, tol=tol, atol=0, M=prec_op)
             if info < 0:
                 raise Exception('GMRES returned ' + str(info))
-            elif info > 0:
+            elif info > 0 and maxit > 1:
                 warnings.warn('GMRES did not converge in ' + str(info) + ' iterations')
         return out
 
@@ -202,7 +202,7 @@ class BorderedInterface(NumPyInterface.NumPyInterface):
 
             if info < 0:
                 raise Exception('GMRES returned ' + str(info))
-            elif info > 0:
+            elif info > 0 and maxit > 1:
                 warnings.warn('GMRES did not converge in ' + str(info) + ' iterations')
 
         orthogonalize(op.Q, out)
