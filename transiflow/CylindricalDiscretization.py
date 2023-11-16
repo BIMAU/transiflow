@@ -200,7 +200,7 @@ class CylindricalDiscretization(Discretization):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    CylindricalDiscretization._u_rr(atom[i, j, k, 0, 0, :, 1, 1], i, j, k, self.x, self.y, self.z)
+                    self._u_rr(atom[i, j, k, 0, 0, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
     def v_tt(self):
@@ -230,7 +230,7 @@ class CylindricalDiscretization(Discretization):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    CylindricalDiscretization._v_rr(atom[i, j, k, 1, 1, :, 1, 1], i, j, k, self.x, self.y, self.z)
+                    self._v_rr(atom[i, j, k, 1, 1, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
     def w_tt(self):
@@ -241,7 +241,7 @@ class CylindricalDiscretization(Discretization):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    CylindricalDiscretization._v_rr(atom[i, j, k, 2, 2, :, 1, 1], i, k, j, self.x, self.z, self.y)
+                    self._v_rr(atom[i, j, k, 2, 2, :, 1, 1], i, k, j, self.x, self.z, self.y)
         return atom
 
     def p_r(self):
@@ -286,7 +286,7 @@ class CylindricalDiscretization(Discretization):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    CylindricalDiscretization._value_u(atom[i, j, k, 0, 0, :, 1, 1], i, j, k, self.x, self.y, self.z)
+                    self._value_u(atom[i, j, k, 0, 0, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
     def value_v(self):
@@ -294,7 +294,7 @@ class CylindricalDiscretization(Discretization):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    CylindricalDiscretization._value_u(atom[i, j, k, 1, 1, :, 1, 1], j, i, k, self.y, self.x, self.z)
+                    self._value_u(atom[i, j, k, 1, 1, :, 1, 1], j, i, k, self.y, self.x, self.z)
         return atom
 
     @staticmethod
@@ -313,7 +313,7 @@ class CylindricalDiscretization(Discretization):
         for i in range(self.nx):
             for j in range(self.ny):
                 for k in range(self.nz):
-                    CylindricalDiscretization._backward_u_r(atom[i, j, k, self.dim, 0, :, 1, 1], i, j, k,
+                    self._backward_u_r(atom[i, j, k, self.dim, 0, :, 1, 1], i, j, k,
                                                             self.x, self.y, self.z)
         return atom
 
