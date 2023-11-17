@@ -292,11 +292,8 @@ class BoundaryConditions:
 
     def _constant_forcing(self, atom, nx, ny, var, value):
         frc = numpy.zeros((nx, ny, self.dof))
-        for j in range(ny):
-            for i in range(nx):
-                for y in range(3):
-                    for x in range(3):
-                        frc[i, j, var] += atom[i, j, var, x, y] * value
+        for j, i, y, x in numpy.ndindex(ny, nx, 3, 3):
+            frc[i, j, var] += atom[i, j, var, x, y] * value
         return frc
 
     def _constant_forcing_east(self, atom, var, value):
