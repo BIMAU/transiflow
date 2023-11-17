@@ -289,13 +289,9 @@ class Discretization:
 
         # Add up all contributions without iterating over the domain
         out_mtx = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
-        for k in range(3):
-            for j in range(3):
-                for i in range(3):
-                    for d1 in range(self.dof):
-                        for d2 in range(self.dof):
-                            out_mtx[:, :, :, d1] += atom[:, :, :, d1, d2, i, j, k] \
-                                * state_mtx[i:(i+self.nx), j:(j+self.ny), k:(k+self.nz), d2]
+        for k, j, i, d1, d2 in numpy.ndindex(3, 3, 3, self.dof, self.dof):
+            out_mtx[:, :, :, d1] += atom[:, :, :, d1, d2, i, j, k] \
+                * state_mtx[i:(i+self.nx), j:(j+self.ny), k:(k+self.nz), d2]
 
         return utils.create_state_vec(out_mtx, self.nx, self.ny, self.nz, self.dof)
 
@@ -327,27 +323,21 @@ class Discretization:
 
         # Check where values are nonzero in the atoms
         configs = []
-        for z in range(3):
-            for y in range(3):
-                for x in range(3):
-                    for d2 in range(self.dof):
-                        if numpy.any(atom[:, :, :, :, d2, x, y, z]):
-                            configs.append([d2, x, y, z])
+        for d2, x, y, z in numpy.ndindex(self.dof, 3, 3, 3):
+            if numpy.any(atom[:, :, :, :, d2, x, y, z]):
+                configs.append((d2, x, y, z))
 
         # Iterate only over configurations with values in there
-        for k in range(self.nz):
-            for j in range(self.ny):
-                for i in range(self.nx):
-                    for d1 in range(self.dof):
-                        for config in configs:
-                            if abs(atom[i, j, k, d1, config[0], config[1], config[2], config[3]]) > 1e-14:
-                                jcoA[idx] = ((i + config[1] - 1) % self.nx) * self.dof \
-                                    + ((j + config[2] - 1) % self.ny) * self.nx * self.dof + \
-                                    + ((k + config[3] - 1) % self.nz) * self.nx * self.ny * self.dof + config[0]
-                                coA[idx] = atom[i, j, k, d1, config[0], config[1], config[2], config[3]]
-                                idx += 1
-                        row += 1
-                        begA[row] = idx
+        for k, j, i, d1 in numpy.ndindex(self.nz, self.ny, self.nx, self.dof):
+            for d2, x, y, z in configs:
+                if abs(atom[i, j, k, d1, d2, x, y, z]) > 1e-14:
+                    jcoA[idx] = ((i + x - 1) % self.nx) * self.dof \
+                        + ((j + y - 1) % self.ny) * self.nx * self.dof + \
+                        + ((k + z - 1) % self.nz) * self.nx * self.ny * self.dof + d2
+                    coA[idx] = atom[i, j, k, d1, d2, x, y, z]
+                    idx += 1
+            row += 1
+            begA[row] = idx
 
         return CrsMatrix(coA, jcoA, begA)
 
@@ -361,16 +351,13 @@ class Discretization:
         jcoA = numpy.zeros(n, dtype=int)
         begA = numpy.zeros(n+1, dtype=int)
 
-        for k in range(self.nz):
-            for j in range(self.ny):
-                for i in range(self.nx):
-                    for d1 in range(self.dof):
-                        if abs(atom[i, j, k, d1]) > 1e-14:
-                            jcoA[idx] = (i + (j + k * self.ny) * self.nx) * self.dof + d1
-                            coA[idx] = atom[i, j, k, d1]
-                            idx += 1
-                        row += 1
-                        begA[row] = idx
+        for k, j, i, d in numpy.ndindex(self.nz, self.ny, self.nx, self.dof):
+            if abs(atom[i, j, k, d]) > 1e-14:
+                jcoA[idx] = (i + (j + k * self.ny) * self.nx) * self.dof + d
+                coA[idx] = atom[i, j, k, d]
+                idx += 1
+            row += 1
+            begA[row] = idx
 
         return CrsMatrix(coA, jcoA, begA)
 
