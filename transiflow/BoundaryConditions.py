@@ -291,7 +291,7 @@ class BoundaryConditions:
         return frc
 
     def _constant_forcing(self, atom, nx, ny, var, value):
-        frc = numpy.zeros([nx, ny, self.dof])
+        frc = numpy.zeros((nx, ny, self.dof))
         for j in range(ny):
             for i in range(nx):
                 for y in range(3):
@@ -300,31 +300,31 @@ class BoundaryConditions:
         return frc
 
     def _constant_forcing_east(self, atom, var, value):
-        frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        frc = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
         frc[self.nx-1, :, :, :] = self._constant_forcing(atom[self.nx-1, :, :, :, 2, :, :], self.ny, self.nz, var, value)
         return create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
 
     def _constant_forcing_west(self, atom, var, value):
-        frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        frc = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
         frc[0, :, :, :] = self._constant_forcing(atom[0, :, :, :, 0, :, :], self.ny, self.nz, var, value)
         return create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
 
     def _constant_forcing_north(self, atom, var, value):
-        frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        frc = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
         frc[:, self.ny-1, :, :] = self._constant_forcing(atom[:, self.ny-1, :, :, :, 2, :], self.nx, self.nz, var, value)
         return create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
 
     def _constant_forcing_south(self, atom, var, value):
-        frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        frc = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
         frc[:, 0, :, :] = self._constant_forcing(atom[:, 0, :, :, :, 0, :], self.nx, self.nz, var, value)
         return create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
 
     def _constant_forcing_top(self, atom, var, value):
-        frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        frc = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
         frc[:, :, self.nz-1, :] = self._constant_forcing(atom[:, :, self.nz-1, :, :, :, 2], self.nx, self.ny, var, value)
         return create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
 
     def _constant_forcing_bottom(self, atom, var, value):
-        frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        frc = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
         frc[:, :, 0, :] = self._constant_forcing(atom[:, :, 0, :, :, :, 0], self.nx, self.ny, var, value)
         return create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
