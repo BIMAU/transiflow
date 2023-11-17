@@ -27,7 +27,7 @@ def create_state_mtx(state, nx=None, ny=None, nz=None, dof=None, interface=None)
         nz = interface.discretization.nz
         dof = interface.discretization.dof
 
-    state_mtx = numpy.zeros([nx, ny, nz, dof])
+    state_mtx = numpy.zeros((nx, ny, nz, dof))
     for k, j, i, d in numpy.ndindex(nz, ny, nx, dof):
         state_mtx[i, j, k, d] = state[d + i * dof + j * dof * nx + k * dof * nx * ny]
     return state_mtx
@@ -48,7 +48,7 @@ def create_padded_state_mtx(state, nx=None, ny=None, nz=None, dof=None,
         y_periodic = interface.discretization.y_periodic
         z_periodic = interface.discretization.z_periodic
 
-    state_mtx = numpy.zeros([nx+2, ny+2, nz+2, dof])
+    state_mtx = numpy.zeros((nx+2, ny+2, nz+2, dof))
     state_mtx[1:nx+1, 1:ny+1, 1:nz+1, :] = create_state_mtx(state, nx, ny, nz, dof)
 
     # Add extra borders for periodic boundary conditions
