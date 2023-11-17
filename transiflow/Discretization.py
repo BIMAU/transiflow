@@ -206,8 +206,8 @@ class Discretization:
         state_mtx = utils.create_padded_state_mtx(state, self.nx, self.ny, self.nz, self.dof,
                                                   self.x_periodic, self.y_periodic, self.z_periodic)
 
-        atomJ = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
-        atomF = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atomJ = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
+        atomF = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
 
         Re = self.get_parameter('Reynolds Number')
         if Re == 0 and not self.dof > self.dim + 1:
@@ -288,7 +288,7 @@ class Discretization:
                                                   self.x_periodic, self.y_periodic, self.z_periodic)
 
         # Add up all contributions without iterating over the domain
-        out_mtx = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        out_mtx = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
         for k, j, i, d1, d2 in numpy.ndindex(3, 3, 3, self.dof, self.dof):
             out_mtx[:, :, :, d1] += atom[:, :, :, d1, d2, i, j, k] \
                 * state_mtx[i:(i+self.nx), j:(j+self.ny), k:(k+self.nz), d2]
@@ -466,19 +466,19 @@ class Discretization:
         atom[1] = -atom[0] - atom[2]
 
     def u_xx(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._u_xx(atom[i, j, k, 0, 0, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
     def v_yy(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._u_xx(atom[i, j, k, 1, 1, 1, :, 1], j, i, k, self.y, self.x, self.z)
         return atom
 
     def w_zz(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._u_xx(atom[i, j, k, 2, 2, 1, 1, :], k, j, i, self.z, self.y, self.x)
         return atom
@@ -500,19 +500,19 @@ class Discretization:
         atom[1] = -atom[0] - atom[2]
 
     def u_yy(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._u_yy(atom[i, j, k, 0, 0, 1, :, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
     def v_xx(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._u_yy(atom[i, j, k, 1, 1, :, 1, 1], j, i, k, self.y, self.x, self.z)
         return atom
 
     def w_yy(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._u_yy(atom[i, j, k, 2, 2, 1, :, 1], k, j, i, self.z, self.y, self.x)
         return atom
@@ -534,19 +534,19 @@ class Discretization:
         atom[1] = -atom[0] - atom[2]
 
     def u_zz(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._u_zz(atom[i, j, k, 0, 0, 1, 1, :], i, j, k, self.x, self.y, self.z)
         return atom
 
     def v_zz(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._u_zz(atom[i, j, k, 1, 1, 1, 1, :], j, i, k, self.y, self.x, self.z)
         return atom
 
     def w_xx(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._u_zz(atom[i, j, k, 2, 2, :, 1, 1], k, j, i, self.z, self.y, self.x)
         return atom
@@ -568,19 +568,19 @@ class Discretization:
         atom[1] = -atom[0] - atom[2]
 
     def T_xx(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._T_xx(atom[i, j, k, self.dim+1, self.dim+1, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
     def T_yy(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._T_xx(atom[i, j, k, self.dim+1, self.dim+1, 1, :, 1], j, i, k, self.y, self.x, self.z)
         return atom
 
     def T_zz(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._T_xx(atom[i, j, k, self.dim+1, self.dim+1, 1, 1, :], k, j, i, self.z, self.y, self.x)
         return atom
@@ -597,19 +597,19 @@ class Discretization:
         atom[1] = -atom[2]
 
     def p_x(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._forward_u_x(atom[i, j, k, 0, self.dim, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
     def p_y(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._forward_u_x(atom[i, j, k, 1, self.dim, 1, :, 1], j, i, k, self.y, self.x, self.z)
         return atom
 
     def p_z(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._forward_u_x(atom[i, j, k, 2, self.dim, 1, 1, :], k, j, i, self.z, self.y, self.x)
         return atom
@@ -626,19 +626,19 @@ class Discretization:
         atom[0] = -atom[1]
 
     def u_x(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._backward_u_x(atom[i, j, k, self.dim, 0, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
     def v_y(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._backward_u_x(atom[i, j, k, self.dim, 1, 1, :, 1], j, i, k, self.y, self.x, self.z)
         return atom
 
     def w_z(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._backward_u_x(atom[i, j, k, self.dim, 2, 1, 1, :], k, j, i, self.z, self.y, self.x)
         return atom
@@ -684,13 +684,13 @@ class Discretization:
         atom[2] = atom[1]
 
     def forward_average_T_y(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._forward_average_x(atom[i, j, k, 1, self.dim+1, 1, :, 1], j, i, k, self.y, self.x, self.z)
         return atom
 
     def forward_average_T_z(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._forward_average_x(atom[i, j, k, 2, self.dim+1, 1, 1, :], k, j, i, self.z, self.y, self.x)
         return atom
@@ -709,19 +709,19 @@ class Discretization:
         atom[1] = atom[0]
 
     def backward_average_v_y(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._backward_average_x(atom[i, j, k, self.dim+1, 1, 1, :, 1], j, i, k, self.y, self.x, self.z)
         return atom
 
     def backward_average_w_z(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._backward_average_x(atom[i, j, k, self.dim+1, 2, 1, 1, :], k, j, i, self.z, self.y, self.x)
         return atom
 
     def coriolis(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             # Value of yu at the position of v
             self._forward_average_x(atom[i, j, k, 1, 0, 0, :, 1], j, i, k, self.y, self.x, self.z)
@@ -738,7 +738,7 @@ class Discretization:
         tau_0 = self.get_parameter('Wind Stress Parameter')
         asym = self.get_parameter('Asymmetry Parameter')
 
-        frc = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        frc = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
         for i, j, k in numpy.ndindex(self.nx - 1, self.ny, self.nz):
             # volume size in the x direction
             dx = (self.x[i+1] - self.x[i-1]) / 2
@@ -764,19 +764,19 @@ class Discretization:
         atom[0] = dx * dy * dz
 
     def mass_x(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._mass_x(atom[i, j, k, 0:1], i, j, k, self.x, self.y, self.z)
         return atom
 
     def mass_y(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._mass_x(atom[i, j, k, 1:2], j, i, k, self.y, self.x, self.z)
         return atom
 
     def mass_z(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._mass_x(atom[i, j, k, 2:3], k, j, i, self.z, self.y, self.x)
         return atom
@@ -793,13 +793,13 @@ class Discretization:
         atom[0] = dx * dy * dz
 
     def mass_T(self):
-        atom = numpy.zeros([self.nx, self.ny, self.nz, self.dof])
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._mass_T(atom[i, j, k, self.dim+1:self.dim+2], i, j, k, self.x, self.y, self.z)
         return atom
 
     def average_x(self, state):
-        averages = numpy.zeros([self.nx+1, self.ny, self.nz])
+        averages = numpy.zeros((self.nx+1, self.ny, self.nz))
 
         cropped_state = state[:, 1:self.ny+1, 1:self.nz+1]
 
@@ -809,7 +809,7 @@ class Discretization:
         return averages
 
     def average_y(self, state):
-        averages = numpy.zeros([self.nx, self.ny+1, self.nz])
+        averages = numpy.zeros((self.nx, self.ny+1, self.nz))
 
         cropped_state = state[1:self.nx+1, :, 1:self.nz+1]
 
@@ -819,7 +819,7 @@ class Discretization:
         return averages
 
     def average_z(self, state):
-        averages = numpy.zeros([self.nx, self.ny, self.nz+1])
+        averages = numpy.zeros((self.nx, self.ny, self.nz+1))
 
         cropped_state = state[1:self.nx+1, 1:self.ny+1, :]
 
@@ -841,7 +841,7 @@ class Discretization:
         atom[1] = 1 / 2 * dxph / dx
 
     def weighted_average_x(self, state):
-        averages = numpy.zeros([self.nx, self.ny+1, self.nz+1])
+        averages = numpy.zeros((self.nx, self.ny+1, self.nz+1))
 
         cropped_state = state[:, 0:self.ny+1, 0:self.nz+1]
 
@@ -855,7 +855,7 @@ class Discretization:
         return averages
 
     def weighted_average_y(self, state):
-        averages = numpy.zeros([self.nx+1, self.ny, self.nz+1])
+        averages = numpy.zeros((self.nx+1, self.ny, self.nz+1))
 
         cropped_state = state[0:self.nx+1, :, 0:self.nz+1]
 
@@ -869,7 +869,7 @@ class Discretization:
         return averages
 
     def weighted_average_z(self, state):
-        averages = numpy.zeros([self.nx+1, self.ny+1, self.nz])
+        averages = numpy.zeros((self.nx+1, self.ny+1, self.nz))
 
         cropped_state = state[0:self.nx+1, 0:self.ny+1, :]
 
