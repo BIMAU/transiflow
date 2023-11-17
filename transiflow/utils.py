@@ -28,11 +28,8 @@ def create_state_mtx(state, nx=None, ny=None, nz=None, dof=None, interface=None)
         dof = interface.discretization.dof
 
     state_mtx = numpy.zeros([nx, ny, nz, dof])
-    for k in range(nz):
-        for j in range(ny):
-            for i in range(nx):
-                for d in range(dof):
-                    state_mtx[i, j, k, d] = state[d + i * dof + j * dof * nx + k * dof * nx * ny]
+    for k, j, i, d in numpy.ndindex(nz, ny, nx, dof):
+        state_mtx[i, j, k, d] = state[d + i * dof + j * dof * nx + k * dof * nx * ny]
     return state_mtx
 
 def create_padded_state_mtx(state, nx=None, ny=None, nz=None, dof=None,
@@ -88,12 +85,9 @@ def create_state_vec(state_mtx, nx=None, ny=None, nz=None, dof=None, interface=N
     state = numpy.zeros(nx * ny * nz * dof)
 
     row = 0
-    for k in range(nz):
-        for j in range(ny):
-            for i in range(nx):
-                for d in range(dof):
-                    state[row] = state_mtx[i, j, k, d]
-                    row += 1
+    for k, j, i, d in numpy.ndindex(nz, ny, nx, dof):
+        state[row] = state_mtx[i, j, k, d]
+        row += 1
     return state
 
 def create_uniform_coordinate_vector(start, end, nx):
@@ -150,12 +144,11 @@ def compute_velocity_magnitude(state, interface, axis=2, position=None):
 
         print('Using center: %e at %d' % (x[center], center))
 
-        for j in range(ny):
-            for k in range(nz):
-                u = get_u_value(state_mtx, center, j, k, interface)
-                v = get_v_value(state_mtx, center, j, k, interface)
-                w = get_w_value(state_mtx, center, j, k, interface)
-                m[j, k] = sqrt(u * u + v * v + w * w)
+        for j, k in numpy.ndindex(ny, nz):
+            u = get_u_value(state_mtx, center, j, k, interface)
+            v = get_v_value(state_mtx, center, j, k, interface)
+            w = get_w_value(state_mtx, center, j, k, interface)
+            m[j, k] = sqrt(u * u + v * v + w * w)
 
         return m
 
@@ -168,12 +161,11 @@ def compute_velocity_magnitude(state, interface, axis=2, position=None):
 
         print('Using center: %e at %d' % (y[center], center))
 
-        for i in range(nx):
-            for k in range(nz):
-                u = get_u_value(state_mtx, i, center, k, interface)
-                v = get_v_value(state_mtx, i, center, k, interface)
-                w = get_w_value(state_mtx, i, center, k, interface)
-                m[i, k] = sqrt(u * u + v * v + w * w)
+        for i, k in numpy.ndindex(nx, nz):
+            u = get_u_value(state_mtx, i, center, k, interface)
+            v = get_v_value(state_mtx, i, center, k, interface)
+            w = get_w_value(state_mtx, i, center, k, interface)
+            m[i, k] = sqrt(u * u + v * v + w * w)
 
         return m
 
@@ -185,16 +177,15 @@ def compute_velocity_magnitude(state, interface, axis=2, position=None):
 
     print('Using center: %e at %d' % (z[center], center))
 
-    for i in range(nx):
-        for j in range(ny):
-            u = get_u_value(state_mtx, i, j, center, interface)
-            v = get_v_value(state_mtx, i, j, center, interface)
+    for i, j in numpy.ndindex(nx, ny):
+        u = get_u_value(state_mtx, i, j, center, interface)
+        v = get_v_value(state_mtx, i, j, center, interface)
 
-            w = 0
-            if interface.discretization.dim > 2:
-                w = get_w_value(state_mtx, i, j, center, interface)
+        w = 0
+        if interface.discretization.dim > 2:
+            w = get_w_value(state_mtx, i, j, center, interface)
 
-            m[i, j] = sqrt(u * u + v * v + w * w)
+        m[i, j] = sqrt(u * u + v * v + w * w)
 
     return m
 
@@ -222,18 +213,17 @@ def compute_streamfunction(state, interface, axis=2):
     psiv = numpy.zeros((nx, ny))
 
     # Integration using the midpoint rule
-    for i in range(nx):
-        for j in range(ny):
-            dx = x[i] - x[i-1]
-            dy = y[j] - y[j-1]
+    for i, j in numpy.ndindex(nx, ny):
+        dx = x[i] - x[i-1]
+        dy = y[j] - y[j-1]
 
-            psiu[i, j] = v[i, j] * dx
-            if i > 0:
-                psiu[i, j] += psiu[i-1, j]
+        psiu[i, j] = v[i, j] * dx
+        if i > 0:
+            psiu[i, j] += psiu[i-1, j]
 
-            psiv[i, j] = u[i, j] * dy
-            if j > 0:
-                psiv[i, j] += psiv[i, j-1]
+        psiv[i, j] = u[i, j] * dy
+        if j > 0:
+            psiv[i, j] += psiv[i, j-1]
 
     return (psiu - psiv) / 2
 
@@ -255,18 +245,17 @@ def compute_vorticity(state, interface, axis=2):
     zeta = numpy.zeros((nx, ny))
 
     # Integration using the midpoint rule
-    for i in range(nx):
-        for j in range(ny):
-            dx = (x[i+1] - x[i-1]) / 2
-            dy = (y[j+1] - y[j-1]) / 2
+    for i, j in numpy.ndindex(nx, ny):
+        dx = (x[i+1] - x[i-1]) / 2
+        dy = (y[j+1] - y[j-1]) / 2
 
-            if i < nx - 1:
-                zeta[i, j] += v[i+1, j] / dx
-                zeta[i, j] -= v[i, j] / dx
+        if i < nx - 1:
+            zeta[i, j] += v[i+1, j] / dx
+            zeta[i, j] -= v[i, j] / dx
 
-            if j < ny - 1:
-                zeta[i, j] += u[i, j+1] / dy
-                zeta[i, j] -= u[i, j] / dy
+        if j < ny - 1:
+            zeta[i, j] += u[i, j+1] / dy
+            zeta[i, j] -= u[i, j] / dy
 
     return zeta
 
@@ -294,19 +283,17 @@ def compute_volume_averaged_kinetic_energy(state, interface):
 
     w = 0
     Ek = 0
-    for i in range(nx):
-        for j in range(ny):
-            for k in range(nz):
-                dx = x[i] - x[i-1]
-                dy = y[j] - y[j-1]
-                dz = z[k] - z[k-1]
+    for i, j, k in numpy.ndindex(nx, ny, nz):
+        dx = x[i] - x[i-1]
+        dy = y[j] - y[j-1]
+        dz = z[k] - z[k-1]
 
-                u = (state_mtx[i+1, j+1, k+1, 0] + state_mtx[i, j+1, k+1, 0]) / 2
-                v = (state_mtx[i+1, j+1, k+1, 1] + state_mtx[i+1, j, k+1, 1]) / 2
-                if dim > 2:
-                    w = (state_mtx[i+1, j+1, k+1, 2] + state_mtx[i+1, j+1, k, 2]) / 2
+        u = (state_mtx[i+1, j+1, k+1, 0] + state_mtx[i, j+1, k+1, 0]) / 2
+        v = (state_mtx[i+1, j+1, k+1, 1] + state_mtx[i+1, j, k+1, 1]) / 2
+        if dim > 2:
+            w = (state_mtx[i+1, j+1, k+1, 2] + state_mtx[i+1, j+1, k, 2]) / 2
 
-                Ek += (u * u + v * v + w * w) * dx * dy * dz
+        Ek += (u * u + v * v + w * w) * dx * dy * dz
 
     return Ek / 2
 
