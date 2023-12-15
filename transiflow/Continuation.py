@@ -86,13 +86,13 @@ class Continuation:
             diff = x - x0
             rnp1 = self.zeta * diff.dot(diff) + (1 - self.zeta) * (mu - mu0) ** 2 - ds ** 2
 
-            # Compute the jacobian F_x at x (LHS of 2.2.9)
-            jac = self.interface.jacobian(x)
-
             # Compute F_mu (LHS of 2.2.9)
             self.interface.set_parameter(parameter_name, mu + self.delta)
             dflval = (self.interface.rhs(x) - fval) / self.delta
             self.interface.set_parameter(parameter_name, mu)
+
+            # Compute the jacobian F_x at x (LHS of 2.2.9)
+            jac = self.interface.jacobian(x)
 
             if self.parameters.get("Bordered Solver", False):
                 # Solve the entire bordered system in one go (2.2.9)
