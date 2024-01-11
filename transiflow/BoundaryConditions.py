@@ -130,7 +130,7 @@ class BoundaryConditions:
         return frc
 
     def moving_lid_north(self, atom, velocity):
-        frc = self._constant_forcing_north(atom[:, :, :, :, 0, :, :, :], 0, 2 * velocity)
+        frc = self._constant_forcing_north(atom[:, :, :, :, 0, :, :, :], 0, 2 * velocity, -1)
 
         self.no_slip_north(atom)
 
@@ -178,12 +178,9 @@ class BoundaryConditions:
         return frc
 
     def temperature_north(self, atom, temperature):
-        '''T[j] + T[j+1] = 2 * Tb'''
-        frc = self._constant_forcing_north(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, 2 * temperature)
-        atom[:, self.ny-1, :, self.dim+1, self.dim+1, :, 1, :] -= atom[:, self.ny-1, :, self.dim+1, self.dim+1, :, 2, :]
-        atom[:, self.ny-1, :, self.dim+1, self.dim+1, :, 2, :] = 0
-
-        return frc
+        '''T[j] + T[j+1] = 2 * Tb
+        so T[j+1] = 2 * Tb - T[j]'''
+        return self._constant_forcing_north(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, 2 * temperature, -1)
 
     def temperature_south(self, atom, temperature):
         '''T[j] + T[j-1] = 2 * Tb
@@ -234,14 +231,10 @@ class BoundaryConditions:
         so T[j+1] = T[j] * (1 - h * Bi / 2) / (1 + h * Bi / 2) + h * Tbc / (1 + h * Bi / 2)'''
         h = (self.y[self.ny] - self.y[self.ny-2]) / 2
 
-        c = 1 + h * biot / 2
-        frc = self._constant_forcing_north(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, heatflux * h / c)
-
-        c = (1 - h * biot / 2) / c
-        atom[:, self.ny-1, :, self.dim+1, self.dim+1, :, 1, :] += c * atom[:, self.ny-1, :, self.dim+1, self.dim+1, :, 2, :]
-        atom[:, self.ny-1, :, self.dim+1, self.dim+1, :, 2, :] = 0
-
-        return frc
+        forcing_constant = h * heatflux / (1 + h * biot / 2)
+        atom_constant = (1 - h * biot / 2) / (1 + h * biot / 2)
+        return self._constant_forcing_north(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1,
+                                            forcing_constant, atom_constant)
 
     def heatflux_south(self, atom, heatflux, biot=0.0):
         '''T[j] - T[j-1] + h * Bi * (T[j] + T[j-1]) / 2 = h * Tbc, h = (y[j] - y[j-2]) / 2
@@ -291,9 +284,14 @@ class BoundaryConditions:
         frc[0, :, :, :] = self._constant_forcing(atom[0, :, :, :, 0, :, :], self.ny, self.nz, var, value)
         return create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
 
-    def _constant_forcing_north(self, atom, var, value):
+    def _constant_forcing_north(self, atom, var, forcing_constant, atom_constant):
         frc = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
-        frc[:, self.ny-1, :, :] = self._constant_forcing(atom[:, self.ny-1, :, :, :, 2, :], self.nx, self.nz, var, value)
+        frc[:, self.ny-1, :, :] = self._constant_forcing(atom[:, self.ny-1, :, :, :, 2, :], self.nx, self.nz,
+                                                         var, forcing_constant)
+
+        atom[:, self.ny-1, :, var, :, 1, :] += atom_constant * atom[:, self.ny-1, :, var, :, 2, :]
+        atom[:, self.ny-1, :, var, :, 2, :] = 0
+
         return create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
 
     def _constant_forcing_south(self, atom, var, forcing_constant, atom_constant):
