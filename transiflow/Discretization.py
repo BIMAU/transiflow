@@ -806,7 +806,7 @@ class Discretization:
         return atom
 
     @staticmethod
-    def _mass_T(atom, i, j, k, x, y, z):
+    def _mass_C(atom, i, j, k, x, y, z):
         # volume size in the x direction
         dx = x[i] - x[i-1]
         # volume size in the y direction
@@ -816,11 +816,14 @@ class Discretization:
 
         atom[0] = dx * dy * dz
 
-    def mass_T(self):
+    def mass_C(self, var):
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._mass_T(atom[i, j, k, self.dim+1:self.dim+2], i, j, k, self.x, self.y, self.z)
+            self._mass_C(atom[i, j, k, var:var+1], i, j, k, self.x, self.y, self.z)
         return atom
+
+    def mass_T(self):
+        return self.mass_C(self.dim + 1)
 
     def average_x(self, state):
         averages = numpy.zeros((self.nx+1, self.ny, self.nz))
