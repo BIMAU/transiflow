@@ -413,8 +413,8 @@ class Discretization:
         elif (self.problem_type_equals('Rayleigh-Benard')
               or self.problem_type_equals('Rayleigh-Benard Perturbation')):
             asym = self.get_parameter('Asymmetry Parameter')
-            frc += boundary_conditions.heatflux_east(atom, asym)
-            frc += boundary_conditions.heatflux_west(atom, 0)
+            frc += boundary_conditions.heat_flux_east(atom, asym)
+            frc += boundary_conditions.heat_flux_west(atom, 0)
             boundary_conditions.no_slip_east(atom)
             boundary_conditions.no_slip_west(atom)
 
@@ -422,14 +422,14 @@ class Discretization:
 
             if self.dim == 2 or self.nz <= 1:
                 Bi = self.get_parameter('Biot Number')
-                frc += boundary_conditions.heatflux_north(atom, 0, Bi)
+                frc += boundary_conditions.heat_flux_north(atom, 0, Bi)
                 frc += boundary_conditions.temperature_south(atom, bottom_temperature)
                 boundary_conditions.free_slip_north(atom)
                 boundary_conditions.no_slip_south(atom)
                 return frc
 
-            frc += boundary_conditions.heatflux_north(atom, 0)
-            frc += boundary_conditions.heatflux_south(atom, 0)
+            frc += boundary_conditions.heat_flux_north(atom, 0)
+            frc += boundary_conditions.heat_flux_south(atom, 0)
             boundary_conditions.no_slip_north(atom)
             boundary_conditions.no_slip_south(atom)
 
@@ -443,14 +443,14 @@ class Discretization:
             boundary_conditions.no_slip_east(atom)
             boundary_conditions.no_slip_west(atom)
 
-            frc += boundary_conditions.heatflux_north(atom, 0)
-            frc += boundary_conditions.heatflux_south(atom, 0)
+            frc += boundary_conditions.heat_flux_north(atom, 0)
+            frc += boundary_conditions.heat_flux_south(atom, 0)
             boundary_conditions.no_slip_north(atom)
             boundary_conditions.no_slip_south(atom)
 
             if self.dim > 2 and self.nz > 1:
-                frc += boundary_conditions.heatflux_top(atom, 0)
-                frc += boundary_conditions.heatflux_bottom(atom, 0)
+                frc += boundary_conditions.heat_flux_top(atom, 0)
+                frc += boundary_conditions.heat_flux_bottom(atom, 0)
                 boundary_conditions.no_slip_top(atom)
                 boundary_conditions.no_slip_bottom(atom)
         elif self.problem_type_equals('Double Gyre'):

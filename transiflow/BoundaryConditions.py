@@ -159,7 +159,7 @@ class BoundaryConditions:
 
         return frc
 
-# TODO: These methods are untested with nonzero heatflux and stretched grids
+# TODO: These methods are untested with nonzero heat flux and stretched grids
 
     def temperature_east(self, atom, temperature):
         '''T[i] + T[i+1] = 2 * Tb
@@ -191,65 +191,65 @@ class BoundaryConditions:
         so T[k-1] = 2 * Tb - T[k]'''
         return self._constant_forcing_bottom(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, 2 * temperature, -1)
 
-    def heatflux_east(self, atom, heatflux, biot=0.0):
+    def heat_flux_east(self, atom, heat_flux, biot=0.0):
         '''T[i+1] - T[i] + h * Bi * (T[i+1] + T[i]) / 2 = h * Tbc, h = (x[i+1] - x[i-1]) / 2
         so T[i+1] = T[i] * (1 - h * Bi / 2) / (1 + h * Bi / 2) + h * Tbc / (1 + h * Bi / 2)'''
         h = (self.x[self.nx] - self.x[self.nx-2]) / 2
 
-        forcing_constant = h * heatflux / (1 + h * biot / 2)
+        forcing_constant = h * heat_flux / (1 + h * biot / 2)
         atom_constant = (1 - h * biot / 2) / (1 + h * biot / 2)
         return self._constant_forcing_east(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1,
                                            forcing_constant, atom_constant)
 
-    def heatflux_west(self, atom, heatflux, biot=0.0):
+    def heat_flux_west(self, atom, heat_flux, biot=0.0):
         '''T[i] - T[i-1] + h * Bi * (T[i] + T[i-1]) / 2 = h * Tbc, h = (x[i] - x[i-2]) / 2
         so T[i-1] = T[i] * (1 + h * Bi / 2) / (1 - h * Bi / 2) + h * Tbc / (1 - h * Bi / 2)
         (west boundary does not start at x = 0)'''
         h = (self.x[0] - self.x[-2]) / 2
 
-        forcing_constant = h * heatflux / (1 - h * biot / 2)
+        forcing_constant = h * heat_flux / (1 - h * biot / 2)
         atom_constant = (1 + h * biot / 2) / (1 - h * biot / 2)
         return self._constant_forcing_west(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1,
                                            forcing_constant, atom_constant)
 
-    def heatflux_north(self, atom, heatflux, biot=0.0):
+    def heat_flux_north(self, atom, heat_flux, biot=0.0):
         '''T[j+1] - T[j] + h * Bi * (T[j+1] + T[j]) / 2 = h * Tbc, h = (y[j+1] - y[j-1]) / 2
         so T[j+1] = T[j] * (1 - h * Bi / 2) / (1 + h * Bi / 2) + h * Tbc / (1 + h * Bi / 2)'''
         h = (self.y[self.ny] - self.y[self.ny-2]) / 2
 
-        forcing_constant = h * heatflux / (1 + h * biot / 2)
+        forcing_constant = h * heat_flux / (1 + h * biot / 2)
         atom_constant = (1 - h * biot / 2) / (1 + h * biot / 2)
         return self._constant_forcing_north(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1,
                                             forcing_constant, atom_constant)
 
-    def heatflux_south(self, atom, heatflux, biot=0.0):
+    def heat_flux_south(self, atom, heat_flux, biot=0.0):
         '''T[j] - T[j-1] + h * Bi * (T[j] + T[j-1]) / 2 = h * Tbc, h = (y[j] - y[j-2]) / 2
         so T[j-1] = T[j] * (1 + h * Bi / 2) / (1 - h * Bi / 2) + h * Tbc / (1 - h * Bi / 2)
         (south boundary does not start at y = 0)'''
         h = (self.y[0] - self.y[-2]) / 2
 
-        forcing_constant = h * heatflux / (1 - h * biot / 2)
+        forcing_constant = h * heat_flux / (1 - h * biot / 2)
         atom_constant = (1 + h * biot / 2) / (1 - h * biot / 2)
         return self._constant_forcing_south(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1,
                                             forcing_constant, atom_constant)
 
-    def heatflux_top(self, atom, heatflux, biot=0.0):
+    def heat_flux_top(self, atom, heat_flux, biot=0.0):
         '''T[k+1] - T[k] + h * Bi * (T[k+1] + T[k]) / 2 = h * Tbc, h = (z[k+1] - z[k-1]) / 2
         so T[k+1] = T[k] * (1 - h * Bi / 2) / (1 + h * Bi / 2) + h * Tbc / (1 + h * Bi / 2)'''
         h = (self.z[self.nz] - self.z[self.nz-2]) / 2
 
-        forcing_constant = h * heatflux / (1 + h * biot / 2)
+        forcing_constant = h * heat_flux / (1 + h * biot / 2)
         atom_constant = (1 - h * biot / 2) / (1 + h * biot / 2)
         return self._constant_forcing_top(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1,
                                           forcing_constant, atom_constant)
 
-    def heatflux_bottom(self, atom, heatflux, biot=0.0):
+    def heat_flux_bottom(self, atom, heat_flux, biot=0.0):
         '''T[k] - T[k-1] + h * Bi * (T[k] + T[k-1]) / 2 = h * Tbc, h = (z[k] - z[k-2]) / 2
         so T[k-1] = T[k] * (1 + h * Bi / 2) / (1 - h * Bi / 2) + h * Tbc / (1 - h * Bi / 2)
         (bottom boundary does not start at z = 0)'''
         h = (self.z[0] - self.z[-2]) / 2
 
-        forcing_constant = h * heatflux / (1 - h * biot / 2)
+        forcing_constant = h * heat_flux / (1 - h * biot / 2)
         atom_constant = (1 + h * biot / 2) / (1 - h * biot / 2)
         return self._constant_forcing_bottom(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1,
                                              forcing_constant, atom_constant)
