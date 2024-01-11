@@ -112,9 +112,9 @@ class BoundaryConditions:
         atom[:, :, 0, :, :, :, :, 0] = 0
 
     def moving_lid_east(self, atom, velocity):
-        frc = self._constant_forcing_east(atom[:, :, :, :, 1, :, :, :], 1, 2 * velocity)
+        frc = self._constant_forcing_east(atom[:, :, :, :, 1, :, :, :], 1, 2 * velocity, -1)
         if self.dim == 3 and self.nz > 1:
-            frc += self._constant_forcing_east(atom[:, :, :, :, 1, :, :, :], 2, 2 * velocity)
+            frc += self._constant_forcing_east(atom[:, :, :, :, 1, :, :, :], 2, 2 * velocity, -1)
 
         self.no_slip_east(atom)
 
@@ -162,12 +162,9 @@ class BoundaryConditions:
 # TODO: These methods are untested with nonzero heatflux and stretched grids
 
     def temperature_east(self, atom, temperature):
-        '''T[i] + T[i+1] = 2 * Tb'''
-        frc = self._constant_forcing_east(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, 2 * temperature)
-        atom[self.nx-1, :, :, self.dim+1, self.dim+1, 1, :, :] -= atom[self.nx-1, :, :, self.dim+1, self.dim+1, 2, :, :]
-        atom[self.nx-1, :, :, self.dim+1, self.dim+1, 2, :, :] = 0
-
-        return frc
+        '''T[i] + T[i+1] = 2 * Tb
+        so T[i+1] = 2 * Tb - T[i]'''
+        return self._constant_forcing_east(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, 2 * temperature, -1)
 
     def temperature_west(self, atom, temperature):
         '''T[i] + T[i-1] = 2 * Tb
@@ -199,14 +196,10 @@ class BoundaryConditions:
         so T[i+1] = T[i] * (1 - h * Bi / 2) / (1 + h * Bi / 2) + h * Tbc / (1 + h * Bi / 2)'''
         h = (self.x[self.nx] - self.x[self.nx-2]) / 2
 
-        c = 1 + h * biot / 2
-        frc = self._constant_forcing_east(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, heatflux * h / c)
-
-        c = (1 - h * biot / 2) / c
-        atom[self.nx-1, :, :, self.dim+1, self.dim+1, 1, :, :] += c * atom[self.nx-1, :, :, self.dim+1, self.dim+1, 2, :, :]
-        atom[self.nx-1, :, :, self.dim+1, self.dim+1, 2, :, :] = 0
-
-        return frc
+        forcing_constant = h * heatflux / (1 + h * biot / 2)
+        atom_constant = (1 - h * biot / 2) / (1 + h * biot / 2)
+        return self._constant_forcing_east(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1,
+                                           forcing_constant, atom_constant)
 
     def heatflux_west(self, atom, heatflux, biot=0.0):
         '''T[i] - T[i-1] + h * Bi * (T[i] + T[i-1]) / 2 = h * Tbc, h = (x[i] - x[i-2]) / 2
@@ -267,9 +260,14 @@ class BoundaryConditions:
             frc[i, j, var] += atom[i, j, var, x, y] * value
         return frc
 
-    def _constant_forcing_east(self, atom, var, value):
+    def _constant_forcing_east(self, atom, var, forcing_constant, atom_constant):
         frc = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
-        frc[self.nx-1, :, :, :] = self._constant_forcing(atom[self.nx-1, :, :, :, 2, :, :], self.ny, self.nz, var, value)
+        frc[self.nx-1, :, :, :] = self._constant_forcing(atom[self.nx-1, :, :, :, 2, :, :], self.ny, self.nz,
+                                                         var, forcing_constant)
+
+        atom[self.nx-1, :, :, var, 1, :, :] += atom_constant * atom[self.nx-1, :, :, var, 2, :, :]
+        atom[self.nx-1, :, :, var, 2, :, :] = 0
+
         return create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
 
     def _constant_forcing_west(self, atom, var, forcing_constant, atom_constant):
