@@ -692,17 +692,23 @@ class Discretization:
         atom[1] = dx * dy * dz / 2
         atom[2] = atom[1]
 
-    def forward_average_T_y(self):
+    def forward_average_C_y(self, var):
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._forward_average_x(atom[i, j, k, 1, self.dim+1, 1, :, 1], j, i, k, self.y, self.x, self.z)
+            self._forward_average_x(atom[i, j, k, 1, var, 1, :, 1], j, i, k, self.y, self.x, self.z)
         return atom
 
-    def forward_average_T_z(self):
+    def forward_average_C_z(self, var):
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._forward_average_x(atom[i, j, k, 2, self.dim+1, 1, 1, :], k, j, i, self.z, self.y, self.x)
+            self._forward_average_x(atom[i, j, k, 2, var, 1, 1, :], k, j, i, self.z, self.y, self.x)
         return atom
+
+    def forward_average_T_y(self):
+        return self.forward_average_C_y(self.dim + 1)
+
+    def forward_average_T_z(self):
+        return self.forward_average_C_z(self.dim + 1)
 
     @staticmethod
     def _backward_average_x(atom, i, j, k, x, y, z):
