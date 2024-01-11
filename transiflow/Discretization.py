@@ -596,23 +596,32 @@ class Discretization:
         atom[2] = dy * dz
         atom[1] = -atom[2]
 
-    def p_x(self):
+    def C_x(self, var):
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._forward_u_x(atom[i, j, k, 0, self.dim, :, 1, 1], i, j, k, self.x, self.y, self.z)
+            self._forward_u_x(atom[i, j, k, 0, var, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom
+
+    def C_y(self, var):
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
+        for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
+            self._forward_u_x(atom[i, j, k, 1, var, 1, :, 1], j, i, k, self.y, self.x, self.z)
+        return atom
+
+    def C_z(self, var):
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
+        for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
+            self._forward_u_x(atom[i, j, k, 2, var, 1, 1, :], k, j, i, self.z, self.y, self.x)
+        return atom
+
+    def p_x(self):
+        return self.C_x(self.dim)
 
     def p_y(self):
-        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
-        for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._forward_u_x(atom[i, j, k, 1, self.dim, 1, :, 1], j, i, k, self.y, self.x, self.z)
-        return atom
+        return self.C_y(self.dim)
 
     def p_z(self):
-        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
-        for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._forward_u_x(atom[i, j, k, 2, self.dim, 1, 1, :], k, j, i, self.z, self.y, self.x)
-        return atom
+        return self.C_z(self.dim)
 
     @staticmethod
     def _backward_u_x(atom, i, j, k, x, y, z):
