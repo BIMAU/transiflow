@@ -552,7 +552,7 @@ class Discretization:
         return atom
 
     @staticmethod
-    def _T_xx(atom, i, j, k, x, y, z):
+    def _C_xx(atom, i, j, k, x, y, z):
         # distance between T[i] and T[i-1]
         dx = (x[i] - x[i-2]) / 2
         # distance between T[i+1] and T[i]
@@ -567,23 +567,32 @@ class Discretization:
         atom[2] = 1 / dxp1 * dy * dz
         atom[1] = -atom[0] - atom[2]
 
-    def T_xx(self):
+    def C_xx(self, var):
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._T_xx(atom[i, j, k, self.dim+1, self.dim+1, :, 1, 1], i, j, k, self.x, self.y, self.z)
+            self._C_xx(atom[i, j, k, var, var, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom
+
+    def C_yy(self, var):
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
+        for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
+            self._C_xx(atom[i, j, k, var, var, 1, :, 1], j, i, k, self.y, self.x, self.z)
+        return atom
+
+    def C_zz(self, var):
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
+        for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
+            self._C_xx(atom[i, j, k, var, var, 1, 1, :], k, j, i, self.z, self.y, self.x)
+        return atom
+
+    def T_xx(self):
+        return self.C_xx(self.dim + 1)
 
     def T_yy(self):
-        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
-        for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._T_xx(atom[i, j, k, self.dim+1, self.dim+1, 1, :, 1], j, i, k, self.y, self.x, self.z)
-        return atom
+        return self.C_yy(self.dim + 1)
 
     def T_zz(self):
-        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
-        for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._T_xx(atom[i, j, k, self.dim+1, self.dim+1, 1, 1, :], k, j, i, self.z, self.y, self.x)
-        return atom
+        return self.C_zz(self.dim + 1)
 
     @staticmethod
     def _forward_u_x(atom, i, j, k, x, y, z):
