@@ -135,6 +135,7 @@ class Discretization:
         Ra = self.get_parameter('Rayleigh Number', 1.0)
         Pr = self.get_parameter('Prandtl Number', 1.0)
         Gr = self.get_parameter('Grashof Number', Ra / Pr)
+        Le = self.get_parameter('Lewis Number', 1.0)
 
         if Re == 0:
             Re = 1
@@ -155,6 +156,10 @@ class Discretization:
             atom += 1 / (Pr * numpy.sqrt(Gr)) * (self.T_xx() + self.T_yy())
             atom += self.forward_average_T_y()
 
+        if self.dof > 4:
+            atom += 1 / (Le * Pr * numpy.sqrt(Gr)) * (self.S_xx() + self.S_yy())
+            atom -= self.forward_average_S_y()
+
         if self.problem_type_equals('Rayleigh-Benard Perturbation'):
             Bi = self.get_parameter('Biot Number')
             atom += Bi / (Bi + 1) * self.backward_average_v_y()
@@ -170,6 +175,7 @@ class Discretization:
         Ra = self.get_parameter('Rayleigh Number', 1.0)
         Pr = self.get_parameter('Prandtl Number', 1.0)
         Gr = self.get_parameter('Grashof Number', Ra / Pr)
+        Le = self.get_parameter('Lewis Number', 1.0)
 
         if Re == 0:
             Re = 1
@@ -189,6 +195,13 @@ class Discretization:
                 atom += self.forward_average_T_z()
             else:
                 atom += self.forward_average_T_y()
+
+        if self.dof > 5:
+            atom += 1 / (Le * Pr * numpy.sqrt(Gr)) * (self.S_xx() + self.S_yy() + self.S_zz())
+            if self.nz > 1:
+                atom -= self.forward_average_S_z()
+            else:
+                atom -= self.forward_average_S_y()
 
         if self.problem_type_equals('Rayleigh-Benard Perturbation'):
             Bi = self.get_parameter('Biot Number')
@@ -232,6 +245,13 @@ class Discretization:
             if self.dim > 2:
                 self.w_T_z(atomJ, atomF, state_mtx)
 
+        if self.dof > self.dim + 2:
+            self.u_S_x(atomJ, atomF, state_mtx)
+            self.v_S_y(atomJ, atomF, state_mtx)
+
+            if self.dim > 2:
+                self.w_S_z(atomJ, atomF, state_mtx)
+
         atomJ += atomF
 
         return (atomJ, atomF)
@@ -264,6 +284,8 @@ class Discretization:
             atom += self.mass_z()
         if self.dof > self.dim + 1:
             atom += self.mass_T()
+        if self.dof > self.dim + 2:
+            atom += self.mass_S()
         return self.assemble_mass_matrix(atom)
 
     def assemble_rhs(self, state, atom):
@@ -594,6 +616,15 @@ class Discretization:
     def T_zz(self):
         return self.C_zz(self.dim + 1)
 
+    def S_xx(self):
+        return self.C_xx(self.dim + 2)
+
+    def S_yy(self):
+        return self.C_yy(self.dim + 2)
+
+    def S_zz(self):
+        return self.C_zz(self.dim + 2)
+
     @staticmethod
     def _forward_u_x(atom, i, j, k, x, y, z):
         # volume size in the y direction
@@ -719,6 +750,12 @@ class Discretization:
     def forward_average_T_z(self):
         return self.forward_average_C_z(self.dim + 1)
 
+    def forward_average_S_y(self):
+        return self.forward_average_C_y(self.dim + 2)
+
+    def forward_average_S_z(self):
+        return self.forward_average_C_z(self.dim + 2)
+
     @staticmethod
     def _backward_average_x(atom, i, j, k, x, y, z):
         # volume size in the x direction
@@ -824,6 +861,9 @@ class Discretization:
 
     def mass_T(self):
         return self.mass_C(self.dim + 1)
+
+    def mass_S(self):
+        return self.mass_C(self.dim + 2)
 
     def average_x(self, state):
         averages = numpy.zeros((self.nx+1, self.ny, self.nz))
@@ -967,6 +1007,9 @@ class Discretization:
     def u_T_x(self, atomJ, atomF, state):
         return self.u_C_x(atomJ, atomF, state, self.dim + 1)
 
+    def u_S_x(self, atomJ, atomF, state):
+        return self.u_C_x(atomJ, atomF, state, self.dim + 2)
+
     def v_u_y(self, atomJ, atomF, state):
         averages_u = self.average_y(state[:, :, :, 0])
         averages_v = self.weighted_average_x(state[:, :, :, 1])
@@ -1025,6 +1068,9 @@ class Discretization:
     def v_T_y(self, atomJ, atomF, state):
         return self.v_C_y(atomJ, atomF, state, self.dim + 1)
 
+    def v_S_y(self, atomJ, atomF, state):
+        return self.v_C_y(atomJ, atomF, state, self.dim + 2)
+
     def w_u_z(self, atomJ, atomF, state):
         averages_u = self.average_z(state[:, :, :, 0])
         averages_w = self.weighted_average_x(state[:, :, :, 2])
@@ -1082,3 +1128,6 @@ class Discretization:
 
     def w_T_z(self, atomJ, atomF, state):
         return self.w_C_z(atomJ, atomF, state, self.dim + 1)
+
+    def w_S_z(self, atomJ, atomF, state):
+        return self.w_C_z(atomJ, atomF, state, self.dim + 2)
