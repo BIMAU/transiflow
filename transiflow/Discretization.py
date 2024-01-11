@@ -948,18 +948,21 @@ class Discretization:
             atomJ[i, j, k, 2, 0, 0, 1, 1:3] -= atom[0] * averages_w[i, j, k] * atom_average
             atomJ[i, j, k, 2, 0, 1, 1, 1:3] -= atom[1] * averages_w[i+1, j, k] * atom_average
 
-    def u_T_x(self, atomJ, atomF, state):
+    def u_C_x(self, atomJ, atomF, state, var):
         averages_u = state[0:self.nx+1, 1:self.ny+1, 1:self.nz+1, 0]
-        averages_T = self.average_x(state[:, :, :, self.dim+1])
+        averages_C = self.average_x(state[:, :, :, var])
 
         atom = numpy.zeros(3)
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._backward_u_x(atom, i, j, k, self.x, self.y, self.z)
-            atomF[i, j, k, self.dim+1, self.dim+1, 0:2, 1, 1] -= atom[0] * averages_u[i, j, k] * 1/2
-            atomF[i, j, k, self.dim+1, self.dim+1, 1:3, 1, 1] -= atom[1] * averages_u[i+1, j, k] * 1/2
+            atomF[i, j, k, var, var, 0:2, 1, 1] -= atom[0] * averages_u[i, j, k] * 1/2
+            atomF[i, j, k, var, var, 1:3, 1, 1] -= atom[1] * averages_u[i+1, j, k] * 1/2
 
-            atomJ[i, j, k, self.dim+1, 0, 0, 1, 1] -= atom[0] * averages_T[i, j, k]
-            atomJ[i, j, k, self.dim+1, 0, 1, 1, 1] -= atom[1] * averages_T[i+1, j, k]
+            atomJ[i, j, k, var, 0, 0, 1, 1] -= atom[0] * averages_C[i, j, k]
+            atomJ[i, j, k, var, 0, 1, 1, 1] -= atom[1] * averages_C[i+1, j, k]
+
+    def u_T_x(self, atomJ, atomF, state):
+        return self.u_C_x(atomJ, atomF, state, self.dim + 1)
 
     def v_u_y(self, atomJ, atomF, state):
         averages_u = self.average_y(state[:, :, :, 0])
@@ -1003,18 +1006,21 @@ class Discretization:
             atomJ[i, j, k, 2, 1, 1, 0, 1:3] -= atom[0] * averages_w[i, j, k] * atom_average
             atomJ[i, j, k, 2, 1, 1, 1, 1:3] -= atom[1] * averages_w[i, j+1, k] * atom_average
 
-    def v_T_y(self, atomJ, atomF, state):
+    def v_C_y(self, atomJ, atomF, state, var):
         averages_v = state[1:self.nx+1, 0:self.ny+1, 1:self.nz+1, 1]
-        averages_T = self.average_y(state[:, :, :, self.dim+1])
+        averages_C = self.average_y(state[:, :, :, var])
 
         atom = numpy.zeros(3)
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._backward_u_x(atom, j, i, k, self.y, self.x, self.z)
-            atomF[i, j, k, self.dim+1, self.dim+1, 1, 0:2, 1] -= atom[0] * averages_v[i, j, k] * 1/2
-            atomF[i, j, k, self.dim+1, self.dim+1, 1, 1:3, 1] -= atom[1] * averages_v[i, j+1, k] * 1/2
+            atomF[i, j, k, var, var, 1, 0:2, 1] -= atom[0] * averages_v[i, j, k] * 1/2
+            atomF[i, j, k, var, var, 1, 1:3, 1] -= atom[1] * averages_v[i, j+1, k] * 1/2
 
-            atomJ[i, j, k, self.dim+1, 1, 1, 0, 1] -= atom[0] * averages_T[i, j, k]
-            atomJ[i, j, k, self.dim+1, 1, 1, 1, 1] -= atom[1] * averages_T[i, j+1, k]
+            atomJ[i, j, k, var, 1, 1, 0, 1] -= atom[0] * averages_C[i, j, k]
+            atomJ[i, j, k, var, 1, 1, 1, 1] -= atom[1] * averages_C[i, j+1, k]
+
+    def v_T_y(self, atomJ, atomF, state):
+        return self.v_C_y(atomJ, atomF, state, self.dim + 1)
 
     def w_u_z(self, atomJ, atomF, state):
         averages_u = self.average_z(state[:, :, :, 0])
@@ -1058,15 +1064,18 @@ class Discretization:
             atomJ[i, j, k, 2, 2, 1, 1, 0:2] -= atom[1] * averages[i, j, k] * 1 / 2
             atomJ[i, j, k, 2, 2, 1, 1, 1:3] -= atom[2] * averages[i, j, k+1] * 1 / 2
 
-    def w_T_z(self, atomJ, atomF, state):
+    def w_C_z(self, atomJ, atomF, state, var):
         averages_w = state[1:self.nx+1, 1:self.ny+1, 0:self.nz+1, 2]
-        averages_T = self.average_z(state[:, :, :, self.dim+1])
+        averages_C = self.average_z(state[:, :, :, var])
 
         atom = numpy.zeros(3)
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._backward_u_x(atom, k, j, i, self.z, self.y, self.x)
-            atomF[i, j, k, self.dim+1, self.dim+1, 1, 1, 0:2] -= atom[0] * averages_w[i, j, k] * 1/2
-            atomF[i, j, k, self.dim+1, self.dim+1, 1, 1, 1:3] -= atom[1] * averages_w[i, j, k+1] * 1/2
+            atomF[i, j, k, var, var, 1, 1, 0:2] -= atom[0] * averages_w[i, j, k] * 1/2
+            atomF[i, j, k, var, var, 1, 1, 1:3] -= atom[1] * averages_w[i, j, k+1] * 1/2
 
-            atomJ[i, j, k, self.dim+1, 2, 1, 1, 0] -= atom[0] * averages_T[i, j, k]
-            atomJ[i, j, k, self.dim+1, 2, 1, 1, 1] -= atom[1] * averages_T[i, j, k+1]
+            atomJ[i, j, k, var, 2, 1, 1, 0] -= atom[0] * averages_C[i, j, k]
+            atomJ[i, j, k, var, 2, 1, 1, 1] -= atom[1] * averages_C[i, j, k+1]
+
+    def w_T_z(self, atomJ, atomF, state):
+        return self.w_C_z(atomJ, atomF, state, self.dim + 1)
