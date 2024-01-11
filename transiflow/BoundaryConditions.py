@@ -137,7 +137,7 @@ class BoundaryConditions:
         return frc
 
     def moving_lid_south(self, atom, velocity):
-        frc = self._constant_forcing_south(atom[:, :, :, :, 0, :, :, :], 0, 2 * velocity)
+        frc = self._constant_forcing_south(atom[:, :, :, :, 0, :, :, :], 0, 2 * velocity, -1)
 
         self.no_slip_south(atom)
 
@@ -186,12 +186,9 @@ class BoundaryConditions:
         return frc
 
     def temperature_south(self, atom, temperature):
-        '''T[j] + T[j-1] = 2 * Tb'''
-        frc = self._constant_forcing_south(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, 2 * temperature)
-        atom[:, 0, :, self.dim+1, self.dim+1, :, 1, :] -= atom[:, 0, :, self.dim+1, self.dim+1, :, 0, :]
-        atom[:, 0, :, self.dim+1, self.dim+1, :, 0, :] = 0
-
-        return frc
+        '''T[j] + T[j-1] = 2 * Tb
+        so T[j-1] = 2 * Tb - T[j]'''
+        return self._constant_forcing_south(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, 2 * temperature, -1)
 
     def temperature_top(self, atom, temperature):
         '''T[k] + T[k+1] = 2 * Tb
@@ -252,14 +249,10 @@ class BoundaryConditions:
         (south boundary does not start at y = 0)'''
         h = (self.y[0] - self.y[-2]) / 2
 
-        c = 1 - h * biot / 2
-        frc = self._constant_forcing_south(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, heatflux * h / c)
-
-        c = (1 + h * biot / 2) / c
-        atom[:, 0, :, self.dim+1, self.dim+1, :, 1, :] += c * atom[:, 0, :, self.dim+1, self.dim+1, :, 0, :]
-        atom[:, 0, :, self.dim+1, self.dim+1, :, 0, :] = 0
-
-        return frc
+        forcing_constant = h * heatflux / (1 - h * biot / 2)
+        atom_constant = (1 + h * biot / 2) / (1 - h * biot / 2)
+        return self._constant_forcing_south(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1,
+                                            forcing_constant, atom_constant)
 
     def heatflux_top(self, atom, heatflux, biot=0.0):
         '''T[k+1] - T[k] + h * Bi * (T[k+1] + T[k]) / 2 = h * Tbc, h = (z[k+1] - z[k-1]) / 2
@@ -303,9 +296,14 @@ class BoundaryConditions:
         frc[:, self.ny-1, :, :] = self._constant_forcing(atom[:, self.ny-1, :, :, :, 2, :], self.nx, self.nz, var, value)
         return create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
 
-    def _constant_forcing_south(self, atom, var, value):
+    def _constant_forcing_south(self, atom, var, forcing_constant, atom_constant):
         frc = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
-        frc[:, 0, :, :] = self._constant_forcing(atom[:, 0, :, :, :, 0, :], self.nx, self.nz, var, value)
+        frc[:, 0, :, :] = self._constant_forcing(atom[:, 0, :, :, :, 0, :], self.nx, self.nz,
+                                                 var, forcing_constant)
+
+        atom[:, 0, :, var, :, 1, :] += atom_constant * atom[:, 0, :, var, :, 0, :]
+        atom[:, 0, :, var, :, 0, :] = 0
+
         return create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
 
     def _constant_forcing_top(self, atom, var, forcing_constant, atom_constant):
