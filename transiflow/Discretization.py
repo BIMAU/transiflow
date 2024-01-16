@@ -57,6 +57,7 @@ class Discretization:
 
     def __init__(self, parameters, nx, ny, nz, dim, dof, x=None, y=None, z=None):
         self.parameters = parameters
+        self.old_parameters = None
 
         self.nx = nx
         self.ny = ny
@@ -80,19 +81,15 @@ class Discretization:
                                             self.nz) if z is None else z
 
         self.atom = None
-        self.recompute_linear_part = True
 
     def set_parameter(self, name, value):
-        '''Set a parameter in self.parameters that has to be called to make
-        sure we recompute the linear part of the equation. Changing
-        the value in self.parameters from outside this class will
-        likely result in wrong answers.'''
+        '''Set a parameter in self.parameters. Changing a value in self.parameters
+        will make us recompute the linear part of the equation.'''
 
         if name in self.parameters and self.get_parameter(name) == value:
             return
 
         self.parameters[name] = value
-        self.recompute_linear_part = True
 
     def get_parameter(self, name, default=0):
         '''Get a parameter from self.parameters.'''
@@ -116,13 +113,14 @@ class Discretization:
     def linear_part(self):
         '''Compute the linear part of the equation. Return a cached version if possible.'''
 
-        if self.recompute_linear_part:
+        parameters = dict(self.parameters)
+        if parameters != self.old_parameters:
             if self.dim == 2:
                 self.atom = self._linear_part_2D()
             else:
                 self.atom = self._linear_part_3D()
 
-            self.recompute_linear_part = False
+            self.old_parameters = parameters
 
         return self.atom
 
