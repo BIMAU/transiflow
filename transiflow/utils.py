@@ -123,6 +123,13 @@ def create_stretched_coordinate_vector2(start, end, nx, sigma):
         x[-3] = x[-4] + dx
     return x
 
+def compute_coordinate_vector_centers(vec):
+    x = numpy.zeros(len(vec) - 1)
+    for i in range(-1, len(vec) - 2):
+        x[i] = (vec[i] + vec[i-1]) / 2
+
+    return x
+
 def compute_velocity_magnitude(state, interface, axis=2, position=None):
     nx = interface.discretization.nx
     ny = interface.discretization.ny
