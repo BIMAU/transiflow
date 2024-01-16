@@ -254,10 +254,58 @@ class BoundaryConditions:
         return self._constant_forcing_bottom(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1,
                                              forcing_constant, atom_constant)
 
+    def salinity_flux_east(self, atom, salinity_flux):
+        '''S[i+1] - S[i] = h * Sbc, h = (x[i+1] - x[i-1]) / 2
+        so S[i+1] = S[i] + h * Sbc'''
+        h = (self.x[self.nx] - self.x[self.nx-2]) / 2
+        return self._constant_forcing_east(atom[:, :, :, :, self.dim+2, :, :, :], self.dim+2,
+                                           h * salinity_flux, 1)
+
+    def salinity_flux_west(self, atom, salinity_flux):
+        '''S[i] - S[i-1] = h * Sbc, h = (x[i] - x[i-2]) / 2
+        so S[i-1] = S[i] - h * Sbc
+        (west boundary does not start at x = 0)'''
+        h = (self.x[0] - self.x[-2]) / 2
+        return self._constant_forcing_west(atom[:, :, :, :, self.dim+2, :, :, :], self.dim+2,
+                                           -h * salinity_flux, 1)
+
+    def salinity_flux_north(self, atom, salinity_flux):
+        '''S[j+1] - S[j] = h * Sbc, h = (y[j+1] - y[j-1]) / 2
+        so S[j+1] = S[j] + h * Sbc'''
+        h = (self.y[self.ny] - self.y[self.ny-2]) / 2
+        return self._constant_forcing_north(atom[:, :, :, :, self.dim+2, :, :, :], self.dim+2,
+                                            h * salinity_flux, 1)
+
+    def salinity_flux_south(self, atom, salinity_flux):
+        '''S[j] - S[j-1] = h * Sbc, h = (y[j] - y[j-2]) / 2
+        so S[j-1] = S[j] - h * Sbc
+        (south boundary does not start at y = 0)'''
+        h = (self.y[0] - self.y[-2]) / 2
+        return self._constant_forcing_south(atom[:, :, :, :, self.dim+2, :, :, :], self.dim+2,
+                                            -h * salinity_flux, 1)
+
+    def salinity_flux_top(self, atom, salinity_flux):
+        '''S[k+1] - S[k] = h * Sbc, h = (z[k+1] - z[k-1]) / 2
+        so S[k+1] = S[k] + h * Sbc'''
+        h = (self.z[self.nz] - self.z[self.nz-2]) / 2
+        return self._constant_forcing_top(atom[:, :, :, :, self.dim+2, :, :, :], self.dim+2,
+                                          h * salinity_flux, 1)
+
+    def salinity_flux_bottom(self, atom, salinity_flux):
+        '''S[k] - S[k-1] = h * Sbc, h = (z[k] - z[k-2]) / 2
+        so S[k-1] = S[k] - h * Sbc
+        (bottom boundary does not start at z = 0)'''
+        h = (self.z[0] - self.z[-2]) / 2
+        return self._constant_forcing_bottom(atom[:, :, :, :, self.dim+2, :, :, :], self.dim+2,
+                                             -h * salinity_flux, 1)
+
     def _constant_forcing(self, atom, nx, ny, var, value):
+        value = numpy.ones((nx + 2, ny + 2)) * value
+
         frc = numpy.zeros((nx, ny, self.dof))
         for j, i, y, x in numpy.ndindex(ny, nx, 3, 3):
-            frc[i, j, var] += atom[i, j, var, x, y] * value
+            frc[i, j, var] += atom[i, j, var, x, y] * value[i + x - 1, j + y - 1]
+
         return frc
 
     def _constant_forcing_east(self, atom, var, forcing_constant, atom_constant):

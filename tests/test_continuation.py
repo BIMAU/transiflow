@@ -290,6 +290,45 @@ def test_continuation_double_gyre(nx=8):
     assert mu > 16
     assert mu < target
 
+def test_continuation_amoc(nx=8):
+    try:
+        from transiflow.interface import JaDa # noqa: F401
+    except ImportError:
+        pytest.skip('jadapy not found')
+
+    numpy.random.seed(1234)
+
+    dim = 2
+    dof = 5
+    ny = nx // 2
+    nz = 1
+
+    parameters = {'Problem Type': 'AMOC',
+                  'Rayleigh Number': 4e4,
+                  'Prandtl Number': 2.25,
+                  'X-max': 5}
+
+    interface = Interface(parameters, nx, ny, nz, dim, dof)
+    continuation = Continuation(interface, parameters)
+
+    x0 = interface.vector()
+
+    target = 1
+    ds = 0.1
+    x, mu = continuation.continuation(x0, 'Temperature Forcing', 0, target, ds)
+
+    parameters['Detect Bifurcation Points'] = True
+    parameters['Eigenvalue Solver'] = {}
+    parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
+
+    target = 0.2
+    ds = 0.01
+    x, mu = continuation.continuation(x, 'Freshwater Flux', 0, target, ds)
+
+    assert numpy.linalg.norm(x) > 0
+    assert mu > 0.1
+    assert mu < target
+
 def test_continuation_2D_tc(nx=8):
     try:
         from transiflow.interface import JaDa # noqa: F401
