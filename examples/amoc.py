@@ -1,4 +1,5 @@
 import numpy
+import pickle
 
 import matplotlib.pyplot as plt
 
@@ -30,10 +31,34 @@ class Data:
         self.value = [self.value[i] for i in idx]
 
 
+def generate_plots(interface, x, sigma):
+    '''Generate plots for the stream function, vorticity and salinity and write them to a file'''
+    psi_max = numpy.max(utils.compute_streamfunction(x, interface))
+
+    plot_utils.plot_streamfunction(
+        x, interface, title=f'Stream function at $\\sigma={sigma:.2f}$ and $\\Psi_\\max={psi_max:.2e}$',
+        legend=False, grid=False, show=False)
+    plt.savefig(f'streamfunction_{sigma:.2f}_{psi_max:.2e}.eps')
+    plt.close()
+
+    plot_utils.plot_vorticity(
+        x, interface, title=f'Vorticity at $\\sigma={sigma:.2f}$ and $\\Psi_\\max={psi_max:.2e}$',
+        legend=False, grid=False, show=False)
+    plt.savefig(f'vorticity_{sigma:.2f}_{psi_max:.2e}.eps')
+    plt.close()
+
+    plot_utils.plot_value(
+        utils.create_state_mtx(x, interface=interface)[:, :, 0, 4],
+        interface, title=f'Salinity at $\\sigma={sigma:.2f}$ and $\\Psi_\\max={psi_max:.2e}$',
+        legend=False, grid=False, show=False)
+    plt.savefig(f'salinity_{sigma:.2f}_{psi_max:.2e}.eps')
+    plt.close()
+
+
 def main():
-    '''An example of performing a continuation for a double-gyre
-    wind-driven ocean, plotting the streamfunction at different Reynolds
-    numbers, and plotting the bifurcation diagram.'''
+    '''An example of performing a continuation for a 2D AMOC, where the plots and interim
+    solutions are written to files instead of storing them in memory and showing them on
+    the screen.'''
 
     dim = 2
     dof = 5
@@ -50,97 +75,99 @@ def main():
                   'Freshwater Flux': 0,
                   'X-max': 5,
                   # Give back extra output (this is also more expensive)
-                  'Verbose': False}
+                  'Verbose': False,
+                  # Use a lower Newton tolerance than the default
+                  'Newton Tolerance': 1e-6}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof)
     continuation = Continuation(interface, parameters)
 
-    # First increase the Rayleigh number to the desired value
+    # First increase the temperature forcing to the desired value
     x0 = interface.vector()
-
-    interface.set_parameter('Newton Tolerance', 1e-6)
 
     ds = 0.1
     target = 1
     x1 = continuation.continuation(x0, 'Temperature Forcing', 0, target, ds)[0]
 
-    plot_utils.plot_streamfunction(x1, interface, title='Streamfunction at $\\sigma=0$')
-    plot_utils.plot_vorticity(x1, interface, title='Vorticity at $\\sigma=0$')
+    # Write the solution to a file
+    numpy.save('x1', x1)
 
-    # Perform a continuation to freshwater flux 1 without detecting bifurcation points
+    generate_plots(interface, x1, 0)
+
+    # Enable the lines below to load the solution instead. Same for the ones below
+    # parameters['Temperature Forcing'] = 1
+    # x1 = numpy.load('x1.npy')
+
+    # Perform a continuation to freshwater flux 0.2 without detecting bifurcation points
     # and use this in the bifurcation diagram
     data2 = Data()
-    interface.set_parameter('Postprocess', lambda interface, x, mu: data2.append(
-        mu, numpy.max(utils.compute_streamfunction(x, interface))))
+    parameters['Postprocess'] = lambda interface, x, mu: data2.append(
+        mu, numpy.max(utils.compute_streamfunction(x, interface)))
     interface.parameters['Postprocess'](interface, x1, 0)
 
     ds = 0.05
     target = 0.2
-    interface.set_parameter('Minimum Step Size', 1e-12)
+    parameters['Minimum Step Size'] = 1e-12
     x2, mu2 = continuation.continuation(x1, 'Freshwater Flux', 0, target, ds)
 
-    data2.filter()
+    # Write the solution to a file
+    numpy.save('x2', x2)
 
-    sigma = mu2
-    psi_max = numpy.max(utils.compute_streamfunction(x2, interface))
-    plot_utils.plot_streamfunction(
-        x2, interface, title=f'Streamfunction at $\\sigma={sigma:.2f}$ and $\\Psi_\\max={psi_max:.2e}$')
-    plot_utils.plot_vorticity(
-        x2, interface, title=f'Vorticity at $\\sigma={sigma:.2f}$ and $\\Psi_\\max={psi_max:.2e}$')
-    plot_utils.plot_value(
-        utils.create_state_mtx(x2, interface=interface)[:, :, 0, 4],
-        interface, title=f'Salinity at $\\sigma={sigma:.2f}$ and $\\Psi_\\max={psi_max:.2e}$')
+    generate_plots(interface, x2, mu2)
+
+    # Write the data to a file
+    with open('data2', 'wb') as f:
+        pickle.dump(data2, f)
+
+    # Enable the lines below to load the data
+    # with open('data2', 'rb') as f:
+    #     data2 = pickle.load(f)
 
     # Add asymmetry to the problem
     ds = 0.05
     target = 1
-    interface.set_parameter('Postprocess', None)
-    interface.set_parameter('Maximum Continuation Steps', 1)
-    interface.set_parameter('Freshwater Flux', 0)
+    parameters['Postprocess'] = None
+    parameters['Maximum Continuation Steps'] = 1
+    parameters['Freshwater Flux'] = 0
     x3, mu3 = continuation.continuation(x1, 'Asymmetry Parameter', 0, target, ds)
-    interface.set_parameter('Maximum Continuation Steps', 1000)
+    parameters['Maximum Continuation Steps'] = 1000
 
-    # Perform a continuation to freshwater flux 1 with assymmetry added to the problem,
+    # Perform a continuation to freshwater flux 0.2 with asymmetry added to the problem,
     # meaning we can't stay on the unstable branch
     ds = 0.01
     target = 0.2
     x4, mu4 = continuation.continuation(x3, 'Freshwater Flux', 0, target, ds)
-
-    sigma = mu4
-    psi_max = numpy.max(utils.compute_streamfunction(x4, interface))
-    plot_utils.plot_streamfunction(
-        x4, interface, title=f'Streamfunction at $\\sigma={sigma:.2f}$ and $\\Psi_\\max={psi_max:.2e}$')
-    plot_utils.plot_vorticity(
-        x4, interface, title=f'Vorticity at $\\sigma={sigma:.2f}$ and $\\Psi_\\max={psi_max:.2e}$')
-    plot_utils.plot_value(
-        utils.create_state_mtx(x4, interface=interface)[:, :, 0, 4],
-        interface, title=f'Salinity at $\\sigma={sigma:.2f}$ and $\\Psi_\\max={psi_max:.2e}$')
 
     # Go back to the symmetric problem
     ds = -0.05
     target = 0
     x5, mu5 = continuation.continuation(x4, 'Asymmetry Parameter', mu3, target, ds)
 
+    # Write the solution to a file
+    numpy.save('x5', x5)
+
+    generate_plots(interface, x5, mu5)
+
+    x5 = numpy.load('x5.npy')
+    mu4 = 0.2
+
     # Now compute the stable branch after the pitchfork bifurcation by going backwards
     # and use this in the bifurcation diagram
     data6 = Data()
-    interface.set_parameter('Postprocess', lambda interface, x, mu: data6.append(
-        mu, numpy.max(utils.compute_streamfunction(x, interface))))
+    parameters['Postprocess'] = lambda interface, x, mu: data6.append(
+        mu, numpy.max(utils.compute_streamfunction(x, interface)))
 
     ds = -0.01
     target = 0.2
-    interface.set_parameter('Maximum Step Size', 0.005)
+    parameters['Maximum Step Size'] = 0.005
     x6, mu6 = continuation.continuation(x5, 'Freshwater Flux', mu4, target, ds)
 
-    sigma = mu6
-    psi_max = numpy.max(utils.compute_streamfunction(x6, interface))
-    plot_utils.plot_streamfunction(
-        x6, interface, title=f'Streamfunction at $\\sigma={sigma:.2f}$ and $\\Psi_\\max={psi_max:.2e}$')
-    plot_utils.plot_vorticity(
-        x6, interface, title=f'Vorticity at $\\sigma={sigma:.2f}$ and $\\Psi_\\max={psi_max:.2e}$')
-    plot_utils.plot_value(
-        utils.create_state_mtx(x6, interface=interface)[:, :, 0, 4],
-        interface, title=f'Salinity at $\\sigma={sigma:.2f}$ and $\\Psi_\\max={psi_max:.2e}$')
+    # Write the solution to a file
+    numpy.save('x6', x6)
+
+    generate_plots(interface, x6, mu6)
+
+    data2.filter()
 
     # Plot a bifurcation diagram
     plt.title(f'Bifurcation diagram for the AMOC model with $n_x={nx}$, $n_y={ny}$')
@@ -148,7 +175,8 @@ def main():
     plt.ylabel('Maximum value of the streamfunction')
     plt.plot(data2.mu, data2.value)
     plt.plot(data6.mu, data6.value)
-    plt.show()
+    plt.savefig('bifurcation_diagram.eps')
+    plt.close()
 
 
 if __name__ == '__main__':
