@@ -57,8 +57,8 @@ def extract_sorted_row(A, i):
 
 
 def extract_sorted_local_row(A, i):
-    indices = A.jcoA[A.begA[i] : A.begA[i + 1]]
-    values = A.coA[A.begA[i] : A.begA[i + 1]]
+    indices = A.jcoA[A.begA[i]: A.begA[i + 1]]
+    values = A.coA[A.begA[i]: A.begA[i + 1]]
     idx = sorted(range(len(indices)), key=lambda i: indices[i])
     return [indices[i] for i in idx], [values[i] for i in idx]
 
@@ -97,7 +97,7 @@ def test_ldc():
             continue
 
         lid = numpy.where(interface.map.indices == i)[0][0]
-        print(f"rank {interface.comm.rank}: {i = } {lid = }")
+        print(f"rank {interface.comm.rank}: {i} {lid}")
 
         indices_A, values_A = extract_sorted_row(A, i)
         indices_B, values_B = extract_sorted_row(B, i)
@@ -163,7 +163,7 @@ def test_ldc_stretched_file():
             continue
 
         lid = numpy.where(interface.map.indices == i)[0][0]
-        print(f"rank {interface.comm.rank}: {i = } {lid = }")
+        print(f"rank {interface.comm.rank}: {i} {lid}")
 
         indices_A, values_A = extract_sorted_row(A, i)
         indices_B, values_B = extract_sorted_row(B, i)

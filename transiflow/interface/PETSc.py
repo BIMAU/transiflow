@@ -101,10 +101,10 @@ class Interface(ParallelBaseInterface):
                     continue
 
                 col_idx = numpy.array(
-                    local_jac.jcoA[local_jac.begA[i] : local_jac.begA[i + 1]],
+                    local_jac.jcoA[local_jac.begA[i]: local_jac.begA[i + 1]],
                     dtype=PETSc.IntType,
                 )
-                values = local_jac.coA[local_jac.begA[i] : local_jac.begA[i + 1]]
+                values = local_jac.coA[local_jac.begA[i]: local_jac.begA[i + 1]]
                 self.jac.setValues(i, col_idx, values)
         else:
             self.jac.setValuesCSR(
