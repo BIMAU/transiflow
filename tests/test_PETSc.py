@@ -3,8 +3,7 @@ import os
 import numpy
 import pytest
 
-from transiflow import Continuation, utils
-from transiflow.interface import SciPy as SciPyInterface
+from transiflow import Continuation, Discretization, utils
 
 
 def read_matrix(fname):
@@ -188,10 +187,9 @@ def test_ldc_stretched_file():
 
         lid = numpy.where(interface.map.indices == i)[0][0]
 
-        if interface.comm.rank == 1:
-            print(
-                f"rank {interface.comm.rank}: {i}, {lid}, {rhs[i]}, {rhs_B[i]}, {rhs.array[lid]}, {rhs_B.array[lid]}"
-            )
+        print(
+            f"rank {interface.comm.rank}: {i}, {lid}, {rhs[i]}, {rhs_B[i]}, {rhs.array[lid]}, {rhs_B.array[lid]}"
+        )
 
         assert rhs_B[i] == pytest.approx(rhs[i])
         assert rhs_B.array[lid] == pytest.approx(rhs.array[lid])
@@ -216,9 +214,9 @@ def test_ldc_stretched(nx=4):
     for i in range(n):
         state[i] = i + 1
 
-    interface = SciPyInterface.Interface(parameters, nx, ny, nz, dim, dof)
-    B = interface.jacobian(state)
-    rhs_B = interface.rhs(state)
+    discretization = Discretization(parameters, nx, ny, nz, dim, dof)
+    B = discretization.jacobian(state)
+    rhs_B = discretization.rhs(state)
 
     interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof, PETSc.COMM_WORLD)
     state = PETScInterface.Vector.from_array(interface.map, state, ghosts=interface.ghosts)
@@ -226,26 +224,22 @@ def test_ldc_stretched(nx=4):
     A = interface.jacobian(state)
     rhs = interface.rhs(state)
 
-    # print(f"rank {interface.comm.rank}: {n = } {interface.ghosts = }")
-    # print(f"rank {interface.comm.rank}: {n = } {interface.map.indices = }")
-
     for i in range(n):
         if i not in interface.map.indices:
             continue
 
         lid = numpy.where(interface.map.indices == i)[0][0]
-        # print(f"rank {interface.comm.rank}: {i = } {lid = }")
 
         indices_A, values_A = extract_sorted_row(A, i)
         indices_B, values_B = extract_sorted_local_row(B, i)
 
         print("Expected:")
-        print(f"rank {interface.comm.rank}: {i = } {indices_B}")
-        # print(values_B)
+        print(indices_B)
+        print(values_B)
 
         print("Got:")
-        print(f"rank {interface.comm.rank}: {i = } {indices_A}")
-        # print(values_A)
+        print(indices_A)
+        print(values_A)
 
         assert len(indices_A) == len(indices_B)
         for j in range(len(indices_A)):
@@ -258,13 +252,9 @@ def test_ldc_stretched(nx=4):
 
         lid = numpy.where(interface.map.indices == i)[0][0]
 
-        if interface.comm.rank == 1:
-            print(
-                f"rank {interface.comm.rank}: {i}, {lid}, {rhs[i]}, {rhs_B[i]}, {rhs.array[lid]}"
-            )
+        print(f"rank {interface.comm.rank}: {i}, {lid}, {rhs[i]}, {rhs_B[i]}, {rhs.array[lid]}")
 
-        assert rhs_B[i] == pytest.approx(rhs[i])
-        # assert rhs_B[lid] == pytest.approx(rhs.array[lid])
+        assert rhs_B[i] == pytest.approx(rhs[lid])
 
 
 def test_ldc8_stretched():
