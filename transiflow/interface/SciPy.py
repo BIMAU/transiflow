@@ -285,7 +285,7 @@ class Interface(BaseInterface):
 
         parameters = self.parameters.get('Iterative Solver', {})
         restart = parameters.get('Restart', 100)
-        maxiter = parameters.get('Maximum Iterations', 1000) / restart
+        maxiter = parameters.get('Maximum Iterations', 1000) // restart
         tol = parameters.get('Convergence Tolerance', 1e-6)
 
         y, info = linalg.gmres(A, x, restart=restart, maxiter=maxiter,
