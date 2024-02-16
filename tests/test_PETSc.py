@@ -4,6 +4,7 @@ import numpy
 import pytest
 
 from transiflow import Continuation, utils
+from transiflow.interface import SciPy as SciPyInterface
 
 
 def read_matrix(fname):
@@ -52,6 +53,13 @@ def read_vector(fname, m):
 
 def extract_sorted_row(A, i):
     indices, values = A.getRow(i)
+    idx = sorted(range(len(indices)), key=lambda i: indices[i])
+    return [indices[i] for i in idx], [values[i] for i in idx]
+
+
+def extract_sorted_local_row(A, i):
+    indices = A.jcoA[A.begA[i] : A.begA[i + 1]]
+    values = A.coA[A.begA[i] : A.begA[i + 1]]
     idx = sorted(range(len(indices)), key=lambda i: indices[i])
     return [indices[i] for i in idx], [values[i] for i in idx]
 
@@ -114,10 +122,153 @@ def test_ldc():
 
         lid = numpy.where(interface.map.indices == i)[0][0]
 
-        print(f"rank {interface.comm.rank}: {i}, {lid}, {rhs[i]}, {rhs_B[i]}")
+        print(
+            f"rank {interface.comm.rank}: {i}, {lid}, {rhs[i]}, {rhs_B[i]}, {rhs.array[lid]}, {rhs_B.array[lid]}"
+        )
 
         assert rhs_B[i] == pytest.approx(rhs[i])
         assert rhs_B.array[lid] == pytest.approx(rhs.array[lid])
+
+
+def test_ldc_stretched_file():
+    try:
+        from petsc4py import PETSc
+
+        from transiflow.interface import PETSc as PETScInterface
+    except ImportError:
+        pytest.skip("PETSc not found")
+
+    nx = 4
+    ny = nx
+    nz = nx
+    dim = 3
+    dof = 4
+    parameters = {"Reynolds Number": 100, "Grid Stretching": True}
+    n = nx * ny * nz * dof
+
+    state = numpy.zeros(n, dtype=PETSc.ScalarType)
+    for i in range(n):
+        state[i] = i + 1
+
+    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof, PETSc.COMM_WORLD)
+    state = PETScInterface.Vector.from_array(interface.map, state, ghosts=interface.ghosts)
+
+    A = interface.jacobian(state)
+    rhs = interface.rhs(state)
+
+    B = read_matrix("ldc_stretched_%sx%sx%s.txt" % (nx, ny, nz))
+    rhs_B = read_vector("ldc_stretched_rhs_%sx%sx%s.txt" % (nx, ny, nz), interface.map)
+
+    for i in range(n):
+        if i not in interface.map.indices:
+            continue
+
+        lid = numpy.where(interface.map.indices == i)[0][0]
+        print(f"rank {interface.comm.rank}: {i = } {lid = }")
+
+        indices_A, values_A = extract_sorted_row(A, i)
+        indices_B, values_B = extract_sorted_row(B, i)
+
+        print("Expected:")
+        print(indices_B)
+        print(values_B)
+
+        print("Got:")
+        print(indices_A)
+        print(values_A)
+
+        assert len(indices_A) == len(indices_B)
+        for j in range(len(indices_A)):
+            assert indices_A[j] == indices_B[j]
+            assert values_A[j] == pytest.approx(values_B[j])
+
+    for i in range(n):
+        if i not in interface.map.indices:
+            continue
+
+        lid = numpy.where(interface.map.indices == i)[0][0]
+
+        if interface.comm.rank == 1:
+            print(
+                f"rank {interface.comm.rank}: {i}, {lid}, {rhs[i]}, {rhs_B[i]}, {rhs.array[lid]}, {rhs_B.array[lid]}"
+            )
+
+        assert rhs_B[i] == pytest.approx(rhs[i])
+        assert rhs_B.array[lid] == pytest.approx(rhs.array[lid])
+
+
+def test_ldc_stretched(nx=4):
+    try:
+        from petsc4py import PETSc
+
+        from transiflow.interface import PETSc as PETScInterface
+    except ImportError:
+        pytest.skip("PETSc not found")
+
+    ny = nx
+    nz = nx
+    dim = 3
+    dof = 4
+    parameters = {"Reynolds Number": 100, "Grid Stretching": True}
+    n = nx * ny * nz * dof
+
+    state = numpy.zeros(n, dtype=PETSc.ScalarType)
+    for i in range(n):
+        state[i] = i + 1
+
+    interface = SciPyInterface.Interface(parameters, nx, ny, nz, dim, dof)
+    B = interface.jacobian(state)
+    rhs_B = interface.rhs(state)
+
+    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof, PETSc.COMM_WORLD)
+    state = PETScInterface.Vector.from_array(interface.map, state, ghosts=interface.ghosts)
+
+    A = interface.jacobian(state)
+    rhs = interface.rhs(state)
+
+    # print(f"rank {interface.comm.rank}: {n = } {interface.ghosts = }")
+    # print(f"rank {interface.comm.rank}: {n = } {interface.map.indices = }")
+
+    for i in range(n):
+        if i not in interface.map.indices:
+            continue
+
+        lid = numpy.where(interface.map.indices == i)[0][0]
+        # print(f"rank {interface.comm.rank}: {i = } {lid = }")
+
+        indices_A, values_A = extract_sorted_row(A, i)
+        indices_B, values_B = extract_sorted_local_row(B, i)
+
+        print("Expected:")
+        print(f"rank {interface.comm.rank}: {i = } {indices_B}")
+        # print(values_B)
+
+        print("Got:")
+        print(f"rank {interface.comm.rank}: {i = } {indices_A}")
+        # print(values_A)
+
+        assert len(indices_A) == len(indices_B)
+        for j in range(len(indices_A)):
+            assert indices_A[j] == indices_B[j]
+            assert values_A[j] == pytest.approx(values_B[j])
+
+    for i in range(n):
+        if i not in interface.map.indices:
+            continue
+
+        lid = numpy.where(interface.map.indices == i)[0][0]
+
+        if interface.comm.rank == 1:
+            print(
+                f"rank {interface.comm.rank}: {i}, {lid}, {rhs[i]}, {rhs_B[i]}, {rhs.array[lid]}"
+            )
+
+        assert rhs_B[i] == pytest.approx(rhs[i])
+        # assert rhs_B[lid] == pytest.approx(rhs.array[lid])
+
+
+def test_ldc8_stretched():
+    test_ldc_stretched(8)
 
 
 def test_norm():
