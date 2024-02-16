@@ -1,4 +1,8 @@
 import numpy
+import os
+
+import tempfile
+import subprocess
 
 class CrsMatrix:
     def __init__(self, coA=None, jcoA=None, begA=None, compress=True, m=None, n=None):
@@ -333,3 +337,67 @@ class CrsMatrix:
             self._tmp.append((iidx[tmp[0]], jidx[tmp[1]], A[tmp[0], tmp[1]]))
         else:
             self._tmp.append(([iidx[0]], [jidx[0]], [A]))
+
+    def show(self, dof=None):
+        def wrtbcsr(beg, jco, co, f):
+            n = numpy.int32(len(beg) - 1)
+
+            bc = numpy.int32(n.nbytes)
+            os.write(f, bc.tobytes())
+            os.write(f, n.tobytes())
+            os.write(f, bc.tobytes())
+
+            bc = numpy.int32(beg.nbytes)
+            os.write(f, bc.tobytes())
+            os.write(f, beg.tobytes())
+            os.write(f, bc.tobytes())
+
+            bc = numpy.int32(jco.nbytes)
+            os.write(f, bc.tobytes())
+            os.write(f, jco.tobytes())
+            os.write(f, bc.tobytes())
+
+            bc = numpy.int32(co.nbytes)
+            os.write(f, bc.tobytes())
+            os.write(f, co.tobytes())
+            os.write(f, bc.tobytes())
+
+        nnz = self.begA[-1]
+        begA = numpy.ndarray(self.m + 1, numpy.int32)
+        jcoA = numpy.ndarray(nnz, numpy.int32)
+        coA = numpy.ndarray(nnz, float)
+
+        begA[:] = self.begA
+        jcoA[:] = self.jcoA[:nnz]
+        coA[:] = self.coA[:nnz]
+
+        if dof:
+            idx = 0
+            idx_map = [0] * self.m
+            for d in range(dof):
+                for i in range(d, self.m, dof):
+                    idx_map[i] = idx
+                    idx += 1
+
+            idx = 0
+            row_idx = 0
+            for d in range(dof):
+                for i in range(d, self.m, dof):
+                    for j in range(self.begA[i], self.begA[i+1]):
+                        jcoA[idx] = idx_map[self.jcoA[j]]
+                        coA[idx] = self.coA[j]
+                        idx += 1
+
+                    row_idx += 1
+                    begA[row_idx] = idx
+
+        begA += 1
+        jcoA += 1
+
+        f, fname = tempfile.mkstemp()
+        wrtbcsr(begA, jcoA, coA, f)
+        os.close(f)
+
+        subprocess.call(['vsm', fname])
+
+        os.remove(fname)

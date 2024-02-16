@@ -3,8 +3,6 @@ import numpy
 from scipy import sparse
 from scipy.sparse import linalg
 
-from transiflow import CrsMatrix
-
 from transiflow.interface import BaseInterface
 
 
@@ -39,11 +37,13 @@ class Interface(BaseInterface):
 
     def jacobian(self, state):
         '''Jacobian J of F in M * du / dt = F(u).'''
-        return self.discretization.jacobian(state)
+        jac = self.discretization.jacobian(state)
+        return sparse.csr_matrix((jac.coA, jac.jcoA, jac.begA)).tocsc()
 
     def mass_matrix(self):
         '''Mass matrix M in M * du / dt = F(u).'''
-        return self.discretization.mass_matrix()
+        mass = self.discretization.mass_matrix()
+        return sparse.csr_matrix((mass.coA, mass.jcoA, mass.begA), (mass.n, mass.n)).tocsc()
 
     def compute_bordered_matrix(self, jac, V=None, W=None, C=None, fix_pressure_row=False):
         '''Helper to compute a bordered matrix of the form [A, V; W', C]'''
@@ -75,57 +75,64 @@ class Interface(BaseInterface):
             border_size = 1
             dtype = V.dtype
 
-        extra_border_space = jac.n * border_size * 2 + border_size * border_size
+        extra_border_space = jac.shape[0] * border_size * 2 + border_size * border_size
 
         if W is None:
             W = V
 
         if C is None and border_size:
-            C = numpy.zeros((border_size, border_size), dtype=jac.coA.dtype)
+            C = numpy.zeros((border_size, border_size), dtype=jac.data.dtype)
 
-        coA = numpy.zeros(jac.begA[-1] + extra_border_space + 1, dtype=dtype)
-        jcoA = numpy.zeros(jac.begA[-1] + extra_border_space + 1, dtype=int)
-        begA = numpy.zeros(len(jac.begA) + border_size, dtype=int)
+        coA = numpy.zeros(jac.indptr[-1] + extra_border_space + 1, dtype=dtype)
+        icoA = numpy.zeros(jac.indptr[-1] + extra_border_space + 1, dtype=int)
+        begA = numpy.zeros(len(jac.indptr) + border_size, dtype=int)
 
         idx = 0
-        for i in range(jac.n):
+        for i in range(jac.shape[0]):
             if fix_pressure_row and i == self.pressure_row:
                 coA[idx] = -1.0
-                jcoA[idx] = i
+                icoA[idx] = i
                 idx += 1
                 begA[i + 1] = idx
                 continue
 
-            for j in range(jac.begA[i], jac.begA[i + 1]):
-                if not fix_pressure_row or jac.jcoA[j] != self.pressure_row:
-                    coA[idx] = jac.coA[j]
-                    jcoA[idx] = jac.jcoA[j]
+            for j in range(jac.indptr[i], jac.indptr[i + 1]):
+                if not fix_pressure_row or jac.indices[j] != self.pressure_row:
+                    coA[idx] = jac.data[j]
+                    icoA[idx] = jac.indices[j]
                     idx += 1
 
             for j in range(border_size):
-                coA[idx] = self.border_scaling * _get_value(V, i, j)
-                jcoA[idx] = jac.n + j
+                coA[idx] = self.border_scaling * _get_value(W, i, j)
+                icoA[idx] = jac.shape[0] + j
                 idx += 1
 
             begA[i + 1] = idx
 
         for i in range(border_size):
-            for j in range(jac.n):
-                coA[idx] = self.border_scaling * _get_value(W, j, i)
-                jcoA[idx] = j
+            for j in range(jac.shape[0]):
+                coA[idx] = self.border_scaling * _get_value(V, j, i)
+                icoA[idx] = j
                 idx += 1
 
             for j in range(border_size):
-                coA[idx] = self.border_scaling * self.border_scaling * _get_value(C, i, j)
-                jcoA[idx] = jac.n + j
+                coA[idx] = self.border_scaling * self.border_scaling * _get_value(C, j, i)
+                icoA[idx] = jac.shape[0] + j
                 idx += 1
 
-            begA[jac.n + 1 + i] = idx
+            begA[jac.shape[0] + 1 + i] = idx
 
-        return CrsMatrix(coA, jcoA, begA, False)
+        n = len(begA) - 1
+        return sparse.csc_matrix((coA, icoA, begA), (n, n))
 
-    def _compute_factorization(self, jac, V=None, W=None, C=None):
+    def _compute_factorization(self, jac, V, W, C):
         '''Compute the LU factorization of the (bordered) jacobian.'''
+
+        if V is not None and hasattr(jac, 'lu') and jac.lu is not None and jac.bordered_lu:
+            return
+
+        if V is None and hasattr(jac, 'lu') and jac.lu is not None and not jac.bordered_lu:
+            return
 
         self._lu = None
         self._prec = None
@@ -133,9 +140,6 @@ class Interface(BaseInterface):
 
         fix_pressure_row = self.dof > self.dim and self.pressure_row is not None
         A = self.compute_bordered_matrix(jac, V, W, C, fix_pressure_row)
-
-        # Convert the matrix to CSC format since splu expects that
-        A = sparse.csr_matrix((A.coA, A.jcoA, A.begA)).tocsc()
 
         self.debug_print(
             'Computing the sparse LU factorization of the %s Jacobian matrix' % (
@@ -146,7 +150,7 @@ class Interface(BaseInterface):
 
         # Cache the factorization for use in the iterative solver
         self._lu = jac.lu
-        self._prec = linalg.LinearOperator((jac.n, jac.n),
+        self._prec = linalg.LinearOperator(jac.shape,
                                            matvec=self._lu.solve,
                                            dtype=jac.dtype)
 
@@ -154,15 +158,18 @@ class Interface(BaseInterface):
             'Done computing the sparse LU factorization of the %s Jacobian matrix' % (
                 'bordered ' if V is not None else ''))
 
-    def _compute_preconditioner(self, jac, A):
+    def _compute_preconditioner(self, jac, A, V, _W, _C):
         '''Compute the ILU factorization of the (bordered) jacobian.'''
+
+        if V is not None and hasattr(jac, 'lu') and jac.lu is not None and jac.bordered_lu:
+            return
+
+        if V is None and hasattr(jac, 'lu') and jac.lu is not None and not jac.bordered_lu:
+            return
 
         self._lu = None
         self._prec = None
         jac.lu = None
-
-        # Convert the matrix to CSC format since spilu expects that
-        A = sparse.csr_matrix((A.coA, A.jcoA, A.begA)).tocsc()
 
         self.debug_print('Computing the sparse ILU factorization of the Jacobian matrix')
 
@@ -180,6 +187,16 @@ class Interface(BaseInterface):
                                            dtype=A.dtype)
 
         self.debug_print('Done computing the sparse ILU factorization of the Jacobian matrix')
+
+    def _lu_solve(self, A, rhs):
+        if A.lu.L.dtype != rhs.dtype and numpy.dtype(rhs.dtype.char.upper()) == rhs.dtype:
+            x = rhs.copy()
+            x.real = self._lu_solve(A, rhs.real)
+            x.imag = self._lu_solve(A, rhs.imag)
+        else:
+            x = A.lu.solve(rhs)
+
+        return x
 
     def direct_solve(self, jac, rhs, rhs2=None, V=None, W=None, C=None):
         '''Solve J y = x for y.'''
@@ -210,15 +227,12 @@ class Interface(BaseInterface):
             x = numpy.append(rhs, rhs2 * self.border_scaling)
 
         # Use a direct solver instead
-        if rhs2 is None and (not jac.lu or jac.bordered_lu):
-            self._compute_factorization(jac)
-        elif rhs2 is not None and (not jac.lu or not jac.bordered_lu):
-            self._compute_factorization(jac, V, W, C)
+        self._compute_factorization(jac, V, W, C)
 
         if jac.bordered_lu:
             self.debug_print('Solving a bordered linear system')
 
-            y = jac.solve(x)
+            y = self._lu_solve(jac, x)
 
             border_size = 1
             if hasattr(rhs2, 'shape') and len(rhs2.shape) > 0:
@@ -227,6 +241,9 @@ class Interface(BaseInterface):
             y1 = y[:-border_size]
             y2 = y[-border_size:] * self.border_scaling
 
+            if numpy.isscalar(rhs2):
+                y2 = y2.item()
+
             self.debug_print_residual('Done solving a bordered linear system with residual',
                                       jac, y1, rhs - V * y2)
 
@@ -234,7 +251,7 @@ class Interface(BaseInterface):
 
         self.debug_print('Solving a linear system')
 
-        y = jac.solve(x)
+        y = self._lu_solve(jac, x)
 
         self.debug_print_residual('Done solving a linear system with residual', jac, y, rhs)
 
@@ -257,10 +274,7 @@ class Interface(BaseInterface):
         fix_pressure_row = self.dof > self.dim and self.pressure_row is not None
         A = self.compute_bordered_matrix(jac, V, W, C, fix_pressure_row)
 
-        if rhs2 is None and (not jac.lu or jac.bordered_lu):
-            self._compute_preconditioner(jac, A)
-        elif rhs2 is not None and (not jac.lu or not jac.bordered_lu):
-            self._compute_preconditioner(jac, A)
+        self._compute_preconditioner(jac, A, V, W, C)
 
         self.debug_print('Solving a linear system')
 

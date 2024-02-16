@@ -3,9 +3,8 @@ import numpy
 import os
 
 from transiflow import Continuation
+from transiflow import Discretization
 from transiflow import utils
-
-from transiflow.interface import SciPy as SciPyInterface
 
 
 def read_matrix(fname, m):
@@ -191,9 +190,9 @@ def test_ldc_stretched(nx=4):
     for i in range(n):
         state[i] = i + 1
 
-    interface = SciPyInterface.Interface(parameters, nx, ny, nz, dim, dof)
-    B = interface.jacobian(state)
-    rhs_B = interface.rhs(state)
+    discretization = Discretization(parameters, nx, ny, nz, dim, dof)
+    B = discretization.jacobian(state)
+    rhs_B = discretization.rhs(state)
 
     interface = EpetraInterface.Interface(parameters, nx, ny, nz, dim, dof)
     state = interface.vector_from_array(state)

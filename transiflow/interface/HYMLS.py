@@ -17,11 +17,11 @@ def set_default_parameter(parameterlist, name, value):
     return parameterlist[name]
 
 def convert_parameters(parameters, teuchos_parameters=None):
+    if isinstance(parameters, Teuchos.ParameterList):
+        return Teuchos.ParameterList(parameters)
+
     if teuchos_parameters is None:
         teuchos_parameters = Teuchos.ParameterList()
-
-    if isinstance(parameters, Teuchos.ParameterList):
-        return parameters
 
     for i, j in parameters.items():
         if isinstance(j, dict):

@@ -72,7 +72,7 @@ def main():
     interface.set_parameter('Reynolds Number', 16)
     x3, mu3 = continuation.continuation(x1, 'Asymmetry Parameter', 0, target, ds)
 
-    # Perform a continuation to Reynolds number 40 with assymmetry added to the problem,
+    # Perform a continuation to Reynolds number 40 with asymmetry added to the problem,
     # meaning we can't stay on the unstable branch
     ds = 5
     target = 40

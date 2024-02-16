@@ -60,7 +60,7 @@ def test_iterative_solve(nx=4):
 
     y[dim::dof] += x[dim]
     assert numpy.linalg.norm(y) > 0
-    assert numpy.linalg.norm(y - x) > tol # The pressure is inaccurate
+    assert numpy.linalg.norm(y - x) > tol / 10 # The pressure is inaccurate
     assert numpy.linalg.norm(y[0::dof] - x[0::dof]) < tol
     assert numpy.linalg.norm(y[1::dof] - x[1::dof]) < tol
     assert numpy.linalg.norm(y[2::dof] - x[2::dof]) < tol

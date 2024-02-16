@@ -1,5 +1,3 @@
-from transiflow import CrsMatrix
-
 import time
 import numpy
 import warnings
@@ -24,10 +22,9 @@ def _get_scalars(alpha, beta):
 
 class Op:
     def __init__(self, mat):
-        self.fvm_mat = mat
-        self.mat = sparse.csr_matrix((mat.coA, mat.jcoA, mat.begA), shape=(mat.n, mat.n))
-        self.dtype = mat.coA.dtype
-        self.shape = (mat.n, mat.n)
+        self.mat = mat
+        self.dtype = mat.data.dtype
+        self.shape = mat.shape
 
     def matvec(self, x):
         return self.mat * x
@@ -74,7 +71,7 @@ class MatrixCache:
         alpha, beta = _get_scalars(alpha, beta)
 
         if shifted_matrix is None and alpha == 0.0 and beta == 1.0:
-            return self.jac_op.fvm_mat
+            return self.jac_op.mat
 
         # Cache previous preconditioners
         for i, cached_matrix in enumerate(self.matrices):
@@ -89,8 +86,7 @@ class MatrixCache:
                 self.matrices.pop(0)
 
         if shifted_matrix is None:
-            mat = beta * self.jac_op.mat - alpha * self.mass_op.mat
-            shifted_matrix = CrsMatrix(mat.data, mat.indices, mat.indptr, False)
+            shifted_matrix = beta * self.jac_op.mat - alpha * self.mass_op.mat
 
         if self.max_matrices > 0:
             self.matrices.append(CachedMatrix(shifted_matrix, alpha, beta))
@@ -143,12 +139,12 @@ class Interface(NumPyInterface.NumPyInterface):
             out[:, i], info = sparse.linalg.gmres(op, x[:, i], restart=restart, maxiter=maxiter, tol=tol, atol=0, M=prec_op)
             if info < 0:
                 raise Exception('GMRES returned ' + str(info))
-            elif info > 0:
+            elif info > 0 and maxit > 1:
                 warnings.warn('GMRES did not converge in ' + str(info) + ' iterations')
         return out
 
     def prec(self, x, *args):
-        return self.interface.solve(self.jac_op.fvm_mat, x)
+        return self.interface.solve(self.jac_op.mat, x)
 
     def shifted_prec(self, x, alpha, beta):
         shifted_matrix = self._matrix_cache.get_shifted_matrix(alpha, beta)
@@ -188,8 +184,7 @@ class BorderedInterface(NumPyInterface.NumPyInterface):
 
         alpha, beta = _get_scalars(alpha, beta)
 
-        mat = beta * self.jac_op.mat - alpha * self.mass_op.mat
-        shifted_matrix = CrsMatrix(mat.data, mat.indices, mat.indptr, False)
+        shifted_matrix = beta * self.jac_op.mat - alpha * self.mass_op.mat
         shifted_bordered_matrix = self.interface.compute_bordered_matrix(shifted_matrix, op.Z, op.Q)
         shifted_bordered_op = Op(shifted_bordered_matrix)
 
@@ -207,7 +202,7 @@ class BorderedInterface(NumPyInterface.NumPyInterface):
 
             if info < 0:
                 raise Exception('GMRES returned ' + str(info))
-            elif info > 0:
+            elif info > 0 and maxit > 1:
                 warnings.warn('GMRES did not converge in ' + str(info) + ' iterations')
 
         orthogonalize(op.Q, out)
@@ -215,4 +210,4 @@ class BorderedInterface(NumPyInterface.NumPyInterface):
         return out
 
     def prec(self, x, *args):
-        return self.interface.solve(self.jac_op.fvm_mat, x)
+        return self.interface.solve(self.jac_op.mat, x)
