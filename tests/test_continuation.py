@@ -15,7 +15,7 @@ def Interface(parameters, nx, ny, nz, dim, dof, backend="SciPy"):
         pytest.skip(backend + " not found")
 
 
-@pytest.mark.parametrize("backend", ["SciPy", "HYMLS"])
+@pytest.mark.parametrize("backend", ["SciPy", "Epetra", "HYMLS"])
 def test_continuation_ldc(backend, nx=4):
     numpy.random.seed(1234)
 
@@ -96,7 +96,7 @@ def test_continuation_ldc_2D_equals(backend):
     assert utils.norm(x1[1:-1:dof1] - x2[1:-1:dof2]) < 1e-2
     assert utils.norm(x1[2:-1:dof1] - x2[3:-1:dof2]) < 1e-2
 
-@pytest.mark.parametrize("backend", ["SciPy", "HYMLS"])
+@pytest.mark.parametrize("backend", ["SciPy", "Epetra", "HYMLS"])
 def test_continuation_ldc_2D_stretched(backend, nx=8):
     numpy.random.seed(1234)
 
