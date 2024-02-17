@@ -95,23 +95,16 @@ class Interface(ParallelBaseInterface):
             self.jac.zeroEntries()
 
         self.jac.assemblyBegin()
-        if self.comm.size > 1:
-            for i in range(len(local_jac.begA) - 1):
-                if self.is_ghost(i):
-                    continue
+        for i in range(len(local_jac.begA) - 1):
+            if self.is_ghost(i):
+                continue
 
-                col_idx = numpy.array(
-                    local_jac.jcoA[local_jac.begA[i]: local_jac.begA[i + 1]],
-                    dtype=PETSc.IntType,
-                )
-                values = local_jac.coA[local_jac.begA[i]: local_jac.begA[i + 1]]
-                self.jac.setValues(i, col_idx, values)
-        else:
-            self.jac.setValuesCSR(
-                numpy.array(local_jac.begA, dtype=numpy.int32),
-                numpy.array(local_jac.jcoA[: local_jac.begA[-1]], dtype=numpy.int32),
-                local_jac.coA[: local_jac.begA[-1]],
+            col_idx = numpy.array(
+                local_jac.jcoA[local_jac.begA[i]: local_jac.begA[i + 1]],
+                dtype=PETSc.IntType,
             )
+            values = local_jac.coA[local_jac.begA[i]: local_jac.begA[i + 1]]
+            self.jac.setValues(i, col_idx, values)
         self.jac.assemblyEnd()
 
         return self.jac
