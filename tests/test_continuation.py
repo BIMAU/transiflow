@@ -259,7 +259,8 @@ def test_continuation_rayleigh_benard(backend, nx=8):
     assert mu3 < target
     assert abs(mu3 - mu2) < 1e-2
 
-def test_continuation_double_gyre(nx=8):
+@pytest.mark.parametrize("backend", ["SciPy", "HYMLS"])
+def test_continuation_double_gyre(backend, nx=8):
     try:
         from transiflow.interface import JaDa # noqa: F401
     except ImportError:
@@ -277,7 +278,11 @@ def test_continuation_double_gyre(nx=8):
                   'Rossby Parameter': 1000,
                   'Wind Stress Parameter': 0}
 
-    interface = Interface(parameters, nx, ny, nz, dim, dof)
+    try:
+        interface = Interface(parameters, nx, ny, nz, dim, dof, backend=backend)
+    except ImportError:
+        pytest.skip(backend + " not found")
+
     continuation = Continuation(interface, parameters)
 
     x0 = interface.vector()
@@ -295,7 +300,7 @@ def test_continuation_double_gyre(nx=8):
     ds = 5
     x, mu = continuation.continuation(x, 'Reynolds Number', 16, target, ds)
 
-    assert numpy.linalg.norm(x) > 0
+    assert utils.norm(x) > 0
     assert mu > 16
     assert mu < target
 
