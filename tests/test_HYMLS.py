@@ -493,34 +493,3 @@ def test_HYMLS(nx=4):
     x = continuation.continuation(x0, 'Reynolds Number', start, target, ds)[0]
 
     assert x.Norm2() > 0
-
-def test_HYMLS_2D(nx=8):
-    try:
-        from transiflow.interface import HYMLS as HYMLSInterface
-        from PyTrilinos import Teuchos
-    except ImportError:
-        pytest.skip("HYMLS not found")
-
-    numpy.random.seed(1234)
-
-    dim = 3
-    dof = 4
-    ny = nx
-    nz = 1
-
-    parameters = Teuchos.ParameterList()
-    parameters.set('Reynolds Number', 0)
-    parameters.set('Bordered Solver', True)
-
-    interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
-    continuation = Continuation(interface, parameters)
-
-    x0 = interface.vector()
-    x0 = continuation.newton(x0)
-
-    start = 0
-    target = 2000
-    ds = 100
-    x = continuation.continuation(x0, 'Reynolds Number', start, target, ds)[0]
-
-    assert x.Norm2() > 0

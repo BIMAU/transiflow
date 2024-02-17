@@ -3,7 +3,6 @@ import pytest
 
 from transiflow import TimeIntegration
 from transiflow import Continuation
-from transiflow import plot_utils
 from transiflow import utils
 
 from transiflow.interface import create
@@ -16,7 +15,8 @@ def Interface(parameters, nx, ny, nz, dim, dof, backend="SciPy"):
         pytest.skip(backend + " not found")
 
 
-def test_continuation(nx=4, interactive=False):
+@pytest.mark.parametrize("backend", ["SciPy", "HYMLS"])
+def test_continuation(backend, nx=4):
     numpy.random.seed(1234)
 
     dim = 3
@@ -25,7 +25,7 @@ def test_continuation(nx=4, interactive=False):
     nz = nx
 
     parameters = {}
-    interface = Interface(parameters, nx, ny, nz, dim, dof)
+    interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
     continuation = Continuation(interface, parameters)
 
     x0 = interface.vector()
@@ -36,16 +36,9 @@ def test_continuation(nx=4, interactive=False):
     ds = 100
     x = continuation.continuation(x0, 'Reynolds Number', start, target, ds)[0]
 
-    assert numpy.linalg.norm(x) > 0
+    assert utils.norm(x) > 0
 
-    if not interactive:
-        return
-
-    print(x)
-
-    plot_utils.plot_velocity_magnitude(x, interface)
-
-def continuation_semi_2D(nx=4, interactive=False):
+def continuation_semi_2D(backend, nx=4):
     numpy.random.seed(1234)
 
     dim = 3
@@ -54,7 +47,7 @@ def continuation_semi_2D(nx=4, interactive=False):
     nz = 1
 
     parameters = {}
-    interface = Interface(parameters, nx, ny, nz, dim, dof)
+    interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
     continuation = Continuation(interface, parameters)
 
     x0 = interface.vector()
@@ -65,16 +58,10 @@ def continuation_semi_2D(nx=4, interactive=False):
     ds = 100
     x = continuation.continuation(x0, 'Reynolds Number', start, target, ds)[0]
 
-    assert numpy.linalg.norm(x) > 0
+    assert utils.norm(x) > 0
+    return interface.array_from_vector(x)
 
-    if not interactive:
-        return x
-
-    print(x)
-
-    plot_utils.plot_velocity_magnitude(x, interface)
-
-def continuation_2D(nx=4, interactive=False):
+def continuation_2D(backend, nx=4):
     numpy.random.seed(1234)
 
     dim = 2
@@ -83,7 +70,7 @@ def continuation_2D(nx=4, interactive=False):
     nz = 1
 
     parameters = {}
-    interface = Interface(parameters, nx, ny, nz, dim, dof)
+    interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
     continuation = Continuation(interface, parameters)
 
     x0 = interface.vector()
@@ -94,25 +81,20 @@ def continuation_2D(nx=4, interactive=False):
     ds = 100
     x = continuation.continuation(x0, 'Reynolds Number', start, target, ds)[0]
 
-    assert numpy.linalg.norm(x) > 0
+    assert utils.norm(x) > 0
+    return interface.array_from_vector(x)
 
-    if not interactive:
-        return x
-
-    print(x)
-
-    plot_utils.plot_velocity_magnitude(x, interface)
-
-def test_continuation_2D_equals():
-    x1 = continuation_2D()
-    x2 = continuation_semi_2D()
+@pytest.mark.parametrize("backend", ["SciPy", "HYMLS"])
+def test_continuation_2D_equals(backend):
+    x1 = continuation_2D(backend)
+    x2 = continuation_semi_2D(backend)
 
     dof1 = 3
     dof2 = 4
 
-    assert numpy.linalg.norm(x1[0:-1:dof1] - x2[0:-1:dof2]) < 1e-2
-    assert numpy.linalg.norm(x1[1:-1:dof1] - x2[1:-1:dof2]) < 1e-2
-    assert numpy.linalg.norm(x1[2:-1:dof1] - x2[3:-1:dof2]) < 1e-2
+    assert utils.norm(x1[0:-1:dof1] - x2[0:-1:dof2]) < 1e-2
+    assert utils.norm(x1[1:-1:dof1] - x2[1:-1:dof2]) < 1e-2
+    assert utils.norm(x1[2:-1:dof1] - x2[3:-1:dof2]) < 1e-2
 
 @pytest.mark.parametrize("backend", ["SciPy", "HYMLS"])
 def test_continuation_2D_stretched(backend, nx=8):
