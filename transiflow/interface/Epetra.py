@@ -26,7 +26,15 @@ class Vector(Epetra.Vector):
 
         local_map = Epetra.Map(-1, local_elements, 0, self.Comm())
         importer = Epetra.Import(local_map, self.Map())
-        out = Epetra.Vector(local_map)
+        out = Vector(local_map)
+        out.Import(self, importer, Epetra.Insert)
+        return out
+
+    def all_gather(self):
+        local_elements = range(self.Map().NumGlobalElements())
+        local_map = Epetra.Map(-1, local_elements, 0, self.Comm())
+        importer = Epetra.Import(local_map, self.Map())
+        out = Vector(local_map)
         out.Import(self, importer, Epetra.Insert)
         return out
 
@@ -87,6 +95,9 @@ class Interface(ParallelBaseInterface):
 
     def vector_from_array(self, array):
         return Vector.from_array(self.map, array)
+
+    def array_from_vector(self, vector):
+        return Vector.all_gather(vector)
 
     def create_map(self, overlapping=False):
         '''Create a map on which the local discretization domain is defined.
