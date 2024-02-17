@@ -136,7 +136,9 @@ class Interface(NumPyInterface.NumPyInterface):
 
             restart = min(maxit, 100)
             maxiter = (maxit - 1) // restart + 1
-            out[:, i], info = sparse.linalg.gmres(op, x[:, i], restart=restart, maxiter=maxiter, tol=tol, atol=0, M=prec_op)
+            y, info = sparse.linalg.gmres(op, x[:, i], restart=restart, maxiter=maxiter, tol=tol, atol=0, M=prec_op)
+            out[:, i] = op.proj(y)
+
             if info < 0:
                 raise Exception('GMRES returned ' + str(info))
             elif info > 0 and maxit > 1:
@@ -198,7 +200,7 @@ class BorderedInterface(NumPyInterface.NumPyInterface):
             x2 = numpy.append(x[:, i], numpy.zeros(op.Q.shape[1], x.dtype))
             y, info = sparse.linalg.gmres(shifted_bordered_op, x2, restart=restart,
                                           maxiter=maxiter, tol=tol, atol=0, M=prec_op)
-            out[:, i] = y[:-op.Q.shape[1]]
+            out[:, i] = op.proj(y[:-op.Q.shape[1]])
 
             if info < 0:
                 raise Exception('GMRES returned ' + str(info))
