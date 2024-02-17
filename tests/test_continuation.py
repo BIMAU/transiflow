@@ -189,7 +189,8 @@ def test_continuation_time_integration(nx=4):
     assert numpy.linalg.norm(x[0:len(x):dof] - x3[0:len(x):dof]) < 1e-4
     assert numpy.linalg.norm(x[1:len(x):dof] - x3[1:len(x):dof]) < 1e-4
 
-def test_continuation_rayleigh_benard(nx=8):
+@pytest.mark.parametrize("backend", ["SciPy", "HYMLS"])
+def test_continuation_rayleigh_benard(backend, nx=8):
     try:
         from transiflow.interface import JaDa # noqa: F401
     except ImportError:
@@ -208,7 +209,11 @@ def test_continuation_rayleigh_benard(nx=8):
                   'X-max': 10,
                   'Bordered Solver': True}
 
-    interface = Interface(parameters, nx, ny, nz, dim, dof)
+    try:
+        interface = Interface(parameters, nx, ny, nz, dim, dof, backend=backend)
+    except ImportError:
+        pytest.skip(backend + " not found")
+
     continuation = Continuation(interface, parameters)
 
     x0 = interface.vector()
@@ -228,24 +233,28 @@ def test_continuation_rayleigh_benard(nx=8):
     ds = 50
     x2, mu2 = continuation.continuation(x, 'Rayleigh Number', mu, target, ds)
 
-    assert numpy.linalg.norm(x2) > 0
+    assert utils.norm(x2) > 0
     assert mu2 > 0
     assert mu2 < target
 
     parameters['Problem Type'] = 'Rayleigh-Benard Perturbation'
 
     # Subtract the motionless state
+    y = interface.discretization.get_coordinate_vector(0, 1, ny)
     t = numpy.zeros((nx, ny, nz, dof))
     for j in range(ny):
-        t[:, j, 0, dim+1] = 1 - (interface.discretization.y[j] + interface.discretization.y[j-1]) / 4
+        t[:, j, 0, dim+1] = 1 - (y[j] + y[j-1]) / 4
     t = utils.create_state_vec(t, nx, ny, nz, dof)
-    x -= t
+    x = x - interface.vector_from_array(t)
 
     x3, mu3 = continuation.continuation(x, 'Rayleigh Number', mu, target, ds)
 
-    assert numpy.linalg.norm(x3[0:len(x):dof] - x2[0:len(x):dof]) < 1e-4
-    assert numpy.linalg.norm(x3[1:len(x):dof] - x2[1:len(x):dof]) < 1e-4
-    assert numpy.linalg.norm(x3[3:len(x):dof] - x2[3:len(x):dof] + t[3:len(x):dof]) < 1e-4
+    x2 = interface.array_from_vector(x2)
+    x3 = interface.array_from_vector(x3)
+
+    assert utils.norm(x3[0:x.size:dof] - x2[0:x.size:dof]) < 1e-4
+    assert utils.norm(x3[1:x.size:dof] - x2[1:x.size:dof]) < 1e-4
+    assert utils.norm(x3[3:x.size:dof] - x2[3:x.size:dof] + t[3:x.size:dof]) < 1e-4
     assert mu3 > 0
     assert mu3 < target
     assert abs(mu3 - mu2) < 1e-2
