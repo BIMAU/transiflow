@@ -281,7 +281,8 @@ def test_continuation_double_gyre(backend, nx=8):
     assert mu > 16
     assert mu < target
 
-def test_continuation_amoc(nx=8):
+@pytest.mark.parametrize("backend", ["SciPy", "HYMLS"])
+def test_continuation_amoc(backend, nx=16):
     try:
         from transiflow.interface import JaDa # noqa: F401
     except ImportError:
@@ -299,7 +300,7 @@ def test_continuation_amoc(nx=8):
                   'Prandtl Number': 2.25,
                   'X-max': 5}
 
-    interface = Interface(parameters, nx, ny, nz, dim, dof)
+    interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
     continuation = Continuation(interface, parameters)
 
     x0 = interface.vector()
@@ -309,6 +310,8 @@ def test_continuation_amoc(nx=8):
     x, mu = continuation.continuation(x0, 'Temperature Forcing', 0, target, ds)
 
     parameters['Detect Bifurcation Points'] = True
+    parameters['Minimum Step Size'] = 1e-6
+    parameters['Newton Tolerance'] = 1e-6
     parameters['Eigenvalue Solver'] = {}
     parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
 
