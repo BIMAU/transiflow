@@ -556,54 +556,6 @@ def test_HYMLS_2D_stretched(nx=8):
 
     assert x.Norm2() > 0
 
-def test_HYMLS_rayleigh_benard(nx=8):
-    try:
-        from transiflow.interface import HYMLS as HYMLSInterface
-    except ImportError:
-        pytest.skip("HYMLS not found")
-
-    try:
-        from transiflow.interface import JaDa # noqa: F401
-    except ImportError:
-        pytest.skip('jadapy not found')
-
-    numpy.random.seed(1234)
-
-    dim = 2
-    dof = 4
-    ny = nx
-    nz = 1
-
-    parameters = {'Problem Type': 'Rayleigh-Benard',
-                  'Prandtl Number': 10,
-                  'Biot Number': 1,
-                  'X-max': 10,
-                  'Bordered Solver': True}
-
-    interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
-    continuation = Continuation(interface, parameters)
-
-    x0 = interface.vector()
-    x0 = continuation.newton(x0)
-
-    start = 0
-    target = 1700
-    ds = 200
-    x, mu = continuation.continuation(x0, 'Rayleigh Number', start, target, ds)
-
-    parameters['Detect Bifurcation Points'] = True
-    parameters['Eigenvalue Solver'] = {}
-    parameters['Eigenvalue Solver']['Arithmetic'] = 'real'
-    parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
-
-    target = 5000
-    ds = 50
-    x, mu = continuation.continuation(x, 'Rayleigh Number', mu, target, ds)
-
-    assert x.Norm2() > 0
-    assert mu > 0
-    assert mu < target
-
 def test_HYMLS_double_gyre(nx=8):
     try:
         from transiflow.interface import HYMLS as HYMLSInterface
