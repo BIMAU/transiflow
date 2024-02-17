@@ -141,6 +141,8 @@ class Interface(NumPyInterface.NumPyInterface):
                 raise Exception('GMRES returned ' + str(info))
             elif info > 0 and maxit > 1:
                 warnings.warn('GMRES did not converge in ' + str(info) + ' iterations')
+
+            out[:, i] = op.proj(out[:, i])
         return out
 
     def prec(self, x, *args):
