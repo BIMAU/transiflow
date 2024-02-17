@@ -121,7 +121,7 @@ class Interface(ParallelBaseInterface):
         ksp.setType("preonly")
         pc = ksp.getPC()
         pc.setType("lu")
-        pc.setFactorSolverType("superlu_dist")
+        pc.setFactorSolverType("mumps")
 
         ksp.setFromOptions()
 
