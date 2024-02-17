@@ -6,7 +6,14 @@ from transiflow import Continuation
 from transiflow import plot_utils
 from transiflow import utils
 
-from transiflow.interface import create as Interface
+from transiflow.interface import create
+
+
+def Interface(parameters, nx, ny, nz, dim, dof, backend="SciPy"):
+    try:
+        return create(parameters, nx, ny, nz, dim, dof, backend=backend)
+    except ImportError:
+        pytest.skip(backend + " not found")
 
 
 def test_continuation(nx=4, interactive=False):
@@ -117,11 +124,7 @@ def test_continuation_2D_stretched(backend, nx=8):
     nz = 1
 
     parameters = {'Grid Stretching': True}
-
-    try:
-        interface = Interface(parameters, nx, ny, nz, dim, dof, backend=backend)
-    except ImportError:
-        pytest.skip(backend + " not found")
+    interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
 
     x = interface.discretization.get_coordinate_vector(0, 1, nx)
     y = interface.discretization.get_coordinate_vector(0, 1, ny)
@@ -209,11 +212,7 @@ def test_continuation_rayleigh_benard(backend, nx=8):
                   'X-max': 10,
                   'Bordered Solver': True}
 
-    try:
-        interface = Interface(parameters, nx, ny, nz, dim, dof, backend=backend)
-    except ImportError:
-        pytest.skip(backend + " not found")
-
+    interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
     continuation = Continuation(interface, parameters)
 
     x0 = interface.vector()
@@ -278,11 +277,7 @@ def test_continuation_double_gyre(backend, nx=8):
                   'Rossby Parameter': 1000,
                   'Wind Stress Parameter': 0}
 
-    try:
-        interface = Interface(parameters, nx, ny, nz, dim, dof, backend=backend)
-    except ImportError:
-        pytest.skip(backend + " not found")
-
+    interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
     continuation = Continuation(interface, parameters)
 
     x0 = interface.vector()
