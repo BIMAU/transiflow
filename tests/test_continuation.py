@@ -6,7 +6,6 @@ from transiflow import Continuation
 from transiflow import plot_utils
 from transiflow import utils
 
-from transiflow.interface.SciPy import Interface as SciPyInterface
 from transiflow.interface import create as Interface
 
 
@@ -108,7 +107,8 @@ def test_continuation_2D_equals():
     assert numpy.linalg.norm(x1[1:-1:dof1] - x2[1:-1:dof2]) < 1e-2
     assert numpy.linalg.norm(x1[2:-1:dof1] - x2[3:-1:dof2]) < 1e-2
 
-def test_continuation_2D_stretched(nx=4, interactive=False):
+@pytest.mark.parametrize("backend", ["SciPy", "HYMLS"])
+def test_continuation_2D_stretched(backend, nx=8):
     numpy.random.seed(1234)
 
     dim = 2
@@ -116,11 +116,18 @@ def test_continuation_2D_stretched(nx=4, interactive=False):
     ny = nx
     nz = 1
 
-    xpos = utils.create_stretched_coordinate_vector(0, 1, nx, 1.5)
-    ypos = utils.create_stretched_coordinate_vector(0, 1, ny, 1.5)
+    parameters = {'Grid Stretching': True}
 
-    parameters = {}
-    interface = SciPyInterface(parameters, nx, ny, nz, dim, dof, xpos, ypos)
+    try:
+        interface = Interface(parameters, nx, ny, nz, dim, dof, backend=backend)
+    except ImportError:
+        pytest.skip(backend + " not found")
+
+    x = interface.discretization.get_coordinate_vector(0, 1, nx)
+    y = interface.discretization.get_coordinate_vector(0, 1, ny)
+    assert x[1] - x[0] < x[2] - x[1]
+    assert y[1] - y[0] < y[2] - y[1]
+
     continuation = Continuation(interface, parameters)
 
     x0 = interface.vector()
@@ -131,14 +138,7 @@ def test_continuation_2D_stretched(nx=4, interactive=False):
     ds = 100
     x = continuation.continuation(x0, 'Reynolds Number', start, target, ds)[0]
 
-    assert numpy.linalg.norm(x) > 0
-
-    if not interactive:
-        return
-
-    print(x)
-
-    plot_utils.plot_velocity_magnitude(x, interface)
+    assert utils.norm(x) > 0
 
 def test_continuation_time_integration(nx=4):
     numpy.random.seed(1234)
@@ -393,9 +393,3 @@ def test_continuation_2D_tc(nx=8):
     assert numpy.linalg.norm(x) > 0
     assert mu > 0
     assert mu < target
-
-
-if __name__ == '__main__':
-    # test_continuation(8, False)
-    # continuation_2D(16, True)
-    test_continuation_2D_stretched(32, True)
