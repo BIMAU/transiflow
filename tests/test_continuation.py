@@ -16,7 +16,7 @@ def Interface(parameters, nx, ny, nz, dim, dof, backend="SciPy"):
 
 
 @pytest.mark.parametrize("backend", ["SciPy", "HYMLS"])
-def test_continuation(backend, nx=4):
+def test_continuation_ldc(backend, nx=4):
     numpy.random.seed(1234)
 
     dim = 3
@@ -38,7 +38,7 @@ def test_continuation(backend, nx=4):
 
     assert utils.norm(x) > 0
 
-def continuation_semi_2D(backend, nx=4):
+def continuation_ldc_semi_2D(backend, nx=4):
     numpy.random.seed(1234)
 
     dim = 3
@@ -61,7 +61,7 @@ def continuation_semi_2D(backend, nx=4):
     assert utils.norm(x) > 0
     return interface.array_from_vector(x)
 
-def continuation_2D(backend, nx=4):
+def continuation_ldc_2D(backend, nx=4):
     numpy.random.seed(1234)
 
     dim = 2
@@ -85,9 +85,9 @@ def continuation_2D(backend, nx=4):
     return interface.array_from_vector(x)
 
 @pytest.mark.parametrize("backend", ["SciPy", "HYMLS"])
-def test_continuation_2D_equals(backend):
-    x1 = continuation_2D(backend)
-    x2 = continuation_semi_2D(backend)
+def test_continuation_ldc_2D_equals(backend):
+    x1 = continuation_ldc_2D(backend)
+    x2 = continuation_ldc_semi_2D(backend)
 
     dof1 = 3
     dof2 = 4
@@ -97,7 +97,7 @@ def test_continuation_2D_equals(backend):
     assert utils.norm(x1[2:-1:dof1] - x2[3:-1:dof2]) < 1e-2
 
 @pytest.mark.parametrize("backend", ["SciPy", "HYMLS"])
-def test_continuation_2D_stretched(backend, nx=8):
+def test_continuation_ldc_2D_stretched(backend, nx=8):
     numpy.random.seed(1234)
 
     dim = 2
