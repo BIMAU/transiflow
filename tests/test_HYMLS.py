@@ -271,6 +271,11 @@ def test_prec(nx=4, parameters=None):
     interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
     state = interface.vector_from_array(state)
 
+    if interface.comm.NumProc() > 1:
+        if interface.comm.MyPID() == 0:
+            pytest.skip("The preconditioner won't be exactly the same on multiple cores")
+        return
+
     interface.jacobian(state)
     rhs = interface.rhs(state)
 
@@ -320,6 +325,11 @@ def test_prec_stretched(nx=4, parameters=None):
 
     interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
     state = interface.vector_from_array(state)
+
+    if interface.comm.NumProc() > 1:
+        if interface.comm.MyPID() == 0:
+            pytest.skip("The preconditioner won't be exactly the same on multiple cores")
+        return
 
     interface.jacobian(state)
     rhs = interface.rhs(state)
