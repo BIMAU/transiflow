@@ -83,8 +83,8 @@ def test_ldc():
     for i in range(n):
         state[i] = i + 1
 
-    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof, PETSc.COMM_WORLD)
-    state = PETScInterface.Vector.from_array(interface.map, state, ghosts=interface.ghosts)
+    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof)
+    state = interface.vector_from_array(state)
 
     A = interface.jacobian(state)
     rhs = interface.rhs(state)
@@ -149,8 +149,8 @@ def test_ldc_stretched_file():
     for i in range(n):
         state[i] = i + 1
 
-    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof, PETSc.COMM_WORLD)
-    state = PETScInterface.Vector.from_array(interface.map, state, ghosts=interface.ghosts)
+    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof)
+    state = interface.vector_from_array(state)
 
     A = interface.jacobian(state)
     rhs = interface.rhs(state)
@@ -218,8 +218,8 @@ def test_ldc_stretched(nx=4):
     B = discretization.jacobian(state)
     rhs_B = discretization.rhs(state)
 
-    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof, PETSc.COMM_WORLD)
-    state = PETScInterface.Vector.from_array(interface.map, state, ghosts=interface.ghosts)
+    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof)
+    state = interface.vector_from_array(state)
 
     A = interface.jacobian(state)
     rhs = interface.rhs(state)
@@ -288,8 +288,6 @@ def test_norm():
 
 def test_PETSc(nx=4):
     try:
-        from petsc4py import PETSc
-
         from transiflow.interface import PETSc as PETScInterface
     except ImportError:
         pytest.skip("PETSc not found")
@@ -302,16 +300,12 @@ def test_PETSc(nx=4):
     nz = nx
     parameters = {"Reynolds Number": 0, "Verbose": True}
 
-    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof, PETSc.COMM_WORLD)
+    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof)
 
     continuation = Continuation(interface, parameters)
 
-    n = nx * ny * nz * dof
-    x0 = PETScInterface.Vector.from_array(
-        interface.map,
-        numpy.zeros(n, dtype=PETSc.ScalarType),
-        ghosts=interface.ghosts,
-    )
+    x0 = interface.vector()
+    x0.zeroEntries()
     x0 = continuation.newton(x0)
 
     start = 0

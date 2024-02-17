@@ -43,11 +43,21 @@ class Interface(ParallelBaseInterface):
     def __init__(self, parameters, nx, ny, nz, dim, dof, comm=PETSc.COMM_WORLD):
         super().__init__(comm, parameters, nx, ny, nz, dim, dof)
 
+        self.size_global = nx * ny * nz * dof
+
         self.map = self.create_map()
         self.assembly_map = self.create_map(True)
         self.ghosts = list(set(self.assembly_map.indices).difference(self.map.indices))
 
         self.jac = None
+
+    def vector(self):
+        vec = Vector().createGhost(self.ghosts, self.size_global, comm=self.comm)
+        vec.setLGMap(self.map)
+        return vec
+
+    def vector_from_array(self, array):
+        return Vector.from_array(self.map, array, self.ghosts)
 
     def create_map(self, overlapping=False):
         """Create a PETSc map on which the local discretization domain is defined.
