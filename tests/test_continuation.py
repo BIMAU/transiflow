@@ -3,14 +3,20 @@ import pytest
 
 from transiflow import TimeIntegration
 from transiflow import Continuation
-from transiflow import plot_utils
 from transiflow import utils
 
-from transiflow.interface.SciPy import Interface as SciPyInterface
-from transiflow.interface import create as Interface
+from transiflow.interface import create
 
 
-def test_continuation(nx=4, interactive=False):
+def Interface(parameters, nx, ny, nz, dim, dof, backend="SciPy"):
+    try:
+        return create(parameters, nx, ny, nz, dim, dof, backend=backend)
+    except ImportError:
+        pytest.skip(backend + " not found")
+
+
+@pytest.mark.parametrize("backend", ["SciPy", "Epetra", "HYMLS"])
+def test_continuation_ldc(backend, nx=4):
     numpy.random.seed(1234)
 
     dim = 3
@@ -19,7 +25,7 @@ def test_continuation(nx=4, interactive=False):
     nz = nx
 
     parameters = {}
-    interface = Interface(parameters, nx, ny, nz, dim, dof)
+    interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
     continuation = Continuation(interface, parameters)
 
     x0 = interface.vector()
@@ -30,16 +36,9 @@ def test_continuation(nx=4, interactive=False):
     ds = 100
     x = continuation.continuation(x0, 'Reynolds Number', start, target, ds)[0]
 
-    assert numpy.linalg.norm(x) > 0
+    assert utils.norm(x) > 0
 
-    if not interactive:
-        return
-
-    print(x)
-
-    plot_utils.plot_velocity_magnitude(x, interface)
-
-def continuation_semi_2D(nx=4, interactive=False):
+def continuation_ldc_semi_2D(backend, nx=4):
     numpy.random.seed(1234)
 
     dim = 3
@@ -48,7 +47,7 @@ def continuation_semi_2D(nx=4, interactive=False):
     nz = 1
 
     parameters = {}
-    interface = Interface(parameters, nx, ny, nz, dim, dof)
+    interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
     continuation = Continuation(interface, parameters)
 
     x0 = interface.vector()
@@ -59,16 +58,10 @@ def continuation_semi_2D(nx=4, interactive=False):
     ds = 100
     x = continuation.continuation(x0, 'Reynolds Number', start, target, ds)[0]
 
-    assert numpy.linalg.norm(x) > 0
+    assert utils.norm(x) > 0
+    return interface.array_from_vector(x)
 
-    if not interactive:
-        return x
-
-    print(x)
-
-    plot_utils.plot_velocity_magnitude(x, interface)
-
-def continuation_2D(nx=4, interactive=False):
+def continuation_ldc_2D(backend, nx=4):
     numpy.random.seed(1234)
 
     dim = 2
@@ -77,7 +70,7 @@ def continuation_2D(nx=4, interactive=False):
     nz = 1
 
     parameters = {}
-    interface = Interface(parameters, nx, ny, nz, dim, dof)
+    interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
     continuation = Continuation(interface, parameters)
 
     x0 = interface.vector()
@@ -88,27 +81,23 @@ def continuation_2D(nx=4, interactive=False):
     ds = 100
     x = continuation.continuation(x0, 'Reynolds Number', start, target, ds)[0]
 
-    assert numpy.linalg.norm(x) > 0
+    assert utils.norm(x) > 0
+    return interface.array_from_vector(x)
 
-    if not interactive:
-        return x
-
-    print(x)
-
-    plot_utils.plot_velocity_magnitude(x, interface)
-
-def test_continuation_2D_equals():
-    x1 = continuation_2D()
-    x2 = continuation_semi_2D()
+@pytest.mark.parametrize("backend", ["SciPy", "HYMLS"])
+def test_continuation_ldc_2D_equals(backend):
+    x1 = continuation_ldc_2D(backend)
+    x2 = continuation_ldc_semi_2D(backend)
 
     dof1 = 3
     dof2 = 4
 
-    assert numpy.linalg.norm(x1[0:-1:dof1] - x2[0:-1:dof2]) < 1e-2
-    assert numpy.linalg.norm(x1[1:-1:dof1] - x2[1:-1:dof2]) < 1e-2
-    assert numpy.linalg.norm(x1[2:-1:dof1] - x2[3:-1:dof2]) < 1e-2
+    assert utils.norm(x1[0:-1:dof1] - x2[0:-1:dof2]) < 1e-2
+    assert utils.norm(x1[1:-1:dof1] - x2[1:-1:dof2]) < 1e-2
+    assert utils.norm(x1[2:-1:dof1] - x2[3:-1:dof2]) < 1e-2
 
-def test_continuation_2D_stretched(nx=4, interactive=False):
+@pytest.mark.parametrize("backend", ["SciPy", "Epetra", "HYMLS"])
+def test_continuation_ldc_2D_stretched(backend, nx=8):
     numpy.random.seed(1234)
 
     dim = 2
@@ -116,11 +105,14 @@ def test_continuation_2D_stretched(nx=4, interactive=False):
     ny = nx
     nz = 1
 
-    xpos = utils.create_stretched_coordinate_vector(0, 1, nx, 1.5)
-    ypos = utils.create_stretched_coordinate_vector(0, 1, ny, 1.5)
+    parameters = {'Grid Stretching': True}
+    interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
 
-    parameters = {}
-    interface = SciPyInterface(parameters, nx, ny, nz, dim, dof, xpos, ypos)
+    x = interface.discretization.get_coordinate_vector(0, 1, nx)
+    y = interface.discretization.get_coordinate_vector(0, 1, ny)
+    assert x[1] - x[0] < x[2] - x[1]
+    assert y[1] - y[0] < y[2] - y[1]
+
     continuation = Continuation(interface, parameters)
 
     x0 = interface.vector()
@@ -131,14 +123,7 @@ def test_continuation_2D_stretched(nx=4, interactive=False):
     ds = 100
     x = continuation.continuation(x0, 'Reynolds Number', start, target, ds)[0]
 
-    assert numpy.linalg.norm(x) > 0
-
-    if not interactive:
-        return
-
-    print(x)
-
-    plot_utils.plot_velocity_magnitude(x, interface)
+    assert utils.norm(x) > 0
 
 def test_continuation_time_integration(nx=4):
     numpy.random.seed(1234)
@@ -189,7 +174,8 @@ def test_continuation_time_integration(nx=4):
     assert numpy.linalg.norm(x[0:len(x):dof] - x3[0:len(x):dof]) < 1e-4
     assert numpy.linalg.norm(x[1:len(x):dof] - x3[1:len(x):dof]) < 1e-4
 
-def test_continuation_rayleigh_benard(nx=8):
+@pytest.mark.parametrize("backend", ["SciPy", "HYMLS"])
+def test_continuation_rayleigh_benard(backend, nx=8):
     try:
         from transiflow.interface import JaDa # noqa: F401
     except ImportError:
@@ -208,7 +194,7 @@ def test_continuation_rayleigh_benard(nx=8):
                   'X-max': 10,
                   'Bordered Solver': True}
 
-    interface = Interface(parameters, nx, ny, nz, dim, dof)
+    interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
     continuation = Continuation(interface, parameters)
 
     x0 = interface.vector()
@@ -228,29 +214,34 @@ def test_continuation_rayleigh_benard(nx=8):
     ds = 50
     x2, mu2 = continuation.continuation(x, 'Rayleigh Number', mu, target, ds)
 
-    assert numpy.linalg.norm(x2) > 0
+    assert utils.norm(x2) > 0
     assert mu2 > 0
     assert mu2 < target
 
     parameters['Problem Type'] = 'Rayleigh-Benard Perturbation'
 
     # Subtract the motionless state
+    y = interface.discretization.get_coordinate_vector(0, 1, ny)
     t = numpy.zeros((nx, ny, nz, dof))
     for j in range(ny):
-        t[:, j, 0, dim+1] = 1 - (interface.discretization.y[j] + interface.discretization.y[j-1]) / 4
+        t[:, j, 0, dim+1] = 1 - (y[j] + y[j-1]) / 4
     t = utils.create_state_vec(t, nx, ny, nz, dof)
-    x -= t
+    x = x - interface.vector_from_array(t)
 
     x3, mu3 = continuation.continuation(x, 'Rayleigh Number', mu, target, ds)
 
-    assert numpy.linalg.norm(x3[0:len(x):dof] - x2[0:len(x):dof]) < 1e-4
-    assert numpy.linalg.norm(x3[1:len(x):dof] - x2[1:len(x):dof]) < 1e-4
-    assert numpy.linalg.norm(x3[3:len(x):dof] - x2[3:len(x):dof] + t[3:len(x):dof]) < 1e-4
+    x2 = interface.array_from_vector(x2)
+    x3 = interface.array_from_vector(x3)
+
+    assert utils.norm(x3[0:x.size:dof] - x2[0:x.size:dof]) < 1e-4
+    assert utils.norm(x3[1:x.size:dof] - x2[1:x.size:dof]) < 1e-4
+    assert utils.norm(x3[3:x.size:dof] - x2[3:x.size:dof] + t[3:x.size:dof]) < 1e-4
     assert mu3 > 0
     assert mu3 < target
     assert abs(mu3 - mu2) < 1e-2
 
-def test_continuation_double_gyre(nx=8):
+@pytest.mark.parametrize("backend", ["SciPy", "HYMLS"])
+def test_continuation_double_gyre(backend, nx=8):
     try:
         from transiflow.interface import JaDa # noqa: F401
     except ImportError:
@@ -268,7 +259,7 @@ def test_continuation_double_gyre(nx=8):
                   'Rossby Parameter': 1000,
                   'Wind Stress Parameter': 0}
 
-    interface = Interface(parameters, nx, ny, nz, dim, dof)
+    interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
     continuation = Continuation(interface, parameters)
 
     x0 = interface.vector()
@@ -286,11 +277,12 @@ def test_continuation_double_gyre(nx=8):
     ds = 5
     x, mu = continuation.continuation(x, 'Reynolds Number', 16, target, ds)
 
-    assert numpy.linalg.norm(x) > 0
+    assert utils.norm(x) > 0
     assert mu > 16
     assert mu < target
 
-def test_continuation_amoc(nx=8):
+@pytest.mark.parametrize("backend", ["SciPy", "HYMLS"])
+def test_continuation_amoc(backend, nx=16):
     try:
         from transiflow.interface import JaDa # noqa: F401
     except ImportError:
@@ -308,7 +300,7 @@ def test_continuation_amoc(nx=8):
                   'Prandtl Number': 2.25,
                   'X-max': 5}
 
-    interface = Interface(parameters, nx, ny, nz, dim, dof)
+    interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
     continuation = Continuation(interface, parameters)
 
     x0 = interface.vector()
@@ -318,6 +310,8 @@ def test_continuation_amoc(nx=8):
     x, mu = continuation.continuation(x0, 'Temperature Forcing', 0, target, ds)
 
     parameters['Detect Bifurcation Points'] = True
+    parameters['Minimum Step Size'] = 1e-6
+    parameters['Newton Tolerance'] = 1e-6
     parameters['Eigenvalue Solver'] = {}
     parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
 
@@ -379,9 +373,3 @@ def test_continuation_2D_tc(nx=8):
     assert numpy.linalg.norm(x) > 0
     assert mu > 0
     assert mu < target
-
-
-if __name__ == '__main__':
-    # test_continuation(8, False)
-    # continuation_2D(16, True)
-    test_continuation_2D_stretched(32, True)
