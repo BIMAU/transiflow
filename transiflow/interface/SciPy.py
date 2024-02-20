@@ -23,8 +23,6 @@ class Interface(BaseInterface):
         self._lu = None
         self._prec = None
 
-        self._gmres_iterations = 0
-
     def vector(self):
         return numpy.zeros(self.nx * self.ny * self.nz * self.dof)
 
@@ -213,13 +211,7 @@ class Interface(BaseInterface):
         # direct solver as preconditioner
         if self._prec and jac.dtype == x.dtype and jac.dtype == self._prec.dtype and \
            self.parameters.get('Use Iterative Solver', False):
-            out, info = linalg.gmres(jac,
-                                     x,
-                                     restart=5,
-                                     maxiter=1,
-                                     tol=1e-8,
-                                     atol=0,
-                                     M=self._prec)
+            out, info, _ = gmres(jac, x, 5, 1e-8, prec=self._prec)
             if info == 0:
                 return out
 
@@ -278,19 +270,12 @@ class Interface(BaseInterface):
 
         self.debug_print('Solving a linear system')
 
-        self._gmres_iterations = 0
-
-        def callback(_r):
-            self._gmres_iterations += 1
-
         parameters = self.parameters.get('Iterative Solver', {})
         restart = parameters.get('Restart', 100)
-        maxiter = parameters.get('Maximum Iterations', 1000) // restart
+        maxit = parameters.get('Maximum Iterations', 1000)
         tol = parameters.get('Convergence Tolerance', 1e-6)
 
-        y, info = linalg.gmres(A, x, restart=restart, maxiter=maxiter,
-                               tol=tol, atol=0, M=self._prec,
-                               callback=callback, callback_type='pr_norm')
+        y, info, gmres_iterations = gmres(A, x, maxit, tol, restart=restart, prec=self._prec)
         if info != 0:
             Exception('GMRES did not converge')
 
@@ -303,12 +288,12 @@ class Interface(BaseInterface):
             y2 = y[-border_size:] * self.border_scaling
 
             self.debug_print_residual('Done solving a bordered linear system in %d iterations with residual' %
-                                      self._gmres_iterations, jac, y1, rhs - V * y2)
+                                      gmres_iterations, jac, y1, rhs - V * y2)
 
             return y1, y2
 
         self.debug_print_residual('Done solving a linear system in %d iterations with residual' %
-                                  self._gmres_iterations, jac, y, rhs)
+                                  gmres_iterations, jac, y, rhs)
 
         return y
 
@@ -344,3 +329,22 @@ class Interface(BaseInterface):
 
         return self._eigs(jada_interface, jac_op, mass_op, prec, state, return_eigenvectors,
                           enable_recycling)
+
+
+def gmres(A, b, maxit, tol, restart=None, prec=None):
+    iterations = 0
+
+    def callback(_r):
+        nonlocal iterations
+        iterations += 1
+
+    if restart is None:
+        restart = min(maxit, 100)
+
+    maxiter = (maxit - 1) // restart + 1
+
+    y, info = linalg.gmres(A, b, restart=restart, maxiter=maxiter,
+                           rtol=tol, atol=0, M=prec,
+                           callback=callback, callback_type='pr_norm')
+
+    return y, info, iterations
