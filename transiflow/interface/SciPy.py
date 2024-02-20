@@ -343,8 +343,14 @@ def gmres(A, b, maxit, tol, restart=None, prec=None):
 
     maxiter = (maxit - 1) // restart + 1
 
-    y, info = linalg.gmres(A, b, restart=restart, maxiter=maxiter,
-                           rtol=tol, atol=0, M=prec,
-                           callback=callback, callback_type='pr_norm')
+    try:
+        y, info = linalg.gmres(A, b, restart=restart, maxiter=maxiter,
+                               rtol=tol, atol=0, M=prec,
+                               callback=callback, callback_type='pr_norm')
+    except TypeError:
+        # Compatibility with SciPy <= 1.11
+        y, info = linalg.gmres(A, b, restart=restart, maxiter=maxiter,
+                               tol=tol, atol=0, M=prec,
+                               callback=callback, callback_type='pr_norm')
 
     return y, info, iterations
