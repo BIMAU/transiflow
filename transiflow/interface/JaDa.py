@@ -5,7 +5,8 @@ import warnings
 from jadapy import NumPyInterface
 from jadapy.orthogonalization import orthogonalize
 
-from scipy import sparse
+from transiflow.interface.SciPy import gmres
+
 
 def _get_scalars(alpha, beta):
     try:
@@ -133,16 +134,13 @@ class Interface(NumPyInterface.NumPyInterface):
 
         out = x.copy()
         for i in range(x.shape[1]):
-
-            restart = min(maxit, 100)
-            maxiter = (maxit - 1) // restart + 1
-            y, info = sparse.linalg.gmres(op, x[:, i], restart=restart, maxiter=maxiter, tol=tol, atol=0, M=prec_op)
+            y, info, iterations = gmres(op, x[:, i], maxit, tol, prec=prec_op)
             out[:, i] = op.proj(y)
 
             if info < 0:
                 raise Exception('GMRES returned ' + str(info))
             elif info > 0 and maxit > 1:
-                warnings.warn('GMRES did not converge in ' + str(info) + ' iterations')
+                warnings.warn('GMRES did not converge in ' + str(iterations) + ' iterations')
         return out
 
     def prec(self, x, *args):
@@ -195,17 +193,14 @@ class BorderedInterface(NumPyInterface.NumPyInterface):
 
         out = x.copy()
         for i in range(x.shape[1]):
-            restart = min(maxit, 100)
-            maxiter = (maxit - 1) // restart + 1
             x2 = numpy.append(x[:, i], numpy.zeros(op.Q.shape[1], x.dtype))
-            y, info = sparse.linalg.gmres(shifted_bordered_op, x2, restart=restart,
-                                          maxiter=maxiter, tol=tol, atol=0, M=prec_op)
+            y, info, iterations = gmres(shifted_bordered_op, x2, maxit, tol, prec=prec_op)
             out[:, i] = op.proj(y[:-op.Q.shape[1]])
 
             if info < 0:
                 raise Exception('GMRES returned ' + str(info))
             elif info > 0 and maxit > 1:
-                warnings.warn('GMRES did not converge in ' + str(info) + ' iterations')
+                warnings.warn('GMRES did not converge in ' + str(iterations) + ' iterations')
 
         orthogonalize(op.Q, out)
 
