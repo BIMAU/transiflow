@@ -5,6 +5,8 @@ from numpy.testing import assert_allclose
 
 import matplotlib.pyplot as plt
 
+from transiflow import utils
+
 # Import common fixtures
 from tests.jada_fixtures import * # noqa: F401, F403
 from tests.jada_fixtures import check_eigenvalues
@@ -112,12 +114,15 @@ def test_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=False):
     jac_op = JaDa.Op(interface.jacobian(x))
     mass_op = JaDa.Op(interface.mass_matrix())
 
-    alpha, beta = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[20, 40])
+    alpha, beta, q, z = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[20, 40], return_subspaces=True)
     jdqz_eigs = numpy.array(sorted(alpha / beta, key=lambda x: abs(x)))
     jdqz_eigs = jdqz_eigs[:num_evs]
 
     assert_allclose(jdqz_eigs.real, arpack_eigs.real, rtol=0, atol=atol)
     assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
+
+    H = utils.dot(q, q)
+    assert_allclose(H, numpy.eye(q.shape[1]), rtol=0, atol=atol)
 
     if not interactive:
         return
@@ -135,14 +140,17 @@ def test_complex_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=F
     jac_op = JaDa.Op(interface.jacobian(x))
     mass_op = JaDa.Op(interface.mass_matrix())
 
-    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
-                               arithmetic='complex', return_eigenvectors=True)
+    alpha, beta, v, q, z = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
+                                     arithmetic='complex', return_eigenvectors=True, return_subspaces=True)
     check_eigenvalues(jac_op, mass_op, alpha / beta, v, num_evs, atol)
 
     jdqz_eigs = numpy.array(sorted(alpha / beta, key=lambda x: abs(x)))
 
     assert_allclose(jdqz_eigs.real, arpack_eigs.real, rtol=0, atol=atol)
     assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
+
+    H = utils.dot(q, q)
+    assert_allclose(H, numpy.eye(q.shape[1]), rtol=0, atol=atol)
 
     if not interactive:
         return
@@ -161,14 +169,17 @@ def test_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interactive=Fals
     mass_op = JaDa.Op(interface.mass_matrix())
     jada_interface = JaDa.Interface(interface, jac_op, mass_op, len(x))
 
-    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
-                               return_eigenvectors=True, prec=jada_interface.prec)
+    alpha, beta, v, q, z = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
+                                     return_eigenvectors=True, return_subspaces=True, prec=jada_interface.prec)
 
     jdqz_eigs = numpy.array(sorted(alpha / beta, key=lambda x: abs(x)))
     jdqz_eigs = jdqz_eigs[:num_evs]
 
     assert_allclose(jdqz_eigs.real, arpack_eigs.real, rtol=0, atol=atol)
     assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
+
+    H = utils.dot(q, q)
+    assert_allclose(H, numpy.eye(q.shape[1]), rtol=0, atol=atol)
 
     if not interactive:
         return
@@ -187,14 +198,18 @@ def test_complex_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, interact
     mass_op = JaDa.Op(interface.mass_matrix())
     jada_interface = JaDa.Interface(interface, jac_op, mass_op, len(x), numpy.complex128)
 
-    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
-                               arithmetic='complex', return_eigenvectors=True, prec=jada_interface.prec)
+    alpha, beta, v, q, z = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
+                                     arithmetic='complex', return_eigenvectors=True, return_subspaces=True,
+                                     prec=jada_interface.prec)
     check_eigenvalues(jac_op, mass_op, alpha / beta, v, num_evs, atol)
 
     jdqz_eigs = numpy.array(sorted(alpha / beta, key=lambda x: abs(x)))
 
     assert_allclose(jdqz_eigs.real, arpack_eigs.real, rtol=0, atol=atol)
     assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
+
+    H = utils.dot(q, q)
+    assert_allclose(H, numpy.eye(q.shape[1]), rtol=0, atol=atol)
 
     if not interactive:
         return
@@ -213,14 +228,18 @@ def test_complex_shifted_prec_2D(arpack_eigs, interface, x, num_evs, tol, atol, 
     mass_op = JaDa.Op(interface.mass_matrix())
     jada_interface = JaDa.Interface(interface, jac_op, mass_op, len(x), numpy.complex128)
 
-    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
-                               arithmetic='complex', return_eigenvectors=True, prec=jada_interface.shifted_prec)
+    alpha, beta, v, q, z = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
+                                     arithmetic='complex', return_eigenvectors=True, return_subspaces=True,
+                                     prec=jada_interface.shifted_prec)
     check_eigenvalues(jac_op, mass_op, alpha / beta, v, num_evs, atol)
 
     jdqz_eigs = numpy.array(sorted(alpha / beta, key=lambda x: abs(x)))
 
     assert_allclose(jdqz_eigs.real, arpack_eigs.real, rtol=0, atol=atol)
     assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
+
+    H = utils.dot(q, q)
+    assert_allclose(H, numpy.eye(q.shape[1]), rtol=0, atol=atol)
 
     if not interactive:
         return
@@ -242,14 +261,18 @@ def test_complex_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, interac
     assert not jada_interface.preconditioned_solve
     assert not jada_interface.shifted
 
-    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
-                               arithmetic='complex', return_eigenvectors=True, interface=jada_interface)
+    alpha, beta, v, q, z = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
+                                     arithmetic='complex', return_eigenvectors=True, return_subspaces=True,
+                                     interface=jada_interface)
     check_eigenvalues(jac_op, mass_op, alpha / beta, v, num_evs, atol)
 
     jdqz_eigs = numpy.array(sorted(alpha / beta, key=lambda x: abs(x)))
 
     assert_allclose(jdqz_eigs.real, arpack_eigs.real, rtol=0, atol=atol)
     assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
+
+    H = utils.dot(q, q)
+    assert_allclose(H, numpy.eye(q.shape[1]), rtol=0, atol=atol)
 
     if not interactive:
         return
@@ -272,14 +295,18 @@ def test_complex_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, atol, in
     assert jada_interface.preconditioned_solve
     assert not jada_interface.shifted
 
-    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
-                               arithmetic='complex', return_eigenvectors=True, interface=jada_interface)
+    alpha, beta, v, q, z = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
+                                     arithmetic='complex', return_eigenvectors=True, return_subspaces=True,
+                                     interface=jada_interface)
     check_eigenvalues(jac_op, mass_op, alpha / beta, v, num_evs, atol)
 
     jdqz_eigs = numpy.array(sorted(alpha / beta, key=lambda x: abs(x)))
 
     assert_allclose(jdqz_eigs.real, arpack_eigs.real, rtol=0, atol=atol)
     assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
+
+    H = utils.dot(q, q)
+    assert_allclose(H, numpy.eye(q.shape[1]), rtol=0, atol=atol)
 
     if not interactive:
         return
@@ -302,14 +329,18 @@ def test_complex_shifted_prec_solve_2D(arpack_eigs, interface, x, num_evs, tol, 
     assert jada_interface.preconditioned_solve
     assert jada_interface.shifted
 
-    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
-                               arithmetic='complex', return_eigenvectors=True, interface=jada_interface)
+    alpha, beta, v, q, z = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
+                                     arithmetic='complex', return_eigenvectors=True, return_subspaces=True,
+                                     interface=jada_interface)
     check_eigenvalues(jac_op, mass_op, alpha / beta, v, num_evs, atol)
 
     jdqz_eigs = numpy.array(sorted(alpha / beta, key=lambda x: abs(x)))
 
     assert_allclose(jdqz_eigs.real, arpack_eigs.real, rtol=0, atol=atol)
     assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
+
+    H = utils.dot(q, q)
+    assert_allclose(H, numpy.eye(q.shape[1]), rtol=0, atol=atol)
 
     if not interactive:
         return
@@ -328,11 +359,15 @@ def test_complex_shifted_prec_bordered_solve_2D(arpack_eigs, interface, x, num_e
     mass_op = JaDa.Op(interface.mass_matrix())
     jada_interface = JaDa.BorderedInterface(interface, jac_op, mass_op, len(x), numpy.complex128)
 
-    alpha, beta, v = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
-                               arithmetic='complex', return_eigenvectors=True, interface=jada_interface)
+    alpha, beta, v, q, z = jdqz.jdqz(jac_op, mass_op, num_evs, tol=tol, subspace_dimensions=[30, 60],
+                                     arithmetic='complex', return_eigenvectors=True, return_subspaces=True,
+                                     interface=jada_interface)
     check_eigenvalues(jac_op, mass_op, alpha / beta, v, num_evs, atol)
 
     jdqz_eigs = numpy.array(sorted(alpha / beta, key=lambda x: abs(x)))
 
     assert_allclose(jdqz_eigs.real, arpack_eigs.real, rtol=0, atol=atol)
     assert_allclose(abs(jdqz_eigs.imag), abs(arpack_eigs.imag), rtol=0, atol=atol)
+
+    H = utils.dot(q, q)
+    assert_allclose(H, numpy.eye(q.shape[1]), rtol=0, atol=atol)
