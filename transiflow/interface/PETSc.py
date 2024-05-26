@@ -12,13 +12,11 @@ class Vector(PETSc.Vec):
 
     @staticmethod
     def from_array(m, x, ghosts=(), comm=PETSc.COMM_WORLD):
-        vec = Vector().createGhost(ghosts, len(x), comm=comm)
-        vec.setLGMap(m)
-        with vec.localForm() as lf:
-            lf.set(0.0)
-        vec.setValues(range(*vec.getOwnershipRange()), x[m.getIndices()])
+        size = len(m.indices)
+        vec = Vector().createGhost(ghosts, (size, None), comm=comm)
+        vec.setValues(m.indices, x)
         vec.assemble()
-        vec.ghostUpdate(PETSc.InsertMode.INSERT, PETSc.ScatterMode.FORWARD)
+        vec.ghostUpdate(addv=PETSc.InsertMode.INSERT_VALUES, mode=PETSc.ScatterMode.FORWARD)
         return vec
 
     size = property(PETSc.Vec.getSize)
@@ -38,31 +36,75 @@ class Interface(ParallelBaseInterface):
     The PETSc backend partitions the domain into Cartesian subdomains,
     while solving linear systems on skew Cartesian subdomains to deal
     with the C-grid discretization. The subdomains will be distributed
-    over multiple processors if MPI is used to run the application."""
+    over multiple processors if MPI is used to run the application.
+
+    PETSc parallel vectors (and matrices) are distributed such that each process owns a
+    contiguous range of indices (rows) without holes. The natural ordering is therefore
+    mapped to PETSc's ordering.
+    """
 
     def __init__(self, parameters, nx, ny, nz, dim, dof, comm=PETSc.COMM_WORLD):
         super().__init__(comm, parameters, nx, ny, nz, dim, dof)
 
         self.size_global = nx * ny * nz * dof
 
-        self.map = self.create_map()
+        self.map_natural = self.create_map()
         self.assembly_map = self.create_map(True)
-        self.ghosts = list(set(self.assembly_map.indices).difference(self.map.indices))
+
+        ghosts_natural = list(
+            set(self.assembly_map.indices).difference(self.map_natural.indices)
+        )
+
+        self.ghosts = self.ghosts_petsc(ghosts_natural)
+
+        self.index_ordering = PETSc.AO().createMapping(self.map_natural.indices)
+        self.map = self.create_map_petsc()
+
+        self.index_natural_local_permut = numpy.argsort(
+            numpy.r_[self.map_natural.indices, ghosts_natural]
+        )
+
+        self.index_ordering_assembly = PETSc.AO().createMapping(
+            numpy.r_[self.map_natural.indices, ghosts_natural].astype(PETSc.IntType),
+            numpy.r_[self.map.indices, self.ghosts].astype(PETSc.IntType),
+        )
 
         self.jac = None
 
     def vector(self):
-        vec = Vector().createGhost(self.ghosts, self.size_global, comm=self.comm)
-        vec.setLGMap(self.map)
-        return vec
+        return Vector().createGhost(self.ghosts, (len(self.map.indices), None), comm=self.comm)
 
     def vector_from_array(self, array):
-        return Vector.from_array(self.map, array, self.ghosts)
+        return Vector.from_array(self.map, array[self.map_natural.indices], ghosts=self.ghosts)
+
+    def ghosts_petsc(self, ghosts_natural):
+        """Get global indices of ghosts in PETSc ordering.
+
+        1. On each process, create a vector containing the owned natural indices.
+        2. Gather the indices from all processes in a sequential vector and find the
+           locations of the ghosts in the sequential vector. The locations correspond to
+           the ghost indices in PETSc ordering.
+        """
+        vec_indices = Vector().createWithArray(self.map_natural.indices)
+        sct, vec_global_indices = PETSc.Scatter().toAll(vec_indices)
+        sct.scatter(vec_indices, vec_global_indices)
+
+        ghosts_petsc = []
+        for ghost in ghosts_natural:
+            ghosts_petsc.append(numpy.where(vec_global_indices.array == ghost)[0][0])
+
+        return ghosts_petsc
+
+    def create_map_petsc(self):
+        """Create a PETSc index map, using PETSc's ordering (contiguous row ownership),
+        from the naturally ordered indices."""
+        return PETSc.LGMap().create(
+            self.index_ordering.app2petsc(self.map_natural.indices), bsize=None, comm=self.comm
+        )
 
     def create_map(self, overlapping=False):
         """Create a PETSc map on which the local discretization domain is defined.
         The overlapping part is only used for computing the discretization."""
-
         local_elements = ParallelBaseInterface.create_map(self, overlapping)
         return PETSc.LGMap().create(local_elements, bsize=None, comm=self.comm)
 
@@ -70,29 +112,29 @@ class Interface(ParallelBaseInterface):
         """Right-hand side in M * du / dt = F(u) defined on the
         non-overlapping discretization domain map."""
 
-        state.ghostUpdate(PETSc.InsertMode.INSERT, PETSc.ScatterMode.FORWARD)
-        rhs = state.duplicate()
-        with rhs.localForm() as local_rhs, state.localForm() as local_state:
-            # all entries after n = rhs.size are ghost points
-            # permute local_state such that indices are in correct order (sorted, ascending)
-            indices = numpy.r_[self.map.indices, numpy.array(self.ghosts, dtype=int)]
-            ind_permute = numpy.argsort(indices)
-            local_arr = numpy.empty_like(local_rhs.array)
-            local_arr[ind_permute] = self.discretization.rhs(local_state.array[ind_permute])
-            local_rhs.setArray(local_arr)
+        state.ghostUpdate(addv=PETSc.InsertMode.INSERT_VALUES, mode=PETSc.ScatterMode.FORWARD)
+        ind_local_nat = self.index_natural_local_permut
 
-        rhs.assemble()
+        with state.localForm() as lf:
+            local_rhs = self.discretization.rhs(lf.array[ind_local_nat])
 
-        return rhs
+        rhs_vec = state.duplicate()
+
+        with rhs_vec.localForm() as lf:
+            lf.array[ind_local_nat] = local_rhs
+
+        return rhs_vec
 
     def jacobian(self, state):
         """Jacobian J of F in M * du / dt = F(u) defined on the
         domain map used by PETSc."""
 
+        ind_local_nat = self.index_natural_local_permut
+
+        state.ghostUpdate(addv=PETSc.InsertMode.INSERT_VALUES, mode=PETSc.ScatterMode.FORWARD)
+
         with state.localForm() as lf:
-            indices = numpy.r_[self.map.indices, numpy.array(self.ghosts, dtype=int)]
-            ind_permute = numpy.argsort(indices)
-            local_jac = self.discretization.jacobian(lf.array[ind_permute])
+            local_jac = self.discretization.jacobian(lf.array[ind_local_nat])
 
         if self.jac is None:
             self.jac = PETSc.Mat().create(comm=self.comm)
@@ -105,16 +147,20 @@ class Interface(ParallelBaseInterface):
             self.jac.zeroEntries()
 
         self.jac.assemblyBegin()
-        for i in range(len(local_jac.begA) - 1):
-            if self.is_ghost(i):
+        for i_loc in range(len(local_jac.begA) - 1):
+
+            if self.is_ghost(i_loc):
                 continue
 
-            col_idx = numpy.array(
-                local_jac.jcoA[local_jac.begA[i]: local_jac.begA[i + 1]],
-                dtype=PETSc.IntType,
-            )
-            values = local_jac.coA[local_jac.begA[i]: local_jac.begA[i + 1]]
+            col_idx_nat = self.assembly_map.indices[
+                local_jac.jcoA[local_jac.begA[i_loc] : local_jac.begA[i_loc + 1]]
+            ]
+            values = local_jac.coA[local_jac.begA[i_loc] : local_jac.begA[i_loc + 1]]
+
+            i = self.index_ordering.app2petsc(self.assembly_map.indices[i_loc])
+            col_idx = self.index_ordering_assembly.app2petsc(col_idx_nat)
             self.jac.setValues(i, col_idx, values)
+
         self.jac.assemblyEnd()
 
         return self.jac
@@ -135,11 +181,25 @@ class Interface(ParallelBaseInterface):
 
         ksp.setFromOptions()
 
+        dof = self.dim
+        self.set_dirichlet_bc(jac, rhs, dof, 0.0)
+
         ksp.setOperators(jac)
-        x = rhs.copy()
+        x = self.vector()
 
         ksp.solve(rhs, x)
+
+        x.ghostUpdate(addv=PETSc.InsertMode.INSERT_VALUES, mode=PETSc.ScatterMode.FORWARD)
         return x
+
+    def set_dirichlet_bc(self, A, b, i, value):
+        """Set Dirichlet BC to specified value at index i.
+        Single values or sequences of indices and values are accepted.
+        """
+        A.zeroRows(i)
+        b.setValues(i, value)
+        b.assemble()
+        b.ghostUpdate(addv=PETSc.InsertMode.INSERT_VALUES, mode=PETSc.ScatterMode.FORWARD)
 
     def eigs(self, state, return_eigenvectors=False, enable_recycling=False):
         """Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v."""

@@ -6,7 +6,7 @@ import pytest
 from transiflow import Continuation, Discretization, utils
 
 
-def read_matrix(fname):
+def read_matrix(fname, ao):
     from petsc4py import PETSc
 
     dirname = os.path.dirname(__file__)
@@ -27,14 +27,16 @@ def read_matrix(fname):
     A = PETSc.Mat().createAIJ((size, size))
     A.setUp()
 
-    for r, c, v in zip(rows, cols, vals):
+    for r, c, v in zip(ao.app2petsc(rows), ao.app2petsc(cols), vals):
         A.setValue(r, c, v)
     A.assemble()
 
     return A
 
 
-def read_vector(fname, m):
+def read_vector(fname, m, ao):
+    from petsc4py import PETSc
+
     from transiflow.interface import PETSc as PETScInterface
 
     values = []
@@ -43,20 +45,26 @@ def read_vector(fname, m):
         for v in f.readlines():
             values.append(float(v.strip()))
 
-    vec = PETScInterface.Vector.from_array(m, numpy.array(values, dtype=numpy.int32))
-
+    indices_nat = ao.petsc2app(m.indices)
+    vec = PETScInterface.Vector.from_array(
+        m, numpy.array(values, dtype=PETSc.ScalarType)[indices_nat]
+    )
     return vec
 
 
 def extract_sorted_row(A, i):
-    indices, values = A.getRow(i)
-    idx = sorted(range(len(indices)), key=lambda i: indices[i])
-    return [indices[i] for i in idx], [values[i] for i in idx]
+    if i in range(*A.getOwnershipRange()):
+        indices, values = A.getRow(i)
+        idx = sorted(range(len(indices)), key=lambda i: indices[i])
+        return [indices[i] for i in idx], [values[i] for i in idx]
+    else:
+        return [], []
 
 
-def extract_sorted_local_row(A, i):
-    indices = A.jcoA[A.begA[i]: A.begA[i + 1]]
-    values = A.coA[A.begA[i]: A.begA[i + 1]]
+def extract_sorted_local_row(A, i, ao):
+    indices = A.jcoA[A.begA[i] : A.begA[i + 1]]
+    values = A.coA[A.begA[i] : A.begA[i + 1]]
+    indices = ao.app2petsc(indices.astype(numpy.int32))
     idx = sorted(range(len(indices)), key=lambda i: indices[i])
     return [indices[i] for i in idx], [values[i] for i in idx]
 
@@ -82,18 +90,21 @@ def test_ldc():
     interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof)
     state = interface.vector_from_array(state)
 
+    for i in interface.map.indices:
+        i_nat = interface.index_ordering.petsc2app(i)
+        assert i_nat == state[i] - 1
+
     A = interface.jacobian(state)
     rhs = interface.rhs(state)
 
-    B = read_matrix("ldc_%sx%sx%s.txt" % (nx, ny, nz))
-    rhs_B = read_vector("ldc_rhs_%sx%sx%s.txt" % (nx, ny, nz), interface.map)
+    B = read_matrix("ldc_%sx%sx%s.txt" % (nx, ny, nz), interface.index_ordering_assembly)
+    rhs_B = read_vector(
+        "ldc_rhs_%sx%sx%s.txt" % (nx, ny, nz), interface.map, interface.index_ordering
+    )
 
     for i in range(n):
         if i not in interface.map.indices:
             continue
-
-        lid = numpy.where(interface.map.indices == i)[0][0]
-        print(f"rank {interface.comm.rank}: {i} {lid}")
 
         indices_A, values_A = extract_sorted_row(A, i)
         indices_B, values_B = extract_sorted_row(B, i)
@@ -106,7 +117,8 @@ def test_ldc():
         print(indices_A)
         print(values_A)
 
-        assert len(indices_A) == len(indices_B)
+        assert len(indices_A) == len(indices_B) > 0
+
         for j in range(len(indices_A)):
             assert indices_A[j] == indices_B[j]
             assert values_A[j] == pytest.approx(values_B[j])
@@ -115,14 +127,7 @@ def test_ldc():
         if i not in interface.map.indices:
             continue
 
-        lid = numpy.where(interface.map.indices == i)[0][0]
-
-        print(
-            f"rank {interface.comm.rank}: {i}, {lid}, {rhs[i]}, {rhs_B[i]}, {rhs.array[lid]}, {rhs_B.array[lid]}"
-        )
-
         assert rhs_B[i] == pytest.approx(rhs[i])
-        assert rhs_B.array[lid] == pytest.approx(rhs.array[lid])
 
 
 def test_ldc_stretched_file():
@@ -151,15 +156,16 @@ def test_ldc_stretched_file():
     A = interface.jacobian(state)
     rhs = interface.rhs(state)
 
-    B = read_matrix("ldc_stretched_%sx%sx%s.txt" % (nx, ny, nz))
-    rhs_B = read_vector("ldc_stretched_rhs_%sx%sx%s.txt" % (nx, ny, nz), interface.map)
+    B = read_matrix(
+        "ldc_stretched_%sx%sx%s.txt" % (nx, ny, nz), interface.index_ordering_assembly
+    )
+    rhs_B = read_vector(
+        "ldc_stretched_rhs_%sx%sx%s.txt" % (nx, ny, nz), interface.map, interface.index_ordering
+    )
 
     for i in range(n):
         if i not in interface.map.indices:
             continue
-
-        lid = numpy.where(interface.map.indices == i)[0][0]
-        print(f"rank {interface.comm.rank}: {i} {lid}")
 
         indices_A, values_A = extract_sorted_row(A, i)
         indices_B, values_B = extract_sorted_row(B, i)
@@ -172,7 +178,8 @@ def test_ldc_stretched_file():
         print(indices_A)
         print(values_A)
 
-        assert len(indices_A) == len(indices_B)
+        assert len(indices_A) == len(indices_B) > 0
+
         for j in range(len(indices_A)):
             assert indices_A[j] == indices_B[j]
             assert values_A[j] == pytest.approx(values_B[j])
@@ -181,14 +188,7 @@ def test_ldc_stretched_file():
         if i not in interface.map.indices:
             continue
 
-        lid = numpy.where(interface.map.indices == i)[0][0]
-
-        print(
-            f"rank {interface.comm.rank}: {i}, {lid}, {rhs[i]}, {rhs_B[i]}, {rhs.array[lid]}, {rhs_B.array[lid]}"
-        )
-
         assert rhs_B[i] == pytest.approx(rhs[i])
-        assert rhs_B.array[lid] == pytest.approx(rhs.array[lid])
 
 
 def test_ldc_stretched(nx=4):
@@ -215,7 +215,36 @@ def test_ldc_stretched(nx=4):
     rhs_B = discretization.rhs(state)
 
     interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof)
+
+    state_numpy = state.copy()
+
     state = interface.vector_from_array(state)
+
+    for i in interface.map.indices:
+        i_nat = interface.index_ordering.petsc2app(i)
+        assert i_nat == state[i] - 1
+
+    assert numpy.allclose(state.array, state_numpy[interface.map_natural.indices])
+
+    for i in range(n):
+        if i not in interface.map.indices:
+            continue
+
+        i_nat = interface.index_ordering.petsc2app(i)
+        assert state_numpy[i_nat] == pytest.approx(state[i])
+
+    # check ghosts mapping and assembly index ordering
+    with state.localForm() as lf:
+        for i, ghost in enumerate(interface.ghosts):
+            ghost_nat = interface.index_ordering_assembly.petsc2app(ghost)
+            assert state_numpy[ghost_nat] == lf.array[state.local_size + i]
+
+    for i in range(n):
+        if i not in interface.map.indices:
+            continue
+
+        i_nat = interface.index_ordering.petsc2app(i)
+        assert state_numpy[i_nat] == pytest.approx(state[i])
 
     A = interface.jacobian(state)
     rhs = interface.rhs(state)
@@ -224,10 +253,20 @@ def test_ldc_stretched(nx=4):
         if i not in interface.map.indices:
             continue
 
-        lid = numpy.where(interface.map.indices == i)[0][0]
+        i_nat = interface.index_ordering.petsc2app(i)
+        assert rhs_B[i_nat] == pytest.approx(rhs[i])
+
+    for i in range(n):
+        if i not in interface.map.indices:
+            continue
 
         indices_A, values_A = extract_sorted_row(A, i)
-        indices_B, values_B = extract_sorted_local_row(B, i)
+
+        i_nat = interface.index_ordering_assembly.petsc2app(i)
+        assert i_nat == interface.index_ordering.petsc2app(i)
+        indices_B, values_B = extract_sorted_local_row(
+            B, i_nat, interface.index_ordering_assembly
+        )
 
         print("Expected:")
         print(indices_B)
@@ -237,20 +276,11 @@ def test_ldc_stretched(nx=4):
         print(indices_A)
         print(values_A)
 
-        assert len(indices_A) == len(indices_B)
+        assert len(indices_A) == len(indices_B) > 0
+
         for j in range(len(indices_A)):
             assert indices_A[j] == indices_B[j]
             assert values_A[j] == pytest.approx(values_B[j])
-
-    for i in range(n):
-        if i not in interface.map.indices:
-            continue
-
-        lid = numpy.where(interface.map.indices == i)[0][0]
-
-        print(f"rank {interface.comm.rank}: {i}, {lid}, {rhs[i]}, {rhs_B[i]}, {rhs.array[lid]}")
-
-        assert rhs_B[i] == pytest.approx(rhs[lid])
 
 
 def test_ldc8_stretched():
@@ -277,9 +307,12 @@ def test_norm():
 
     interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof)
 
-    state_dist = PETScInterface.Vector.from_array(interface.map, state)
+    state_dist = PETScInterface.Vector.from_array(
+        interface.map, state[interface.map_natural.indices]
+    )
+    state_dist2 = interface.vector_from_array(state)
 
-    assert utils.norm(state) == utils.norm(state_dist)
+    assert utils.norm(state) == utils.norm(state_dist) == utils.norm(state_dist2)
 
 
 def test_PETSc(nx=4):
