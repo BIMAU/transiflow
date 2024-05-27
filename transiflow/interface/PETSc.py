@@ -153,9 +153,9 @@ class Interface(ParallelBaseInterface):
                 continue
 
             col_idx_nat = self.assembly_map.indices[
-                local_jac.jcoA[local_jac.begA[i_loc] : local_jac.begA[i_loc + 1]]
+                local_jac.jcoA[local_jac.begA[i_loc]: local_jac.begA[i_loc + 1]]
             ]
-            values = local_jac.coA[local_jac.begA[i_loc] : local_jac.begA[i_loc + 1]]
+            values = local_jac.coA[local_jac.begA[i_loc]: local_jac.begA[i_loc + 1]]
 
             i = self.index_ordering.app2petsc(self.assembly_map.indices[i_loc])
             col_idx = self.index_ordering_assembly.app2petsc(col_idx_nat)

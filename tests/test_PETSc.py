@@ -62,8 +62,8 @@ def extract_sorted_row(A, i):
 
 
 def extract_sorted_local_row(A, i, ao):
-    indices = A.jcoA[A.begA[i] : A.begA[i + 1]]
-    values = A.coA[A.begA[i] : A.begA[i + 1]]
+    indices = A.jcoA[A.begA[i]: A.begA[i + 1]]
+    values = A.coA[A.begA[i]: A.begA[i + 1]]
     indices = ao.app2petsc(indices.astype(numpy.int32))
     idx = sorted(range(len(indices)), key=lambda i: indices[i])
     return [indices[i] for i in idx], [values[i] for i in idx]
