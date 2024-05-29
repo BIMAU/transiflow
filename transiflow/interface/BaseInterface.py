@@ -2,7 +2,8 @@ import numpy
 
 from transiflow.utils import norm
 
-from transiflow import Discretization, CylindricalDiscretization
+from transiflow.Discretization import Discretization
+from transiflow.CylindricalDiscretization import CylindricalDiscretization
 
 
 class BaseInterface:
