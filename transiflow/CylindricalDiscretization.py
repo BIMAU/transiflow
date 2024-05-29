@@ -2,7 +2,7 @@ import numpy
 
 from transiflow import utils
 from transiflow import BoundaryConditions
-from transiflow import Discretization
+from transiflow.Discretization import Discretization
 
 class CylindricalDiscretization(Discretization):
     '''Finite volume discretization of the incompressible Navier-Stokes
