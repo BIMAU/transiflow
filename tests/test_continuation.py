@@ -225,7 +225,7 @@ def test_continuation_rayleigh_benard(backend, nx=8):
     assert mu3 < target
 
 @pytest.mark.parametrize("backend", ["SciPy", "HYMLS"])
-def test_continuation_rayleigh_benard_formulations(backend, nx=8):
+def test_continuation_rayleigh_benard_formulations_2D(backend, nx=8):
     try:
         from transiflow.interface import JaDa # noqa: F401
     except ImportError:
@@ -287,6 +287,75 @@ def test_continuation_rayleigh_benard_formulations(backend, nx=8):
     assert utils.norm(x3[0:x.size:dof] - x2[0:x.size:dof]) < 1e-4
     assert utils.norm(x3[1:x.size:dof] - x2[1:x.size:dof]) < 1e-4
     assert utils.norm(x3[3:x.size:dof] - x2[3:x.size:dof] + t[3:x.size:dof]) < 1e-4
+    assert mu3 > mu
+    assert mu3 < target
+    assert abs(mu3 - mu2) < 1
+
+@pytest.mark.parametrize("backend", ["SciPy", "HYMLS"])
+def test_continuation_rayleigh_benard_formulations(backend, nx=4):
+    try:
+        from transiflow.interface import JaDa # noqa: F401
+    except ImportError:
+        pytest.skip('jadapy not found')
+
+    numpy.random.seed(1234)
+
+    dim = 3
+    dof = 5
+    ny = nx
+    nz = nx
+
+    parameters = {'Problem Type': 'Rayleigh-Benard',
+                  'Prandtl Number': 10,
+                  'Biot Number': 1,
+                  'X-max': 10,
+                  'Y-max': 10,
+                  'Bordered Solver': True}
+
+    interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
+    continuation = Continuation(interface, parameters)
+
+    x0 = interface.vector()
+    x0 = continuation.newton(x0)
+
+    start = 0
+    target = 1800
+    ds = 200
+    x, mu = continuation.continuation(x0, 'Rayleigh Number', start, target, ds)
+
+    parameters['Detect Bifurcation Points'] = True
+    parameters['Eigenvalue Solver'] = {}
+    parameters['Eigenvalue Solver']['Arithmetic'] = 'real'
+    parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
+
+    target = 5000
+    ds = 50
+    x2, mu2 = continuation.continuation(x, 'Rayleigh Number', mu, target, ds)
+
+    assert utils.norm(x2) > 0
+    assert mu2 > mu
+    assert mu2 < target
+
+    parameters['Problem Type'] = 'Rayleigh-Benard Perturbation'
+
+    # Subtract the motionless state
+    z = interface.discretization.get_coordinate_vector(0, 1, nz)
+    t = numpy.zeros((nx, ny, nz, dof))
+    for k in range(nz):
+        t[:, :, k, dim+1] = 1 - (z[k] + z[k-1]) / 4
+    t = utils.create_state_vec(t, nx, ny, nz, dof)
+    x = x - interface.vector_from_array(t)
+
+    x3, mu3 = continuation.continuation(x, 'Rayleigh Number', mu, target, ds)
+
+    # Test that the solution obtained from both formulations are the same
+    x2 = interface.array_from_vector(x2)
+    x3 = interface.array_from_vector(x3)
+
+    assert utils.norm(x3[0:x.size:dof] - x2[0:x.size:dof]) < 1e-4
+    assert utils.norm(x3[1:x.size:dof] - x2[1:x.size:dof]) < 1e-4
+    assert utils.norm(x3[2:x.size:dof] - x2[2:x.size:dof]) < 1e-4
+    assert utils.norm(x3[4:x.size:dof] - x2[4:x.size:dof] + t[4:x.size:dof]) < 1e-4
     assert mu3 > mu
     assert mu3 < target
     assert abs(mu3 - mu2) < 1
