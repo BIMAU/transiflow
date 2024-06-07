@@ -10,6 +10,7 @@ Welcome to TransiFlow's documentation!
    :maxdepth: 3
    :caption: Problem definitions
 
+   problems/ldc
    problems/rb
 
 .. toctree::

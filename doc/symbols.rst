@@ -13,14 +13,17 @@ $g$            Gravitational constant
 $\\mathrm{Gr}$ Grashof number $\\mathrm{Gr} = \\mathrm{Ra} / \\mathrm{Pr}$
 $h$            Surface heat transfer coefficient
 $k$            Thermal conductivity
+$L$            Length of the domain/typical length scale
 $p$            Pressure
 $\\mathrm{Pr}$ Prandtl number $\\mathrm{Pr} = \\nu / \\kappa_T$
 $\\mathrm{Ra}$ Rayleigh number $\\mathrm{Ra} = (\\alpha_T g \\Delta T D^3) / (\\nu \\kappa)$
+$\\mathrm{Re}$ Reynolds number $\\mathrm{Re} = UL / \\nu$
 $t$            Time
 $T$            Temperature
 $\\Delta T$    Temperature difference
 $\\mathbf{u}$  Velocity vector $(u, v, w)$ in 3D and $(u, v)$ in 2D
 $u$            Horizontal velocity in the $x$-direction
+$U$            Typical velocity/lid velocity for the lid-driven cavity
 $v$            Horizontal velocity in the $y$-direction
 $w$            Vertical velocity in the $z$-direction
 $\\alpha_T$    Thermal compressibility coefficient
