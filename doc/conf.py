@@ -53,7 +53,11 @@ apidoc_excluded_paths = [
 ]
 apidoc_separate_modules = True
 apidoc_toc_file = False
-apidoc_module_first = False
+apidoc_module_first = True
+
+autodoc_default_options = {
+    'inherited-members': True
+}
 
 
 # -- Options for HTML output -------------------------------------------------
