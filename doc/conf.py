@@ -31,7 +31,10 @@ sys.modules['petsc4py'] = MagicMock()
 
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosectionlabel',
+    'sphinx.ext.mathjax',
     'sphinxcontrib.apidoc',
+    'numpydoc',
 ]
 
 templates_path = ['_templates']
@@ -65,3 +68,14 @@ autodoc_default_options = {
 
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
+
+# -- Options for MathJax -----------------------------------------------------
+mathjax3_config = {
+    'tex': {
+        'inlineMath': [['$', '$'], ['\\(', '\\)']],
+        'macros': {
+            'd': '\\textrm{d}',
+            'Re': '\\textrm{Re}',
+        }
+    }
+}
