@@ -8,10 +8,15 @@ Welcome to TransiFlow's documentation!
 
 .. toctree::
    :maxdepth: 3
+   :caption: Problem definitions
+
+   problems/rb
+
+.. toctree::
+   :maxdepth: 3
    :caption: API documentation
 
    reference/transiflow
-
 
 Indices and tables
 ==================
@@ -19,3 +24,4 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+* :ref:`symbols`
