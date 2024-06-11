@@ -10,6 +10,7 @@ class Continuation:
         self.parameters = parameters
 
         self.newton_iterations = 0
+        self.destination_tolerance = 1e-4
         self.delta = None
         self.zeta = None
 
@@ -161,10 +162,8 @@ class Continuation:
     def detect_bifurcation(self, parameter_name, x, mu, dx, dmu, eig, deig, v, ds, maxit):
         ''' Converge onto a bifurcation '''
 
-        tol = self.parameters.get('Destination Tolerance', 1e-4)
-
         for j in range(maxit):
-            if abs(eig.real) < tol:
+            if abs(eig.real) < self.destination_tolerance:
                 print("Bifurcation found at %s = %f with eigenvalue %e + %ei" % (
                     parameter_name, mu, eig.real, eig.imag), flush=True)
                 break
@@ -183,10 +182,8 @@ class Continuation:
     def converge(self, parameter_name, x, mu, dx, dmu, target, ds, maxit):
         ''' Converge onto the target value '''
 
-        tol = self.parameters.get('Destination Tolerance', 1e-4)
-
         for j in range(maxit):
-            if abs(target - mu) < tol:
+            if abs(target - mu) < self.destination_tolerance:
                 self.interface.set_parameter(parameter_name, target)
                 print("Convergence achieved onto target %s = %f" % (parameter_name, mu), flush=True)
                 break
@@ -328,6 +325,8 @@ class Continuation:
         mu = start
 
         # Set some parameters
+        self.destination_tolerance = self.parameters.get(
+            'Destination Tolerance', self.destination_tolerance)
         self.delta = self.parameters.get('Delta', 1)
         self.zeta = 1 / x.size
 
