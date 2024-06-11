@@ -351,8 +351,6 @@ class Continuation:
         for j in range(maxit):
             mu0 = mu
 
-            x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, ds)
-
             if detect_bifurcations or (enable_branch_switching and not switched_branches):
                 eig_prev = eig
                 eigs, v = self.interface.eigs(x, return_eigenvectors=True, enable_recycling=enable_recycling)
@@ -373,6 +371,8 @@ class Continuation:
                 if eig_prev is None and eig.real > 0:
                     # We're past the bifurcation already, so go backwards
                     ds = -ds
+
+            x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, ds)
 
             if (mu >= target and mu0 < target) or (mu <= target and mu0 > target):
                 # Converge onto the end point
