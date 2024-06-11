@@ -1,6 +1,6 @@
 import math
+import numpy
 
-from math import sqrt
 from transiflow.utils import norm
 
 class Continuation:
@@ -159,23 +159,24 @@ class Continuation:
 
         return ds
 
-    def detect_bifurcation(self, parameter_name, x, mu, dx, dmu, eig, deig, v, ds, maxit):
+    def detect_bifurcation(self, parameter_name, x, mu, dx, dmu, eigs, deig, v, ds, maxit):
         ''' Converge onto a bifurcation '''
 
         for j in range(maxit):
-            if abs(eig.real) < self.destination_tolerance:
+            i = numpy.argmin(numpy.abs(eigs.real))
+            if abs(eigs[i].real) < self.destination_tolerance:
                 print("Bifurcation found at %s = %f with eigenvalue %e + %ei" % (
-                    parameter_name, mu, eig.real, eig.imag), flush=True)
+                    parameter_name, mu, eigs[i].real, eigs[i].imag), flush=True)
                 break
 
             # Secant method
-            ds = ds / deig.real * -eig.real
+            ds = ds / deig.real * -eigs.real[i]
             x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, ds)
 
-            eig_prev = eig
+            prev_eigs = eigs
             eigs, v = self.interface.eigs(x, return_eigenvectors=True, enable_recycling=True)
-            eig = eigs[0]
-            deig = eig - eig_prev
+            i = numpy.argmin(numpy.abs(eigs.real))
+            deig = eigs[i] - prev_eigs[i]
 
         return x, mu, v
 
@@ -280,6 +281,11 @@ class Continuation:
 
         return self.switch_branches_tangent(parameter_name, x, mu, dx, dmu, v, ds)
 
+    def num_positive_eigs(self, eigs):
+        # Include the range of the destination tolerance here to make sure
+        # we don't converge onto the same target twice
+        return sum([eig.real > -self.destination_tolerance for eig in eigs])
+
     def initial_tangent(self, x, parameter_name, mu):
         ''' Compute the initial tangent '''
 
@@ -296,7 +302,7 @@ class Continuation:
 
         # Scaling of the initial tangent (2.2.7)
         dmu = 1
-        nrm = sqrt(self.zeta * dx.dot(dx) + dmu ** 2)
+        nrm = math.sqrt(self.zeta * dx.dot(dx) + dmu ** 2)
         dmu /= nrm
         dx /= nrm
 
@@ -337,7 +343,7 @@ class Continuation:
             dx /= ds
             dmu /= ds
 
-        eig = None
+        eigs = None
 
         if not maxit:
             maxit = self.parameters.get('Maximum Continuation Steps', 1000)
@@ -352,14 +358,14 @@ class Continuation:
             mu0 = mu
 
             if detect_bifurcations or (enable_branch_switching and not switched_branches):
-                eig_prev = eig
+                prev_eigs = eigs
                 eigs, v = self.interface.eigs(x, return_eigenvectors=True, enable_recycling=enable_recycling)
-                eig = eigs[0]
                 enable_recycling = True
 
-                if eig_prev is not None and eig.real * eig_prev.real < 0:
-                    deig = eig - eig_prev
-                    x, mu, v = self.detect_bifurcation(parameter_name, x, mu, dx, dmu, eig, deig, v, ds, maxit - j)
+                if prev_eigs is not None and self.num_positive_eigs(eigs) != self.num_positive_eigs(prev_eigs):
+                    i = numpy.argmin(numpy.abs(eigs.real))
+                    deig = eigs[i] - prev_eigs[i]
+                    x, mu, v = self.detect_bifurcation(parameter_name, x, mu, dx, dmu, eigs, deig, v, ds, maxit - j)
 
                     if enable_branch_switching and not switched_branches:
                         switched_branches = True
