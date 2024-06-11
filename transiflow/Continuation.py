@@ -368,10 +368,6 @@ class Continuation:
 
                     return x, mu
 
-                if eig_prev is None and eig.real > 0:
-                    # We're past the bifurcation already, so go backwards
-                    ds = -ds
-
             x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, ds)
 
             if (mu >= target and mu0 < target) or (mu <= target and mu0 > target):
