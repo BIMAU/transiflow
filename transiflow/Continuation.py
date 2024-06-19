@@ -1,6 +1,6 @@
 import math
+import numpy
 
-from math import sqrt
 from transiflow.utils import norm
 
 class Continuation:
@@ -10,6 +10,7 @@ class Continuation:
         self.parameters = parameters
 
         self.newton_iterations = 0
+        self.destination_tolerance = 1e-4
         self.delta = None
         self.zeta = None
 
@@ -86,13 +87,13 @@ class Continuation:
             diff = x - x0
             rnp1 = self.zeta * diff.dot(diff) + (1 - self.zeta) * (mu - mu0) ** 2 - ds ** 2
 
-            # Compute the jacobian F_x at x (LHS of 2.2.9)
-            jac = self.interface.jacobian(x)
-
             # Compute F_mu (LHS of 2.2.9)
             self.interface.set_parameter(parameter_name, mu + self.delta)
             dflval = (self.interface.rhs(x) - fval) / self.delta
             self.interface.set_parameter(parameter_name, mu)
+
+            # Compute the jacobian F_x at x (LHS of 2.2.9)
+            jac = self.interface.jacobian(x)
 
             if self.parameters.get("Bordered Solver", False):
                 # Solve the entire bordered system in one go (2.2.9)
@@ -158,35 +159,32 @@ class Continuation:
 
         return ds
 
-    def detect_bifurcation(self, parameter_name, x, mu, dx, dmu, eig, deig, v, ds, maxit):
+    def detect_bifurcation(self, parameter_name, x, mu, dx, dmu, eigs, deig, v, ds, maxit):
         ''' Converge onto a bifurcation '''
 
-        tol = self.parameters.get('Destination Tolerance', 1e-4)
-
         for j in range(maxit):
-            if abs(eig.real) < tol:
+            i = numpy.argmin(numpy.abs(eigs.real))
+            if abs(eigs[i].real) < self.destination_tolerance:
                 print("Bifurcation found at %s = %f with eigenvalue %e + %ei" % (
-                    parameter_name, mu, eig.real, eig.imag), flush=True)
+                    parameter_name, mu, eigs[i].real, eigs[i].imag), flush=True)
                 break
 
             # Secant method
-            ds = ds / deig.real * -eig.real
+            ds = ds / deig.real * -eigs.real[i]
             x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, ds)
 
-            eig_prev = eig
+            prev_eigs = eigs
             eigs, v = self.interface.eigs(x, return_eigenvectors=True, enable_recycling=True)
-            eig = eigs[0]
-            deig = eig - eig_prev
+            i = numpy.argmin(numpy.abs(eigs.real))
+            deig = eigs[i] - prev_eigs[i]
 
         return x, mu, v
 
     def converge(self, parameter_name, x, mu, dx, dmu, target, ds, maxit):
         ''' Converge onto the target value '''
 
-        tol = self.parameters.get('Destination Tolerance', 1e-4)
-
         for j in range(maxit):
-            if abs(target - mu) < tol:
+            if abs(target - mu) < self.destination_tolerance:
                 self.interface.set_parameter(parameter_name, target)
                 print("Convergence achieved onto target %s = %f" % (parameter_name, mu), flush=True)
                 break
@@ -283,6 +281,11 @@ class Continuation:
 
         return self.switch_branches_tangent(parameter_name, x, mu, dx, dmu, v, ds)
 
+    def num_positive_eigs(self, eigs):
+        # Include the range of the destination tolerance here to make sure
+        # we don't converge onto the same target twice
+        return sum([eig.real > -self.destination_tolerance for eig in eigs])
+
     def initial_tangent(self, x, parameter_name, mu):
         ''' Compute the initial tangent '''
 
@@ -299,7 +302,7 @@ class Continuation:
 
         # Scaling of the initial tangent (2.2.7)
         dmu = 1
-        nrm = sqrt(self.zeta * dx.dot(dx) + dmu ** 2)
+        nrm = math.sqrt(self.zeta * dx.dot(dx) + dmu ** 2)
         dmu /= nrm
         dx /= nrm
 
@@ -307,7 +310,8 @@ class Continuation:
 
     def continuation(self, x0, parameter_name, start, target, ds,
                      dx=None, dmu=None,
-                     maxit=None, switched_branches=False):
+                     maxit=None, switched_branches=False,
+                     return_step=False):
         '''Perform a pseudo-arclength continuation in parameter_name from
         parameter value start to target with arclength step size ds,
         and starting from an initial state x0.
@@ -327,17 +331,19 @@ class Continuation:
         mu = start
 
         # Set some parameters
+        self.destination_tolerance = self.parameters.get(
+            'Destination Tolerance', self.destination_tolerance)
         self.delta = self.parameters.get('Delta', 1)
         self.zeta = 1 / x.size
 
-        if not dx or not dmu:
+        if dx is None or dmu is None:
             # Get the initial tangent (2.2.5 - 2.2.7).
             dx, dmu = self.initial_tangent(x, parameter_name, mu)
         else:
             dx /= ds
             dmu /= ds
 
-        eig = None
+        eigs = None
 
         if not maxit:
             maxit = self.parameters.get('Maximum Continuation Steps', 1000)
@@ -351,35 +357,40 @@ class Continuation:
         for j in range(maxit):
             mu0 = mu
 
-            x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, ds)
-
             if detect_bifurcations or (enable_branch_switching and not switched_branches):
-                eig_prev = eig
+                prev_eigs = eigs
                 eigs, v = self.interface.eigs(x, return_eigenvectors=True, enable_recycling=enable_recycling)
-                eig = eigs[0]
                 enable_recycling = True
 
-                if eig_prev is not None and eig.real * eig_prev.real < 0:
-                    deig = eig - eig_prev
-                    x, mu, v = self.detect_bifurcation(parameter_name, x, mu, dx, dmu, eig, deig, v, ds, maxit - j)
+                if prev_eigs is not None and self.num_positive_eigs(eigs) != self.num_positive_eigs(prev_eigs):
+                    i = numpy.argmin(numpy.abs(eigs.real))
+                    deig = eigs[i] - prev_eigs[i]
+                    x, mu, v = self.detect_bifurcation(parameter_name, x, mu, dx, dmu, eigs, deig, v, ds, maxit - j)
 
                     if enable_branch_switching and not switched_branches:
                         switched_branches = True
                         x, mu, dx, dmu, ds = self.switch_branches(parameter_name, x, mu, dx, dmu, v[:, 0].real, ds)
                         continue
 
+                    if return_step:
+                        return x, mu, dx * ds, dmu * ds
+
                     return x, mu
 
-                if eig_prev is None and eig.real > 0:
-                    # We're past the bifurcation already, so go backwards
-                    ds = -ds
+            x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, ds)
 
             if (mu >= target and mu0 < target) or (mu <= target and mu0 > target):
                 # Converge onto the end point
                 x, mu = self.converge(parameter_name, x, mu, dx, dmu, target, ds, maxit - j)
 
+                if return_step:
+                    return x, mu, dx * ds, dmu * ds
+
                 return x, mu
 
             ds = self.adjust_step_size(ds)
+
+        if return_step:
+            return x, mu, dx * ds, dmu * ds
 
         return x, mu
