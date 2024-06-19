@@ -13,6 +13,7 @@ Welcome to TransiFlow's documentation!
    problems/ldc
    problems/rb
    problems/dhc
+   problems/tc
 
 .. toctree::
    :maxdepth: 3
