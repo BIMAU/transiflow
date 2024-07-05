@@ -1,17 +1,22 @@
 import numpy
-
+import petsc4py
 from petsc4py import PETSc
 
 from transiflow.interface import ParallelBaseInterface
 
+petsc4py.init()
+
 
 class Vector(PETSc.Vec):
-    """Distributed Epetra_Vector with some extra methods added to it for convenience."""
+    """Distributed ghosted PETSc Vector with some extra methods added to it for convenience."""
 
     @staticmethod
-    def from_array(x):
-        vec = Vector().createMPI(len(x))
-        vec.setArray(x)
+    def from_array(m, x, ghosts=(), comm=PETSc.COMM_WORLD):
+        size = len(m.indices)
+        vec = Vector().createGhost(ghosts, (size, None), comm=comm)
+        vec.setValues(m.indices, x)
+        vec.assemble()
+        vec.ghostUpdate(addv=PETSc.InsertMode.INSERT_VALUES, mode=PETSc.ScatterMode.FORWARD)
         return vec
 
     size = property(PETSc.Vec.getSize)
@@ -31,19 +36,84 @@ class Interface(ParallelBaseInterface):
     The PETSc backend partitions the domain into Cartesian subdomains,
     while solving linear systems on skew Cartesian subdomains to deal
     with the C-grid discretization. The subdomains will be distributed
-    over multiple processors if MPI is used to run the application."""
+    over multiple processors if MPI is used to run the application.
+
+    PETSc parallel vectors (and matrices) are distributed such that each process owns a
+    contiguous range of indices (rows) without holes. The natural ordering is therefore
+    mapped to PETSc's ordering.
+    """
 
     def __init__(self, parameters, nx, ny, nz, dim, dof, comm=PETSc.COMM_WORLD):
         super().__init__(comm, parameters, nx, ny, nz, dim, dof)
 
+        self.size_global = nx * ny * nz * dof
+
+        self.map_natural = self.create_map()
+        self.assembly_map = self.create_map(True)
+
+        ghosts_natural = list(
+            set(self.assembly_map.indices).difference(self.map_natural.indices)
+        )
+
+        self.ghosts = self.ghosts_petsc(ghosts_natural)
+
+        self.index_ordering = PETSc.AO().createMapping(self.map_natural.indices)
+        self.map = self.create_map_petsc()
+
+        self.index_natural_local_permut = numpy.argsort(
+            numpy.r_[self.map_natural.indices, ghosts_natural]
+        )
+
+        self.index_ordering_assembly = PETSc.AO().createMapping(
+            numpy.r_[self.map_natural.indices, ghosts_natural].astype(PETSc.IntType),
+            numpy.r_[self.map.indices, self.ghosts].astype(PETSc.IntType),
+        )
+
         self.jac = None
+
+    def vector(self):
+        return Vector().createGhost(self.ghosts, (len(self.map.indices), None), comm=self.comm)
+
+    def vector_from_array(self, array):
+        return Vector.from_array(self.map, array[self.map_natural.indices], ghosts=self.ghosts)
+
+    def ghosts_petsc(self, ghosts_natural):
+        """Get global indices of ghosts in PETSc ordering.
+
+        1. On each process, create a vector containing the owned natural indices.
+        2. Gather the indices from all processes in a sequential vector and find the
+           locations of the ghosts in the sequential vector. The locations correspond to
+           the ghost indices in PETSc ordering.
+        """
+        vec_indices = Vector().createWithArray(self.map_natural.indices)
+        sct, vec_global_indices = PETSc.Scatter().toAll(vec_indices)
+        sct.scatter(vec_indices, vec_global_indices)
+
+        ghosts_petsc = []
+        for ghost in ghosts_natural:
+            ghosts_petsc.append(numpy.where(vec_global_indices.array == ghost)[0][0])
+
+        return ghosts_petsc
+
+    def create_map_petsc(self):
+        """Create a PETSc index map, using PETSc's ordering (contiguous row ownership),
+        from the naturally ordered indices."""
+        return PETSc.LGMap().create(
+            self.index_ordering.app2petsc(self.map_natural.indices), bsize=None, comm=self.comm
+        )
+
+    def create_map(self, overlapping=False):
+        """Create a PETSc map on which the local discretization domain is defined.
+        The overlapping part is only used for computing the discretization."""
+        local_elements = ParallelBaseInterface.create_map(self, overlapping)
+        return PETSc.LGMap().create(local_elements, bsize=None, comm=self.comm)
 
     def rhs(self, state):
         """Right-hand side in M * du / dt = F(u) defined on the
         non-overlapping discretization domain map."""
 
         rhs = self.discretization.rhs(state.getArray())
-        rhs = Vector.from_array(rhs)
+        rhs = Vector.from_array(self.map, rhs)
 
         return rhs
 
