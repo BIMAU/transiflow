@@ -112,30 +112,56 @@ class Interface(ParallelBaseInterface):
         """Right-hand side in M * du / dt = F(u) defined on the
         non-overlapping discretization domain map."""
 
-        rhs = self.discretization.rhs(state.getArray())
-        rhs = Vector.from_array(self.map, rhs)
+        state.ghostUpdate(addv=PETSc.InsertMode.INSERT_VALUES, mode=PETSc.ScatterMode.FORWARD)
+        ind_local_nat = self.index_natural_local_permut
 
-        return rhs
+        with state.localForm() as lf:
+            local_rhs = self.discretization.rhs(lf.array[ind_local_nat])
+
+        rhs_vec = state.duplicate()
+
+        with rhs_vec.localForm() as lf:
+            lf.array[ind_local_nat] = local_rhs
+
+        return rhs_vec
 
     def jacobian(self, state):
         """Jacobian J of F in M * du / dt = F(u) defined on the
         domain map used by PETSc."""
 
-        local_jac = self.discretization.jacobian(state.getArray())
+        ind_local_nat = self.index_natural_local_permut
+
+        state.ghostUpdate(addv=PETSc.InsertMode.INSERT_VALUES, mode=PETSc.ScatterMode.FORWARD)
+
+        with state.localForm() as lf:
+            local_jac = self.discretization.jacobian(lf.array[ind_local_nat])
 
         if self.jac is None:
-            self.jac = PETSc.Mat().createAIJ((state.size, state.size), comm=self.comm)
+            self.jac = PETSc.Mat().create(comm=self.comm)
+            self.jac.setType("aij")
+            N = state.size
+            self.jac.setSizes((N, N))
+            self.jac.setLGMap(self.map)
             self.jac.setUp()
         else:
             self.jac.zeroEntries()
 
-        self.jac.setValuesCSR(
-            numpy.array(local_jac.begA, dtype=numpy.int32),
-            numpy.array(local_jac.jcoA[: local_jac.begA[-1]], dtype=numpy.int32),
-            local_jac.coA[: local_jac.begA[-1]],
-        )
+        self.jac.assemblyBegin()
+        for i_loc in range(len(local_jac.begA) - 1):
 
-        self.jac.assemble()
+            if self.is_ghost(i_loc):
+                continue
+
+            col_idx_nat = self.assembly_map.indices[
+                local_jac.jcoA[local_jac.begA[i_loc]: local_jac.begA[i_loc + 1]]
+            ]
+            values = local_jac.coA[local_jac.begA[i_loc]: local_jac.begA[i_loc + 1]]
+
+            i = self.index_ordering.app2petsc(self.assembly_map.indices[i_loc])
+            col_idx = self.index_ordering_assembly.app2petsc(col_idx_nat)
+            self.jac.setValues(i, col_idx, values)
+
+        self.jac.assemblyEnd()
 
         return self.jac
 
