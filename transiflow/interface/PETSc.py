@@ -181,11 +181,25 @@ class Interface(ParallelBaseInterface):
 
         ksp.setFromOptions()
 
+        dof = self.dim
+        self.set_dirichlet_bc(jac, rhs, dof, 0.0)
+
         ksp.setOperators(jac)
-        x = rhs.copy()
+        x = self.vector()
 
         ksp.solve(rhs, x)
+
+        x.ghostUpdate(addv=PETSc.InsertMode.INSERT_VALUES, mode=PETSc.ScatterMode.FORWARD)
         return x
+
+    def set_dirichlet_bc(self, A, b, i, value):
+        """Set Dirichlet BC to specified value at index i.
+        Single values or sequences of indices and values are accepted.
+        """
+        A.zeroRows(i)
+        b.setValues(i, value)
+        b.assemble()
+        b.ghostUpdate(addv=PETSc.InsertMode.INSERT_VALUES, mode=PETSc.ScatterMode.FORWARD)
 
     def eigs(self, state, return_eigenvectors=False, enable_recycling=False):
         """Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v."""
