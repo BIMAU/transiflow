@@ -23,10 +23,14 @@ Welcome to TransiFlow's documentation!
 
    reference/transiflow
 
+.. toctree::
+   :caption: Symbols
+
+   symbols
+
 Indices and tables
 ==================
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-* :ref:`symbols`
