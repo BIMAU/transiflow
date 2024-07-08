@@ -6,6 +6,7 @@
 Welcome to TransiFlow's documentation!
 ======================================
 
+.. _problem definitions:
 .. toctree::
    :maxdepth: 3
    :caption: Problem definitions

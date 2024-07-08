@@ -37,11 +37,12 @@ extensions = [
     'numpydoc',
 ]
 
+numpydoc_show_class_members = False
+
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 add_module_names = False
-
 apidoc_module_dir = '../transiflow'
 apidoc_output_dir = 'reference'
 apidoc_excluded_paths = [
