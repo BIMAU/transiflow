@@ -15,6 +15,7 @@ Welcome to TransiFlow's documentation!
    problems/dhc
    problems/tc
    problems/qg
+   problems/amoc
 
 .. toctree::
    :maxdepth: 3
