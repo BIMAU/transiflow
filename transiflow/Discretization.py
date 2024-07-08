@@ -836,7 +836,7 @@ class Discretization:
         return atom
 
     def wind_stress(self):
-        tau_0 = self.get_parameter('Wind Stress Parameter')
+        alpha = self.get_parameter('Wind Stress Parameter')
         asym = self.get_parameter('Asymmetry Parameter')
 
         frc = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
@@ -850,7 +850,7 @@ class Discretization:
 
             y = (self.y[j] + self.y[j-1]) / 2
             frc[i, j, k, 0] = - (1 - asym) * numpy.cos(2 * numpy.pi * y) - asym * numpy.cos(numpy.pi * y)
-            frc[i, j, k, 0] *= tau_0 / (2 * numpy.pi) * dx * dy * dz
+            frc[i, j, k, 0] *= alpha / (2 * numpy.pi) * dx * dy * dz
         return utils.create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
 
     @staticmethod
