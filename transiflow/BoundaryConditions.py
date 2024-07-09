@@ -145,9 +145,7 @@ class BoundaryConditions:
         self.no_slip_south(atom)
 
     def moving_lid_top(self, atom, velocity):
-        self.frc += self._constant_forcing_top(atom[:, :, :, :, 0, :, :, :], 0, 2 * velocity, -1) + \
-            self._constant_forcing_top(atom[:, :, :, :, 0, :, :, :], 1, 2 * velocity, -1)
-
+        self.frc += self._constant_forcing_top(atom, 0, 2 * velocity, -1)
         self.no_slip_top(atom)
 
     def moving_lid_bottom(self, atom, velocity):
@@ -181,7 +179,7 @@ class BoundaryConditions:
     def temperature_top(self, atom, temperature):
         '''T[k] + T[k+1] = 2 * Tb
         so T[k+1] = 2 * Tb - T[k]'''
-        self.frc += self._constant_forcing_top(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, 2 * temperature, -1)
+        self.frc += self._constant_forcing_top(atom, self.dim+1, 2 * temperature, -1)
 
     def temperature_bottom(self, atom, temperature):
         '''T[k] + T[k-1] = 2 * Tb
@@ -233,8 +231,7 @@ class BoundaryConditions:
 
         forcing_constant = h * heat_flux / (1 + h * biot / 2)
         atom_constant = (1 - h * biot / 2) / (1 + h * biot / 2)
-        self.frc += self._constant_forcing_top(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1,
-                                               forcing_constant, atom_constant)
+        self.frc += self._constant_forcing_top(atom, self.dim+1, forcing_constant, atom_constant)
 
     def heat_flux_bottom(self, atom, heat_flux, biot=0.0):
         '''T[k] - T[k-1] + h * Bi * (T[k] + T[k-1]) / 2 = h * Tbc, h = (z[k] - z[k-2]) / 2
@@ -277,8 +274,7 @@ class BoundaryConditions:
         '''S[k+1] - S[k] = h * Sbc, h = (z[k+1] - z[k-1]) / 2
         so S[k+1] = S[k] + h * Sbc'''
         h = (self.z[self.nz] - self.z[self.nz-2]) / 2
-        self.frc += self._constant_forcing_top(atom[:, :, :, :, self.dim+2, :, :, :], self.dim+2,
-                                               h * salinity_flux, 1)
+        self.frc += self._constant_forcing_top(atom, self.dim+2, h * salinity_flux, 1)
 
     def salinity_flux_bottom(self, atom, salinity_flux):
         '''S[k] - S[k-1] = h * Sbc, h = (z[k] - z[k-2]) / 2
@@ -343,11 +339,12 @@ class BoundaryConditions:
 
     def _constant_forcing_top(self, atom, var, forcing_constant, atom_constant):
         frc = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
-        frc[:, :, self.nz-1, :] = self._constant_forcing(atom[:, :, self.nz-1, :, :, :, 2], self.nx, self.ny,
-                                                         var, forcing_constant)
+        frc[:, :, self.nz-1, :] = self._constant_forcing(
+            atom[:, :, self.nz-1, :, var, :, :, 2], self.nx, self.ny,
+            var, forcing_constant)
 
-        atom[:, :, self.nz-1, var, :, :, 1] += atom_constant * atom[:, :, self.nz-1, var, :, :, 2]
-        atom[:, :, self.nz-1, var, :, :, 2] = 0
+        atom[:, :, self.nz-1, :, var, :, :, 1] += atom_constant * atom[:, :, self.nz-1, :, var, :, :, 2]
+        atom[:, :, self.nz-1, :, var, :, :, 2] = 0
 
         return frc
 
