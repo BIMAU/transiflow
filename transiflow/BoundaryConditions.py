@@ -30,6 +30,8 @@ class BoundaryConditions:
         # TODO: Do we need this?
         atom[self.nx-2, :, :, 0, 0, 2, :, :] = 0
 
+        self.frc[self.nx-1, :, :, 0] = 0
+
     def no_slip_west(self, atom):
         '''At the boundary u[i-1] = 0, v[i-1] + v[i] = 0 similar for w. So v[i-1] = -v[i].'''
         atom[0, :, :, :, 0, 0, :, :] = 0
@@ -45,6 +47,8 @@ class BoundaryConditions:
         atom[:, self.ny-1, :, 1, 1, 1, 1, 1] = -1
         # TODO: Do we need this?
         atom[:, self.ny-2, :, 1, 1, :, 2, :] = 0
+
+        self.frc[:, self.ny-1, :, 1] = 0
 
     def no_slip_south(self, atom):
         '''At the boundary v[i-1] = 0, u[i-1] + u[i] = 0 similar for w. So u[i-1] = -u[i].'''
@@ -62,6 +66,8 @@ class BoundaryConditions:
         # TODO: Do we need this?
         atom[:, :, self.nz-2, 2, 2, :, :, 2] = 0
 
+        self.frc[:, :, self.nz-1, 1] = 0
+
     def no_slip_bottom(self, atom):
         '''At the boundary w[i-1] = 0, u[i-1] + u[i] = 0 similar for v. So u[i-1] = -u[i].'''
         atom[:, :, 0, :, 2, :, :, 0] = 0
@@ -77,6 +83,8 @@ class BoundaryConditions:
         atom[self.nx-1, :, :, 0, 0, 1, 1, 1] = -1
         # TODO: Do we need this?
         atom[self.nx-2, :, :, 0, 0, 2, :, :] = 0
+
+        self.frc[self.nx-1, :, :, 0] = 0
 
     def free_slip_west(self, atom):
         '''At the boundary u[i-1] = 0, v[i-1] - v[i] = 0 similar for w. So v[i-1] = v[i].'''
@@ -94,6 +102,8 @@ class BoundaryConditions:
         # TODO: Do we need this?
         atom[:, self.ny-2, :, 1, 1, :, 2, :] = 0
 
+        self.frc[:, self.ny-1, :, 1] = 0
+
     def free_slip_south(self, atom):
         '''At the boundary v[i-1] = 0, u[i-1] - u[i] = 0 similar for w. So u[i-1] = u[i].'''
         atom[:, 0, :, :, 1, :, 0, :] = 0
@@ -109,6 +119,8 @@ class BoundaryConditions:
         atom[:, :, self.nz-1, 2, 2, 1, 1, 1] = -1
         # TODO: Do we need this?
         atom[:, :, self.nz-2, 2, 2, :, :, 2] = 0
+
+        self.frc[:, :, self.nz-1, 1] = 0
 
     def free_slip_bottom(self, atom):
         '''At the boundary w[i-1] = 0, u[i-1] - u[i] = 0 similar for v. So u[i-1] = u[i].'''
