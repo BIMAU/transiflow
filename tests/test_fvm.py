@@ -1044,6 +1044,165 @@ def test_bous_2D():
 
         assert rhs2[i] == pytest.approx(rhs1[i1])
 
+def test_dhc():
+    nx = 4
+    ny = nx
+    nz = nx
+    dim = 3
+    dof = 5
+    parameters = {'Reynolds Number': 1, 'Rayleigh Number': 100, 'Prandtl Number': 100,
+                  'Problem Type': 'Differentially Heated Cavity'}
+    n = nx * ny * nz * dof
+
+    state = numpy.zeros(n)
+    for i in range(n):
+        state[i] = i+1
+
+    discretization = Discretization(parameters, nx, ny, nz, dim, dof)
+    A = discretization.jacobian(state)
+    rhs = discretization.rhs(state)
+
+    B = read_matrix('data/dhc_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = read_vector('data/dhc_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+
+    for i in range(n):
+        print(i)
+
+        print('Expected:')
+        print(B.jcoA[B.begA[i]:B.begA[i+1]])
+        print(B.coA[B.begA[i]:B.begA[i+1]])
+
+        print('Got:')
+        print(A.jcoA[A.begA[i]:A.begA[i+1]])
+        print(A.coA[A.begA[i]:A.begA[i+1]])
+
+        assert A.begA[i+1] - A.begA[i] == B.begA[i+1] - B.begA[i]
+        for j in range(A.begA[i], A.begA[i+1]):
+            assert A.jcoA[j] == B.jcoA[j]
+            assert A.coA[j] == pytest.approx(B.coA[j])
+
+        assert rhs_B[i] == pytest.approx(rhs[i])
+
+def test_tc():
+    nx = 4
+    ny = nx
+    nz = nx
+    dim = 3
+    dof = 4
+    parameters = {'Reynolds Number': 1,
+                  'Problem Type': 'Taylor-Couette'}
+    n = nx * ny * nz * dof
+
+    state = numpy.zeros(n)
+    for i in range(n):
+        state[i] = i+1
+
+    discretization = CylindricalDiscretization(parameters, nx, ny, nz, dim, dof)
+    A = discretization.jacobian(state)
+    rhs = discretization.rhs(state)
+
+    B = read_matrix('data/tc_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = read_vector('data/tc_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+
+    for i in range(n):
+        print(i)
+
+        print('Expected:')
+        print(B.jcoA[B.begA[i]:B.begA[i+1]])
+        print(B.coA[B.begA[i]:B.begA[i+1]])
+
+        print('Got:')
+        print(A.jcoA[A.begA[i]:A.begA[i+1]])
+        print(A.coA[A.begA[i]:A.begA[i+1]])
+
+        assert A.begA[i+1] - A.begA[i] == B.begA[i+1] - B.begA[i]
+        for j in range(A.begA[i], A.begA[i+1]):
+            assert A.jcoA[j] == B.jcoA[j]
+            assert A.coA[j] == pytest.approx(B.coA[j])
+
+        assert rhs_B[i] == pytest.approx(rhs[i])
+
+def test_qg():
+    nx = 4
+    ny = nx
+    nz = 1
+    dim = 2
+    dof = 4
+    parameters = {'Reynolds Number': 16, 'Rossby Parameter': 1000,
+                  'Wind Stress Parameter': 1000,
+                  'Problem Type': 'Double Gyre'}
+    n = nx * ny * nz * dof
+
+    state = numpy.zeros(n)
+    for i in range(n):
+        state[i] = i+1
+
+    discretization = Discretization(parameters, nx, ny, nz, dim, dof)
+    A = discretization.jacobian(state)
+    rhs = discretization.rhs(state)
+
+    B = read_matrix('data/qg_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = read_vector('data/qg_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+
+    for i in range(n):
+        print(i)
+
+        print('Expected:')
+        print(B.jcoA[B.begA[i]:B.begA[i+1]])
+        print(B.coA[B.begA[i]:B.begA[i+1]])
+
+        print('Got:')
+        print(A.jcoA[A.begA[i]:A.begA[i+1]])
+        print(A.coA[A.begA[i]:A.begA[i+1]])
+
+        assert A.begA[i+1] - A.begA[i] == B.begA[i+1] - B.begA[i]
+        for j in range(A.begA[i], A.begA[i+1]):
+            assert A.jcoA[j] == B.jcoA[j]
+            assert A.coA[j] == pytest.approx(B.coA[j])
+
+        assert rhs_B[i] == pytest.approx(rhs[i])
+
+def test_amoc():
+    nx = 4
+    ny = nx
+    nz = 1
+    dim = 2
+    dof = 5
+    parameters = {'Reynolds Number': 16, 'Rayleigh Number': 4e4,
+                  'Prandtl Number': 2.25, 'Lewis Number': 1,
+                  'Temperature Forcing': 1, 'Freshwater Flux': 1,
+                  'Problem Type': 'AMOC'}
+    n = nx * ny * nz * dof
+
+    state = numpy.zeros(n)
+    for i in range(n):
+        state[i] = i+1
+
+    discretization = Discretization(parameters, nx, ny, nz, dim, dof)
+    A = discretization.jacobian(state)
+    rhs = discretization.rhs(state)
+
+    B = read_matrix('data/amoc_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = read_vector('data/amoc_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+
+    for i in range(n):
+        print(i)
+
+        print('Expected:')
+        print(B.jcoA[B.begA[i]:B.begA[i+1]])
+        print(B.coA[B.begA[i]:B.begA[i+1]])
+
+        print('Got:')
+        print(A.jcoA[A.begA[i]:A.begA[i+1]])
+        print(A.coA[A.begA[i]:A.begA[i+1]])
+
+        assert A.begA[i+1] - A.begA[i] == B.begA[i+1] - B.begA[i]
+        for j in range(A.begA[i], A.begA[i+1]):
+            assert A.jcoA[j] == B.jcoA[j]
+            assert A.coA[j] == pytest.approx(B.coA[j])
+
+        assert rhs_B[i] == pytest.approx(rhs[i])
+
 def test_ldc8():
     nx = 8
     ny = nx
