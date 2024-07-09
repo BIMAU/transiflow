@@ -137,8 +137,7 @@ class BoundaryConditions:
         self.no_slip_west(atom)
 
     def moving_lid_north(self, atom, velocity):
-        self.frc += self._constant_forcing_north(atom[:, :, :, :, 0, :, :, :], 0, 2 * velocity, -1)
-
+        self.frc += self._constant_forcing_north(atom, 0, 2 * velocity, -1)
         self.no_slip_north(atom)
 
     def moving_lid_south(self, atom, velocity):
@@ -173,7 +172,7 @@ class BoundaryConditions:
     def temperature_north(self, atom, temperature):
         '''T[j] + T[j+1] = 2 * Tb
         so T[j+1] = 2 * Tb - T[j]'''
-        self.frc += self._constant_forcing_north(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, 2 * temperature, -1)
+        self.frc += self._constant_forcing_north(atom, self.dim+1, 2 * temperature, -1)
 
     def temperature_south(self, atom, temperature):
         '''T[j] + T[j-1] = 2 * Tb
@@ -216,8 +215,7 @@ class BoundaryConditions:
 
         forcing_constant = h * heat_flux / (1 + h * biot / 2)
         atom_constant = (1 - h * biot / 2) / (1 + h * biot / 2)
-        self.frc += self._constant_forcing_north(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1,
-                                                 forcing_constant, atom_constant)
+        self.frc += self._constant_forcing_north(atom, self.dim+1, forcing_constant, atom_constant)
 
     def heat_flux_south(self, atom, heat_flux, biot=0.0):
         '''T[j] - T[j-1] + h * Bi * (T[j] + T[j-1]) / 2 = h * Tbc, h = (y[j] - y[j-2]) / 2
@@ -268,8 +266,7 @@ class BoundaryConditions:
         '''S[j+1] - S[j] = h * Sbc, h = (y[j+1] - y[j-1]) / 2
         so S[j+1] = S[j] + h * Sbc'''
         h = (self.y[self.ny] - self.y[self.ny-2]) / 2
-        self.frc += self._constant_forcing_north(atom[:, :, :, :, self.dim+2, :, :, :], self.dim+2,
-                                                 h * salinity_flux, 1)
+        self.frc += self._constant_forcing_north(atom, self.dim+2, h * salinity_flux, 1)
 
     def salinity_flux_south(self, atom, salinity_flux):
         '''S[j] - S[j-1] = h * Sbc, h = (y[j] - y[j-2]) / 2
@@ -327,11 +324,12 @@ class BoundaryConditions:
 
     def _constant_forcing_north(self, atom, var, forcing_constant, atom_constant):
         frc = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
-        frc[:, self.ny-1, :, :] = self._constant_forcing(atom[:, self.ny-1, :, :, :, 2, :], self.nx, self.nz,
-                                                         var, forcing_constant)
+        frc[:, self.ny-1, :, :] = self._constant_forcing(
+            atom[:, self.ny-1, :, :, var, :, 2, :], self.nx, self.nz,
+            var, forcing_constant)
 
-        atom[:, self.ny-1, :, var, :, 1, :] += atom_constant * atom[:, self.ny-1, :, var, :, 2, :]
-        atom[:, self.ny-1, :, var, :, 2, :] = 0
+        atom[:, self.ny-1, :, :, var, :, 1, :] += atom_constant * atom[:, self.ny-1, :, :, var, :, 2, :]
+        atom[:, self.ny-1, :, :, var, :, 2, :] = 0
 
         return frc
 
