@@ -552,8 +552,6 @@ class Discretization:
 
         boundary_conditions = BoundaryConditions(self.nx, self.ny, self.nz, self.dim, self.dof, self.x, self.y, self.z)
 
-        frc = numpy.zeros(self.nx * self.ny * self.nz * self.dof)
-
         if self.problem_type_equals('Lid-driven Cavity'):
             v = self.get_parameter('Lid Velocity', 1)
             boundary_conditions.no_slip_east(atom)
@@ -561,18 +559,18 @@ class Discretization:
 
             boundary_conditions.no_slip_south(atom)
             if self.dim == 2 or self.nz <= 1:
-                frc += boundary_conditions.moving_lid_north(atom, v)
-                return frc
+                boundary_conditions.moving_lid_north(atom, v)
+                return boundary_conditions.get_forcing()
 
             boundary_conditions.no_slip_north(atom)
 
             boundary_conditions.no_slip_bottom(atom)
-            frc += boundary_conditions.moving_lid_top(atom, v)
+            boundary_conditions.moving_lid_top(atom, v)
         elif (self.problem_type_equals('Rayleigh-Benard')
               or self.problem_type_equals('Rayleigh-Benard Perturbation')):
             asym = self.get_parameter('Asymmetry Parameter')
-            frc += boundary_conditions.heat_flux_east(atom, asym)
-            frc += boundary_conditions.heat_flux_west(atom, 0)
+            boundary_conditions.heat_flux_east(atom, asym)
+            boundary_conditions.heat_flux_west(atom, 0)
             boundary_conditions.no_slip_east(atom)
             boundary_conditions.no_slip_west(atom)
 
@@ -580,35 +578,35 @@ class Discretization:
             bottom_temperature = 1 if self.problem_type_equals('Rayleigh-Benard') else 0
 
             if self.dim == 2 or self.nz <= 1:
-                frc += boundary_conditions.heat_flux_north(atom, 0, Bi)
-                frc += boundary_conditions.temperature_south(atom, bottom_temperature)
+                boundary_conditions.heat_flux_north(atom, 0, Bi)
+                boundary_conditions.temperature_south(atom, bottom_temperature)
                 boundary_conditions.free_slip_north(atom)
                 boundary_conditions.no_slip_south(atom)
-                return frc
+                return boundary_conditions.get_forcing()
 
-            frc += boundary_conditions.heat_flux_north(atom, 0)
-            frc += boundary_conditions.heat_flux_south(atom, 0)
+            boundary_conditions.heat_flux_north(atom, 0)
+            boundary_conditions.heat_flux_south(atom, 0)
             boundary_conditions.no_slip_north(atom)
             boundary_conditions.no_slip_south(atom)
 
-            frc += boundary_conditions.heat_flux_top(atom, 0, Bi)
-            frc += boundary_conditions.temperature_bottom(atom, bottom_temperature)
+            boundary_conditions.heat_flux_top(atom, 0, Bi)
+            boundary_conditions.temperature_bottom(atom, bottom_temperature)
             boundary_conditions.free_slip_top(atom)
             boundary_conditions.no_slip_bottom(atom)
         elif self.problem_type_equals('Differentially Heated Cavity'):
-            frc += boundary_conditions.temperature_east(atom, -1/2)
-            frc += boundary_conditions.temperature_west(atom, 1/2)
+            boundary_conditions.temperature_east(atom, -1/2)
+            boundary_conditions.temperature_west(atom, 1/2)
             boundary_conditions.no_slip_east(atom)
             boundary_conditions.no_slip_west(atom)
 
-            frc += boundary_conditions.heat_flux_north(atom, 0)
-            frc += boundary_conditions.heat_flux_south(atom, 0)
+            boundary_conditions.heat_flux_north(atom, 0)
+            boundary_conditions.heat_flux_south(atom, 0)
             boundary_conditions.no_slip_north(atom)
             boundary_conditions.no_slip_south(atom)
 
             if self.dim > 2 and self.nz > 1:
-                frc += boundary_conditions.heat_flux_top(atom, 0)
-                frc += boundary_conditions.heat_flux_bottom(atom, 0)
+                boundary_conditions.heat_flux_top(atom, 0)
+                boundary_conditions.heat_flux_bottom(atom, 0)
                 boundary_conditions.no_slip_top(atom)
                 boundary_conditions.no_slip_bottom(atom)
         elif self.problem_type_equals('Double Gyre'):
@@ -619,16 +617,18 @@ class Discretization:
 
             boundary_conditions.free_slip_north(atom)
             boundary_conditions.free_slip_south(atom)
+
+            return frc
         elif self.problem_type_equals('AMOC'):
-            frc += boundary_conditions.heat_flux_east(atom, 0)
-            frc += boundary_conditions.heat_flux_west(atom, 0)
-            frc += boundary_conditions.salinity_flux_east(atom, 0)
-            frc += boundary_conditions.salinity_flux_west(atom, 0)
+            boundary_conditions.heat_flux_east(atom, 0)
+            boundary_conditions.heat_flux_west(atom, 0)
+            boundary_conditions.salinity_flux_east(atom, 0)
+            boundary_conditions.salinity_flux_west(atom, 0)
             boundary_conditions.free_slip_east(atom)
             boundary_conditions.free_slip_west(atom)
 
-            frc += boundary_conditions.heat_flux_south(atom, 0)
-            frc += boundary_conditions.salinity_flux_south(atom, 0)
+            boundary_conditions.heat_flux_south(atom, 0)
+            boundary_conditions.salinity_flux_south(atom, 0)
             boundary_conditions.free_slip_south(atom)
 
             x = utils.compute_coordinate_vector_centers(self.x)
@@ -640,14 +640,14 @@ class Discretization:
             T_S = numpy.zeros((self.nx + 2, self.nz + 2))
             T_S[:, 0] = 1 / 2 * ((1 - asym) * numpy.cos(2 * numpy.pi * (x / A - 1 / 2))
                                  + asym * numpy.cos(numpy.pi * x / A) + 1)
-            frc += boundary_conditions.temperature_north(atom, theta * T_S)
+            boundary_conditions.temperature_north(atom, theta * T_S)
 
             sigma = self.get_parameter('Freshwater Flux')
             p = 2
 
             Q_S = numpy.zeros((self.nx + 2, self.nz + 2))
             Q_S[:, 0] = 3 * numpy.cos(p * numpy.pi * (x / A - 1 / 2)) - 6 / (p * numpy.pi) * numpy.sin(p * numpy.pi / 2)
-            frc += boundary_conditions.salinity_flux_north(atom, sigma * Q_S)
+            boundary_conditions.salinity_flux_north(atom, sigma * Q_S)
 
             boundary_conditions.free_slip_north(atom)
 
@@ -660,11 +660,14 @@ class Discretization:
                     atom[i, j, k, d, self.dim+2, x, y, z] = 0
 
             atom[0, 0, 0, self.dim+2, self.dim+2, 1, 1, 1] = -1
+
+            frc = boundary_conditions.get_forcing()
             frc[row] = 0
+            return frc
         else:
             raise Exception('Invalid problem type %s' % self.get_parameter('Problem Type'))
 
-        return frc
+        return boundary_conditions.get_forcing()
 
     # Below are all of the discretizations of separate parts of
     # equations that we can solve using FVM. This takes into account
