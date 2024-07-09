@@ -141,8 +141,7 @@ class BoundaryConditions:
         self.no_slip_north(atom)
 
     def moving_lid_south(self, atom, velocity):
-        self.frc += self._constant_forcing_south(atom[:, :, :, :, 0, :, :, :], 0, 2 * velocity, -1)
-
+        self.frc += self._constant_forcing_south(atom, 0, 2 * velocity, -1)
         self.no_slip_south(atom)
 
     def moving_lid_top(self, atom, velocity):
@@ -177,7 +176,7 @@ class BoundaryConditions:
     def temperature_south(self, atom, temperature):
         '''T[j] + T[j-1] = 2 * Tb
         so T[j-1] = 2 * Tb - T[j]'''
-        self.frc += self._constant_forcing_south(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, 2 * temperature, -1)
+        self.frc += self._constant_forcing_south(atom, self.dim+1, 2 * temperature, -1)
 
     def temperature_top(self, atom, temperature):
         '''T[k] + T[k+1] = 2 * Tb
@@ -225,8 +224,7 @@ class BoundaryConditions:
 
         forcing_constant = -h * heat_flux / (1 - h * biot / 2)
         atom_constant = (1 + h * biot / 2) / (1 - h * biot / 2)
-        self.frc += self._constant_forcing_south(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1,
-                                                 forcing_constant, atom_constant)
+        self.frc += self._constant_forcing_south(atom, self.dim+1, forcing_constant, atom_constant)
 
     def heat_flux_top(self, atom, heat_flux, biot=0.0):
         '''T[k+1] - T[k] + h * Bi * (T[k+1] + T[k]) / 2 = h * Tbc, h = (z[k+1] - z[k-1]) / 2
@@ -273,8 +271,7 @@ class BoundaryConditions:
         so S[j-1] = S[j] - h * Sbc
         (south boundary does not start at y = 0)'''
         h = (self.y[0] - self.y[-2]) / 2
-        self.frc += self._constant_forcing_south(atom[:, :, :, :, self.dim+2, :, :, :], self.dim+2,
-                                                 -h * salinity_flux, 1)
+        self.frc += self._constant_forcing_south(atom, self.dim+2, -h * salinity_flux, 1)
 
     def salinity_flux_top(self, atom, salinity_flux):
         '''S[k+1] - S[k] = h * Sbc, h = (z[k+1] - z[k-1]) / 2
@@ -335,11 +332,12 @@ class BoundaryConditions:
 
     def _constant_forcing_south(self, atom, var, forcing_constant, atom_constant):
         frc = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
-        frc[:, 0, :, :] = self._constant_forcing(atom[:, 0, :, :, :, 0, :], self.nx, self.nz,
-                                                 var, forcing_constant)
+        frc[:, 0, :, :] = self._constant_forcing(
+            atom[:, 0, :, :, var, :, 0, :], self.nx, self.nz,
+            var, forcing_constant)
 
-        atom[:, 0, :, var, :, 1, :] += atom_constant * atom[:, 0, :, var, :, 0, :]
-        atom[:, 0, :, var, :, 0, :] = 0
+        atom[:, 0, :, :, var, :, 1, :] += atom_constant * atom[:, 0, :, :, var, :, 0, :]
+        atom[:, 0, :, :, var, :, 0, :] = 0
 
         return frc
 
