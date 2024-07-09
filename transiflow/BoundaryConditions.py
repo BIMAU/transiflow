@@ -149,9 +149,7 @@ class BoundaryConditions:
         self.no_slip_top(atom)
 
     def moving_lid_bottom(self, atom, velocity):
-        self.frc += self._constant_forcing_bottom(atom[:, :, :, :, 0, :, :, :], 0, 2 * velocity, -1) + \
-            self._constant_forcing_bottom(atom[:, :, :, :, 0, :, :, :], 1, 2 * velocity, -1)
-
+        self.frc += self._constant_forcing_bottom(atom, 0, 2 * velocity, -1)
         self.no_slip_bottom(atom)
 
 # TODO: These methods are untested with nonzero heat flux and stretched grids
@@ -184,7 +182,7 @@ class BoundaryConditions:
     def temperature_bottom(self, atom, temperature):
         '''T[k] + T[k-1] = 2 * Tb
         so T[k-1] = 2 * Tb - T[k]'''
-        self.frc += self._constant_forcing_bottom(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, 2 * temperature, -1)
+        self.frc += self._constant_forcing_bottom(atom, self.dim+1, 2 * temperature, -1)
 
     def heat_flux_east(self, atom, heat_flux, biot=0.0):
         '''T[i+1] - T[i] + h * Bi * (T[i+1] + T[i]) / 2 = h * Tbc, h = (x[i+1] - x[i-1]) / 2
@@ -241,8 +239,7 @@ class BoundaryConditions:
 
         forcing_constant = -h * heat_flux / (1 - h * biot / 2)
         atom_constant = (1 + h * biot / 2) / (1 - h * biot / 2)
-        self.frc += self._constant_forcing_bottom(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1,
-                                                  forcing_constant, atom_constant)
+        self.frc += self._constant_forcing_bottom(atom, self.dim+1, forcing_constant, atom_constant)
 
     def salinity_flux_east(self, atom, salinity_flux):
         '''S[i+1] - S[i] = h * Sbc, h = (x[i+1] - x[i-1]) / 2
@@ -281,8 +278,7 @@ class BoundaryConditions:
         so S[k-1] = S[k] - h * Sbc
         (bottom boundary does not start at z = 0)'''
         h = (self.z[0] - self.z[-2]) / 2
-        self.frc += self._constant_forcing_bottom(atom[:, :, :, :, self.dim+2, :, :, :], self.dim+2,
-                                                  -h * salinity_flux, 1)
+        self.frc += self._constant_forcing_bottom(atom, self.dim+2, -h * salinity_flux, 1)
 
     def _constant_forcing(self, atom, nx, ny, var, value):
         value = numpy.ones((nx + 2, ny + 2)) * value
@@ -350,10 +346,11 @@ class BoundaryConditions:
 
     def _constant_forcing_bottom(self, atom, var, forcing_constant, atom_constant):
         frc = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
-        frc[:, :, 0, :] = self._constant_forcing(atom[:, :, 0, :, :, :, 0], self.nx, self.ny,
-                                                 var, forcing_constant)
+        frc[:, :, 0, :] = self._constant_forcing(
+            atom[:, :, 0, :, var, :, :, 0], self.nx, self.ny,
+            var, forcing_constant)
 
-        atom[:, :, 0, var, :, :, 1] += atom_constant * atom[:, :, 0, var, :, :, 0]
-        atom[:, :, 0, var, :, :, 0] = 0
+        atom[:, :, 0, :, var, :, :, 1] += atom_constant * atom[:, :, 0, :, var, :, :, 0]
+        atom[:, :, 0, :, var, :, :, 0] = 0
 
         return frc
