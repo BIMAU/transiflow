@@ -6,3 +6,7 @@
 {%- for option in automodule_options %}
    :{{ option }}:
 {%- endfor %}
+
+..
+    Explicitly enable math mode
+.. math::
