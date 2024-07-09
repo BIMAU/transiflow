@@ -133,10 +133,7 @@ class BoundaryConditions:
         self.no_slip_east(atom)
 
     def moving_lid_west(self, atom, velocity):
-        self.frc += self._constant_forcing_west(atom[:, :, :, :, 1, :, :, :], 1, 2 * velocity, -1)
-        if self.dim == 3 and self.nz > 1:
-            self.frc += self._constant_forcing_west(atom[:, :, :, :, 1, :, :, :], 2, 2 * velocity, -1)
-
+        self.frc += self._constant_forcing_west(atom, 1, 2 * velocity, -1)
         self.no_slip_west(atom)
 
     def moving_lid_north(self, atom, velocity):
@@ -171,7 +168,7 @@ class BoundaryConditions:
     def temperature_west(self, atom, temperature):
         '''T[i] + T[i-1] = 2 * Tb
         so T[i-1] = 2 * Tb - T[i]'''
-        self.frc += self._constant_forcing_west(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1, 2 * temperature, -1)
+        self.frc += self._constant_forcing_west(atom, self.dim+1, 2 * temperature, -1)
 
     def temperature_north(self, atom, temperature):
         '''T[j] + T[j+1] = 2 * Tb
@@ -210,8 +207,7 @@ class BoundaryConditions:
 
         forcing_constant = -h * heat_flux / (1 - h * biot / 2)
         atom_constant = (1 + h * biot / 2) / (1 - h * biot / 2)
-        self.frc += self._constant_forcing_west(atom[:, :, :, :, self.dim+1, :, :, :], self.dim+1,
-                                                forcing_constant, atom_constant)
+        self.frc += self._constant_forcing_west(atom, self.dim+1, forcing_constant, atom_constant)
 
     def heat_flux_north(self, atom, heat_flux, biot=0.0):
         '''T[j+1] - T[j] + h * Bi * (T[j+1] + T[j]) / 2 = h * Tbc, h = (y[j+1] - y[j-1]) / 2
@@ -266,8 +262,7 @@ class BoundaryConditions:
         so S[i-1] = S[i] - h * Sbc
         (west boundary does not start at x = 0)'''
         h = (self.x[0] - self.x[-2]) / 2
-        self.frc += self._constant_forcing_west(atom[:, :, :, :, self.dim+2, :, :, :], self.dim+2,
-                                                -h * salinity_flux, 1)
+        self.frc += self._constant_forcing_west(atom, self.dim+2, -h * salinity_flux, 1)
 
     def salinity_flux_north(self, atom, salinity_flux):
         '''S[j+1] - S[j] = h * Sbc, h = (y[j+1] - y[j-1]) / 2
@@ -321,11 +316,12 @@ class BoundaryConditions:
 
     def _constant_forcing_west(self, atom, var, forcing_constant, atom_constant):
         frc = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
-        frc[0, :, :, :] = self._constant_forcing(atom[0, :, :, :, 0, :, :], self.ny, self.nz,
-                                                 var, forcing_constant)
+        frc[0, :, :, :] = self._constant_forcing(
+            atom[0, :, :, :, var, 0, :, :], self.ny, self.nz,
+            var, forcing_constant)
 
-        atom[0, :, :, var, 1, :, :] += atom_constant * atom[0, :, :, var, 0, :, :]
-        atom[0, :, :, var, 0, :, :] = 0
+        atom[0, :, :, :, var, 1, :, :] += atom_constant * atom[0, :, :, :, var, 0, :, :]
+        atom[0, :, :, :, var, 0, :, :] = 0
 
         return frc
 
