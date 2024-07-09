@@ -556,7 +556,7 @@ def test_ldc_lin():
     atom = discretization.linear_part()
     A = assemble_jacobian(atom, nx, ny, nz, dof)
 
-    B = read_matrix('ldc_lin_%sx%sx%s.txt' % (nx, ny, nz))
+    B = read_matrix('data/ldc_lin_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -587,7 +587,7 @@ def test_bous_lin():
     atom = discretization.linear_part()
     A = assemble_jacobian(atom, nx, ny, nz, dof)
 
-    B = read_matrix('bous_lin_%sx%sx%s.txt' % (nx, ny, nz))
+    B = read_matrix('data/bous_lin_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -651,7 +651,7 @@ def test_ldc_bnd():
     discretization.boundaries(atom)
     A = discretization.assemble_jacobian(atom)
 
-    B = read_matrix('ldc_bnd_%sx%sx%s.txt' % (nx, ny, nz))
+    B = read_matrix('data/ldc_bnd_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -683,7 +683,7 @@ def test_bous_bnd():
     discretization.boundaries(atom)
     A = discretization.assemble_jacobian(atom)
 
-    B = read_matrix('bous_bnd_%sx%sx%s.txt' % (nx, ny, nz))
+    B = read_matrix('data/bous_bnd_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -719,7 +719,7 @@ def test_ldc_bil():
     discretization.boundaries(atom)
     A = discretization.assemble_jacobian(atom)
 
-    B = read_matrix('ldc_bil_%sx%sx%s.txt' % (nx, ny, nz))
+    B = read_matrix('data/ldc_bil_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -762,7 +762,7 @@ def test_bous_bil():
     discretization.boundaries(atom)
     A = discretization.assemble_jacobian(atom)
 
-    B = read_matrix('bous_bil_%sx%sx%s.txt' % (nx, ny, nz))
+    B = read_matrix('data/bous_bil_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -804,8 +804,8 @@ def test_ldc():
     A = discretization.jacobian(state)
     rhs = discretization.rhs(state)
 
-    B = read_matrix('ldc_%sx%sx%s.txt' % (nx, ny, nz))
-    rhs_B = read_vector('ldc_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+    B = read_matrix('data/ldc_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = read_vector('data/ldc_rhs_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -842,8 +842,8 @@ def test_ldc_stretched():
     A = discretization.jacobian(state)
     rhs = discretization.rhs(state)
 
-    B = read_matrix('ldc_stretched_%sx%sx%s.txt' % (nx, ny, nz))
-    rhs_B = read_vector('ldc_stretched_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+    B = read_matrix('data/ldc_stretched_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = read_vector('data/ldc_stretched_rhs_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -932,8 +932,8 @@ def test_bous():
     A = discretization.jacobian(state)
     rhs = discretization.rhs(state)
 
-    B = read_matrix('bous_%sx%sx%s.txt' % (nx, ny, nz))
-    rhs_B = read_vector('bous_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+    B = read_matrix('data/bous_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = read_vector('data/bous_rhs_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -971,8 +971,8 @@ def test_bous_stretched():
     A = discretization.jacobian(state)
     rhs = discretization.rhs(state)
 
-    B = read_matrix('bous_stretched_%sx%sx%s.txt' % (nx, ny, nz))
-    rhs_B = read_vector('bous_stretched_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+    B = read_matrix('data/bous_stretched_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = read_vector('data/bous_stretched_rhs_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -1064,8 +1064,8 @@ def test_ldc8():
     if not os.path.isfile('ldc_%sx%sx%s.txt' % (nx, ny, nz)):
         return
 
-    B = read_matrix('ldc_%sx%sx%s.txt' % (nx, ny, nz))
-    rhs_B = read_vector('ldc_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+    B = read_matrix('data/ldc_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = read_vector('data/ldc_rhs_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)

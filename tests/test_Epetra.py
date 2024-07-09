@@ -77,8 +77,8 @@ def test_ldc():
     A = interface.jacobian(state)
     rhs = interface.rhs(state)
 
-    B = read_matrix('ldc_%sx%sx%s.txt' % (nx, ny, nz), interface.solve_map)
-    rhs_B = read_vector('ldc_rhs_%sx%sx%s.txt' % (nx, ny, nz), interface.map)
+    B = read_matrix('data/ldc_%sx%sx%s.txt' % (nx, ny, nz), interface.solve_map)
+    rhs_B = read_vector('data/ldc_rhs_%sx%sx%s.txt' % (nx, ny, nz), interface.map)
 
     for i in range(n):
         lid = interface.solve_map.LID(i)
@@ -137,8 +137,8 @@ def test_ldc_stretched_file():
     A = interface.jacobian(state)
     rhs = interface.rhs(state)
 
-    B = read_matrix('ldc_stretched_%sx%sx%s.txt' % (nx, ny, nz), interface.solve_map)
-    rhs_B = read_vector('ldc_stretched_rhs_%sx%sx%s.txt' % (nx, ny, nz), interface.map)
+    B = read_matrix('data/ldc_stretched_%sx%sx%s.txt' % (nx, ny, nz), interface.solve_map)
+    rhs_B = read_vector('data/ldc_stretched_rhs_%sx%sx%s.txt' % (nx, ny, nz), interface.map)
 
     for i in range(n):
         lid = interface.solve_map.LID(i)
