@@ -98,9 +98,9 @@ def test_ldc():
     A = interface.jacobian(state)
     rhs = interface.rhs(state)
 
-    B = read_matrix("ldc_%sx%sx%s.txt" % (nx, ny, nz), interface.index_ordering_assembly)
+    B = read_matrix("data/ldc_%sx%sx%s.txt" % (nx, ny, nz), interface.index_ordering_assembly)
     rhs_B = read_vector(
-        "ldc_rhs_%sx%sx%s.txt" % (nx, ny, nz), interface.map, interface.index_ordering
+        "data/ldc_rhs_%sx%sx%s.txt" % (nx, ny, nz), interface.map, interface.index_ordering
     )
 
     for i in range(n):
@@ -159,10 +159,10 @@ def test_ldc_stretched_file():
     rhs = interface.rhs(state)
 
     B = read_matrix(
-        "ldc_stretched_%sx%sx%s.txt" % (nx, ny, nz), interface.index_ordering_assembly
+        "data/ldc_stretched_%sx%sx%s.txt" % (nx, ny, nz), interface.index_ordering_assembly
     )
     rhs_B = read_vector(
-        "ldc_stretched_rhs_%sx%sx%s.txt" % (nx, ny, nz), interface.map, interface.index_ordering
+        "data/ldc_stretched_rhs_%sx%sx%s.txt" % (nx, ny, nz), interface.map, interface.index_ordering
     )
 
     for i in range(n):

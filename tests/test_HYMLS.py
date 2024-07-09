@@ -92,8 +92,8 @@ def test_ldc():
     A = interface.jacobian(state)
     rhs = interface.rhs(state)
 
-    B = read_matrix('ldc_%sx%sx%s.txt' % (nx, ny, nz), interface.solve_map)
-    rhs_B = read_vector('ldc_rhs_%sx%sx%s.txt' % (nx, ny, nz), interface.map)
+    B = read_matrix('data/ldc_%sx%sx%s.txt' % (nx, ny, nz), interface.solve_map)
+    rhs_B = read_vector('data/ldc_rhs_%sx%sx%s.txt' % (nx, ny, nz), interface.map)
 
     for i in range(n):
         lid = interface.solve_map.LID(i)
@@ -151,8 +151,8 @@ def test_ldc_stretched_file():
     A = interface.jacobian(state)
     rhs = interface.rhs(state)
 
-    B = read_matrix('ldc_stretched_%sx%sx%s.txt' % (nx, ny, nz), interface.solve_map)
-    rhs_B = read_vector('ldc_stretched_rhs_%sx%sx%s.txt' % (nx, ny, nz), interface.map)
+    B = read_matrix('data/ldc_stretched_%sx%sx%s.txt' % (nx, ny, nz), interface.solve_map)
+    rhs_B = read_vector('data/ldc_stretched_rhs_%sx%sx%s.txt' % (nx, ny, nz), interface.map)
 
     for i in range(n):
         lid = interface.solve_map.LID(i)
@@ -286,9 +286,9 @@ def test_prec(nx=4, parameters=None):
     interface.preconditioner.Compute()
     interface.preconditioner.ApplyInverse(rhs_sol, prec_rhs)
 
-    # write_vector(prec_rhs, 'ldc_prec_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+    # write_vector(prec_rhs, 'data/ldc_prec_rhs_%sx%sx%s.txt' % (nx, ny, nz))
 
-    prec_rhs_B = read_vector('ldc_prec_rhs_%sx%sx%s.txt' % (nx, ny, nz), interface.solve_map)
+    prec_rhs_B = read_vector('data/ldc_prec_rhs_%sx%sx%s.txt' % (nx, ny, nz), interface.solve_map)
 
     for i in range(n):
         lid = interface.solve_map.LID(i)
@@ -341,9 +341,9 @@ def test_prec_stretched(nx=4, parameters=None):
     interface.preconditioner.Compute()
     interface.preconditioner.ApplyInverse(rhs_sol, prec_rhs)
 
-    # write_vector(prec_rhs, 'ldc_stretched_prec_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+    # write_vector(prec_rhs, 'data/ldc_stretched_prec_rhs_%sx%sx%s.txt' % (nx, ny, nz))
 
-    prec_rhs_B = read_vector('ldc_stretched_prec_rhs_%sx%sx%s.txt' % (nx, ny, nz), interface.solve_map)
+    prec_rhs_B = read_vector('data/ldc_stretched_prec_rhs_%sx%sx%s.txt' % (nx, ny, nz), interface.solve_map)
 
     for i in range(n):
         lid = interface.solve_map.LID(i)
@@ -424,8 +424,8 @@ def test_bordered_prec():
     # write_vector(prec_rhs, 'ldc_bordered_prec_rhs_%sx%sx%s.txt' % (nx, ny, nz))
     # write_value(prec_rhs_2[0, 0], 'ldc_bordered_prec_rhs_2_%sx%sx%s.txt' % (nx, ny, nz))
 
-    prec_rhs_B = read_vector('ldc_bordered_prec_rhs_%sx%sx%s.txt' % (nx, ny, nz), interface.solve_map)
-    prec_rhs_2_B = read_value('ldc_bordered_prec_rhs_2_%sx%sx%s.txt' % (nx, ny, nz))
+    prec_rhs_B = read_vector('data/ldc_bordered_prec_rhs_%sx%sx%s.txt' % (nx, ny, nz), interface.solve_map)
+    prec_rhs_2_B = read_value('data/ldc_bordered_prec_rhs_2_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         lid = interface.solve_map.LID(i)
