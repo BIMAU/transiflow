@@ -48,19 +48,14 @@ apidoc_output_dir = 'reference'
 apidoc_excluded_paths = [
     'interface',
     'interface/**',
-    'BoundaryConditions.py',
-    'Continuation.py',
-    'CrsMatrix.py',
-    'CylindricalDiscretization.py',
-    'TimeIntegration.py',
-    'Discretization.py',
 ]
 apidoc_separate_modules = True
 apidoc_toc_file = False
 apidoc_module_first = True
 
 autodoc_default_options = {
-    'inherited-members': True
+    'inherited-members': True,
+    'ignore-module-all': True,
 }
 
 
