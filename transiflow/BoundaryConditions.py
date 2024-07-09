@@ -15,10 +15,10 @@ class BoundaryConditions:
         self.y = y
         self.z = z
 
-        self.frc = numpy.zeros(self.nx * self.ny * self.nz * self.dof)
+        self.frc = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
 
     def get_forcing(self):
-        return self.frc
+        return create_state_vec(self.frc, self.nx, self.ny, self.nz, self.dof)
 
     def no_slip_east(self, atom):
         '''At the boundary u[i] = 0, v[i] + v[i+1] = 2*V similar for w. So v[i+1] = -v[i]+2*V.'''
@@ -309,7 +309,7 @@ class BoundaryConditions:
         atom[self.nx-1, :, :, var, 1, :, :] += atom_constant * atom[self.nx-1, :, :, var, 2, :, :]
         atom[self.nx-1, :, :, var, 2, :, :] = 0
 
-        return create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
+        return frc
 
     def _constant_forcing_west(self, atom, var, forcing_constant, atom_constant):
         frc = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
@@ -319,7 +319,7 @@ class BoundaryConditions:
         atom[0, :, :, var, 1, :, :] += atom_constant * atom[0, :, :, var, 0, :, :]
         atom[0, :, :, var, 0, :, :] = 0
 
-        return create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
+        return frc
 
     def _constant_forcing_north(self, atom, var, forcing_constant, atom_constant):
         frc = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
@@ -329,7 +329,7 @@ class BoundaryConditions:
         atom[:, self.ny-1, :, var, :, 1, :] += atom_constant * atom[:, self.ny-1, :, var, :, 2, :]
         atom[:, self.ny-1, :, var, :, 2, :] = 0
 
-        return create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
+        return frc
 
     def _constant_forcing_south(self, atom, var, forcing_constant, atom_constant):
         frc = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
@@ -339,7 +339,7 @@ class BoundaryConditions:
         atom[:, 0, :, var, :, 1, :] += atom_constant * atom[:, 0, :, var, :, 0, :]
         atom[:, 0, :, var, :, 0, :] = 0
 
-        return create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
+        return frc
 
     def _constant_forcing_top(self, atom, var, forcing_constant, atom_constant):
         frc = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
@@ -349,7 +349,7 @@ class BoundaryConditions:
         atom[:, :, self.nz-1, var, :, :, 1] += atom_constant * atom[:, :, self.nz-1, var, :, :, 2]
         atom[:, :, self.nz-1, var, :, :, 2] = 0
 
-        return create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
+        return frc
 
     def _constant_forcing_bottom(self, atom, var, forcing_constant, atom_constant):
         frc = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
@@ -359,4 +359,4 @@ class BoundaryConditions:
         atom[:, :, 0, var, :, :, 1] += atom_constant * atom[:, :, 0, var, :, :, 0]
         atom[:, :, 0, var, :, :, 0] = 0
 
-        return create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
+        return frc
