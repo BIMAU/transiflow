@@ -52,7 +52,7 @@ class Continuation:
 
         return x
 
-    def newtoncorrector(self, parameter_name, ds, x, x0, mu, mu0):
+    def _newton_corrector(self, parameter_name, ds, x, x0, mu, mu0):
         residual_check = self.parameters.get('Residual Check', 'F')
         verbose = self.parameters.get('Verbose', False)
 
@@ -140,7 +140,7 @@ class Continuation:
 
         return x, mu
 
-    def adjust_step_size(self, ds):
+    def _adjust_step_size(self, ds):
         ''' Step size control, see [Seydel p 188.] '''
 
         min_step_size = self.parameters.get('Minimum Step Size', 0.01)
@@ -159,7 +159,7 @@ class Continuation:
 
         return ds
 
-    def detect_bifurcation(self, parameter_name, x, mu, dx, dmu, eigs, deig, v, ds, maxit):
+    def _detect_bifurcation(self, parameter_name, x, mu, dx, dmu, eigs, deig, v, ds, maxit):
         ''' Converge onto a bifurcation '''
 
         for j in range(maxit):
@@ -171,7 +171,7 @@ class Continuation:
 
             # Secant method
             ds = ds / deig.real * -eigs.real[i]
-            x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, ds)
+            x, mu, dx, dmu, ds = self._step(parameter_name, x, mu, dx, dmu, ds)
 
             prev_eigs = eigs
             eigs, v = self.interface.eigs(x, return_eigenvectors=True, enable_recycling=True)
@@ -180,7 +180,7 @@ class Continuation:
 
         return x, mu, v
 
-    def converge(self, parameter_name, x, mu, dx, dmu, target, ds, maxit):
+    def _converge(self, parameter_name, x, mu, dx, dmu, target, ds, maxit):
         ''' Converge onto the target value '''
 
         for j in range(maxit):
@@ -191,11 +191,11 @@ class Continuation:
 
             # Secant method
             ds = 1 / dmu * (target - mu)
-            x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, ds)
+            x, mu, dx, dmu, ds = self._step(parameter_name, x, mu, dx, dmu, ds)
 
         return x, mu
 
-    def step(self, parameter_name, x, mu, dx, dmu, ds):
+    def _step(self, parameter_name, x, mu, dx, dmu, ds):
         ''' Perform one step of the continuation '''
 
         mu0 = mu
@@ -206,16 +206,16 @@ class Continuation:
         x = x0 + ds * dx
 
         # Corrector (2.2.9 and onward)
-        x, mu = self.newtoncorrector(parameter_name, ds, x, x0, mu, mu0)
+        x, mu = self._newton_corrector(parameter_name, ds, x, x0, mu, mu0)
 
         if mu == mu0:
             # No convergence was achieved, adjusting the step size
             prev_ds = ds
-            ds = self.adjust_step_size(ds)
+            ds = self._adjust_step_size(ds)
             if prev_ds == ds:
                 raise Exception('Newton cannot achieve convergence')
 
-            return self.step(parameter_name, x0, mu0, dx, dmu, ds)
+            return self._step(parameter_name, x0, mu0, dx, dmu, ds)
 
         print("%s: %f" % (parameter_name, mu), flush=True)
 
@@ -235,7 +235,7 @@ class Continuation:
 
         return x, mu, dx, dmu, ds
 
-    def switch_branches_tangent(self, parameter_name, x, mu, dx, dmu, v, ds):
+    def _switch_branches_tangent(self, parameter_name, x, mu, dx, dmu, v, ds):
         ''' Switch branches according to (5.16) '''
 
         dmu0 = dmu
@@ -264,29 +264,29 @@ class Continuation:
 
         return x, mu, dx, dmu, ds
 
-    def switch_branches_asymmetry(self, parameter_name, x, mu, ds):
+    def _switch_branches_asymmetry(self, parameter_name, x, mu, ds):
         continuation = Continuation(self.interface, self.parameters)
         x, a = continuation.continuation(x, 'Asymmetry Parameter', 0, 1000, 10, 1, switched_branches=True)
         x, mu = continuation.continuation(x, parameter_name, mu, mu + 1, ds, switched_branches=True)
         x, a = continuation.continuation(x, 'Asymmetry Parameter', a, 0, -a, switched_branches=True)
 
-        dx, dmu = self.initial_tangent(x, parameter_name, mu)
+        dx, dmu = self._initial_tangent(x, parameter_name, mu)
 
         return x, mu, dx, dmu, ds
 
-    def switch_branches(self, parameter_name, x, mu, dx, dmu, v, ds):
+    def _switch_branches(self, parameter_name, x, mu, dx, dmu, v, ds):
         branch_switching_method = self.parameters.get('Branch Switching Method', 'Tangent')
         if branch_switching_method == 'Asymmetry':
-            return self.switch_branches_asymmetry(parameter_name, x, mu, ds)
+            return self._switch_branches_asymmetry(parameter_name, x, mu, ds)
 
-        return self.switch_branches_tangent(parameter_name, x, mu, dx, dmu, v, ds)
+        return self._switch_branches_tangent(parameter_name, x, mu, dx, dmu, v, ds)
 
-    def num_positive_eigs(self, eigs):
+    def _num_positive_eigs(self, eigs):
         # Include the range of the destination tolerance here to make sure
         # we don't converge onto the same target twice
         return sum([eig.real > -self.destination_tolerance for eig in eigs])
 
-    def initial_tangent(self, x, parameter_name, mu):
+    def _initial_tangent(self, x, parameter_name, mu):
         ''' Compute the initial tangent '''
 
         # Get the initial tangent (2.2.5 - 2.2.7).
@@ -338,7 +338,7 @@ class Continuation:
 
         if dx is None or dmu is None:
             # Get the initial tangent (2.2.5 - 2.2.7).
-            dx, dmu = self.initial_tangent(x, parameter_name, mu)
+            dx, dmu = self._initial_tangent(x, parameter_name, mu)
         else:
             dx /= ds
             dmu /= ds
@@ -362,14 +362,14 @@ class Continuation:
                 eigs, v = self.interface.eigs(x, return_eigenvectors=True, enable_recycling=enable_recycling)
                 enable_recycling = True
 
-                if prev_eigs is not None and self.num_positive_eigs(eigs) != self.num_positive_eigs(prev_eigs):
+                if prev_eigs is not None and self._num_positive_eigs(eigs) != self._num_positive_eigs(prev_eigs):
                     i = numpy.argmin(numpy.abs(eigs.real))
                     deig = eigs[i] - prev_eigs[i]
-                    x, mu, v = self.detect_bifurcation(parameter_name, x, mu, dx, dmu, eigs, deig, v, ds, maxit - j)
+                    x, mu, v = self._detect_bifurcation(parameter_name, x, mu, dx, dmu, eigs, deig, v, ds, maxit - j)
 
                     if enable_branch_switching and not switched_branches:
                         switched_branches = True
-                        x, mu, dx, dmu, ds = self.switch_branches(parameter_name, x, mu, dx, dmu, v[:, 0].real, ds)
+                        x, mu, dx, dmu, ds = self._switch_branches(parameter_name, x, mu, dx, dmu, v[:, 0].real, ds)
                         continue
 
                     if return_step:
@@ -377,18 +377,18 @@ class Continuation:
 
                     return x, mu
 
-            x, mu, dx, dmu, ds = self.step(parameter_name, x, mu, dx, dmu, ds)
+            x, mu, dx, dmu, ds = self._step(parameter_name, x, mu, dx, dmu, ds)
 
             if (mu >= target and mu0 < target) or (mu <= target and mu0 > target):
                 # Converge onto the end point
-                x, mu = self.converge(parameter_name, x, mu, dx, dmu, target, ds, maxit - j)
+                x, mu = self._converge(parameter_name, x, mu, dx, dmu, target, ds, maxit - j)
 
                 if return_step:
                     return x, mu, dx * ds, dmu * ds
 
                 return x, mu
 
-            ds = self.adjust_step_size(ds)
+            ds = self._adjust_step_size(ds)
 
         if return_step:
             return x, mu, dx * ds, dmu * ds
