@@ -5,10 +5,11 @@ from transiflow import BoundaryConditions
 from transiflow.Discretization import Discretization
 
 class CylindricalDiscretization(Discretization):
-    '''Finite volume discretization of the incompressible Navier-Stokes
-    equations on a (possibly non-uniform) Arakawa C-grid in a
-    cylindrical coordinate system. For details on the implementation
-    and the ordering of the variables, see the Discretization class.
+    '''Finite volume discretization of the incompressible
+    Navier-Stokes equations on a (possibly non-uniform) Arakawa C-grid
+    in a cylindrical coordinate system. For details on the
+    implementation and the ordering of the variables, see the
+    :ref:`transiflow.discretization` class.
 
     '''
 
@@ -71,8 +72,12 @@ class CylindricalDiscretization(Discretization):
             + self.div()
 
     def nonlinear_part(self, state):
-        '''Compute the nonlinear part of the equation. In case Re = 0 this
-        does nothing.'''
+        r'''Compute the nonlinear part of the equation. In case $\Re = 0$ this
+        does nothing.
+
+        :meta private:
+
+        '''
 
         state_mtx = utils.create_padded_state_mtx(state, self.nx, self.ny, self.nz, self.dof,
                                                   self.x_periodic, self.y_periodic, self.z_periodic)
@@ -105,7 +110,11 @@ class CylindricalDiscretization(Discretization):
         return (atomJ, atomF)
 
     def boundaries(self, atom):
-        '''Compute boundary conditions for the currently defined problem type.'''
+        '''Compute boundary conditions for the currently defined problem type.
+
+        :meta private:
+
+        '''
 
         # TODO: Make it possible to interface this from the outside.
 
@@ -149,31 +158,51 @@ class CylindricalDiscretization(Discretization):
     # to be implemented in a similar way.
 
     def rvscale(self, atom):
-        '''Scale atom by r at the location of v'''
+        '''Scale atom by r at the location of v
+
+        :meta private:
+
+        '''
         for i in range(self.nx):
             atom[i, :, :, :, :, :, :, :] *= (self.x[i] + self.x[i-1]) / 2
         return atom
 
     def iruscale(self, atom):
-        '''Scale atom by 1/r at the location of u'''
+        '''Scale atom by 1/r at the location of u
+
+        :meta private:
+
+        '''
         for i in range(self.nx):
             atom[i, :, :, :, :, :, :, :] /= self.x[i]
         return atom
 
     def irvscale(self, atom):
-        '''Scale atom by 1/r at the location of v'''
+        '''Scale atom by 1/r at the location of v
+
+        :meta private:
+
+        '''
         for i in range(self.nx):
             atom[i, :, :, :, :, :, :, :] /= (self.x[i] + self.x[i-1]) / 2
         return atom
 
     def iru2scale(self, atom):
-        '''Scale atom by 1/r^2 at the location of u'''
+        '''Scale atom by 1/r^2 at the location of u
+
+        :meta private:
+
+        '''
         for i in range(self.nx):
             atom[i, :, :, :, :, :, :, :] /= self.x[i] * self.x[i]
         return atom
 
     def irv2scale(self, atom):
-        '''Scale atom by 1/r^2 at the location of v'''
+        '''Scale atom by 1/r^2 at the location of v
+
+        :meta private:
+
+        '''
         for i in range(self.nx):
             atom[i, :, :, :, :, :, :, :] /= (self.x[i] + self.x[i-1]) * (self.x[i] + self.x[i-1]) / 4
         return atom
@@ -197,12 +226,14 @@ class CylindricalDiscretization(Discretization):
         atom[1] = -atom[0] - atom[2]
 
     def u_rr(self):
+        ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._u_rr(atom[i, j, k, 0, 0, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
     def v_tt(self):
+        ''':meta private:'''
         return self.v_yy()
 
     @staticmethod
@@ -222,30 +253,37 @@ class CylindricalDiscretization(Discretization):
         atom[1] = -atom[0] - atom[2]
 
     def u_tt(self):
+        ''':meta private:'''
         return self.u_yy()
 
     def v_rr(self):
+        ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._v_rr(atom[i, j, k, 1, 1, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
     def w_tt(self):
+        ''':meta private:'''
         return self.w_yy()
 
     def w_rr(self):
+        ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._v_rr(atom[i, j, k, 2, 2, :, 1, 1], i, k, j, self.x, self.z, self.y)
         return atom
 
     def p_r(self):
+        ''':meta private:'''
         return self.p_x()
 
     def p_t(self):
+        ''':meta private:'''
         return self.p_y()
 
     def v_t_u(self):
+        ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             Discretization._backward_u_y(atom[i, j, k, 0, 1, 1, :, 1], i, j, k, self.x, self.y, self.z)
@@ -254,6 +292,7 @@ class CylindricalDiscretization(Discretization):
         return atom
 
     def u_t_v(self):
+        ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             Discretization._forward_u_x(atom[i, j, k, 1, 0, 0, :, 1], j, i, k, self.y, self.x, self.z)
@@ -273,12 +312,14 @@ class CylindricalDiscretization(Discretization):
         atom[1] = dx * dy * dz
 
     def value_u(self):
+        ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._value_u(atom[i, j, k, 0, 0, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
     def value_v(self):
+        ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._value_u(atom[i, j, k, 1, 1, :, 1, 1], j, i, k, self.y, self.x, self.z)
@@ -296,26 +337,32 @@ class CylindricalDiscretization(Discretization):
         atom[0] = -x[i-1] * dy * dz
 
     def u_r(self):
+        ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._backward_u_r(atom[i, j, k, self.dim, 0, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
     def div(self):
+        ''':meta private:'''
         if self.dim == 2:
             return self.u_x() + self.v_y()
         return self.u_x() + self.v_y() + self.rvscale(self.w_z())
 
     def u_u_r(self, atomJ, atomF, state):
+        ''':meta private:'''
         Discretization.u_u_x(self, atomJ, atomF, state)
 
     def u_v_r(self, atomJ, atomF, state):
+        ''':meta private:'''
         Discretization.u_v_x(self, atomJ, atomF, state)
 
     def u_w_r(self, atomJ, atomF, state):
+        ''':meta private:'''
         Discretization.u_w_x(self, atomJ, atomF, state)
 
     def v_u_t(self, atomJ_in, atomF_in, state):
+        ''':meta private:'''
         atomJ = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         atomF = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
 
@@ -327,6 +374,7 @@ class CylindricalDiscretization(Discretization):
         atomF_in += atomF
 
     def v_v_t(self, atomJ_in, atomF_in, state):
+        ''':meta private:'''
         atomJ = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         atomF = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
 
@@ -338,6 +386,7 @@ class CylindricalDiscretization(Discretization):
         atomF_in += atomF
 
     def v_w_t(self, atomJ_in, atomF_in, state):
+        ''':meta private:'''
         atomJ = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         atomF = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
 
@@ -349,6 +398,7 @@ class CylindricalDiscretization(Discretization):
         atomF_in += atomF
 
     def v_v(self, atomJ_in, atomF_in, state):
+        ''':meta private:'''
         averages_v = self.weighted_average_x(state[:, :, :, 1])
         averages_v = (averages_v[:, 0:self.ny, :] + averages_v[:, 1:self.ny+1, :]) / 2
 
@@ -368,6 +418,7 @@ class CylindricalDiscretization(Discretization):
         atomF_in += atom
 
     def u_v(self, atomJ_in, atomF_in, state):
+        ''':meta private:'''
         averages_u = self.weighted_average_y(state[:, :, :, 0])
         averages_u = (averages_u[0:self.nx, :, :] + averages_u[1:self.nx+1, :, :]) / 2
         averages_v = state[1:self.nx+1, 1:self.ny+1, 1:self.nz+1, 1]
