@@ -5,6 +5,8 @@ import tempfile
 import subprocess
 
 class CrsMatrix:
+    '''Compressed sparse row matrix used for assembly of the internal
+    matrices. Can also be used for debugging purposes'''
     def __init__(self, coA=None, jcoA=None, begA=None, compress=True, m=None, n=None):
         self.coA = coA
         self.jcoA = jcoA
@@ -21,31 +23,31 @@ class CrsMatrix:
         self._m = m
         self._n = n
 
-    def _get_m(self):
+    @property
+    def m(self):
+        '''Row dimension of the matrix'''
         if self._m:
             return self._m
 
         return len(self.begA) - 1
 
-    m = property(_get_m)
-
-    def _get_n(self):
+    @property
+    def n(self):
+        '''Column dimension of the matrix'''
         if self._n:
             return self._n
 
         return self.m
 
-    n = property(_get_n)
-
-    def _get_shape(self):
+    @property
+    def shape(self):
+        '''Shape of the matrix'''
         return (self.m, self.n)
 
-    shape = property(_get_shape)
-
-    def _get_dtype(self):
+    @property
+    def dtype(self):
+        '''Shape of the matrix'''
         return self.coA.dtype
-
-    dtype = property(_get_dtype)
 
     def compress(self):
         ''' Remove zeros and merge duplicate entries, which may occur in the case of periodic
@@ -69,6 +71,7 @@ class CrsMatrix:
             self.begA[i+1] = idx
 
     def solve(self, rhs):
+        '''Solve a system using the self.lu property'''
         if self.lu.L.dtype != rhs.dtype and numpy.dtype(rhs.dtype.char.upper()) == rhs.dtype:
             x = rhs.copy()
             x.real = self.solve(rhs.real)
@@ -150,6 +153,7 @@ class CrsMatrix:
         return self * (1 / x)
 
     def matvec(self, x):
+        '''Return $y = A x$'''
         if len(x.shape) > 1:
             shape = list(x.shape)
             shape[0] = self.m
@@ -176,6 +180,18 @@ class CrsMatrix:
         return out
 
     def to_coo(self):
+        '''Convert the matrix to coordinate format.
+
+        Returns
+        -------
+        coA : array_like
+            Values
+        icoA : array_like
+            Row indices
+        jcoA : array_like
+            Column indices
+
+        '''
         coA = numpy.zeros(self.begA[-1], dtype=self.dtype)
         icoA = numpy.zeros(self.begA[-1], dtype=int)
         jcoA = numpy.zeros(self.begA[-1], dtype=int)
@@ -191,6 +207,14 @@ class CrsMatrix:
         return coA, icoA, jcoA
 
     def to_dense(self):
+        '''Convert the matrix to a dense matrix.
+
+        Returns
+        -------
+        A : array_like
+            Dense matrix
+
+        '''
         A = numpy.zeros(self.shape, dtype=self.dtype)
         for i in range(self.m):
             for j in range(self.begA[i], self.begA[i+1]):
@@ -199,6 +223,14 @@ class CrsMatrix:
         return A
 
     def transpose(self):
+        '''Return the transpose of the matrix.
+
+        Returns
+        -------
+        B : CrsMatrix
+            Transpose of the matrix
+
+        '''
         coA, icoA, jcoA = self.to_coo()
         indices = sorted(range(self.begA[-1]), key=lambda i: jcoA[i])
 
@@ -222,6 +254,14 @@ class CrsMatrix:
         return CrsMatrix(coB, jcoB, begB, False)
 
     def dump(self, name):
+        '''Dump the matrix to a file.
+
+        Parmaters
+        ---------
+        name : string
+            Name of the file
+
+        '''
         with open(name, 'w') as f:
             out = '%%%%MatrixMarket matrix coordinate real general\n%d %d %d\n' % (self.m, self.n, self.begA[self.m])
             for i in range(self.m):
@@ -288,6 +328,8 @@ class CrsMatrix:
                          compress=False, m=len(iidx), n=len(jidx))
 
     def assemble(self):
+        '''Assemble the matrix after using the setter to assign
+        values.'''
         assert self._tmp
 
         iidx = numpy.concatenate([i[0] for i in self._tmp])
@@ -339,6 +381,8 @@ class CrsMatrix:
             self._tmp.append(([iidx[0]], [jidx[0]], [A]))
 
     def show(self, dof=None):
+        '''Use vsm to show the structure of the matrix. vsm can
+        currently be found in the mrilu directory of I-EMIC.'''
         def wrtbcsr(beg, jco, co, f):
             n = numpy.int32(len(beg) - 1)
 
