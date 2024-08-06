@@ -325,6 +325,44 @@ class Continuation:
         A bifurcation can be detected automatically when the 'Detect
         Bifurcation Points' parameter is set to True.
 
+        Parameters
+        ----------
+        x0 : array_like
+            Initial solution.
+        parameter_name : string
+            Name of the parameter we want to perform the continuation
+            in.
+        start : scalar
+            Starting value of the continuation parameter.
+        target : scalar
+            Target value of the continuation parameter.
+        ds : scalar
+            Arclength step size.
+        dx : array_like, optional
+            Vector difference defining the initial tangent.
+        dmu : scalar, optional
+            Parameter difference defining the initial tangent
+        maxit : int, optional
+            Maximum number of continuation iterations.
+        return_step : bool, optional
+            Return ``dx`` and ``dmu`` when set to True. These can be
+            used in the next ``continuation()`` call.
+
+        Returns
+        -------
+        x : array_like
+            Value at the target or bifurcation point if were are
+            detecting bifurcation points.
+        mu : scalar
+            Value of the bifurcation parameter at the end of the
+            continuation.
+        dx : array_like, optional
+            Array to pass back to ``continuation()`` which is returned
+            if ``return_step`` is set to True.
+        dmu : scalar, optional
+            Value to pass back to ``continuation()`` which is returned
+            if ``return_step`` is set to True.
+
         '''
 
         x = x0
