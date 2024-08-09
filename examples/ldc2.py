@@ -14,7 +14,6 @@ def main():
     ''' An example of performing a continuation for a 2D lid-driven cavity and computing eigenvalues along the way'''
     nx = 16
     ny = nx
-    nz = 1
 
     # Define the problem
     parameters = {'Problem Type': 'Lid-driven Cavity',
@@ -22,7 +21,7 @@ def main():
                   'Reynolds Number': 1,
                   'Lid Velocity': 0}
 
-    interface = Interface(parameters, nx, ny, nz)
+    interface = Interface(parameters, nx, ny)
     continuation = Continuation(interface)
 
     # Compute an initial guess

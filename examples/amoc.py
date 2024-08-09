@@ -53,7 +53,6 @@ def main():
 
     nx = 60
     ny = 30
-    nz = 1
 
     # Define the problem
     parameters = {'Problem Type': 'AMOC',
@@ -66,7 +65,7 @@ def main():
                   # Give back extra output (this is also more expensive)
                   'Verbose': False}
 
-    interface = Interface(parameters, nx, ny, nz)
+    interface = Interface(parameters, nx, ny)
     continuation = Continuation(interface, newton_tolerance=1e-6)
 
     # First increase the temperature forcing to the desired value
