@@ -156,8 +156,8 @@ def main():
 
     ds = -0.01
     target = 0.2
-    parameters['Maximum Step Size'] = 0.005
-    x6, mu6 = continuation.continuation(x5, 'Freshwater Flux', mu4, target, ds, ds_min=1e-12)
+    x6, mu6 = continuation.continuation(x5, 'Freshwater Flux', mu4, target,
+                                        ds, ds_min=1e-12, ds_max=0.005)
 
     # Write the solution to a file
     numpy.save('x6', x6)

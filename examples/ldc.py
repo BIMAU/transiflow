@@ -42,8 +42,6 @@ def main():
                   'Lid Velocity': 0,
                   # Use a stretched grid
                   'Grid Stretching Factor': 1.5,
-                  # Set a maximum step size ds
-                  'Maximum Step Size': 500,
                   # Give back extra output (this is also more expensive)
                   'Verbose': False}
 
@@ -67,7 +65,6 @@ def main():
     # Now detect the bifurcation point
     parameters['Destination Tolerance'] = 1e-4
     parameters['Detect Bifurcation Points'] = True
-    parameters['Maximum Step Size'] = 100
 
     parameters['Eigenvalue Solver'] = {}
     parameters['Eigenvalue Solver']['Target'] = 3j
@@ -77,13 +74,13 @@ def main():
     bifurcation_continuation = Continuation(interface, parameters, newton_tolerance=1e-12)
 
     target = 10000
-    x2, mu2 = bifurcation_continuation.continuation(x, 'Reynolds Number', mu, target, ds)
+    x2, mu2 = bifurcation_continuation.continuation(x, 'Reynolds Number', mu, target,
+                                                    ds, ds_max=100)
 
     ke = utils.compute_volume_averaged_kinetic_energy(x2, interface)
 
     # Compute the unstable branch after the bifurcation
     parameters['Detect Bifurcation Points'] = False
-    parameters['Maximum Step Size'] = 2000
 
     target = 10000
     x3, mu3 = continuation.continuation(x2, 'Reynolds Number', mu2, target, ds)

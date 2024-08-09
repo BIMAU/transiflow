@@ -166,24 +166,22 @@ class Continuation:
 
         return x, mu
 
-    def _adjust_step_size(self, ds, ds_min):
+    def _adjust_step_size(self, ds, ds_min, ds_max):
         ''' Step size control, see [Seydel p 188.] '''
-
-        max_step_size = self.parameters.get('Maximum Step Size', 2000)
-
         factor = self.optimal_newton_iterations / max(self.newton_iterations, 1)
         factor = min(max(factor, 0.5), 2.0)
 
         ds *= factor
 
-        ds = math.copysign(min(max(abs(ds), ds_min), max_step_size), ds)
+        ds = math.copysign(min(max(abs(ds), ds_min), ds_max), ds)
 
         if self.verbose:
             print('New stepsize: ds=%e, factor=%e' % (ds, factor), flush=True)
 
         return ds
 
-    def _detect_bifurcation(self, parameter_name, x, mu, dx, dmu, eigs, deig, v, ds, ds_min, maxit):
+    def _detect_bifurcation(self, parameter_name, x, mu, dx, dmu, eigs, deig, v,
+                            ds, ds_min, ds_max, maxit):
         ''' Converge onto a bifurcation '''
 
         for j in range(maxit):
@@ -195,7 +193,8 @@ class Continuation:
 
             # Secant method
             ds = ds / deig.real * -eigs.real[i]
-            x, mu, dx, dmu, ds = self._step(parameter_name, x, mu, dx, dmu, ds, ds_min)
+            x, mu, dx, dmu, ds = self._step(parameter_name, x, mu, dx, dmu,
+                                            ds, ds_min, ds_max)
 
             prev_eigs = eigs
             eigs, v = self.interface.eigs(x, return_eigenvectors=True, enable_recycling=True)
@@ -204,7 +203,8 @@ class Continuation:
 
         return x, mu, v
 
-    def _converge(self, parameter_name, x, mu, dx, dmu, target, ds, ds_min, maxit):
+    def _converge(self, parameter_name, x, mu, dx, dmu, target,
+                  ds, ds_min, ds_max, maxit):
         ''' Converge onto the target value '''
 
         for j in range(maxit):
@@ -215,11 +215,13 @@ class Continuation:
 
             # Secant method
             ds = 1 / dmu * (target - mu)
-            x, mu, dx, dmu, ds = self._step(parameter_name, x, mu, dx, dmu, ds, ds_min)
+            x, mu, dx, dmu, ds = self._step(parameter_name, x, mu, dx, dmu,
+                                            ds, ds_min, ds_max)
 
         return x, mu
 
-    def _step(self, parameter_name, x, mu, dx, dmu, ds, ds_min):
+    def _step(self, parameter_name, x, mu, dx, dmu,
+              ds, ds_min, ds_max):
         ''' Perform one step of the continuation '''
 
         mu0 = mu
@@ -235,11 +237,12 @@ class Continuation:
         if mu == mu0:
             # No convergence was achieved, adjusting the step size
             prev_ds = ds
-            ds = self._adjust_step_size(ds, ds_min)
+            ds = self._adjust_step_size(ds, ds_min, ds_max)
             if prev_ds == ds:
                 raise Exception('Newton cannot achieve convergence')
 
-            return self._step(parameter_name, x0, mu0, dx, dmu, ds, ds_min)
+            return self._step(parameter_name, x0, mu0, dx, dmu,
+                              ds, ds_min, ds_max)
 
         print("%s: %f" % (parameter_name, mu), flush=True)
 
@@ -259,7 +262,8 @@ class Continuation:
 
         return x, mu, dx, dmu, ds
 
-    def _switch_branches_tangent(self, parameter_name, x, mu, dx, dmu, v, ds, ds_min):
+    def _switch_branches_tangent(self, parameter_name, x, mu, dx, dmu, v,
+                                 ds, ds_min, ds_max):
         ''' Switch branches according to (5.16) '''
 
         dmu0 = dmu
@@ -288,8 +292,10 @@ class Continuation:
 
         return x, mu, dx, dmu, ds
 
-    def _switch_branches(self, parameter_name, x, mu, dx, dmu, v, ds, ds_min):
-        return self._switch_branches_tangent(parameter_name, x, mu, dx, dmu, v, ds, ds_min)
+    def _switch_branches(self, parameter_name, x, mu, dx, dmu, v,
+                         ds, ds_min, ds_max):
+        return self._switch_branches_tangent(parameter_name, x, mu, dx, dmu, v,
+                                             ds, ds_min, ds_max)
 
     def _num_positive_eigs(self, eigs):
         # Include the range of the destination tolerance here to make sure
@@ -319,7 +325,7 @@ class Continuation:
         return dx, dmu
 
     def continuation(self, x0, parameter_name, start, target,
-                     ds, ds_min=0.01,
+                     ds, ds_min=0.01, ds_max=1000,
                      dx=None, dmu=None,
                      maxit=None, return_step=False):
         '''Perform a pseudo-arclength continuation in
@@ -351,6 +357,8 @@ class Continuation:
             Arclength step size.
         ds_min : scalar, optional
             Minimum arclength step size.
+        ds_max : scalar, optional
+            Maximum arclength step size.
         dx : array_like, optional
             Vector difference defining the initial tangent.
         dmu : scalar, optional
@@ -416,11 +424,13 @@ class Continuation:
                 if prev_eigs is not None and self._num_positive_eigs(eigs) != self._num_positive_eigs(prev_eigs):
                     i = numpy.argmin(numpy.abs(eigs.real))
                     deig = eigs[i] - prev_eigs[i]
-                    x, mu, v = self._detect_bifurcation(parameter_name, x, mu, dx, dmu, eigs, deig, v, ds, ds_min, maxit - j)
+                    x, mu, v = self._detect_bifurcation(parameter_name, x, mu, dx, dmu, eigs, deig, v,
+                                                        ds, ds_min, ds_max, maxit - j)
 
                     if enable_branch_switching and not switched_branches:
                         switched_branches = True
-                        x, mu, dx, dmu, ds = self._switch_branches(parameter_name, x, mu, dx, dmu, v[:, 0].real, ds, ds_min)
+                        x, mu, dx, dmu, ds = self._switch_branches(parameter_name, x, mu, dx, dmu, v[:, 0].real,
+                                                                   ds, ds_min, ds_max)
                         continue
 
                     if return_step:
@@ -428,18 +438,20 @@ class Continuation:
 
                     return x, mu
 
-            x, mu, dx, dmu, ds = self._step(parameter_name, x, mu, dx, dmu, ds, ds_min)
+            x, mu, dx, dmu, ds = self._step(parameter_name, x, mu, dx, dmu,
+                                            ds, ds_min, ds_max)
 
             if (mu >= target and mu0 < target) or (mu <= target and mu0 > target):
                 # Converge onto the end point
-                x, mu = self._converge(parameter_name, x, mu, dx, dmu, target, ds, ds_min, maxit - j)
+                x, mu = self._converge(parameter_name, x, mu, dx, dmu, target,
+                                       ds, ds_min, ds_max, maxit - j)
 
                 if return_step:
                     return x, mu, dx * ds, dmu * ds
 
                 return x, mu
 
-            ds = self._adjust_step_size(ds, ds_min)
+            ds = self._adjust_step_size(ds, ds_min, ds_max)
 
         if return_step:
             return x, mu, dx * ds, dmu * ds
