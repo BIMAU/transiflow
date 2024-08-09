@@ -59,7 +59,7 @@ def main():
 
     ds = 5
     target = 40
-    x2, mu2 = continuation.continuation(x1, 'Reynolds Number', 16, target, ds, ds_max=10)
+    x2, mu2 = continuation.continuation(x1, 'Reynolds Number', 16, target, ds)
 
     plot_utils.plot_streamfunction(x2, interface, title='Streamfunction at Re={}'.format(mu2))
 
@@ -69,19 +69,19 @@ def main():
     interface.set_parameter('Postprocess', None)
     interface.set_parameter('Maximum Continuation Steps', 1)
     interface.set_parameter('Reynolds Number', 16)
-    x3, mu3 = continuation.continuation(x1, 'Asymmetry Parameter', 0, target, ds, ds_max=10)
+    x3, mu3 = continuation.continuation(x1, 'Asymmetry Parameter', 0, target, ds)
 
     # Perform a continuation to Reynolds number 40 with asymmetry added to the problem,
     # meaning we can't stay on the unstable branch
     ds = 5
     target = 40
     interface.set_parameter('Maximum Continuation Steps', 1000)
-    x4, mu4 = continuation.continuation(x3, 'Reynolds Number', 16, target, ds, ds_max=10)
+    x4, mu4 = continuation.continuation(x3, 'Reynolds Number', 16, target, ds)
 
     # Go back to the symmetric problem
     ds = -1
     target = 0
-    x5, mu5 = continuation.continuation(x4, 'Asymmetry Parameter', mu3, target, ds, ds_max=10)
+    x5, mu5 = continuation.continuation(x4, 'Asymmetry Parameter', mu3, target, ds)
 
     # Now compute the stable branch after the pitchfork bifurcation by going backwards
     # and use this in the bifurcation diagram
@@ -91,7 +91,7 @@ def main():
 
     ds = -5
     target = 40
-    x6, mu6 = continuation.continuation(x5, 'Reynolds Number', mu4, target, ds, ds_max=10)
+    x6, mu6 = continuation.continuation(x5, 'Reynolds Number', mu4, target, ds)
 
     # Plot a bifurcation diagram
     plt.title('Bifurcation diagram for the QG model with $n_x=n_y={}$'.format(nx))
