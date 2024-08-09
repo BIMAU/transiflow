@@ -8,7 +8,7 @@ from transiflow import utils
 from transiflow.interface import create
 
 
-def Interface(parameters, nx, ny, nz, dim=None, dof=None, backend="SciPy"):
+def Interface(parameters, nx, ny, nz=1, dim=None, dof=None, backend="SciPy"):
     try:
         return create(parameters, nx, ny, nz, dim, dof, backend=backend)
     except ImportError:
@@ -97,10 +97,9 @@ def test_continuation_ldc_2D_stretched(backend, nx=8):
     numpy.random.seed(1234)
 
     ny = nx
-    nz = 1
 
     parameters = {'Grid Stretching': True}
-    interface = Interface(parameters, nx, ny, nz, backend=backend)
+    interface = Interface(parameters, nx, ny, backend=backend)
 
     x = interface.discretization.get_coordinate_vector(0, 1, nx)
     y = interface.discretization.get_coordinate_vector(0, 1, ny)
@@ -175,7 +174,6 @@ def test_continuation_rayleigh_benard(backend, nx=8):
     numpy.random.seed(1234)
 
     ny = nx
-    nz = 1
 
     parameters = {'Problem Type': 'Rayleigh-Benard',
                   'Prandtl Number': 10,
@@ -183,7 +181,7 @@ def test_continuation_rayleigh_benard(backend, nx=8):
                   'X-max': 10,
                   'Bordered Solver': True}
 
-    interface = Interface(parameters, nx, ny, nz, backend=backend)
+    interface = Interface(parameters, nx, ny, backend=backend)
     continuation = Continuation(interface)
 
     x0 = interface.vector()
@@ -363,14 +361,13 @@ def test_continuation_double_gyre(backend, nx=8):
     numpy.random.seed(1234)
 
     ny = nx
-    nz = 1
 
     parameters = {'Problem Type': 'Double Gyre',
                   'Reynolds Number': 16,
                   'Rossby Parameter': 1000,
                   'Wind Stress Parameter': 0}
 
-    interface = Interface(parameters, nx, ny, nz, backend=backend)
+    interface = Interface(parameters, nx, ny, backend=backend)
     continuation = Continuation(interface)
 
     x0 = interface.vector()
@@ -402,14 +399,13 @@ def test_continuation_amoc(backend, nx=16):
     numpy.random.seed(1234)
 
     ny = nx // 2
-    nz = 1
 
     parameters = {'Problem Type': 'AMOC',
                   'Rayleigh Number': 4e4,
                   'Prandtl Number': 2.25,
                   'X-max': 5}
 
-    interface = Interface(parameters, nx, ny, nz, backend=backend)
+    interface = Interface(parameters, nx, ny, backend=backend)
     continuation = Continuation(interface)
 
     x0 = interface.vector()
