@@ -249,9 +249,6 @@ class Continuation:
 
         print("%s: %f" % (parameter_name, mu), flush=True)
 
-        if 'Postprocess' in self.parameters and self.parameters['Postprocess']:
-            self.parameters['Postprocess'](self.interface, x, mu)
-
         # Set the new values computed by the corrector
         dmu = mu - mu0
         dx = x - x0
@@ -327,8 +324,10 @@ class Continuation:
 
         return dx, dmu
 
-    @staticmethod
-    def _return(x, mu, dx, dmu, ds, return_step):
+    def _return(self, x, mu, dx, dmu, ds, callback, return_step):
+        if callback is not None:
+            callback(self.interface, x, mu)
+
         if return_step:
             return x, mu, dx * ds, dmu * ds
 
@@ -403,6 +402,10 @@ class Continuation:
         x = x0
         mu = start
 
+        callback = None
+        if 'Postprocess' in self.parameters and self.parameters['Postprocess']:
+            callback = self.parameters['Postprocess']
+
         self.zeta = 1 / x.size
 
         if dx is None or dmu is None:
@@ -439,7 +442,10 @@ class Continuation:
                                                                    ds, ds_min, ds_max)
                         continue
 
-                    return self._return(x, mu, dx, dmu, ds, return_step)
+                    return self._return(x, mu, dx, dmu, ds, callback, return_step)
+
+            if callback is not None:
+                callback(self.interface, x, mu)
 
             x, mu, dx, dmu, ds = self._step(parameter_name, x, mu, dx, dmu,
                                             ds, ds_min, ds_max)
@@ -449,8 +455,8 @@ class Continuation:
                 x, mu = self._converge(parameter_name, x, mu, dx, dmu, target,
                                        ds, ds_min, ds_max, maxit - j)
 
-                return self._return(x, mu, dx, dmu, ds, return_step)
+                return self._return(x, mu, dx, dmu, ds, callback, return_step)
 
             ds = self._adjust_step_size(ds, ds_min, ds_max)
 
-        return self._return(x, mu, dx, dmu, ds, return_step)
+        return self._return(x, mu, dx, dmu, ds, callback, return_step)

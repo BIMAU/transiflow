@@ -15,17 +15,6 @@ class Data:
         self.mu.append(mu)
         self.value.append(value)
 
-    def filter(self):
-        '''Filter out values obtained while converging onto a target'''
-        idx = []
-        for i, mu in enumerate(self.mu):
-            if idx:
-                idx = [j for j in idx if self.mu[j] < mu]
-
-            idx.append(i)
-
-        self.mu = [self.mu[i] for i in idx]
-        self.value = [self.value[i] for i in idx]
 
 def main():
     ''' An example of performing a continuation for a 2D differentially heated cavity and detecting a bifurcation point'''
@@ -81,10 +70,7 @@ def main():
     continuation = Continuation(interface, parameters, newton_tolerance=1e-4)
     x3, mu3 = continuation.continuation(x2, 'Rayleigh Number', mu2, target, ds, ds_max=1e8)
 
-    # Plot a bifurcation diagram. Filter out the part where we
-    # have to go back an forth when converging onto a target
-    data.filter()
-
+    # Plot a bifurcation diagram
     bif = plt.scatter(mu2, ke, marker='^')
     plt.plot(data.mu, data.value)
 
