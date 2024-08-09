@@ -37,10 +37,9 @@ def num_evs():
 @pytest.fixture(scope='module')
 def scipy_interface(nx):
     ny = nx
-    nz = 1
 
     parameters = {}
-    interface = Interface(parameters, nx, ny, nz)
+    interface = Interface(parameters, nx, ny)
 
     return interface
 
