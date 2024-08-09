@@ -33,6 +33,11 @@ class Continuation:
 
         - ``F``: Use the norm of the ``rhs(x)`` function.
         - ``dx``: Use the norm of the step ``dx``.
+    bordered_solver : bool, optional
+        Use a bordered solver the entire linear system in the
+        correction equation in a single operation, instead of using
+        two separate solves. This has to be implemented by the
+        interface.
     verbose : bool, optional
         Give extra information about convergence. Since we have to
         compute this information, this may be slower.
@@ -42,11 +47,13 @@ class Continuation:
     def __init__(self, interface, parameters,
                  delta=1.0, destination_tolerance=1e-4,
                  newton_tolerance=1e-4, maximum_newton_iterations=10,
-                 optimal_newton_iterations=3, residual_check='F', verbose=False):
+                 optimal_newton_iterations=3, residual_check='F',
+                 bordered_solver=False, verbose=False):
         self.interface = interface
         self.parameters = parameters
         self.verbose = verbose
 
+        self.destination_tolerance = destination_tolerance
         self.delta = delta
         self.zeta = None
 
@@ -55,7 +62,8 @@ class Continuation:
         self.newton_tolerance = newton_tolerance
         self.newton_iterations = 0
         self.residual_check = residual_check
-        self.destination_tolerance = destination_tolerance
+
+        self.bordered_solver = bordered_solver
 
     def newton(self, x0, tol=1e-10):
         x = x0
@@ -124,7 +132,7 @@ class Continuation:
             # Compute the jacobian F_x at x (LHS of 2.2.9)
             jac = self.interface.jacobian(x)
 
-            if self.parameters.get("Bordered Solver", False):
+            if self.bordered_solver:
                 # Solve the entire bordered system in one go (2.2.9)
                 dx, dmu = self.interface.solve(jac, -fval, -rnp1, dflval, 2 * self.zeta * diff,
                                                2 * (1 - self.zeta) * (mu - mu0))
@@ -277,7 +285,7 @@ class Continuation:
         dflval = (self.interface.rhs(x) - fval) / self.delta
         self.interface.set_parameter(parameter_name, mu)
 
-        if self.parameters.get("Bordered Solver", False):
+        if self.bordered_solver:
             # Solve the entire bordered system in one go (5.16)
             dx, dmu = self.interface.solve(jac, 0 * x, 0, dflval, dx, dmu)
         else:
