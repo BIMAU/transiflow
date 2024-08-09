@@ -116,10 +116,6 @@ def main():
 
     enable_output = False
 
-    # The bordered solver only has to solve one system in each Newton step instead of two.
-    # It also can solve a bordered system instead of using projections in the eigenvalue solver.
-    # parameters['Bordered Solver'] = True
-
     # Set some parameters for the Belos solver (GMRES)
     parameters['Solver'] = {}
     parameters['Solver']['Iterative Solver'] = {}
