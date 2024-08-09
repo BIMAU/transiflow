@@ -337,17 +337,13 @@ class Continuation:
                      ds, ds_min=0.01, ds_max=1000,
                      dx=None, dmu=None, maxit=1000,
                      detect_bifurcations=False, switch_branches=False,
-                     return_step=False):
+                     return_step=False, callback=None):
         '''Perform a pseudo-arclength continuation in
         ``parameter_name`` from parameter value start to ``target``
         with arclength step size ``ds``, and starting from an initial
         state ``x0``.
 
         Returns the final state x and the final parameter value mu.
-
-        Postprocessing can be done by setting the 'Postprocess'
-        parameter to a lambda x, mu: ... function, which gets called
-        after every continuation step.
 
         Parameters
         ----------
@@ -381,6 +377,9 @@ class Continuation:
         return_step : bool, optional
             Return ``dx`` and ``dmu`` when set to True. These can be
             used in the next ``continuation()`` call.
+        callback : function, optional
+            User-supplied function to call after each continuation
+            step. It is called as ``callback(interface, x, mu)``.
 
         Returns
         -------
@@ -401,10 +400,6 @@ class Continuation:
 
         x = x0
         mu = start
-
-        callback = None
-        if 'Postprocess' in self.parameters and self.parameters['Postprocess']:
-            callback = self.parameters['Postprocess']
 
         self.zeta = 1 / x.size
 

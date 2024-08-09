@@ -15,6 +15,8 @@ class Data:
         self.mu.append(mu)
         self.value.append(value)
 
+    def callback(self, interface, x, mu):
+        self.append(mu, utils.compute_volume_averaged_kinetic_energy(x, interface))
 
 def main():
     ''' An example of performing a continuation for a 2D differentially heated cavity and detecting a bifurcation point'''
@@ -45,13 +47,12 @@ def main():
 
     # Store data for computing the bifurcation diagram using postprocessing
     data = Data()
-    parameters['Postprocess'] = lambda interface, x, mu: data.append(
-        mu, utils.compute_volume_averaged_kinetic_energy(x, interface))
 
     # Perform an initial continuation to Rayleigh number 1e8 without detecting bifurcation points
     ds = 100
     target = 1e9
-    x, mu = continuation.continuation(x0, 'Rayleigh Number', 0, target, ds, ds_max=1e8)
+    x, mu = continuation.continuation(x0, 'Rayleigh Number', 0, target,
+                                      ds, ds_max=1e8, callback=data.callback)
 
     parameters['Eigenvalue Solver'] = {}
     parameters['Eigenvalue Solver']['Target'] = 0
@@ -62,13 +63,14 @@ def main():
     ds = 1e8
     target = 3.5e9
     x2, mu2 = continuation.continuation(x, 'Rayleigh Number', mu, target, ds, ds_max=1e8,
-                                        detect_bifurcations=True)
+                                        detect_bifurcations=True, callback=data.callback)
 
     ke = utils.compute_volume_averaged_kinetic_energy(x2, interface)
 
     # Compute the unstable branch after the bifurcation
     continuation = Continuation(interface, parameters, newton_tolerance=1e-4)
-    x3, mu3 = continuation.continuation(x2, 'Rayleigh Number', mu2, target, ds, ds_max=1e8)
+    x3, mu3 = continuation.continuation(x2, 'Rayleigh Number', mu2, target,
+                                        ds, ds_max=1e8, callback=data.callback)
 
     # Plot a bifurcation diagram
     bif = plt.scatter(mu2, ke, marker='^')

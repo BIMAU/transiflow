@@ -17,6 +17,9 @@ class Data:
         self.mu.append(mu)
         self.value.append(value)
 
+    def callback(self, interface, x, mu):
+        self.append(mu, numpy.max(utils.compute_streamfunction(x, interface)))
+
 
 def main():
     '''An example of performing a continuation for a double-gyre
@@ -54,19 +57,17 @@ def main():
     # Perform a continuation to Reynolds number 40 without detecting bifurcation points
     # and use this in the bifurcation diagram
     data2 = Data()
-    interface.set_parameter('Postprocess', lambda interface, x, mu: data2.append(
-        mu, numpy.max(utils.compute_streamfunction(x, interface))))
 
     ds = 5
     target = 40
-    x2, mu2 = continuation.continuation(x1, 'Reynolds Number', 16, target, ds)
+    x2, mu2 = continuation.continuation(x1, 'Reynolds Number', 16, target, ds,
+                                        callback=data2.callback)
 
     plot_utils.plot_streamfunction(x2, interface, title='Streamfunction at Re={}'.format(mu2))
 
     # Add asymmetry to the problem
     ds = 10
     target = 1
-    interface.set_parameter('Postprocess', None)
     interface.set_parameter('Reynolds Number', 16)
     x3, mu3 = continuation.continuation(x1, 'Asymmetry Parameter', 0, target, ds, maxit=1)
 
@@ -84,12 +85,11 @@ def main():
     # Now compute the stable branch after the pitchfork bifurcation by going backwards
     # and use this in the bifurcation diagram
     data6 = Data()
-    interface.set_parameter('Postprocess', lambda interface, x, mu: data6.append(
-        mu, numpy.max(utils.compute_streamfunction(x, interface))))
 
     ds = -5
     target = 40
-    x6, mu6 = continuation.continuation(x5, 'Reynolds Number', mu4, target, ds)
+    x6, mu6 = continuation.continuation(x5, 'Reynolds Number', mu4, target, ds,
+                                        callback=data6.callback)
 
     # Plot a bifurcation diagram
     plt.title('Bifurcation diagram for the QG model with $n_x=n_y={}$'.format(nx))

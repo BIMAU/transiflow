@@ -137,18 +137,19 @@ def main():
     interface = Interface(parameters, nx, ny, nz, dim, dof, backend='HYMLS')
 
     data = Data()
-    parameters['Postprocess'] = lambda interface, x, mu: postprocess(data, interface, x, mu, enable_output)
+    callback = lambda interface, x, mu: postprocess(data, interface, x, mu, enable_output)
 
     continuation = Continuation(interface, parameters)
 
     # Compute an initial guess
     x0 = interface.vector()
-    x = continuation.continuation(x0, 'Lid Velocity', 0, 1, 1)[0]
+    x = continuation.continuation(x0, 'Lid Velocity', 0, 1, 1, callback=callback)[0]
 
     # Perform an initial continuation to Reynolds number 1700 without detecting bifurcation points
     ds = 100
     target = 1800
-    x, mu = continuation.continuation(x, 'Reynolds Number', 0, target, ds, ds_max=100)
+    x, mu = continuation.continuation(x, 'Reynolds Number', 0, target,
+                                      ds, ds_max=100, callback=callback)
 
     # Store point b from which we start locating the bifurcation point
     write_solution(interface, x, mu, 'b', enable_output)
@@ -166,7 +167,7 @@ def main():
     ds = 100
     target = 2500
     x2, mu2 = continuation.continuation(x, 'Reynolds Number', mu, target, ds, ds_max=100,
-                                        detect_bifurcations=True)
+                                        detect_bifurcations=True, callback=callback)
 
     # Store the solution at the bifurcation point
     write_solution(interface, x, mu, 'c', enable_output)

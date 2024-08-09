@@ -18,6 +18,9 @@ class Data:
         self.mu.append(mu)
         self.value.append(value)
 
+    def callback(self, interface, x, mu):
+        self.append(mu, numpy.max(utils.compute_streamfunction(x, interface)))
+
 
 def generate_plots(interface, x, sigma):
     '''Generate plots for the stream function, vorticity and salinity and write them to a file'''
@@ -87,13 +90,11 @@ def main():
     # Perform a continuation to freshwater flux 0.2 without detecting bifurcation points
     # and use this in the bifurcation diagram
     data2 = Data()
-    parameters['Postprocess'] = lambda interface, x, mu: data2.append(
-        mu, numpy.max(utils.compute_streamfunction(x, interface)))
-    interface.parameters['Postprocess'](interface, x1, 0)
 
     ds = 0.05
     target = 0.2
-    x2, mu2 = continuation.continuation(x1, 'Freshwater Flux', 0, target, ds, ds_min=1e-12)
+    x2, mu2 = continuation.continuation(x1, 'Freshwater Flux', 0, target,
+                                        ds, ds_min=1e-12, callback=data2.callback)
 
     # Write the solution to a file
     numpy.save('x2', x2)
@@ -111,7 +112,6 @@ def main():
     # Add asymmetry to the problem
     ds = 0.05
     target = 1
-    parameters['Postprocess'] = None
     parameters['Freshwater Flux'] = 0
     x3, mu3 = continuation.continuation(x1, 'Asymmetry Parameter', 0, target, ds, maxit=1)
 
@@ -137,13 +137,12 @@ def main():
     # Now compute the stable branch after the pitchfork bifurcation by going backwards
     # and use this in the bifurcation diagram
     data6 = Data()
-    parameters['Postprocess'] = lambda interface, x, mu: data6.append(
-        mu, numpy.max(utils.compute_streamfunction(x, interface)))
 
     ds = -0.01
     target = 0.2
     x6, mu6 = continuation.continuation(x5, 'Freshwater Flux', mu4, target,
-                                        ds, ds_min=1e-12, ds_max=0.005)
+                                        ds, ds_min=1e-12, ds_max=0.005,
+                                        callback=data6.callback)
 
     # Write the solution to a file
     numpy.save('x6', x6)
