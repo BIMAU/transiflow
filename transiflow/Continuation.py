@@ -326,7 +326,7 @@ class Continuation:
 
     def continuation(self, x0, parameter_name, start, target,
                      ds, ds_min=0.01, ds_max=1000,
-                     dx=None, dmu=None, maxit=None,
+                     dx=None, dmu=None, maxit=1000,
                      detect_bifurcations=False, return_step=False):
         '''Perform a pseudo-arclength continuation in
         ``parameter_name`` from parameter value start to ``target``
@@ -403,9 +403,6 @@ class Continuation:
 
         switched_branches = False
         eigs = None
-
-        if not maxit:
-            maxit = self.parameters.get('Maximum Continuation Steps', 1000)
 
         # Some configuration for the detection of bifurcations
         enable_branch_switching = self.parameters.get('Enable Branch Switching', False)

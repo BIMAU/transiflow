@@ -124,10 +124,8 @@ def main():
     ds = 0.05
     target = 1
     parameters['Postprocess'] = None
-    parameters['Maximum Continuation Steps'] = 1
     parameters['Freshwater Flux'] = 0
-    x3, mu3 = continuation.continuation(x1, 'Asymmetry Parameter', 0, target, ds)
-    parameters['Maximum Continuation Steps'] = 1000
+    x3, mu3 = continuation.continuation(x1, 'Asymmetry Parameter', 0, target, ds, maxit=1)
 
     # Perform a continuation to freshwater flux 0.2 with asymmetry added to the problem,
     # meaning we can't stay on the unstable branch
