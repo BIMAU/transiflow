@@ -1,6 +1,16 @@
 from transiflow.utils import norm
 
 class TimeIntegration:
+    '''Time integration using the theta method.
+
+    Parameters
+    ----------
+    interface
+        Interface object that implements the following functions:
+        ``rhs(x)``, ``jacobian(x)``, ``mass_matrix()`` and
+        ``solve(jac, rhs)``.
+    '''
+
     def __init__(self, interface, parameters):
         self.interface = interface
         self.parameters = parameters
@@ -53,6 +63,27 @@ class TimeIntegration:
             self.parameters['Postprocess'](self.interface, x, t)
 
     def integration(self, x0, dt, tmax):
+        '''
+        Perform the time integration.
+
+        Parameters
+        ----------
+        x0 : array_like
+            Initial solution.
+        dt : scalar
+            Time step.
+        tmax : scalar
+            End time
+
+        Returns
+        -------
+        x : array_like
+            Solution at the end time
+        t : scalar
+            End time
+
+        '''
+
         x = x0
         t = 0
 
