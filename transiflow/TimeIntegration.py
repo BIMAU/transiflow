@@ -74,11 +74,7 @@ class TimeIntegration:
 
         return x
 
-    def postprocess(self, x, t):
-        if 'Postprocess' in self.parameters and self.parameters['Postprocess']:
-            self.parameters['Postprocess'](self.interface, x, t)
-
-    def integration(self, x0, dt, tmax):
+    def integration(self, x0, dt, tmax, callback=None):
         '''
         Perform the time integration.
 
@@ -89,7 +85,10 @@ class TimeIntegration:
         dt : scalar
             Time step.
         tmax : scalar
-            End time
+            End time.
+        callback : function, optional
+            User-supplied function to call after each continuation
+            step. It is called as ``callback(interface, x, t)``.
 
         Returns
         -------
@@ -103,7 +102,8 @@ class TimeIntegration:
         x = x0
         t = 0
 
-        self.postprocess(x, t)
+        if callback:
+            callback(self.interface, x, t)
 
         while t < tmax:
             x = self.newton(x, dt)
@@ -111,6 +111,7 @@ class TimeIntegration:
 
             print("t = %f" % t, flush=True)
 
-            self.postprocess(x, t)
+            if callback:
+                callback(self.interface, x, t)
 
         return x, t
