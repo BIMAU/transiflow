@@ -41,9 +41,9 @@ class Discretization:
         Grid size in the x direction.
     ny : int
         Grid size in the y direction.
-    nz : int
-        Grid size in the z direction. This is set to 1 for
-        2-dimensional problems.
+    nz : int, optional
+        Grid size in the z direction. 1 for 2-dimensional problems.
+        This is the default.
     dim : int, optional
         Physical dimension of the problem. In case this is set to 2, w
         is not referenced in the state vector. The default is based on
@@ -98,7 +98,7 @@ class Discretization:
 
     '''
 
-    def __init__(self, parameters, nx, ny, nz, dim=None, dof=None, x=None, y=None, z=None):
+    def __init__(self, parameters, nx, ny, nz=1, dim=None, dof=None, x=None, y=None, z=None):
         self.parameters = parameters
         self.old_parameters = None
 
