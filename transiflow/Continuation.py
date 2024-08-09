@@ -11,8 +11,11 @@ class Continuation:
     ----------
     interface
         Interface object that implements the following functions:
-        ``rhs(x)``, ``jacobian(x)``, ``solve(jac, rhs)``, ``eigs(x)`` and
-        ``set_parameter(name, value)``.
+        ``rhs(x)``, ``jacobian(x)``, ``solve(jac, rhs)``, ``eigs(x)``
+        and ``set_parameter(name, value)``.
+    newton_tolerance : scalar, optional
+        Tolerance used in the Newton corrector to determine
+        convergence.
     maximum_newton_iterations : int, optional
         Maximum number of Newton iterations.
     residual_check: str, optional
@@ -24,22 +27,22 @@ class Continuation:
 
     '''
 
-    def __init__(self, interface, parameters, maximum_newton_iterations=10, residual_check='F'):
+    def __init__(self, interface, parameters,
+                 newton_tolerance=1e-4, maximum_newton_iterations=10,
+                 residual_check='F'):
         self.interface = interface
         self.parameters = parameters
 
         self.maximum_newton_iterations = maximum_newton_iterations
+        self.newton_tolerance = newton_tolerance
         self.newton_iterations = 0
         self.residual_check = residual_check
         self.destination_tolerance = 1e-4
         self.delta = None
         self.zeta = None
 
-    def newton(self, x0):
+    def newton(self, x0, tol=1e-10):
         verbose = self.parameters.get('Verbose', False)
-
-        # Set Newton some parameters
-        tol = self.parameters.get('Newton Tolerance', 1e-10)
 
         x = x0
         for k in range(self.maximum_newton_iterations):
@@ -74,9 +77,6 @@ class Continuation:
     def _newton_corrector(self, parameter_name, ds, x, x0, mu, mu0):
         verbose = self.parameters.get('Verbose', False)
 
-        # Set Newton some parameters
-        tol = self.parameters.get('Newton Tolerance', 1e-4)
-
         self.newton_iterations = 0
 
         fnorm = None
@@ -92,7 +92,7 @@ class Continuation:
                 prev_norm = fnorm
                 fnorm = norm(fval)
 
-            if self.residual_check == 'F' and fnorm < tol:
+            if self.residual_check == 'F' and fnorm < self.newton_tolerance:
                 print('Newton corrector converged in %d iterations with ||F||=%e' % (k, fnorm), flush=True)
                 break
 
@@ -138,7 +138,7 @@ class Continuation:
                 prev_norm = dxnorm
                 dxnorm = norm(dx)
 
-            if self.residual_check != 'F' and dxnorm < tol:
+            if self.residual_check != 'F' and dxnorm < self.newton_tolerance:
                 print('Newton corrector converged in %d iterations with ||dx||=%e' % (k, dxnorm), flush=True)
                 break
 

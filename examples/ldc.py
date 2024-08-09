@@ -64,7 +64,7 @@ def main():
     target = 6000
     x, mu = continuation.continuation(x0, 'Reynolds Number', 0, target, ds)
 
-    parameters['Newton Tolerance'] = 1e-12
+    # Now detect the bifurcation point
     parameters['Destination Tolerance'] = 1e-4
     parameters['Detect Bifurcation Points'] = True
     parameters['Maximum Step Size'] = 100
@@ -74,9 +74,10 @@ def main():
     parameters['Eigenvalue Solver']['Tolerance'] = 1e-9
     parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 5
 
-    # Now detect the bifurcation point
+    bifurcation_continuation = Continuation(interface, parameters, newton_tolerance=1e-12)
+
     target = 10000
-    x2, mu2 = continuation.continuation(x, 'Reynolds Number', mu, target, ds)
+    x2, mu2 = bifurcation_continuation.continuation(x, 'Reynolds Number', mu, target, ds)
 
     ke = utils.compute_volume_averaged_kinetic_energy(x2, interface)
 
@@ -85,7 +86,6 @@ def main():
     parameters['Maximum Step Size'] = 2000
 
     target = 10000
-    parameters['Newton Tolerance'] = 1e-4
     x3, mu3 = continuation.continuation(x2, 'Reynolds Number', mu2, target, ds)
 
     # Plot a bifurcation diagram. Filter out the part where we

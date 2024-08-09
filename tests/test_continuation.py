@@ -135,7 +135,7 @@ def test_continuation_time_integration(nx=4):
 
     parameters = {'Newton Tolerance': 1e-8}
     interface = Interface(parameters, nx, ny, nz, dim, dof)
-    continuation = Continuation(interface, parameters)
+    continuation = Continuation(interface, parameters, newton_tolerance=1e-8)
 
     x0 = interface.vector()
     x0 = continuation.newton(x0)
@@ -431,12 +431,12 @@ def test_continuation_amoc(backend, nx=16):
 
     parameters['Detect Bifurcation Points'] = True
     parameters['Minimum Step Size'] = 1e-6
-    parameters['Newton Tolerance'] = 1e-6
     parameters['Eigenvalue Solver'] = {}
     parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
 
     target = 0.2
     ds = 0.01
+    continuation = Continuation(interface, parameters, newton_tolerance=1e-6)
     x, mu = continuation.continuation(x, 'Freshwater Flux', 0, target, ds)
 
     assert numpy.linalg.norm(x) > 0
@@ -480,7 +480,6 @@ def test_continuation_2D_tc(nx=8):
 
     parameters['Maximum Step Size'] = 1
     parameters['Bordered Solver'] = True
-    parameters['Newton Tolerance'] = 1e-12
     parameters['Detect Bifurcation Points'] = True
     parameters['Eigenvalue Solver'] = {}
     parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
@@ -488,6 +487,7 @@ def test_continuation_2D_tc(nx=8):
 
     target = 100
     ds = 1
+    continuation = Continuation(interface, parameters, newton_tolerance=1e-12)
     x, mu = continuation.continuation(x, 'Reynolds Number', mu, target, ds)
 
     assert numpy.linalg.norm(x) > 0

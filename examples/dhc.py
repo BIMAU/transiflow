@@ -46,14 +46,12 @@ def main():
                   'Y-max': 1,
                   # Set a maximum step size ds
                   'Maximum Step Size': 1e8,
-                  # Set a smaller Newton tolerance
-                  'Newton Tolerance': 1e-7,
                   # Give back extra output (this is also more expensive)
                   'Verbose': False}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof)
 
-    continuation = Continuation(interface, parameters)
+    continuation = Continuation(interface, parameters, newton_tolerance=1e-7)
 
     # Compute an initial guess
     x0 = interface.vector()
@@ -86,7 +84,7 @@ def main():
     # Compute the unstable branch after the bifurcation
     parameters['Detect Bifurcation Points'] = False
 
-    parameters['Newton Tolerance'] = 1e-4
+    continuation = Continuation(interface, parameters, newton_tolerance=1e-4)
     x3, mu3 = continuation.continuation(x2, 'Rayleigh Number', mu2, target, ds)
 
     # Plot a bifurcation diagram. Filter out the part where we
