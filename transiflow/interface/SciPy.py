@@ -12,7 +12,7 @@ class Interface(BaseInterface):
     such as pseudo-arclength continuation without knowing anything
     about the underlying methods such as the solvers that are present
     in the backend we are interfacing with.'''
-    def __init__(self, parameters, nx, ny, nz, dim, dof=None, x=None, y=None, z=None):
+    def __init__(self, parameters, nx, ny, nz, dim=None, dof=None, x=None, y=None, z=None):
         super().__init__(parameters, nx, ny, nz, dim, dof, x, y, z)
 
         # Select one pressure node to fix
