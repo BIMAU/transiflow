@@ -133,7 +133,7 @@ def test_continuation_time_integration(nx=4):
     ny = nx
     nz = 1
 
-    parameters = {'Newton Tolerance': 1e-8}
+    parameters = {}
     interface = Interface(parameters, nx, ny, nz, dim, dof)
     continuation = Continuation(interface, newton_tolerance=1e-8)
 

@@ -9,6 +9,9 @@ class TimeIntegration:
         Interface object that implements the following functions:
         ``rhs(x)``, ``jacobian(x)``, ``mass_matrix()`` and
         ``solve(jac, rhs)``.
+    newton_tolerance : scalar, optional
+        Tolerance used in the Newton corrector to determine
+        convergence.
     residual_check: str, optional
         Method for checking the residual in the Newton method
         (default: 'F').
@@ -21,11 +24,14 @@ class TimeIntegration:
 
     '''
 
-    def __init__(self, interface, parameters, residual_check='F', verbose=False):
+    def __init__(self, interface, parameters,
+                 newton_tolerance=1e-10,
+                 residual_check='F', verbose=False):
         self.interface = interface
         self.parameters = parameters
         self.verbose = verbose
 
+        self.newton_tolerance = newton_tolerance
         self.residual_check = residual_check
 
     def newton(self, x0, dt):
@@ -33,7 +39,6 @@ class TimeIntegration:
 
         # Set Newton some parameters
         maxit = self.parameters.get('Maximum Newton Iterations', 10)
-        tol = self.parameters.get('Newton Tolerance', 1e-10)
 
         x = x0
         b0 = self.interface.rhs(x0)
@@ -47,7 +52,7 @@ class TimeIntegration:
             if self.residual_check == 'F' or self.verbose:
                 fnorm = norm(fval)
 
-            if self.residual_check == 'F' and fnorm < tol:
+            if self.residual_check == 'F' and fnorm < self.newton_tolerance:
                 print('Newton converged in %d iterations with ||F||=%e' % (k, fnorm), flush=True)
                 break
 
@@ -60,7 +65,7 @@ class TimeIntegration:
             if self.residual_check != 'F' or self.verbose:
                 dxnorm = norm(dx)
 
-            if self.residual_check != 'F' and dxnorm < tol:
+            if self.residual_check != 'F' and dxnorm < self.newton_tolerance:
                 print('Newton converged in %d iterations with ||dx||=%e' % (k, dxnorm), flush=True)
                 break
 
