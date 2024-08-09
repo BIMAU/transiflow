@@ -47,7 +47,7 @@ class Discretization:
     dim : int
         Physical dimension of the problem. In case this is set to 2, w
         is not referenced in the state vector.
-    dof : int
+    dof : int, optional
         Degrees of freedom for this problem. This should be set to dim
         plus 1 for each of pressure, temperature and salinity, if they
         are required for your problem. For example a 3D differentially
@@ -97,7 +97,7 @@ class Discretization:
 
     '''
 
-    def __init__(self, parameters, nx, ny, nz, dim, dof, x=None, y=None, z=None):
+    def __init__(self, parameters, nx, ny, nz, dim, dof=None, x=None, y=None, z=None):
         self.parameters = parameters
         self.old_parameters = None
 
@@ -106,7 +106,10 @@ class Discretization:
         self.nz = nz
 
         self.dim = dim
+
         self.dof = dof
+        if dof is None:
+            self.set_dof()
 
         self.x_periodic = False
         self.y_periodic = False
@@ -540,6 +543,22 @@ class Discretization:
         '''
         first = self.get_parameter('Problem Type', 'Lid-driven Cavity')
         return first.lower() == second.lower()
+
+    def set_dof(self):
+        '''Set ``self.dof`` based on the problem type.
+
+        :meta private:
+
+        '''
+
+        self.dof = self.dim + 1
+        if self.problem_type_equals('Rayleigh-Benard') \
+           or self.problem_type_equals('Rayleigh-Benard Perturbation'):
+            self.dof = self.dim + 2
+        elif self.problem_type_equals('Differentially Heated Cavity'):
+            self.dof = self.dim + 2
+        elif self.problem_type_equals('AMOC'):
+            self.dof = self.dim + 3
 
     def boundaries(self, atom):
         '''Compute boundary conditions for the currently defined problem type.
