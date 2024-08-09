@@ -62,7 +62,6 @@ def test_ldc():
     nx = 4
     ny = nx
     nz = nx
-    dim = 3
     dof = 4
     parameters = {'Reynolds Number': 100}
     n = nx * ny * nz * dof
@@ -71,7 +70,7 @@ def test_ldc():
     for i in range(n):
         state[i] = i + 1
 
-    interface = EpetraInterface.Interface(parameters, nx, ny, nz, dim, dof)
+    interface = EpetraInterface.Interface(parameters, nx, ny, nz, dof=dof)
     state = interface.vector_from_array(state)
 
     A = interface.jacobian(state)
@@ -122,7 +121,6 @@ def test_ldc_stretched_file():
     nx = 4
     ny = nx
     nz = nx
-    dim = 3
     dof = 4
     parameters = {'Reynolds Number': 100, 'Grid Stretching': True}
     n = nx * ny * nz * dof
@@ -131,7 +129,7 @@ def test_ldc_stretched_file():
     for i in range(n):
         state[i] = i + 1
 
-    interface = EpetraInterface.Interface(parameters, nx, ny, nz, dim, dof)
+    interface = EpetraInterface.Interface(parameters, nx, ny, nz, dof=dof)
     state = interface.vector_from_array(state)
 
     A = interface.jacobian(state)
@@ -181,7 +179,6 @@ def test_ldc_stretched(nx=4):
 
     ny = nx
     nz = nx
-    dim = 3
     dof = 4
     parameters = {'Reynolds Number': 100, 'Grid Stretching': True}
     n = nx * ny * nz * dof
@@ -190,11 +187,11 @@ def test_ldc_stretched(nx=4):
     for i in range(n):
         state[i] = i + 1
 
-    discretization = Discretization(parameters, nx, ny, nz, dim, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof=dof)
     B = discretization.jacobian(state)
     rhs_B = discretization.rhs(state)
 
-    interface = EpetraInterface.Interface(parameters, nx, ny, nz, dim, dof)
+    interface = EpetraInterface.Interface(parameters, nx, ny, nz, dof=dof)
     state = interface.vector_from_array(state)
 
     A = interface.jacobian(state)
@@ -246,7 +243,6 @@ def test_norm():
     nx = 4
     ny = nx
     nz = nx
-    dim = 3
     dof = 4
     parameters = {}
     n = nx * ny * nz * dof
@@ -255,7 +251,7 @@ def test_norm():
     for i in range(n):
         state[i] = i + 1
 
-    interface = EpetraInterface.Interface(parameters, nx, ny, nz, dim, dof)
+    interface = EpetraInterface.Interface(parameters, nx, ny, nz, dof=dof)
 
     state_dist = EpetraInterface.Vector.from_array(interface.map, state)
     assert utils.norm(state) == utils.norm(state_dist)
@@ -273,14 +269,13 @@ def test_Epetra(nx=4):
 
     numpy.random.seed(1234)
 
-    dim = 3
     ny = nx
     nz = nx
 
     parameters = Teuchos.ParameterList()
     parameters.set('Reynolds Number', 0)
 
-    interface = EpetraInterface.Interface(parameters, nx, ny, nz, dim)
+    interface = EpetraInterface.Interface(parameters, nx, ny, nz)
     continuation = Continuation(interface)
 
     x0 = interface.vector()

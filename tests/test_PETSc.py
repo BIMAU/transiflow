@@ -78,7 +78,6 @@ def test_ldc():
     nx = 4
     ny = nx
     nz = nx
-    dim = 3
     dof = 4
     parameters = {"Reynolds Number": 100}
     n = nx * ny * nz * dof
@@ -87,7 +86,7 @@ def test_ldc():
     for i in range(n):
         state[i] = i + 1
 
-    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof)
+    interface = PETScInterface.Interface(parameters, nx, ny, nz, dof=dof)
     state = interface.vector_from_array(state)
 
     for i in interface.map.indices:
@@ -143,7 +142,6 @@ def test_ldc_stretched_file():
     nx = 4
     ny = nx
     nz = nx
-    dim = 3
     dof = 4
     parameters = {"Reynolds Number": 100, "Grid Stretching": True}
     n = nx * ny * nz * dof
@@ -152,7 +150,7 @@ def test_ldc_stretched_file():
     for i in range(n):
         state[i] = i + 1
 
-    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof)
+    interface = PETScInterface.Interface(parameters, nx, ny, nz, dof=dof)
     state = interface.vector_from_array(state)
 
     A = interface.jacobian(state)
@@ -204,7 +202,6 @@ def test_ldc_stretched(nx=4):
 
     ny = nx
     nz = nx
-    dim = 3
     dof = 4
     parameters = {"Reynolds Number": 100, "Grid Stretching": True}
     n = nx * ny * nz * dof
@@ -213,11 +210,11 @@ def test_ldc_stretched(nx=4):
     for i in range(n):
         state[i] = i + 1
 
-    discretization = Discretization(parameters, nx, ny, nz, dim, dof)
+    discretization = Discretization(parameters, nx, ny, nz, dof=dof)
     B = discretization.jacobian(state)
     rhs_B = discretization.rhs(state)
 
-    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof)
+    interface = PETScInterface.Interface(parameters, nx, ny, nz, dof=dof)
 
     state_numpy = state.copy()
 
@@ -302,7 +299,6 @@ def test_norm():
     nx = 4
     ny = nx
     nz = nx
-    dim = 3
     dof = 4
     n = nx * ny * nz * dof
     parameters = {}
@@ -311,7 +307,7 @@ def test_norm():
     for i in range(n):
         state[i] = i + 1
 
-    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof)
+    interface = PETScInterface.Interface(parameters, nx, ny, nz, dof=dof)
 
     state_dist = PETScInterface.Vector.from_array(
         interface.map, state[interface.map_natural.indices]
@@ -330,12 +326,11 @@ def test_PETSc(nx=4):
 
     numpy.random.seed(1234)
 
-    dim = 3
     ny = nx
     nz = nx
     parameters = {"Reynolds Number": 0, "Verbose": True}
 
-    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim)
+    interface = PETScInterface.Interface(parameters, nx, ny, nz)
 
     continuation = Continuation(interface)
 
