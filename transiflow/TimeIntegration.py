@@ -9,14 +9,22 @@ class TimeIntegration:
         Interface object that implements the following functions:
         ``rhs(x)``, ``jacobian(x)``, ``mass_matrix()`` and
         ``solve(jac, rhs)``.
+    residual_check: str, optional
+        Method for checking the residual in the Newton method
+        (default: 'F').
+
+        - ``F``: Use the norm of the ``rhs(x)`` function.
+        - ``dx``: Use the norm of the step ``dx``.
+
     '''
 
-    def __init__(self, interface, parameters):
+    def __init__(self, interface, parameters, residual_check='F'):
         self.interface = interface
         self.parameters = parameters
 
+        self.residual_check = residual_check
+
     def newton(self, x0, dt):
-        residual_check = self.parameters.get('Residual Check', 'F')
         verbose = self.parameters.get('Verbose', False)
         theta = self.parameters.get('Theta', 1)
 
@@ -33,10 +41,10 @@ class TimeIntegration:
             fval = mass @ (x0 - x) + dt * theta * self.interface.rhs(x) + dt * (1 - theta) * b0
             fval /= theta * dt
 
-            if residual_check == 'F' or verbose:
+            if self.residual_check == 'F' or verbose:
                 fnorm = norm(fval)
 
-            if residual_check == 'F' and fnorm < tol:
+            if self.residual_check == 'F' and fnorm < tol:
                 print('Newton converged in %d iterations with ||F||=%e' % (k, fnorm), flush=True)
                 break
 
@@ -46,10 +54,10 @@ class TimeIntegration:
 
             x = x + dx
 
-            if residual_check != 'F' or verbose:
+            if self.residual_check != 'F' or verbose:
                 dxnorm = norm(dx)
 
-            if residual_check != 'F' and dxnorm < tol:
+            if self.residual_check != 'F' and dxnorm < tol:
                 print('Newton converged in %d iterations with ||dx||=%e' % (k, dxnorm), flush=True)
                 break
 
