@@ -21,6 +21,9 @@ class Continuation:
         convergence.
     maximum_newton_iterations : int, optional
         Maximum number of Newton iterations.
+    optimal_newton_iterations : int, optional
+        Number of Newton iterations in which we try to converge by
+        adjusting ds.
     residual_check: str, optional
         Method for checking the residual in the Newton method
         (default: 'F').
@@ -36,7 +39,7 @@ class Continuation:
     def __init__(self, interface, parameters,
                  delta=1.0,
                  newton_tolerance=1e-4, maximum_newton_iterations=10,
-                 residual_check='F', verbose=False):
+                 optimal_newton_iterations=3, residual_check='F', verbose=False):
         self.interface = interface
         self.parameters = parameters
         self.verbose = verbose
@@ -45,6 +48,7 @@ class Continuation:
         self.zeta = None
 
         self.maximum_newton_iterations = maximum_newton_iterations
+        self.optimal_newton_iterations = optimal_newton_iterations
         self.newton_tolerance = newton_tolerance
         self.newton_iterations = 0
         self.residual_check = residual_check
@@ -167,9 +171,8 @@ class Continuation:
 
         min_step_size = self.parameters.get('Minimum Step Size', 0.01)
         max_step_size = self.parameters.get('Maximum Step Size', 2000)
-        optimal_newton_iterations = self.parameters.get('Optimal Newton Iterations', 3)
 
-        factor = optimal_newton_iterations / max(self.newton_iterations, 1)
+        factor = self.optimal_newton_iterations / max(self.newton_iterations, 1)
         factor = min(max(factor, 0.5), 2.0)
 
         ds *= factor
