@@ -13,13 +13,16 @@ class Continuation:
         Interface object that implements the following functions:
         ``rhs(x)``, ``jacobian(x)``, ``solve(jac, rhs)``, ``eigs(x)`` and
         ``set_parameter(name, value)``.
+    maximum_newton_iterations : int, optional
+        Maximum number of Newton iterations.
 
     '''
 
-    def __init__(self, interface, parameters):
+    def __init__(self, interface, parameters, maximum_newton_iterations=10):
         self.interface = interface
         self.parameters = parameters
 
+        self.maximum_newton_iterations = maximum_newton_iterations
         self.newton_iterations = 0
         self.destination_tolerance = 1e-4
         self.delta = None
@@ -30,11 +33,10 @@ class Continuation:
         verbose = self.parameters.get('Verbose', False)
 
         # Set Newton some parameters
-        maxit = self.parameters.get('Maximum Newton Iterations', 10)
         tol = self.parameters.get('Newton Tolerance', 1e-10)
 
         x = x0
-        for k in range(maxit):
+        for k in range(self.maximum_newton_iterations):
             fval = self.interface.rhs(x)
 
             if residual_check == 'F' or verbose:
@@ -68,7 +70,6 @@ class Continuation:
         verbose = self.parameters.get('Verbose', False)
 
         # Set Newton some parameters
-        maxit = self.parameters.get('Maximum Newton Iterations', 10)
         tol = self.parameters.get('Newton Tolerance', 1e-4)
 
         self.newton_iterations = 0
@@ -77,7 +78,7 @@ class Continuation:
         dxnorm = None
 
         # Do the main iteration
-        for k in range(maxit):
+        for k in range(self.maximum_newton_iterations):
             # Compute F (RHS of 2.2.9)
             self.interface.set_parameter(parameter_name, mu)
             fval = self.interface.rhs(x)
@@ -91,7 +92,7 @@ class Continuation:
                 break
 
             if residual_check == 'F' and prev_norm is not None and prev_norm < fnorm:
-                self.newton_iterations = maxit
+                self.newton_iterations = self.maximum_newton_iterations
                 break
 
             # Compute r (2.2.8)
@@ -140,10 +141,10 @@ class Continuation:
                 print('Newton corrector status at iteration %d: ||F||=%e, ||dx||=%e' % (k, fnorm, dxnorm), flush=True)
 
             if residual_check != 'F' and prev_norm is not None and prev_norm < dxnorm:
-                self.newton_iterations = maxit
+                self.newton_iterations = self.maximum_newton_iterations
                 break
 
-        if self.newton_iterations == maxit:
+        if self.newton_iterations == self.maximum_newton_iterations:
             print('Newton did not converge. Adjusting step size and trying again', flush=True)
             return x0, mu0
 
