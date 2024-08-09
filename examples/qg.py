@@ -26,7 +26,6 @@ def main():
     wind-driven ocean, plotting the streamfunction at different Reynolds
     numbers, and plotting the bifurcation diagram.'''
 
-    dim = 2
     nx = 32
     ny = nx
     nz = 1
@@ -40,7 +39,7 @@ def main():
                   # Give back extra output (this is also more expensive)
                   'Verbose': False}
 
-    interface = Interface(parameters, nx, ny, nz, dim)
+    interface = Interface(parameters, nx, ny, nz)
     continuation = Continuation(interface)
 
     # First activate the wind stress

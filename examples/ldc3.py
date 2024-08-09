@@ -22,7 +22,6 @@ class Data:
 
 def main():
     ''' An example of performing a "poor man's continuation" for a 2D lid-driven cavity using time integration'''
-    dim = 2
     nx = 16
     ny = nx
     nz = 1
@@ -38,7 +37,7 @@ def main():
                   'Verbose': False,
                   'Theta': 1}
 
-    interface = Interface(parameters, nx, ny, nz, dim)
+    interface = Interface(parameters, nx, ny, nz)
 
     # Store data for computing the bifurcation diagram using postprocessing
     data = Data()

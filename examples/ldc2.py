@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 
 def main():
     ''' An example of performing a continuation for a 2D lid-driven cavity and computing eigenvalues along the way'''
-    dim = 2
     nx = 16
     ny = nx
     nz = 1
@@ -23,7 +22,7 @@ def main():
                   'Reynolds Number': 1,
                   'Lid Velocity': 0}
 
-    interface = Interface(parameters, nx, ny, nz, dim)
+    interface = Interface(parameters, nx, ny, nz)
     continuation = Continuation(interface)
 
     # Compute an initial guess
