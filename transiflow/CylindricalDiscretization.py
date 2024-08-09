@@ -13,7 +13,7 @@ class CylindricalDiscretization(Discretization):
 
     '''
 
-    def __init__(self, parameters, nr, ntheta, nz, dim, dof, r=None, theta=None, z=None):
+    def __init__(self, parameters, nr, ntheta, nz, dim, dof=None, r=None, theta=None, z=None):
         self.parameters = parameters
 
         ri = self.parameters.get('R-min', 1.0)
