@@ -75,12 +75,10 @@ def main():
                   'Freshwater Flux': 0,
                   'X-max': 5,
                   # Give back extra output (this is also more expensive)
-                  'Verbose': False,
-                  # Use a lower Newton tolerance than the default
-                  'Newton Tolerance': 1e-6}
+                  'Verbose': False}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof)
-    continuation = Continuation(interface, parameters)
+    continuation = Continuation(interface, parameters, newton_tolerance=1e-6)
 
     # First increase the temperature forcing to the desired value
     x0 = interface.vector()
