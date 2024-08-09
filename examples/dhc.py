@@ -40,7 +40,7 @@ def main():
 
     interface = Interface(parameters, nx, ny, nz, dim, dof)
 
-    continuation = Continuation(interface, parameters, newton_tolerance=1e-7)
+    continuation = Continuation(interface, newton_tolerance=1e-7)
 
     # Compute an initial guess
     x0 = interface.vector()
@@ -68,7 +68,7 @@ def main():
     ke = utils.compute_volume_averaged_kinetic_energy(x2, interface)
 
     # Compute the unstable branch after the bifurcation
-    continuation = Continuation(interface, parameters, newton_tolerance=1e-4)
+    continuation = Continuation(interface, newton_tolerance=1e-4)
     x3, mu3 = continuation.continuation(x2, 'Rayleigh Number', mu2, target,
                                         ds, ds_max=1e8, callback=data.callback)
 

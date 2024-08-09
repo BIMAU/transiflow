@@ -38,7 +38,7 @@ def main():
                   'Verbose': False}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof)
-    continuation = Continuation(interface, parameters)
+    continuation = Continuation(interface)
 
     # Compute an initial guess
     x0 = interface.vector()
@@ -59,7 +59,7 @@ def main():
     parameters['Eigenvalue Solver']['Tolerance'] = 1e-9
     parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 5
 
-    bifurcation_continuation = Continuation(interface, parameters, newton_tolerance=1e-12)
+    bifurcation_continuation = Continuation(interface, newton_tolerance=1e-12)
 
     target = 10000
     x2, mu2 = bifurcation_continuation.continuation(x, 'Reynolds Number', mu, target,

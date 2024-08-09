@@ -14,7 +14,7 @@ Given a continuation parameters and a target value, the continuation can be call
     interface = Interface(parameters, nx, ny, nz, dim, dof)
 
     # Instantiate the continuation
-    continuation = Continuation(interface, parameters)
+    continuation = Continuation(interface)
 
     # Compute an initial guess
     x0 = interface.vector()

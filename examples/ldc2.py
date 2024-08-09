@@ -26,7 +26,7 @@ def main():
                   'Lid Velocity': 0}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof)
-    continuation = Continuation(interface, parameters)
+    continuation = Continuation(interface)
 
     # Compute an initial guess
     x0 = interface.vector()

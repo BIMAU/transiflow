@@ -44,13 +44,12 @@ class Continuation:
 
     '''
 
-    def __init__(self, interface, parameters,
+    def __init__(self, interface,
                  delta=1.0, destination_tolerance=1e-4,
                  newton_tolerance=1e-4, maximum_newton_iterations=10,
                  optimal_newton_iterations=3, residual_check='F',
                  bordered_solver=False, verbose=False):
         self.interface = interface
-        self.parameters = parameters
         self.verbose = verbose
 
         self.destination_tolerance = destination_tolerance

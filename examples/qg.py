@@ -42,7 +42,7 @@ def main():
                   'Verbose': False}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof)
-    continuation = Continuation(interface, parameters)
+    continuation = Continuation(interface)
 
     # First activate the wind stress
     x0 = interface.vector()

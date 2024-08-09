@@ -338,7 +338,7 @@ def test_PETSc(nx=4):
 
     interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof)
 
-    continuation = Continuation(interface, parameters)
+    continuation = Continuation(interface)
 
     x0 = interface.vector()
     x0 = continuation.newton(x0)
