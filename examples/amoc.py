@@ -76,13 +76,12 @@ def main():
     x1 = continuation.continuation(x0, 'Temperature Forcing', 0, target, ds)[0]
 
     # Write the solution to a file
-    numpy.save('x1', x1)
+    interface.save_state('x1', x1)
 
     generate_plots(interface, x1, 0)
 
     # Enable the lines below to load the solution instead. Same for the ones below
-    # parameters['Temperature Forcing'] = 1
-    # x1 = numpy.load('x1.npy')
+    # x1 = interface.load_state('x1')
 
     # Perform a continuation to freshwater flux 0.2 without detecting bifurcation points
     # and use this in the bifurcation diagram
@@ -94,7 +93,7 @@ def main():
                                         ds, ds_min=1e-12, callback=data2.callback)
 
     # Write the solution to a file
-    numpy.save('x2', x2)
+    interface.save_state('x2', x2)
 
     generate_plots(interface, x2, mu2)
 
@@ -124,11 +123,11 @@ def main():
     x5, mu5 = continuation.continuation(x4, 'Asymmetry Parameter', mu3, target, ds)
 
     # Write the solution to a file
-    numpy.save('x5', x5)
+    interface.save_state('x5', x5)
 
     generate_plots(interface, x5, mu5)
 
-    x5 = numpy.load('x5.npy')
+    x5 = interface.load_state('x5')
     mu4 = 0.2
 
     # Now compute the stable branch after the pitchfork bifurcation by going backwards
@@ -142,7 +141,7 @@ def main():
                                         callback=data6.callback)
 
     # Write the solution to a file
-    numpy.save('x6', x6)
+    interface.save_state('x6', x6)
 
     generate_plots(interface, x6, mu6)
 
