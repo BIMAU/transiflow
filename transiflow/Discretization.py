@@ -44,9 +44,10 @@ class Discretization:
     nz : int
         Grid size in the z direction. This is set to 1 for
         2-dimensional problems.
-    dim : int
+    dim : int, optional
         Physical dimension of the problem. In case this is set to 2, w
-        is not referenced in the state vector.
+        is not referenced in the state vector. The default is based on
+        the value of nz.
     dof : int, optional
         Degrees of freedom for this problem. This should be set to dim
         plus 1 for each of pressure, temperature and salinity, if they
@@ -97,7 +98,7 @@ class Discretization:
 
     '''
 
-    def __init__(self, parameters, nx, ny, nz, dim, dof=None, x=None, y=None, z=None):
+    def __init__(self, parameters, nx, ny, nz, dim=None, dof=None, x=None, y=None, z=None):
         self.parameters = parameters
         self.old_parameters = None
 
@@ -106,6 +107,8 @@ class Discretization:
         self.nz = nz
 
         self.dim = dim
+        if dim is None:
+            self.dim = 3 if self.nz > 1 else 2
 
         self.dof = dof
         if dof is None:
