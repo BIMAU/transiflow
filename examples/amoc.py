@@ -18,18 +18,6 @@ class Data:
         self.mu.append(mu)
         self.value.append(value)
 
-    def filter(self):
-        '''Filter out values obtained while converging onto a target'''
-        idx = []
-        for i, mu in enumerate(self.mu):
-            if idx:
-                idx = [j for j in idx if self.mu[j] < mu]
-
-            idx.append(i)
-
-        self.mu = [self.mu[i] for i in idx]
-        self.value = [self.value[i] for i in idx]
-
 
 def generate_plots(interface, x, sigma):
     '''Generate plots for the stream function, vorticity and salinity and write them to a file'''
@@ -161,8 +149,6 @@ def main():
     numpy.save('x6', x6)
 
     generate_plots(interface, x6, mu6)
-
-    data2.filter()
 
     # Plot a bifurcation diagram
     plt.title(f'Bifurcation diagram for the AMOC model with $n_x={nx}$, $n_y={ny}$')
