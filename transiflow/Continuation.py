@@ -24,14 +24,18 @@ class Continuation:
 
         - ``F``: Use the norm of the ``rhs(x)`` function.
         - ``dx``: Use the norm of the step ``dx``.
+    verbose : bool, optional
+        Give extra information about convergence. Since we have to
+        compute this information, this may be slower.
 
     '''
 
     def __init__(self, interface, parameters,
                  newton_tolerance=1e-4, maximum_newton_iterations=10,
-                 residual_check='F'):
+                 residual_check='F', verbose=False):
         self.interface = interface
         self.parameters = parameters
+        self.verbose = verbose
 
         self.maximum_newton_iterations = maximum_newton_iterations
         self.newton_tolerance = newton_tolerance
@@ -42,13 +46,11 @@ class Continuation:
         self.zeta = None
 
     def newton(self, x0, tol=1e-10):
-        verbose = self.parameters.get('Verbose', False)
-
         x = x0
         for k in range(self.maximum_newton_iterations):
             fval = self.interface.rhs(x)
 
-            if self.residual_check == 'F' or verbose:
+            if self.residual_check == 'F' or self.verbose:
                 fnorm = norm(fval)
 
             if self.residual_check == 'F' and fnorm < tol:
@@ -60,14 +62,14 @@ class Continuation:
 
             x = x + dx
 
-            if self.residual_check != 'F' or verbose:
+            if self.residual_check != 'F' or self.verbose:
                 dxnorm = norm(dx)
 
             if self.residual_check != 'F' and dxnorm < tol:
                 print('Newton converged in %d iterations with ||dx||=%e' % (k, dxnorm), flush=True)
                 break
 
-            if verbose:
+            if self.verbose:
                 print('Newton status at iteration %d: ||F||=%e, ||dx||=%e' % (k, fnorm, dxnorm), flush=True)
 
         self.newton_iterations = k
@@ -75,8 +77,6 @@ class Continuation:
         return x
 
     def _newton_corrector(self, parameter_name, ds, x, x0, mu, mu0):
-        verbose = self.parameters.get('Verbose', False)
-
         self.newton_iterations = 0
 
         fnorm = None
@@ -88,7 +88,7 @@ class Continuation:
             self.interface.set_parameter(parameter_name, mu)
             fval = self.interface.rhs(x)
 
-            if self.residual_check == 'F' or verbose:
+            if self.residual_check == 'F' or self.verbose:
                 prev_norm = fnorm
                 fnorm = norm(fval)
 
@@ -134,7 +134,7 @@ class Continuation:
 
             self.newton_iterations += 1
 
-            if self.residual_check != 'F' or verbose:
+            if self.residual_check != 'F' or self.verbose:
                 prev_norm = dxnorm
                 dxnorm = norm(dx)
 
@@ -142,7 +142,7 @@ class Continuation:
                 print('Newton corrector converged in %d iterations with ||dx||=%e' % (k, dxnorm), flush=True)
                 break
 
-            if verbose:
+            if self.verbose:
                 print('Newton corrector status at iteration %d: ||F||=%e, ||dx||=%e' % (k, fnorm, dxnorm), flush=True)
 
             if self.residual_check != 'F' and prev_norm is not None and prev_norm < dxnorm:
@@ -171,7 +171,7 @@ class Continuation:
 
         ds = math.copysign(min(max(abs(ds), min_step_size), max_step_size), ds)
 
-        if self.parameters.get('Verbose', False):
+        if self.verbose:
             print('New stepsize: ds=%e, factor=%e' % (ds, factor), flush=True)
 
         return ds
