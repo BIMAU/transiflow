@@ -65,7 +65,6 @@ def main():
     x, mu = continuation.continuation(x0, 'Rayleigh Number', 0, target, ds, ds_max=1e8)
 
     parameters['Destination Tolerance'] = 1e-4
-    parameters['Detect Bifurcation Points'] = True
 
     parameters['Eigenvalue Solver'] = {}
     parameters['Eigenvalue Solver']['Target'] = 0
@@ -75,13 +74,12 @@ def main():
     # Now detect the bifurcation point
     ds = 1e8
     target = 3.5e9
-    x2, mu2 = continuation.continuation(x, 'Rayleigh Number', mu, target, ds, ds_max=1e8)
+    x2, mu2 = continuation.continuation(x, 'Rayleigh Number', mu, target, ds, ds_max=1e8,
+                                        detect_bifurcations=True)
 
     ke = utils.compute_volume_averaged_kinetic_energy(x2, interface)
 
     # Compute the unstable branch after the bifurcation
-    parameters['Detect Bifurcation Points'] = False
-
     continuation = Continuation(interface, parameters, newton_tolerance=1e-4)
     x3, mu3 = continuation.continuation(x2, 'Rayleigh Number', mu2, target, ds, ds_max=1e8)
 

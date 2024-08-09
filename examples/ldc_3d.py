@@ -159,7 +159,6 @@ def main():
 
     # Now detect the bifurcation point
     parameters['Destination Tolerance'] = 1e-4
-    parameters['Detect Bifurcation Points'] = True
 
     parameters['Eigenvalue Solver'] = {}
     parameters['Eigenvalue Solver']['Target'] = 0.4j
@@ -168,7 +167,8 @@ def main():
 
     ds = 100
     target = 2500
-    x2, mu2 = continuation.continuation(x, 'Reynolds Number', mu, target, ds, ds_max=100)
+    x2, mu2 = continuation.continuation(x, 'Reynolds Number', mu, target, ds, ds_max=100,
+                                        detect_bifurcations=True)
 
     # Store the solution at the bifurcation point
     write_solution(interface, x, mu, 'c', enable_output)
