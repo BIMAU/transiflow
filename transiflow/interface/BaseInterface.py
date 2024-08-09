@@ -1,9 +1,32 @@
+import json
 import numpy
 
 from transiflow.utils import norm
 
 from transiflow.Discretization import Discretization
 from transiflow.CylindricalDiscretization import CylindricalDiscretization
+
+
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (numpy.int8, numpy.int16, numpy.int32, numpy.int64,
+                            numpy.uint8, numpy.uint16, numpy.uint32, numpy.uint64)):
+
+            return int(obj)
+        elif isinstance(obj, (numpy.float16, numpy.float32, numpy.float64)):
+            return float(obj)
+        elif isinstance(obj, (complex, numpy.complex64, numpy.complex128)):
+            return {'__complex__': True, 'real': obj.real, 'imag': obj.imag}
+        elif isinstance(obj, numpy.ndarray):
+            return obj.tolist()
+
+        return json.JSONEncoder.default(self, obj)
+
+
+def numpy_decoder(obj):
+    if '__complex__' in obj:
+        return complex(obj['real'], obj['imag'])
+    return obj
 
 
 class BaseInterface:
@@ -48,6 +71,51 @@ class BaseInterface:
     def get_parameter(self, name):
         '''Get a parameter from self.parameters through the discretization.'''
         return self.discretization.get_parameter(name)
+
+    def save_state(self, name, x):
+        '''Save the state ``x`` along with the current parameter set.```
+
+        Parameters
+        ----------
+        name : str
+            Name of the file.
+        x : array_like
+            State at the current parameter values.
+
+        '''
+
+        params_name = name + '.params'
+        with open(params_name, 'w') as f:
+            json.dump(self.parameters, f, cls=NumpyEncoder)
+            print('Wrote parameters to', params_name, flush=True)
+
+        if not name.endswith('.npy'):
+            name += '.npy'
+
+        numpy.save(name, x)
+        print('Wrote state to', name, flush=True)
+
+    def load_state(self, name):
+        '''Load the state ``x`` along with the current parameter set.```
+
+        Parameters
+        ----------
+        name : str
+            Name of the file.
+
+        '''
+        params_name = name + '.params'
+        with open(params_name, 'r') as f:
+            self.parameters.update(json.load(f, object_hook=numpy_decoder))
+            print('Read parameters from', params_name, flush=True)
+
+        if not name.endswith('.npy'):
+            name += '.npy'
+
+        x = numpy.load(name)
+        print('Read state from', name, flush=True)
+
+        return x
 
     def rhs(self, state):
         '''Right-hand side in M * du / dt = F(u).'''
