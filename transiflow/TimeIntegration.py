@@ -26,12 +26,10 @@ class TimeIntegration:
 
     '''
 
-    def __init__(self, interface, parameters,
-                 theta=1.0,
+    def __init__(self, interface, theta=1.0,
                  newton_tolerance=1e-10, maximum_newton_iterations=10,
                  residual_check='F', verbose=False):
         self.interface = interface
-        self.parameters = parameters
         self.verbose = verbose
         self.theta = theta
 

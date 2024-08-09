@@ -52,7 +52,7 @@ def main():
 
     for mu in range(0, 100, 10):
         interface.set_parameter('Reynolds Number', mu)
-        time_integration = TimeIntegration(interface, parameters)
+        time_integration = TimeIntegration(interface)
         x, t = time_integration.integration(x, 1, 10, data.callback)
 
         # Plot the traced value during the time integration
