@@ -16,6 +16,9 @@ class Data:
         self.t.append(t)
         self.value.append(value)
 
+    def callback(self, interface, x, t):
+        self.append(t, utils.compute_volume_averaged_kinetic_energy(x, interface))
+
 
 def main():
     ''' An example of performing a "poor man's continuation" for a 2D lid-driven cavity using time integration'''
@@ -41,8 +44,6 @@ def main():
 
     # Store data for computing the bifurcation diagram using postprocessing
     data = Data()
-    parameters['Postprocess'] = lambda interface, x, t: data.append(
-        t, utils.compute_volume_averaged_kinetic_energy(x, interface))
 
     x = numpy.random.random(n)
 
@@ -52,7 +53,7 @@ def main():
     for mu in range(0, 100, 10):
         interface.set_parameter('Reynolds Number', mu)
         time_integration = TimeIntegration(interface, parameters)
-        x, t = time_integration.integration(x, 1, 10)
+        x, t = time_integration.integration(x, 1, 10, data.callback)
 
         # Plot the traced value during the time integration
         # plt.plot(data.t, data.value)
