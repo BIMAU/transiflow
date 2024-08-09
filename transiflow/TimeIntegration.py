@@ -37,7 +37,7 @@ class TimeIntegration:
         self.newton_tolerance = newton_tolerance
         self.residual_check = residual_check
 
-    def newton(self, x0, dt):
+    def _newton(self, x0, dt):
         x = x0
         b0 = self.interface.rhs(x0)
         mass = self.interface.mass_matrix()
@@ -104,7 +104,7 @@ class TimeIntegration:
             callback(self.interface, x, t)
 
         while t < tmax:
-            x = self.newton(x, dt)
+            x = self._newton(x, dt)
             t += dt
 
             print("t = %f" % t, flush=True)
