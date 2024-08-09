@@ -205,20 +205,22 @@ def test_continuation_rayleigh_benard(backend, nx=8):
     ds = 200
     x, mu = continuation.continuation(x0, 'Rayleigh Number', start, target, ds)
 
-    parameters['Detect Bifurcation Points'] = True
     parameters['Eigenvalue Solver'] = {}
     parameters['Eigenvalue Solver']['Arithmetic'] = 'real'
     parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
 
     target = 5000
     ds = 50
-    x2, mu2, dx, dmu = continuation.continuation(x, 'Rayleigh Number', mu, target, ds, return_step=True)
+    x2, mu2, dx, dmu = continuation.continuation(x, 'Rayleigh Number', mu, target, ds,
+                                                 detect_bifurcations=True,
+                                                 return_step=True)
 
     assert utils.norm(x2) > 0
     assert mu2 > mu
     assert mu2 < target
 
-    x3, mu3 = continuation.continuation(x2, 'Rayleigh Number', mu2, target, ds)
+    x3, mu3 = continuation.continuation(x2, 'Rayleigh Number', mu2, target, ds,
+                                        detect_bifurcations=True)
 
     assert utils.norm(x3) > 0
     assert mu3 > mu2
@@ -255,14 +257,14 @@ def test_continuation_rayleigh_benard_formulations_2D(backend, nx=8):
     ds = 200
     x, mu = continuation.continuation(x0, 'Rayleigh Number', start, target, ds)
 
-    parameters['Detect Bifurcation Points'] = True
     parameters['Eigenvalue Solver'] = {}
     parameters['Eigenvalue Solver']['Arithmetic'] = 'real'
     parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
 
     target = 5000
     ds = 50
-    x2, mu2 = continuation.continuation(x, 'Rayleigh Number', mu, target, ds)
+    x2, mu2 = continuation.continuation(x, 'Rayleigh Number', mu, target, ds,
+                                        detect_bifurcations=True)
 
     assert utils.norm(x2) > 0
     assert mu2 > mu
@@ -278,7 +280,8 @@ def test_continuation_rayleigh_benard_formulations_2D(backend, nx=8):
     t = utils.create_state_vec(t, nx, ny, nz, dof)
     x = x - interface.vector_from_array(t)
 
-    x3, mu3 = continuation.continuation(x, 'Rayleigh Number', mu, target, ds)
+    x3, mu3 = continuation.continuation(x, 'Rayleigh Number', mu, target, ds,
+                                        detect_bifurcations=True)
 
     # Test that the solution obtained from both formulations are the same
     x2 = interface.array_from_vector(x2)
@@ -323,14 +326,14 @@ def test_continuation_rayleigh_benard_formulations(backend, nx=4):
     ds = 200
     x, mu = continuation.continuation(x0, 'Rayleigh Number', start, target, ds)
 
-    parameters['Detect Bifurcation Points'] = True
     parameters['Eigenvalue Solver'] = {}
     parameters['Eigenvalue Solver']['Arithmetic'] = 'real'
     parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
 
     target = 5000
     ds = 50
-    x2, mu2 = continuation.continuation(x, 'Rayleigh Number', mu, target, ds)
+    x2, mu2 = continuation.continuation(x, 'Rayleigh Number', mu, target, ds,
+                                        detect_bifurcations=True)
 
     assert utils.norm(x2) > 0
     assert mu2 > mu
@@ -346,7 +349,8 @@ def test_continuation_rayleigh_benard_formulations(backend, nx=4):
     t = utils.create_state_vec(t, nx, ny, nz, dof)
     x = x - interface.vector_from_array(t)
 
-    x3, mu3 = continuation.continuation(x, 'Rayleigh Number', mu, target, ds)
+    x3, mu3 = continuation.continuation(x, 'Rayleigh Number', mu, target, ds,
+                                        detect_bifurcations=True)
 
     # Test that the solution obtained from both formulations are the same
     x2 = interface.array_from_vector(x2)
@@ -389,13 +393,13 @@ def test_continuation_double_gyre(backend, nx=8):
     ds = 200
     x, mu = continuation.continuation(x0, 'Wind Stress Parameter', start, target, ds)
 
-    parameters['Detect Bifurcation Points'] = True
     parameters['Eigenvalue Solver'] = {}
     parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
 
     target = 100
     ds = 5
-    x, mu = continuation.continuation(x, 'Reynolds Number', 16, target, ds)
+    x, mu = continuation.continuation(x, 'Reynolds Number', 16, target, ds,
+                                      detect_bifurcations=True)
 
     assert utils.norm(x) > 0
     assert mu > 16
@@ -429,7 +433,6 @@ def test_continuation_amoc(backend, nx=16):
     ds = 0.1
     x, mu = continuation.continuation(x0, 'Temperature Forcing', 0, target, ds)
 
-    parameters['Detect Bifurcation Points'] = True
     parameters['Eigenvalue Solver'] = {}
     parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
 
@@ -437,7 +440,8 @@ def test_continuation_amoc(backend, nx=16):
     ds = 0.01
     continuation = Continuation(interface, parameters, newton_tolerance=1e-6)
     x, mu = continuation.continuation(x, 'Freshwater Flux', 0, target,
-                                      ds, ds_min=1e-6)
+                                      ds, ds_min=1e-6,
+                                      detect_bifurcations=True)
 
     assert numpy.linalg.norm(x) > 0
     assert mu > 0.1
@@ -479,7 +483,6 @@ def test_continuation_2D_tc(nx=8):
     x, mu = continuation.continuation(x0, 'Reynolds Number', start, target, ds)
 
     parameters['Bordered Solver'] = True
-    parameters['Detect Bifurcation Points'] = True
     parameters['Eigenvalue Solver'] = {}
     parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
     parameters['Eigenvalue Solver']['Arithmetic'] = 'real'
@@ -487,7 +490,8 @@ def test_continuation_2D_tc(nx=8):
     target = 100
     ds = 1
     continuation = Continuation(interface, parameters, newton_tolerance=1e-12)
-    x, mu = continuation.continuation(x, 'Reynolds Number', mu, target, ds)
+    x, mu = continuation.continuation(x, 'Reynolds Number', mu, target, ds,
+                                      detect_bifurcations=True)
 
     assert numpy.linalg.norm(x) > 0
     assert mu > 0

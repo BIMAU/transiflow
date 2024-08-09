@@ -64,7 +64,6 @@ def main():
 
     # Now detect the bifurcation point
     parameters['Destination Tolerance'] = 1e-4
-    parameters['Detect Bifurcation Points'] = True
 
     parameters['Eigenvalue Solver'] = {}
     parameters['Eigenvalue Solver']['Target'] = 3j
@@ -75,13 +74,11 @@ def main():
 
     target = 10000
     x2, mu2 = bifurcation_continuation.continuation(x, 'Reynolds Number', mu, target,
-                                                    ds, ds_max=100)
+                                                    ds, ds_max=100, detect_bifurcations=True)
 
     ke = utils.compute_volume_averaged_kinetic_energy(x2, interface)
 
     # Compute the unstable branch after the bifurcation
-    parameters['Detect Bifurcation Points'] = False
-
     target = 10000
     x3, mu3 = continuation.continuation(x2, 'Reynolds Number', mu2, target, ds)
 

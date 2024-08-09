@@ -326,8 +326,8 @@ class Continuation:
 
     def continuation(self, x0, parameter_name, start, target,
                      ds, ds_min=0.01, ds_max=1000,
-                     dx=None, dmu=None,
-                     maxit=None, return_step=False):
+                     dx=None, dmu=None, maxit=None,
+                     detect_bifurcations=False, return_step=False):
         '''Perform a pseudo-arclength continuation in
         ``parameter_name`` from parameter value start to ``target``
         with arclength step size ``ds``, and starting from an initial
@@ -338,9 +338,6 @@ class Continuation:
         Postprocessing can be done by setting the 'Postprocess'
         parameter to a lambda x, mu: ... function, which gets called
         after every continuation step.
-
-        A bifurcation can be detected automatically when the 'Detect
-        Bifurcation Points' parameter is set to True.
 
         Parameters
         ----------
@@ -365,6 +362,9 @@ class Continuation:
             Parameter difference defining the initial tangent.
         maxit : int, optional
             Maximum number of continuation iterations.
+        detect_bifurcations : bool, optional
+            Detect bifurcations by detecting a switch in eigenvalue
+            signs. Note that this is very expensive.
         return_step : bool, optional
             Return ``dx`` and ``dmu`` when set to True. These can be
             used in the next ``continuation()`` call.
@@ -408,7 +408,6 @@ class Continuation:
             maxit = self.parameters.get('Maximum Continuation Steps', 1000)
 
         # Some configuration for the detection of bifurcations
-        detect_bifurcations = self.parameters.get('Detect Bifurcation Points', False)
         enable_branch_switching = self.parameters.get('Enable Branch Switching', False)
         enable_recycling = False
 
