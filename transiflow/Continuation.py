@@ -327,7 +327,8 @@ class Continuation:
     def continuation(self, x0, parameter_name, start, target,
                      ds, ds_min=0.01, ds_max=1000,
                      dx=None, dmu=None, maxit=1000,
-                     detect_bifurcations=False, return_step=False):
+                     detect_bifurcations=False, switch_branches=False,
+                     return_step=False):
         '''Perform a pseudo-arclength continuation in
         ``parameter_name`` from parameter value start to ``target``
         with arclength step size ``ds``, and starting from an initial
@@ -365,6 +366,9 @@ class Continuation:
         detect_bifurcations : bool, optional
             Detect bifurcations by detecting a switch in eigenvalue
             signs. Note that this is very expensive.
+        switch_branches : bool, optional
+            Switch branches using the tangent. This usually doesn't
+            work and is currently untested.
         return_step : bool, optional
             Return ``dx`` and ``dmu`` when set to True. These can be
             used in the next ``continuation()`` call.
@@ -405,14 +409,13 @@ class Continuation:
         eigs = None
 
         # Some configuration for the detection of bifurcations
-        enable_branch_switching = self.parameters.get('Enable Branch Switching', False)
         enable_recycling = False
 
         # Perform the continuation
         for j in range(maxit):
             mu0 = mu
 
-            if detect_bifurcations or (enable_branch_switching and not switched_branches):
+            if detect_bifurcations or (switch_branches and not switched_branches):
                 prev_eigs = eigs
                 eigs, v = self.interface.eigs(x, return_eigenvectors=True, enable_recycling=enable_recycling)
                 enable_recycling = True
@@ -423,7 +426,7 @@ class Continuation:
                     x, mu, v = self._detect_bifurcation(parameter_name, x, mu, dx, dmu, eigs, deig, v,
                                                         ds, ds_min, ds_max, maxit - j)
 
-                    if enable_branch_switching and not switched_branches:
+                    if switch_branches and not switched_branches:
                         switched_branches = True
                         x, mu, dx, dmu, ds = self._switch_branches(parameter_name, x, mu, dx, dmu, v[:, 0].real,
                                                                    ds, ds_min, ds_max)
