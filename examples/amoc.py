@@ -105,8 +105,7 @@ def main():
 
     ds = 0.05
     target = 0.2
-    parameters['Minimum Step Size'] = 1e-12
-    x2, mu2 = continuation.continuation(x1, 'Freshwater Flux', 0, target, ds)
+    x2, mu2 = continuation.continuation(x1, 'Freshwater Flux', 0, target, ds, ds_min=1e-12)
 
     # Write the solution to a file
     numpy.save('x2', x2)
@@ -134,7 +133,7 @@ def main():
     # meaning we can't stay on the unstable branch
     ds = 0.01
     target = 0.2
-    x4, mu4 = continuation.continuation(x3, 'Freshwater Flux', 0, target, ds)
+    x4, mu4 = continuation.continuation(x3, 'Freshwater Flux', 0, target, ds, ds_min=1e-12)
 
     # Go back to the symmetric problem
     ds = -0.05
@@ -158,7 +157,7 @@ def main():
     ds = -0.01
     target = 0.2
     parameters['Maximum Step Size'] = 0.005
-    x6, mu6 = continuation.continuation(x5, 'Freshwater Flux', mu4, target, ds)
+    x6, mu6 = continuation.continuation(x5, 'Freshwater Flux', mu4, target, ds, ds_min=1e-12)
 
     # Write the solution to a file
     numpy.save('x6', x6)

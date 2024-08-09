@@ -430,14 +430,14 @@ def test_continuation_amoc(backend, nx=16):
     x, mu = continuation.continuation(x0, 'Temperature Forcing', 0, target, ds)
 
     parameters['Detect Bifurcation Points'] = True
-    parameters['Minimum Step Size'] = 1e-6
     parameters['Eigenvalue Solver'] = {}
     parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
 
     target = 0.2
     ds = 0.01
     continuation = Continuation(interface, parameters, newton_tolerance=1e-6)
-    x, mu = continuation.continuation(x, 'Freshwater Flux', 0, target, ds)
+    x, mu = continuation.continuation(x, 'Freshwater Flux', 0, target,
+                                      ds, ds_min=1e-6)
 
     assert numpy.linalg.norm(x) > 0
     assert mu > 0.1
