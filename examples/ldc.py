@@ -63,8 +63,6 @@ def main():
     x, mu = continuation.continuation(x0, 'Reynolds Number', 0, target, ds)
 
     # Now detect the bifurcation point
-    parameters['Destination Tolerance'] = 1e-4
-
     parameters['Eigenvalue Solver'] = {}
     parameters['Eigenvalue Solver']['Target'] = 3j
     parameters['Eigenvalue Solver']['Tolerance'] = 1e-9

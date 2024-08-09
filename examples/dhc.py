@@ -64,8 +64,6 @@ def main():
     target = 1e9
     x, mu = continuation.continuation(x0, 'Rayleigh Number', 0, target, ds, ds_max=1e8)
 
-    parameters['Destination Tolerance'] = 1e-4
-
     parameters['Eigenvalue Solver'] = {}
     parameters['Eigenvalue Solver']['Target'] = 0
     parameters['Eigenvalue Solver']['Tolerance'] = 1e-9
