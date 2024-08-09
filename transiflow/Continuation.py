@@ -289,21 +289,7 @@ class Continuation:
 
         return x, mu, dx, dmu, ds
 
-    def _switch_branches_asymmetry(self, parameter_name, x, mu, ds):
-        continuation = Continuation(self.interface, self.parameters)
-        x, a = continuation.continuation(x, 'Asymmetry Parameter', 0, 1000, 10, 1, switched_branches=True)
-        x, mu = continuation.continuation(x, parameter_name, mu, mu + 1, ds, switched_branches=True)
-        x, a = continuation.continuation(x, 'Asymmetry Parameter', a, 0, -a, switched_branches=True)
-
-        dx, dmu = self._initial_tangent(x, parameter_name, mu)
-
-        return x, mu, dx, dmu, ds
-
     def _switch_branches(self, parameter_name, x, mu, dx, dmu, v, ds):
-        branch_switching_method = self.parameters.get('Branch Switching Method', 'Tangent')
-        if branch_switching_method == 'Asymmetry':
-            return self._switch_branches_asymmetry(parameter_name, x, mu, ds)
-
         return self._switch_branches_tangent(parameter_name, x, mu, dx, dmu, v, ds)
 
     def _num_positive_eigs(self, eigs):
