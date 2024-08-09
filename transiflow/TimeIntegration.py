@@ -27,37 +27,37 @@ class TimeIntegration:
     '''
 
     def __init__(self, interface, parameters,
+                 theta=1.0,
                  newton_tolerance=1e-10, maximum_newton_iterations=10,
                  residual_check='F', verbose=False):
         self.interface = interface
         self.parameters = parameters
         self.verbose = verbose
+        self.theta = theta
 
         self.maximum_newton_iterations = maximum_newton_iterations
         self.newton_tolerance = newton_tolerance
         self.residual_check = residual_check
 
     def newton(self, x0, dt):
-        theta = self.parameters.get('Theta', 1)
-
         x = x0
         b0 = self.interface.rhs(x0)
         mass = self.interface.mass_matrix()
 
         for k in range(self.maximum_newton_iterations):
             # M * u_n + dt * theta * F(u_(n+1)) + dt * (1 - theta) * F(u_n) - M * u_(n+1) = 0
-            fval = mass @ (x0 - x) + dt * theta * self.interface.rhs(x) + dt * (1 - theta) * b0
-            fval /= theta * dt
+            fval = mass @ (x0 - x) + dt * self.theta * self.interface.rhs(x) + dt * (1 - self.theta) * b0
+            fval /= self.theta * dt
 
             if self.residual_check == 'F' or self.verbose:
                 fnorm = norm(fval)
 
             if self.residual_check == 'F' and fnorm < self.newton_tolerance:
-                print('Newton converged in %d iterations with ||F||=%e' % (k, fnorm), flush=True)
+                print('Newton converged i %d iterations with ||F||=%e' % (k, fnorm), flush=True)
                 break
 
             # J - 1 / (theta * dt) * M
-            jac = self.interface.jacobian(x) - mass / (theta * dt)
+            jac = self.interface.jacobian(x) - mass / (self.theta * dt)
             dx = self.interface.solve(jac, -fval)
 
             x = x + dx
