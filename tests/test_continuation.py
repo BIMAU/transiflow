@@ -153,13 +153,12 @@ def test_continuation_time_integration(nx=4):
     assert numpy.linalg.norm(x[0:len(x):dof] - x2[0:len(x):dof]) > 1e-2
     assert numpy.linalg.norm(x[1:len(x):dof] - x2[1:len(x):dof]) < 1e-4
 
-    time_integration = TimeIntegration(interface, parameters)
+    time_integration = TimeIntegration(interface)
     x3 = time_integration.integration(x2, 1, 1)[0]
 
     assert numpy.linalg.norm(x[0:len(x):dof] - x3[0:len(x):dof]) > 1e-2
     assert numpy.linalg.norm(x[1:len(x):dof] - x3[1:len(x):dof]) > 1e-2
 
-    time_integration = TimeIntegration(interface, parameters)
     x3 = time_integration.integration(x2, 100, 1000)[0]
 
     assert numpy.linalg.norm(x[0:len(x):dof] - x3[0:len(x):dof]) < 1e-4
@@ -168,7 +167,6 @@ def test_continuation_time_integration(nx=4):
     # Start from zero
     x2[:] = 0
 
-    time_integration = TimeIntegration(interface, parameters)
     x3 = time_integration.integration(x2, 100, 1000)[0]
 
     assert numpy.linalg.norm(x[0:len(x):dof] - x3[0:len(x):dof]) < 1e-4
