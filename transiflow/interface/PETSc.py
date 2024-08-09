@@ -53,10 +53,10 @@ class Interface(ParallelBaseInterface):
     mapped to PETSc's ordering.
     """
 
-    def __init__(self, parameters, nx, ny, nz, dim, dof, comm=PETSc.COMM_WORLD):
+    def __init__(self, parameters, nx, ny, nz, dim, dof=None, comm=PETSc.COMM_WORLD):
         super().__init__(comm, parameters, nx, ny, nz, dim, dof)
 
-        self.size_global = nx * ny * nz * dof
+        self.size_global = nx * ny * nz * self.dof
 
         self.map_natural = self.create_map()
         self.assembly_map = self.create_map(True)

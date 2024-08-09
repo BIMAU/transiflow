@@ -65,7 +65,7 @@ class Interface(ParallelBaseInterface):
     while solving linear systems on skew Cartesian subdomains to deal
     with the C-grid discretization. The subdomains will be distributed
     over multiple processors if MPI is used to run the application.'''
-    def __init__(self, parameters, nx, ny, nz, dim, dof, comm=None):
+    def __init__(self, parameters, nx, ny, nz, dim, dof=None, comm=None):
         if comm is None:
             comm = Epetra.PyComm()
 
