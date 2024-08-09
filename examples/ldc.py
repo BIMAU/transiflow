@@ -15,6 +15,9 @@ class Data:
         self.mu.append(mu)
         self.value.append(value)
 
+    def callback(self, interface, x, mu):
+        self.append(mu, utils.compute_volume_averaged_kinetic_energy(x, interface))
+
 
 def main():
     ''' An example of performing a continuation for a 2D lid-driven cavity and detecting a bifurcation point'''
@@ -43,13 +46,12 @@ def main():
 
     # Store data for computing the bifurcation diagram using postprocessing
     data = Data()
-    parameters['Postprocess'] = lambda interface, x, mu: data.append(
-        mu, utils.compute_volume_averaged_kinetic_energy(x, interface))
 
     # Perform an initial continuation to Reynolds number 7000 without detecting bifurcation points
     ds = 100
     target = 6000
-    x, mu = continuation.continuation(x0, 'Reynolds Number', 0, target, ds)
+    x, mu = continuation.continuation(x0, 'Reynolds Number', 0, target, ds,
+                                      callback=data.callback)
 
     # Now detect the bifurcation point
     parameters['Eigenvalue Solver'] = {}
@@ -61,13 +63,15 @@ def main():
 
     target = 10000
     x2, mu2 = bifurcation_continuation.continuation(x, 'Reynolds Number', mu, target,
-                                                    ds, ds_max=100, detect_bifurcations=True)
+                                                    ds, ds_max=100, detect_bifurcations=True,
+                                                    callback=data.callback)
 
     ke = utils.compute_volume_averaged_kinetic_energy(x2, interface)
 
     # Compute the unstable branch after the bifurcation
     target = 10000
-    x3, mu3 = continuation.continuation(x2, 'Reynolds Number', mu2, target, ds)
+    x3, mu3 = continuation.continuation(x2, 'Reynolds Number', mu2, target, ds,
+                                        callback=data.callback)
 
     # Plot a bifurcation diagram
     bif = plt.scatter(mu2, ke, marker='^')
