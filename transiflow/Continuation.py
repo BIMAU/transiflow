@@ -65,6 +65,24 @@ class Continuation:
         self.bordered_solver = bordered_solver
 
     def newton(self, x0, tol=1e-10):
+        '''Newton method that can be used to converge to a steady
+        state that is very nearby. This can for instance be used to
+        obtain an initial guess.
+
+        Parameters
+        ----------
+        x0 : array_like
+            Initial solution.
+        tol : scalar, optional
+            Convergence tolerance
+
+        Returns
+        -------
+        x : array_like
+            Root at the current parameter value.
+
+        '''
+
         x = x0
         for k in range(self.maximum_newton_iterations):
             fval = self.interface.rhs(x)
