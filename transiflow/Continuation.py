@@ -321,8 +321,7 @@ class Continuation:
 
     def continuation(self, x0, parameter_name, start, target, ds,
                      dx=None, dmu=None,
-                     maxit=None, switched_branches=False,
-                     return_step=False):
+                     maxit=None, return_step=False):
         '''Perform a pseudo-arclength continuation in
         ``parameter_name`` from parameter value start to ``target``
         with arclength step size ``ds``, and starting from an initial
@@ -392,6 +391,7 @@ class Continuation:
             dx /= ds
             dmu /= ds
 
+        switched_branches = False
         eigs = None
 
         if not maxit:
