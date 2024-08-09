@@ -4,6 +4,17 @@ import numpy
 from transiflow.utils import norm
 
 class Continuation:
+    '''Pseudo-arclength continuation of an abstract interface that can
+    return a Jacobian matrix and a right-hand side.
+
+    Parameters
+    ----------
+    interface
+        Interface object that implements the following functions:
+        ``rhs(x)``, ``jacobian(x)``, ``solve(jac, rhs)``, ``eigs(x)`` and
+        ``set_parameter(name, value)``.
+
+    '''
 
     def __init__(self, interface, parameters):
         self.interface = interface
@@ -312,9 +323,10 @@ class Continuation:
                      dx=None, dmu=None,
                      maxit=None, switched_branches=False,
                      return_step=False):
-        '''Perform a pseudo-arclength continuation in parameter_name from
-        parameter value start to target with arclength step size ds,
-        and starting from an initial state x0.
+        '''Perform a pseudo-arclength continuation in
+        ``parameter_name`` from parameter value start to ``target``
+        with arclength step size ``ds``, and starting from an initial
+        state ``x0``.
 
         Returns the final state x and the final parameter value mu.
 
