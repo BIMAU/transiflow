@@ -23,11 +23,9 @@ class Data:
 def main():
     ''' An example of performing a "poor man's continuation" for a 2D lid-driven cavity using time integration'''
     dim = 2
-    dof = 3
     nx = 16
     ny = nx
     nz = 1
-    n = dof * nx * ny * nz
 
     # Define the problem
     parameters = {'Problem Type': 'Lid-driven Cavity',
@@ -40,11 +38,12 @@ def main():
                   'Verbose': False,
                   'Theta': 1}
 
-    interface = Interface(parameters, nx, ny, nz, dim, dof)
+    interface = Interface(parameters, nx, ny, nz, dim)
 
     # Store data for computing the bifurcation diagram using postprocessing
     data = Data()
 
+    n = interface.discretization.dof * nx * ny * nz
     x = numpy.random.random(n)
 
     mu_list = []

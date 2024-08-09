@@ -27,7 +27,6 @@ def main():
     numbers, and plotting the bifurcation diagram.'''
 
     dim = 2
-    dof = 3
     nx = 32
     ny = nx
     nz = 1
@@ -41,7 +40,7 @@ def main():
                   # Give back extra output (this is also more expensive)
                   'Verbose': False}
 
-    interface = Interface(parameters, nx, ny, nz, dim, dof)
+    interface = Interface(parameters, nx, ny, nz, dim)
     continuation = Continuation(interface)
 
     # First activate the wind stress
