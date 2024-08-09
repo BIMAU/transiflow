@@ -16,6 +16,9 @@ class Continuation:
     delta : scalar, optional
         Parameter value difference used when computing the approximate
         derivative.
+    destination_tolerance : scalar, optional
+        Tolerance used for the continuation parameter when converging
+        onto a bifurcation point.
     newton_tolerance : scalar, optional
         Tolerance used in the Newton corrector to determine
         convergence.
@@ -37,7 +40,7 @@ class Continuation:
     '''
 
     def __init__(self, interface, parameters,
-                 delta=1.0,
+                 delta=1.0, destination_tolerance=1e-4,
                  newton_tolerance=1e-4, maximum_newton_iterations=10,
                  optimal_newton_iterations=3, residual_check='F', verbose=False):
         self.interface = interface
@@ -52,7 +55,7 @@ class Continuation:
         self.newton_tolerance = newton_tolerance
         self.newton_iterations = 0
         self.residual_check = residual_check
-        self.destination_tolerance = 1e-4
+        self.destination_tolerance = destination_tolerance
 
     def newton(self, x0, tol=1e-10):
         x = x0
@@ -393,9 +396,6 @@ class Continuation:
         x = x0
         mu = start
 
-        # Set some parameters
-        self.destination_tolerance = self.parameters.get(
-            'Destination Tolerance', self.destination_tolerance)
         self.zeta = 1 / x.size
 
         if dx is None or dmu is None:

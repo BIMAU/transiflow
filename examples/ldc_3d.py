@@ -158,8 +158,6 @@ def main():
     # x, mu = read_solution(interface, 'b')
 
     # Now detect the bifurcation point
-    parameters['Destination Tolerance'] = 1e-4
-
     parameters['Eigenvalue Solver'] = {}
     parameters['Eigenvalue Solver']['Target'] = 0.4j
     parameters['Eigenvalue Solver']['Tolerance'] = 1e-8
