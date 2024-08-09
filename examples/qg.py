@@ -28,7 +28,6 @@ def main():
 
     nx = 32
     ny = nx
-    nz = 1
 
     # Define the problem
     parameters = {'Problem Type': 'Double Gyre',
@@ -39,7 +38,7 @@ def main():
                   # Give back extra output (this is also more expensive)
                   'Verbose': False}
 
-    interface = Interface(parameters, nx, ny, nz)
+    interface = Interface(parameters, nx, ny)
     continuation = Continuation(interface)
 
     # First activate the wind stress
