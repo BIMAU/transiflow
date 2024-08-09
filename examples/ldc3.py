@@ -33,8 +33,6 @@ def main():
                   'Lid Velocity': 1,
                   # Use a stretched grid
                   'Grid Stretching Factor': 1.5,
-                  # Set a maximum step size ds
-                  'Maximum Step Size': 500,
                   # Give back extra output (this is also more expensive)
                   'Verbose': False,
                   'Theta': 1}

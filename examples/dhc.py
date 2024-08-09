@@ -44,8 +44,6 @@ def main():
                   # Problem size
                   'X-max': 4.08 / 80,
                   'Y-max': 1,
-                  # Set a maximum step size ds
-                  'Maximum Step Size': 1e8,
                   # Give back extra output (this is also more expensive)
                   'Verbose': False}
 
@@ -64,7 +62,7 @@ def main():
     # Perform an initial continuation to Rayleigh number 1e8 without detecting bifurcation points
     ds = 100
     target = 1e9
-    x, mu = continuation.continuation(x0, 'Rayleigh Number', 0, target, ds)
+    x, mu = continuation.continuation(x0, 'Rayleigh Number', 0, target, ds, ds_max=1e8)
 
     parameters['Destination Tolerance'] = 1e-4
     parameters['Detect Bifurcation Points'] = True
@@ -77,7 +75,7 @@ def main():
     # Now detect the bifurcation point
     ds = 1e8
     target = 3.5e9
-    x2, mu2 = continuation.continuation(x, 'Rayleigh Number', mu, target, ds)
+    x2, mu2 = continuation.continuation(x, 'Rayleigh Number', mu, target, ds, ds_max=1e8)
 
     ke = utils.compute_volume_averaged_kinetic_energy(x2, interface)
 
@@ -85,7 +83,7 @@ def main():
     parameters['Detect Bifurcation Points'] = False
 
     continuation = Continuation(interface, parameters, newton_tolerance=1e-4)
-    x3, mu3 = continuation.continuation(x2, 'Rayleigh Number', mu2, target, ds)
+    x3, mu3 = continuation.continuation(x2, 'Rayleigh Number', mu2, target, ds, ds_max=1e8)
 
     # Plot a bifurcation diagram. Filter out the part where we
     # have to go back an forth when converging onto a target

@@ -478,7 +478,6 @@ def test_continuation_2D_tc(nx=8):
     ds = 30
     x, mu = continuation.continuation(x0, 'Reynolds Number', start, target, ds)
 
-    parameters['Maximum Step Size'] = 1
     parameters['Bordered Solver'] = True
     parameters['Detect Bifurcation Points'] = True
     parameters['Eigenvalue Solver'] = {}
