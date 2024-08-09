@@ -1,7 +1,7 @@
 def _icmp(first, second):
     return first.lower() == second.lower()
 
-def create(parameters, nx, ny, nz, dim=None, dof=None, backend='SciPy'):
+def create(parameters, nx, ny, nz=1, dim=None, dof=None, backend='SciPy'):
     if _icmp(backend, 'Epetra'):
         from .Epetra import Interface
         return Interface(parameters, nx, ny, nz, dim, dof)
