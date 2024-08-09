@@ -15,21 +15,27 @@ class Continuation:
         ``set_parameter(name, value)``.
     maximum_newton_iterations : int, optional
         Maximum number of Newton iterations.
+    residual_check: str, optional
+        Method for checking the residual in the Newton method
+        (default: 'F').
+
+        - ``F``: Use the norm of the ``rhs(x)`` function.
+        - ``dx``: Use the norm of the step ``dx``.
 
     '''
 
-    def __init__(self, interface, parameters, maximum_newton_iterations=10):
+    def __init__(self, interface, parameters, maximum_newton_iterations=10, residual_check='F'):
         self.interface = interface
         self.parameters = parameters
 
         self.maximum_newton_iterations = maximum_newton_iterations
         self.newton_iterations = 0
+        self.residual_check = residual_check
         self.destination_tolerance = 1e-4
         self.delta = None
         self.zeta = None
 
     def newton(self, x0):
-        residual_check = self.parameters.get('Residual Check', 'F')
         verbose = self.parameters.get('Verbose', False)
 
         # Set Newton some parameters
@@ -39,10 +45,10 @@ class Continuation:
         for k in range(self.maximum_newton_iterations):
             fval = self.interface.rhs(x)
 
-            if residual_check == 'F' or verbose:
+            if self.residual_check == 'F' or verbose:
                 fnorm = norm(fval)
 
-            if residual_check == 'F' and fnorm < tol:
+            if self.residual_check == 'F' and fnorm < tol:
                 print('Newton converged in %d iterations with ||F||=%e' % (k, fnorm), flush=True)
                 break
 
@@ -51,10 +57,10 @@ class Continuation:
 
             x = x + dx
 
-            if residual_check != 'F' or verbose:
+            if self.residual_check != 'F' or verbose:
                 dxnorm = norm(dx)
 
-            if residual_check != 'F' and dxnorm < tol:
+            if self.residual_check != 'F' and dxnorm < tol:
                 print('Newton converged in %d iterations with ||dx||=%e' % (k, dxnorm), flush=True)
                 break
 
@@ -66,7 +72,6 @@ class Continuation:
         return x
 
     def _newton_corrector(self, parameter_name, ds, x, x0, mu, mu0):
-        residual_check = self.parameters.get('Residual Check', 'F')
         verbose = self.parameters.get('Verbose', False)
 
         # Set Newton some parameters
@@ -83,15 +88,15 @@ class Continuation:
             self.interface.set_parameter(parameter_name, mu)
             fval = self.interface.rhs(x)
 
-            if residual_check == 'F' or verbose:
+            if self.residual_check == 'F' or verbose:
                 prev_norm = fnorm
                 fnorm = norm(fval)
 
-            if residual_check == 'F' and fnorm < tol:
+            if self.residual_check == 'F' and fnorm < tol:
                 print('Newton corrector converged in %d iterations with ||F||=%e' % (k, fnorm), flush=True)
                 break
 
-            if residual_check == 'F' and prev_norm is not None and prev_norm < fnorm:
+            if self.residual_check == 'F' and prev_norm is not None and prev_norm < fnorm:
                 self.newton_iterations = self.maximum_newton_iterations
                 break
 
@@ -129,18 +134,18 @@ class Continuation:
 
             self.newton_iterations += 1
 
-            if residual_check != 'F' or verbose:
+            if self.residual_check != 'F' or verbose:
                 prev_norm = dxnorm
                 dxnorm = norm(dx)
 
-            if residual_check != 'F' and dxnorm < tol:
+            if self.residual_check != 'F' and dxnorm < tol:
                 print('Newton corrector converged in %d iterations with ||dx||=%e' % (k, dxnorm), flush=True)
                 break
 
             if verbose:
                 print('Newton corrector status at iteration %d: ||F||=%e, ||dx||=%e' % (k, fnorm, dxnorm), flush=True)
 
-            if residual_check != 'F' and prev_norm is not None and prev_norm < dxnorm:
+            if self.residual_check != 'F' and prev_norm is not None and prev_norm < dxnorm:
                 self.newton_iterations = self.maximum_newton_iterations
                 break
 
