@@ -11,7 +11,7 @@ Given a continuation parameters and a target value, the continuation can be call
 ```Python
     # Define the problem
     parameters = {'Reynolds Number': 0, 'Problem Type': 'Lid-driven cavity'}
-    interface = Interface(parameters, nx, ny, nz, dim)
+    interface = Interface(parameters, nx, ny, nz)
 
     # Instantiate the continuation
     continuation = Continuation(interface)
