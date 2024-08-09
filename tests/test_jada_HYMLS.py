@@ -28,7 +28,6 @@ def interface(nx):
     from PyTrilinos import Teuchos
 
     dim = 2
-    dof = 3
     ny = nx
     nz = 1
 
@@ -36,7 +35,7 @@ def interface(nx):
     parameters.set('Reynolds Number', 0)
     parameters.set('Bordered Solver', True)
 
-    interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
+    interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim)
 
     return interface
 

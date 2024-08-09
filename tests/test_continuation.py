@@ -8,7 +8,7 @@ from transiflow import utils
 from transiflow.interface import create
 
 
-def Interface(parameters, nx, ny, nz, dim, dof, backend="SciPy"):
+def Interface(parameters, nx, ny, nz, dim, dof=None, backend="SciPy"):
     try:
         return create(parameters, nx, ny, nz, dim, dof, backend=backend)
     except ImportError:
@@ -20,12 +20,11 @@ def test_continuation_ldc(backend, nx=4):
     numpy.random.seed(1234)
 
     dim = 3
-    dof = 4
     ny = nx
     nz = nx
 
     parameters = {}
-    interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
+    interface = Interface(parameters, nx, ny, nz, dim, backend=backend)
     continuation = Continuation(interface)
 
     x0 = interface.vector()
@@ -42,12 +41,11 @@ def continuation_ldc_semi_2D(backend, nx=4):
     numpy.random.seed(1234)
 
     dim = 3
-    dof = 4
     ny = nx
     nz = 1
 
     parameters = {}
-    interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
+    interface = Interface(parameters, nx, ny, nz, dim, backend=backend)
     continuation = Continuation(interface)
 
     x0 = interface.vector()
@@ -65,12 +63,11 @@ def continuation_ldc_2D(backend, nx=4):
     numpy.random.seed(1234)
 
     dim = 2
-    dof = 3
     ny = nx
     nz = 1
 
     parameters = {}
-    interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
+    interface = Interface(parameters, nx, ny, nz, dim, backend=backend)
     continuation = Continuation(interface)
 
     x0 = interface.vector()
@@ -101,12 +98,11 @@ def test_continuation_ldc_2D_stretched(backend, nx=8):
     numpy.random.seed(1234)
 
     dim = 2
-    dof = 3
     ny = nx
     nz = 1
 
     parameters = {'Grid Stretching': True}
-    interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
+    interface = Interface(parameters, nx, ny, nz, dim, backend=backend)
 
     x = interface.discretization.get_coordinate_vector(0, 1, nx)
     y = interface.discretization.get_coordinate_vector(0, 1, ny)
@@ -182,7 +178,6 @@ def test_continuation_rayleigh_benard(backend, nx=8):
     numpy.random.seed(1234)
 
     dim = 2
-    dof = 4
     ny = nx
     nz = 1
 
@@ -192,7 +187,7 @@ def test_continuation_rayleigh_benard(backend, nx=8):
                   'X-max': 10,
                   'Bordered Solver': True}
 
-    interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
+    interface = Interface(parameters, nx, ny, nz, dim, backend=backend)
     continuation = Continuation(interface)
 
     x0 = interface.vector()
@@ -372,7 +367,6 @@ def test_continuation_double_gyre(backend, nx=8):
     numpy.random.seed(1234)
 
     dim = 2
-    dof = 3
     ny = nx
     nz = 1
 
@@ -381,7 +375,7 @@ def test_continuation_double_gyre(backend, nx=8):
                   'Rossby Parameter': 1000,
                   'Wind Stress Parameter': 0}
 
-    interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
+    interface = Interface(parameters, nx, ny, nz, dim, backend=backend)
     continuation = Continuation(interface)
 
     x0 = interface.vector()
@@ -413,7 +407,6 @@ def test_continuation_amoc(backend, nx=16):
     numpy.random.seed(1234)
 
     dim = 2
-    dof = 5
     ny = nx // 2
     nz = 1
 
@@ -422,7 +415,7 @@ def test_continuation_amoc(backend, nx=16):
                   'Prandtl Number': 2.25,
                   'X-max': 5}
 
-    interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
+    interface = Interface(parameters, nx, ny, nz, dim, backend=backend)
     continuation = Continuation(interface)
 
     x0 = interface.vector()
@@ -454,7 +447,6 @@ def test_continuation_2D_tc(nx=8):
     numpy.random.seed(1234)
 
     dim = 3
-    dof = 4
     ny = 1
     nz = nx
 
@@ -470,7 +462,7 @@ def test_continuation_2D_tc(nx=8):
                   'Inner Angular Velocity': 1 / ri / (ro - ri),
                   'Outer Angular Velocity': 0}
 
-    interface = Interface(parameters, nx, ny, nz, dim, dof)
+    interface = Interface(parameters, nx, ny, nz, dim)
     continuation = Continuation(interface)
 
     x0 = interface.vector()

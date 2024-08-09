@@ -474,14 +474,13 @@ def test_HYMLS(nx=4):
     numpy.random.seed(1234)
 
     dim = 3
-    dof = 4
     ny = nx
     nz = nx
 
     parameters = Teuchos.ParameterList()
     parameters.set('Reynolds Number', 0)
 
-    interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
+    interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim)
     continuation = Continuation(interface)
 
     x0 = interface.vector()
