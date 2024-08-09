@@ -149,7 +149,6 @@ def main():
     # Perform an initial continuation to Reynolds number 1700 without detecting bifurcation points
     ds = 100
     target = 1800
-    parameters['Newton Tolerance'] = 1e-3
     x, mu = continuation.continuation(x, 'Reynolds Number', 0, target, ds)
 
     # Store point b from which we start locating the bifurcation point
@@ -160,7 +159,6 @@ def main():
     # x, mu = read_solution(interface, 'b')
 
     # Now detect the bifurcation point
-    parameters['Newton Tolerance'] = 1e-6
     parameters['Destination Tolerance'] = 1e-4
     parameters['Detect Bifurcation Points'] = True
     parameters['Maximum Step Size'] = 100
