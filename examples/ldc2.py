@@ -13,11 +13,9 @@ import matplotlib.pyplot as plt
 def main():
     ''' An example of performing a continuation for a 2D lid-driven cavity and computing eigenvalues along the way'''
     dim = 2
-    dof = 3
     nx = 16
     ny = nx
     nz = 1
-    n = dof * nx * ny * nz
 
     # Define the problem
     parameters = {'Problem Type': 'Lid-driven Cavity',
@@ -25,7 +23,7 @@ def main():
                   'Reynolds Number': 1,
                   'Lid Velocity': 0}
 
-    interface = Interface(parameters, nx, ny, nz, dim, dof)
+    interface = Interface(parameters, nx, ny, nz, dim)
     continuation = Continuation(interface)
 
     # Compute an initial guess
@@ -47,7 +45,7 @@ def main():
         # Compute the eigenvalues of the generalized eigenvalue problem near a target 2.8i
         jac_op = JaDa.Op(interface.jacobian(x))
         mass_op = JaDa.Op(interface.mass_matrix())
-        jada_interface = JaDa.Interface(interface, jac_op, mass_op, n, numpy.complex128)
+        jada_interface = JaDa.Interface(interface, jac_op, mass_op, len(x), numpy.complex128)
 
         alpha, beta, q, z = jdqz.jdqz(jac_op, mass_op, eigs.shape[1], tol=1e-7, subspace_dimensions=[30, 60], target=2.8j,
                                       interface=jada_interface, arithmetic='complex', prec=jada_interface.shifted_prec,

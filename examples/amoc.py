@@ -52,7 +52,6 @@ def main():
     the screen.'''
 
     dim = 2
-    dof = 5
     nx = 60
     ny = 30
     nz = 1
@@ -68,7 +67,7 @@ def main():
                   # Give back extra output (this is also more expensive)
                   'Verbose': False}
 
-    interface = Interface(parameters, nx, ny, nz, dim, dof)
+    interface = Interface(parameters, nx, ny, nz, dim)
     continuation = Continuation(interface, newton_tolerance=1e-6)
 
     # First increase the temperature forcing to the desired value

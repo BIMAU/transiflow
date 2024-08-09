@@ -21,7 +21,6 @@ class Data:
 def main():
     ''' An example of performing a continuation for a 2D differentially heated cavity and detecting a bifurcation point'''
     dim = 2
-    dof = 4
     nx = 32
     ny = nx
     nz = 1
@@ -38,7 +37,7 @@ def main():
                   # Give back extra output (this is also more expensive)
                   'Verbose': False}
 
-    interface = Interface(parameters, nx, ny, nz, dim, dof)
+    interface = Interface(parameters, nx, ny, nz, dim)
 
     continuation = Continuation(interface, newton_tolerance=1e-7)
 
@@ -91,7 +90,7 @@ def main():
     plot_utils.plot_velocity_magnitude(v, interface, title='Velocity magnitude of the bifurcating eigenvector')
 
     # Plot the pressure
-    v = plot_utils.create_state_mtx(v, nx, ny, nz, dof)
+    v = plot_utils.create_state_mtx(v, nx, ny, nz, interface.discretization.dof)
     plot_utils.plot_value(v[:, :, 0, 2], interface, title='Pressure component of the bifurcating eigenvector')
 
 
