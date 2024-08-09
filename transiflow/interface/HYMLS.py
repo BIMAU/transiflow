@@ -47,7 +47,7 @@ class Interface(EpetraInterface):
     with the C-grid discretization. The subdomains will be distributed
     over multiple processors if MPI is used to run the application.'''
 
-    def __init__(self, parameters, nx, ny, nz, dim, dof, comm=None):
+    def __init__(self, parameters, nx, ny, nz, dim, dof=None, comm=None):
         EpetraInterface.__init__(self, parameters, nx, ny, nz, dim, dof, comm)
 
         # Disable HYMLS output from MPI ranks != 0

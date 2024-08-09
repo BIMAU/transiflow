@@ -13,17 +13,18 @@ class BaseInterface:
     about the underlying methods such as the solvers that are present
     in the backend we are interfacing with.'''
 
-    def __init__(self, parameters, nx, ny, nz, dim, dof, x=None, y=None, z=None):
+    def __init__(self, parameters, nx, ny, nz, dim, dof=None, x=None, y=None, z=None):
         self.nx = nx
         self.ny = ny
         self.nz = nz
         self.dim = dim
-        self.dof = dof
 
         self.discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
 
         if 'Problem Type' in parameters and 'Taylor-Couette' in parameters['Problem Type']:
             self.discretization = CylindricalDiscretization(parameters, nx, ny, nz, dim, dof, x, y, z)
+
+        self.dof = dof or self.discretization.dof
 
         self.parameters = parameters
 
