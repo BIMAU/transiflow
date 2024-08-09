@@ -67,15 +67,13 @@ def main():
     ds = 10
     target = 1
     interface.set_parameter('Postprocess', None)
-    interface.set_parameter('Maximum Continuation Steps', 1)
     interface.set_parameter('Reynolds Number', 16)
-    x3, mu3 = continuation.continuation(x1, 'Asymmetry Parameter', 0, target, ds)
+    x3, mu3 = continuation.continuation(x1, 'Asymmetry Parameter', 0, target, ds, maxit=1)
 
     # Perform a continuation to Reynolds number 40 with asymmetry added to the problem,
     # meaning we can't stay on the unstable branch
     ds = 5
     target = 40
-    interface.set_parameter('Maximum Continuation Steps', 1000)
     x4, mu4 = continuation.continuation(x3, 'Reynolds Number', 16, target, ds)
 
     # Go back to the symmetric problem
