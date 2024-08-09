@@ -327,6 +327,13 @@ class Continuation:
 
         return dx, dmu
 
+    @staticmethod
+    def _return(x, mu, dx, dmu, ds, return_step):
+        if return_step:
+            return x, mu, dx * ds, dmu * ds
+
+        return x, mu
+
     def continuation(self, x0, parameter_name, start, target,
                      ds, ds_min=0.01, ds_max=1000,
                      dx=None, dmu=None, maxit=1000,
@@ -432,10 +439,7 @@ class Continuation:
                                                                    ds, ds_min, ds_max)
                         continue
 
-                    if return_step:
-                        return x, mu, dx * ds, dmu * ds
-
-                    return x, mu
+                    return self._return(x, mu, dx, dmu, ds, return_step)
 
             x, mu, dx, dmu, ds = self._step(parameter_name, x, mu, dx, dmu,
                                             ds, ds_min, ds_max)
@@ -445,14 +449,8 @@ class Continuation:
                 x, mu = self._converge(parameter_name, x, mu, dx, dmu, target,
                                        ds, ds_min, ds_max, maxit - j)
 
-                if return_step:
-                    return x, mu, dx * ds, dmu * ds
-
-                return x, mu
+                return self._return(x, mu, dx, dmu, ds, return_step)
 
             ds = self._adjust_step_size(ds, ds_min, ds_max)
 
-        if return_step:
-            return x, mu, dx * ds, dmu * ds
-
-        return x, mu
+        return self._return(x, mu, dx, dmu, ds, return_step)
