@@ -15,17 +15,20 @@ class TimeIntegration:
 
         - ``F``: Use the norm of the ``rhs(x)`` function.
         - ``dx``: Use the norm of the step ``dx``.
+    verbose : bool, optional
+        Give extra information about convergence. Since we have to
+        compute this information, this may be slower.
 
     '''
 
-    def __init__(self, interface, parameters, residual_check='F'):
+    def __init__(self, interface, parameters, residual_check='F', verbose=False):
         self.interface = interface
         self.parameters = parameters
+        self.verbose = verbose
 
         self.residual_check = residual_check
 
     def newton(self, x0, dt):
-        verbose = self.parameters.get('Verbose', False)
         theta = self.parameters.get('Theta', 1)
 
         # Set Newton some parameters
@@ -41,7 +44,7 @@ class TimeIntegration:
             fval = mass @ (x0 - x) + dt * theta * self.interface.rhs(x) + dt * (1 - theta) * b0
             fval /= theta * dt
 
-            if self.residual_check == 'F' or verbose:
+            if self.residual_check == 'F' or self.verbose:
                 fnorm = norm(fval)
 
             if self.residual_check == 'F' and fnorm < tol:
@@ -54,14 +57,14 @@ class TimeIntegration:
 
             x = x + dx
 
-            if self.residual_check != 'F' or verbose:
+            if self.residual_check != 'F' or self.verbose:
                 dxnorm = norm(dx)
 
             if self.residual_check != 'F' and dxnorm < tol:
                 print('Newton converged in %d iterations with ||dx||=%e' % (k, dxnorm), flush=True)
                 break
 
-            if verbose:
+            if self.verbose:
                 print('Newton status at iteration %d: ||F||=%e, ||dx||=%e' % (k, fnorm, dxnorm), flush=True)
 
         return x
