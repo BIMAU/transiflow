@@ -12,6 +12,8 @@ class TimeIntegration:
     newton_tolerance : scalar, optional
         Tolerance used in the Newton corrector to determine
         convergence.
+    maximum_newton_iterations : int, optional
+        Maximum number of Newton iterations.
     residual_check: str, optional
         Method for checking the residual in the Newton method
         (default: 'F').
@@ -25,26 +27,24 @@ class TimeIntegration:
     '''
 
     def __init__(self, interface, parameters,
-                 newton_tolerance=1e-10,
+                 newton_tolerance=1e-10, maximum_newton_iterations=10,
                  residual_check='F', verbose=False):
         self.interface = interface
         self.parameters = parameters
         self.verbose = verbose
 
+        self.maximum_newton_iterations = maximum_newton_iterations
         self.newton_tolerance = newton_tolerance
         self.residual_check = residual_check
 
     def newton(self, x0, dt):
         theta = self.parameters.get('Theta', 1)
 
-        # Set Newton some parameters
-        maxit = self.parameters.get('Maximum Newton Iterations', 10)
-
         x = x0
         b0 = self.interface.rhs(x0)
         mass = self.interface.mass_matrix()
 
-        for k in range(maxit):
+        for k in range(self.maximum_newton_iterations):
             # M * u_n + dt * theta * F(u_(n+1)) + dt * (1 - theta) * F(u_n) - M * u_(n+1) = 0
             fval = mass @ (x0 - x) + dt * theta * self.interface.rhs(x) + dt * (1 - theta) * b0
             fval /= theta * dt
