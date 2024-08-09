@@ -13,6 +13,9 @@ class Continuation:
         Interface object that implements the following functions:
         ``rhs(x)``, ``jacobian(x)``, ``solve(jac, rhs)``, ``eigs(x)``
         and ``set_parameter(name, value)``.
+    delta : scalar, optional
+        Parameter value difference used when computing the approximate
+        derivative.
     newton_tolerance : scalar, optional
         Tolerance used in the Newton corrector to determine
         convergence.
@@ -31,19 +34,21 @@ class Continuation:
     '''
 
     def __init__(self, interface, parameters,
+                 delta=1.0,
                  newton_tolerance=1e-4, maximum_newton_iterations=10,
                  residual_check='F', verbose=False):
         self.interface = interface
         self.parameters = parameters
         self.verbose = verbose
 
+        self.delta = delta
+        self.zeta = None
+
         self.maximum_newton_iterations = maximum_newton_iterations
         self.newton_tolerance = newton_tolerance
         self.newton_iterations = 0
         self.residual_check = residual_check
         self.destination_tolerance = 1e-4
-        self.delta = None
-        self.zeta = None
 
     def newton(self, x0, tol=1e-10):
         x = x0
@@ -389,7 +394,6 @@ class Continuation:
         # Set some parameters
         self.destination_tolerance = self.parameters.get(
             'Destination Tolerance', self.destination_tolerance)
-        self.delta = self.parameters.get('Delta', 1)
         self.zeta = 1 / x.size
 
         if dx is None or dmu is None:
