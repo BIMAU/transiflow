@@ -69,7 +69,7 @@ def main():
                   'Verbose': False}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof)
-    continuation = Continuation(interface, parameters, newton_tolerance=1e-6)
+    continuation = Continuation(interface, newton_tolerance=1e-6)
 
     # First increase the temperature forcing to the desired value
     x0 = interface.vector()

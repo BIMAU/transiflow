@@ -50,8 +50,7 @@ def scipy_interface(nx):
 def scipy_x(scipy_interface):
     n = scipy_interface.dof * scipy_interface.nx * scipy_interface.ny * scipy_interface.nz
 
-    parameters = {}
-    continuation = Continuation(scipy_interface, parameters)
+    continuation = Continuation(scipy_interface)
 
     x0 = numpy.zeros(n)
     x0 = continuation.newton(x0)

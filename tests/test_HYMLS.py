@@ -482,7 +482,7 @@ def test_HYMLS(nx=4):
     parameters.set('Reynolds Number', 0)
 
     interface = HYMLSInterface.Interface(parameters, nx, ny, nz, dim, dof)
-    continuation = Continuation(interface, parameters)
+    continuation = Continuation(interface)
 
     x0 = interface.vector()
     x0 = continuation.newton(x0)

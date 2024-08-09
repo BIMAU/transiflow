@@ -44,7 +44,7 @@ def interface(nx):
 def x(interface):
     from transiflow.interface import HYMLS as HYMLSInterface
 
-    continuation = Continuation(interface, interface.parameters)
+    continuation = Continuation(interface)
 
     x0 = HYMLSInterface.Vector(interface.map)
     x0 = continuation.newton(x0)

@@ -26,7 +26,7 @@ def test_continuation_ldc(backend, nx=4):
 
     parameters = {}
     interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
-    continuation = Continuation(interface, parameters)
+    continuation = Continuation(interface)
 
     x0 = interface.vector()
     x0 = continuation.newton(x0)
@@ -48,7 +48,7 @@ def continuation_ldc_semi_2D(backend, nx=4):
 
     parameters = {}
     interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
-    continuation = Continuation(interface, parameters)
+    continuation = Continuation(interface)
 
     x0 = interface.vector()
     x0 = continuation.newton(x0)
@@ -71,7 +71,7 @@ def continuation_ldc_2D(backend, nx=4):
 
     parameters = {}
     interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
-    continuation = Continuation(interface, parameters)
+    continuation = Continuation(interface)
 
     x0 = interface.vector()
     x0 = continuation.newton(x0)
@@ -113,7 +113,7 @@ def test_continuation_ldc_2D_stretched(backend, nx=8):
     assert x[1] - x[0] < x[2] - x[1]
     assert y[1] - y[0] < y[2] - y[1]
 
-    continuation = Continuation(interface, parameters)
+    continuation = Continuation(interface)
 
     x0 = interface.vector()
     x0 = continuation.newton(x0)
@@ -135,7 +135,7 @@ def test_continuation_time_integration(nx=4):
 
     parameters = {'Newton Tolerance': 1e-8}
     interface = Interface(parameters, nx, ny, nz, dim, dof)
-    continuation = Continuation(interface, parameters, newton_tolerance=1e-8)
+    continuation = Continuation(interface, newton_tolerance=1e-8)
 
     x0 = interface.vector()
     x0 = continuation.newton(x0)
@@ -195,7 +195,7 @@ def test_continuation_rayleigh_benard(backend, nx=8):
                   'Bordered Solver': True}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
-    continuation = Continuation(interface, parameters)
+    continuation = Continuation(interface)
 
     x0 = interface.vector()
     x0 = continuation.newton(x0)
@@ -247,7 +247,7 @@ def test_continuation_rayleigh_benard_formulations_2D(backend, nx=8):
                   'Bordered Solver': True}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
-    continuation = Continuation(interface, parameters)
+    continuation = Continuation(interface)
 
     x0 = interface.vector()
     x0 = continuation.newton(x0)
@@ -316,7 +316,7 @@ def test_continuation_rayleigh_benard_formulations(backend, nx=4):
                   'Bordered Solver': True}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
-    continuation = Continuation(interface, parameters)
+    continuation = Continuation(interface)
 
     x0 = interface.vector()
     x0 = continuation.newton(x0)
@@ -384,7 +384,7 @@ def test_continuation_double_gyre(backend, nx=8):
                   'Wind Stress Parameter': 0}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
-    continuation = Continuation(interface, parameters)
+    continuation = Continuation(interface)
 
     x0 = interface.vector()
 
@@ -425,7 +425,7 @@ def test_continuation_amoc(backend, nx=16):
                   'X-max': 5}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
-    continuation = Continuation(interface, parameters)
+    continuation = Continuation(interface)
 
     x0 = interface.vector()
 
@@ -438,7 +438,7 @@ def test_continuation_amoc(backend, nx=16):
 
     target = 0.2
     ds = 0.01
-    continuation = Continuation(interface, parameters, newton_tolerance=1e-6)
+    continuation = Continuation(interface, newton_tolerance=1e-6)
     x, mu = continuation.continuation(x, 'Freshwater Flux', 0, target,
                                       ds, ds_min=1e-6,
                                       detect_bifurcations=True)
@@ -473,7 +473,7 @@ def test_continuation_2D_tc(nx=8):
                   'Outer Angular Velocity': 0}
 
     interface = Interface(parameters, nx, ny, nz, dim, dof)
-    continuation = Continuation(interface, parameters)
+    continuation = Continuation(interface)
 
     x0 = interface.vector()
 
@@ -489,7 +489,7 @@ def test_continuation_2D_tc(nx=8):
 
     target = 100
     ds = 1
-    continuation = Continuation(interface, parameters, newton_tolerance=1e-12)
+    continuation = Continuation(interface, newton_tolerance=1e-12)
     x, mu = continuation.continuation(x, 'Reynolds Number', mu, target, ds,
                                       detect_bifurcations=True)
 

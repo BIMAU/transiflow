@@ -135,7 +135,7 @@ def main():
     data = Data()
     callback = lambda interface, x, mu: postprocess(data, interface, x, mu, enable_output)
 
-    continuation = Continuation(interface, parameters)
+    continuation = Continuation(interface)
 
     # Compute an initial guess
     x0 = interface.vector()
