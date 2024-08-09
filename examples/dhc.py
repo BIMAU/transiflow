@@ -20,7 +20,6 @@ class Data:
 
 def main():
     ''' An example of performing a continuation for a 2D differentially heated cavity and detecting a bifurcation point'''
-    dim = 2
     nx = 32
     ny = nx
     nz = 1
@@ -37,7 +36,7 @@ def main():
                   # Give back extra output (this is also more expensive)
                   'Verbose': False}
 
-    interface = Interface(parameters, nx, ny, nz, dim)
+    interface = Interface(parameters, nx, ny, nz)
 
     continuation = Continuation(interface, newton_tolerance=1e-7)
 

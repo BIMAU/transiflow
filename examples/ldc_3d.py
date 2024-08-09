@@ -99,7 +99,6 @@ def main():
 
     Disabling threading is adviced, since this is broken in Epetra.'''
 
-    dim = 3
     nx = 16
     ny = nx
     nz = nx
@@ -129,7 +128,7 @@ def main():
 
     # Define a HYMLS interface that handles everything that is different when using HYMLS+Trilinos
     # instead of NumPy as computational backend
-    interface = Interface(parameters, nx, ny, nz, dim, backend='HYMLS')
+    interface = Interface(parameters, nx, ny, nz, backend='HYMLS')
 
     data = Data()
     callback = lambda interface, x, mu: postprocess(data, interface, x, mu, enable_output)
