@@ -331,12 +331,11 @@ def test_PETSc(nx=4):
     numpy.random.seed(1234)
 
     dim = 3
-    dof = 4
     ny = nx
     nz = nx
     parameters = {"Reynolds Number": 0, "Verbose": True}
 
-    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof)
+    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim)
 
     continuation = Continuation(interface)
 
