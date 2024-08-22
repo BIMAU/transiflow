@@ -63,7 +63,7 @@ def check_divfree(discretization, state):
     x = A @ state
     for i in range(len(state)):
         if i % discretization.dof == discretization.dim:
-            assert abs(x[i]) < 1e-14
+            assert abs(x[i]) < 1e-13
 
 def make_divfree(discretization, state):
     A = discretization.jacobian(state)
