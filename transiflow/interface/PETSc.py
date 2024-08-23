@@ -21,6 +21,11 @@ class Vector(PETSc.Vec):
 
     size = property(PETSc.Vec.getSize)
 
+    def gather(self):
+        sct, vector_global = PETSc.Scatter().toZero(self)
+        sct.scatter(self, vector_global)
+        return vector_global
+
     def all_gather(self):
         sct, vector_global = PETSc.Scatter().toAll(self)
         sct.scatter(self, vector_global)
