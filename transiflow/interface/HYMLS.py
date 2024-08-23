@@ -56,7 +56,7 @@ class Interface(EpetraInterface):
         # Do the same for Python output
         self._original_stdout = sys.stdout
         if self.comm.MyPID() != 0:
-            self.debug_print('PID %d: Disable output to stdout' % self.comm.MyPID())
+            self._debug_print('PID %d: Disable output to stdout' % self.comm.MyPID())
             sys.stdout = open(os.devnull, 'w')
 
         self.teuchos_parameters = self.get_teuchos_parameters()
@@ -76,7 +76,7 @@ class Interface(EpetraInterface):
         if self.comm.MyPID() != 0:
             sys.stdout.close()
             sys.stdout = self._original_stdout
-            self.debug_print('PID %d: Re-enable output to stdout' % self.comm.MyPID())
+            self._debug_print('PID %d: Re-enable output to stdout' % self.comm.MyPID())
 
     def get_teuchos_parameters(self):
         teuchos_parameters = convert_parameters(self.parameters)

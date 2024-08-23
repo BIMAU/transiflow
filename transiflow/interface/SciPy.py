@@ -8,10 +8,20 @@ from transiflow.interface import BaseInterface
 
 class Interface(BaseInterface):
     '''This class defines an interface to the SciPy backend for the
-    discretization. We use this so we can write higher level methods
-    such as pseudo-arclength continuation without knowing anything
-    about the underlying methods such as the solvers that are present
-    in the backend we are interfacing with.'''
+    discretization. This backend can be used for low-resolution serial
+    runs as well as implementing new problems in the discretization.
+
+    See :mod:`.Discretization` for the descriptions of the constructor
+    arguments.
+
+    Parameters
+    ----------
+    parameters : dict
+        Key-value pairs that can be used to modify parameters in the
+        discretization as well as the linear solver and eigenvalue
+        solver.
+
+    '''
     def __init__(self, parameters, nx, ny, nz=1, dim=None, dof=None, x=None, y=None, z=None):
         super().__init__(parameters, nx, ny, nz, dim, dof, x, y, z)
 
@@ -27,21 +37,18 @@ class Interface(BaseInterface):
         return numpy.zeros(self.nx * self.ny * self.nz * self.dof)
 
     def rhs(self, state):
-        '''Right-hand side in M * du / dt = F(u).'''
         return self.discretization.rhs(state)
 
     def jacobian(self, state):
-        '''Jacobian J of F in M * du / dt = F(u).'''
         jac = self.discretization.jacobian(state)
         return sparse.csr_matrix((jac.coA, jac.jcoA, jac.begA)).tocsc()
 
     def mass_matrix(self):
-        '''Mass matrix M in M * du / dt = F(u).'''
         mass = self.discretization.mass_matrix()
         return sparse.csr_matrix((mass.coA, mass.jcoA, mass.begA), (mass.n, mass.n)).tocsc()
 
     def compute_bordered_matrix(self, jac, V=None, W=None, C=None, fix_pressure_row=False):
-        '''Helper to compute a bordered matrix of the form [A, V; W', C]'''
+        '''Helper to compute a bordered matrix of the form ``[A, V; W^T, C]``.'''
         def _get_value(V, i, j):
             if not hasattr(V, 'shape') or len(V.shape) < 1:
                 return V
@@ -52,14 +59,14 @@ class Interface(BaseInterface):
             return V[i, j]
 
         if fix_pressure_row and V is not None:
-            self.debug_print(
+            self._debug_print(
                 'Fixing pressure at row %d of the Jacobian matrix and adding the border' %
                 self.pressure_row)
         elif V is not None:
-            self.debug_print('Adding the border to the Jacobian matrix')
+            self._debug_print('Adding the border to the Jacobian matrix')
         else:
-            self.debug_print('Fixing pressure at row %d of the Jacobian matrix' %
-                             self.pressure_row)
+            self._debug_print('Fixing pressure at row %d of the Jacobian matrix' %
+                              self.pressure_row)
 
         border_size = 0
         dtype = jac.dtype
@@ -136,7 +143,7 @@ class Interface(BaseInterface):
         fix_pressure_row = self.dof > self.dim and self.pressure_row is not None
         A = self.compute_bordered_matrix(jac, V, W, C, fix_pressure_row)
 
-        self.debug_print(
+        self._debug_print(
             'Computing the sparse LU factorization of the %s Jacobian matrix' % (
                 'bordered ' if V is not None else ''))
 
@@ -149,7 +156,7 @@ class Interface(BaseInterface):
                                            matvec=self._lu.solve,
                                            dtype=jac.dtype)
 
-        self.debug_print(
+        self._debug_print(
             'Done computing the sparse LU factorization of the %s Jacobian matrix' % (
                 'bordered ' if V is not None else ''))
 
@@ -166,7 +173,7 @@ class Interface(BaseInterface):
         self._prec = None
         jac.lu = None
 
-        self.debug_print('Computing the sparse ILU factorization of the Jacobian matrix')
+        self._debug_print('Computing the sparse ILU factorization of the Jacobian matrix')
 
         parameters = self.parameters.get('Preconditioner', {})
         jac.lu = linalg.spilu(A,
@@ -181,7 +188,7 @@ class Interface(BaseInterface):
                                            matvec=self._lu.solve,
                                            dtype=A.dtype)
 
-        self.debug_print('Done computing the sparse ILU factorization of the Jacobian matrix')
+        self._debug_print('Done computing the sparse ILU factorization of the Jacobian matrix')
 
     def _lu_solve(self, A, rhs):
         if A.lu.L.dtype != rhs.dtype and numpy.dtype(rhs.dtype.char.upper()) == rhs.dtype:
@@ -194,7 +201,10 @@ class Interface(BaseInterface):
         return x
 
     def direct_solve(self, jac, rhs, rhs2=None, V=None, W=None, C=None):
-        '''Solve J y = x for y.'''
+        '''Solve $J(u, p) y = x$ for $y$ using a direct solver. See
+        the :meth:`solve` function.
+
+        '''
         x = rhs.copy()
 
         # Fix one pressure node
@@ -219,7 +229,7 @@ class Interface(BaseInterface):
         self._compute_factorization(jac, V, W, C)
 
         if jac.bordered_lu:
-            self.debug_print('Solving a bordered linear system')
+            self._debug_print('Solving a bordered linear system')
 
             y = self._lu_solve(jac, x)
 
@@ -233,21 +243,24 @@ class Interface(BaseInterface):
             if numpy.isscalar(rhs2):
                 y2 = y2.item()
 
-            self.debug_print_residual('Done solving a bordered linear system with residual',
-                                      jac, y1, rhs - V * y2)
+            self._debug_print_residual('Done solving a bordered linear system with residual',
+                                       jac, y1, rhs - V * y2)
 
             return y1, y2
 
-        self.debug_print('Solving a linear system')
+        self._debug_print('Solving a linear system')
 
         y = self._lu_solve(jac, x)
 
-        self.debug_print_residual('Done solving a linear system with residual', jac, y, rhs)
+        self._debug_print_residual('Done solving a linear system with residual', jac, y, rhs)
 
         return y
 
     def iterative_solve(self, jac, rhs, rhs2=None, V=None, W=None, C=None):
-        '''Solve J y = x for y.'''
+        '''Solve $J(u, p) y = x$ for $y$ using an iterative solver.
+        See the :meth:`solve` function.
+
+        '''
         x = rhs.copy()
 
         # Fix one pressure node
@@ -265,7 +278,7 @@ class Interface(BaseInterface):
 
         self._compute_preconditioner(jac, A, V, W, C)
 
-        self.debug_print('Solving a linear system')
+        self._debug_print('Solving a linear system')
 
         parameters = self.parameters.get('Iterative Solver', {})
         restart = parameters.get('Restart', 100)
@@ -284,13 +297,13 @@ class Interface(BaseInterface):
             y1 = y[:-border_size]
             y2 = y[-border_size:] * self.border_scaling
 
-            self.debug_print_residual('Done solving a bordered linear system in %d iterations with residual' %
-                                      gmres_iterations, jac, y1, rhs - V * y2)
+            self._debug_print_residual('Done solving a bordered linear system in %d iterations with residual' %
+                                       gmres_iterations, jac, y1, rhs - V * y2)
 
             return y1, y2
 
-        self.debug_print_residual('Done solving a linear system in %d iterations with residual' %
-                                  gmres_iterations, jac, y, rhs)
+        self._debug_print_residual('Done solving a linear system in %d iterations with residual' %
+                                   gmres_iterations, jac, y, rhs)
 
         return y
 
@@ -301,8 +314,6 @@ class Interface(BaseInterface):
         return self.direct_solve(jac, rhs, rhs2, V, W, C)
 
     def eigs(self, state, return_eigenvectors=False, enable_recycling=False):
-        '''Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v.'''
-
         from transiflow.interface.JaDa import Op
 
         parameters = self.parameters.get('Eigenvalue Solver', {})

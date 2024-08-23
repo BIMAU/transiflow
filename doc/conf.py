@@ -46,8 +46,13 @@ add_module_names = False
 apidoc_module_dir = '../transiflow'
 apidoc_output_dir = 'reference'
 apidoc_excluded_paths = [
-    'interface',
-    'interface/**',
+    'interface/BaseInterface.py',
+    'interface/Epetra.py',
+    'interface/HYMLS.py',
+    'interface/JaDa.py',
+    'interface/JaDaHYMLS.py',
+    'interface/ParallelBaseInterface.py',
+    'interface/PETSc.py',
 ]
 apidoc_separate_modules = True
 apidoc_toc_file = False
