@@ -21,6 +21,11 @@ class Vector(PETSc.Vec):
 
     size = property(PETSc.Vec.getSize)
 
+    def all_gather(self):
+        sct, vector_global = PETSc.Scatter().toAll(self)
+        sct.scatter(self, vector_global)
+        return vector_global
+
     @property
     def shape(self):
         return (self.size,)
@@ -55,7 +60,12 @@ class Interface(ParallelBaseInterface):
             set(self.assembly_map.indices).difference(self.map_natural.indices)
         )
 
-        self.ghosts = self.ghosts_petsc(ghosts_natural)
+        indices_natural = Vector().createWithArray(self.map_natural.indices)
+        sct, indices_natural_global = PETSc.Scatter().toAll(indices_natural)
+        sct.scatter(indices_natural, indices_natural_global)
+        self.index_natural_global_permut = numpy.argsort(indices_natural_global)
+
+        self.ghosts = self.ghosts_petsc(ghosts_natural, indices_natural_global)
 
         self.index_ordering = PETSc.AO().createMapping(self.map_natural.indices)
         self.map = self.create_map_petsc()
@@ -77,21 +87,14 @@ class Interface(ParallelBaseInterface):
     def vector_from_array(self, array):
         return Vector.from_array(self.map, array[self.map_natural.indices], ghosts=self.ghosts)
 
-    def ghosts_petsc(self, ghosts_natural):
-        """Get global indices of ghosts in PETSc ordering.
+    def array_from_vector(self, vector):
+        return Vector.all_gather(vector).array[self.index_natural_global_permut]
 
-        1. On each process, create a vector containing the owned natural indices.
-        2. Gather the indices from all processes in a sequential vector and find the
-           locations of the ghosts in the sequential vector. The locations correspond to
-           the ghost indices in PETSc ordering.
-        """
-        vec_indices = Vector().createWithArray(self.map_natural.indices)
-        sct, vec_global_indices = PETSc.Scatter().toAll(vec_indices)
-        sct.scatter(vec_indices, vec_global_indices)
-
+    def ghosts_petsc(self, ghosts_natural, indices_natural_global):
+        """Get global indices of ghosts in PETSc ordering."""
         ghosts_petsc = []
         for ghost in ghosts_natural:
-            ghosts_petsc.append(numpy.where(vec_global_indices.array == ghost)[0][0])
+            ghosts_petsc.append(numpy.where(indices_natural_global.array == ghost)[0][0])
 
         return ghosts_petsc
 
