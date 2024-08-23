@@ -1,7 +1,16 @@
 import numpy
 import os
+import pytest
 
-from transiflow import Interface
+from transiflow import utils
+from transiflow.interface import create
+
+
+def Interface(parameters, nx, ny, nz=1, dim=None, dof=None, backend="SciPy"):
+    try:
+        return create(parameters, nx, ny, nz, dim, dof, backend=backend)
+    except ImportError:
+        pytest.skip(backend + " not found")
 
 
 def test_solve(nx=4):
@@ -59,17 +68,26 @@ def test_bordered_matrix(nx=4):
     assert numpy.linalg.norm(y) > 0
     assert numpy.linalg.norm(y - b3) < 1e-11
 
-def test_save_load(nx=4):
+
+@pytest.mark.parametrize("backend", ["SciPy", "Epetra", "HYMLS"])
+def test_save_load(backend, nx=4):
     ny = nx
     nz = nx
 
+    try:
+        from mpi4py import MPI
+        if MPI.COMM_WORLD.Get_size() > 1 and backend == 'SciPy':
+            pytest.skip('SciPy shouldn\'t be used in parallel')
+    except ImportError:
+        pass
+
     parameters = {'Eigenvalue Solver': {'Target': 1 + 3j}}
-    interface = Interface(parameters, nx, ny, nz)
+    interface = Interface(parameters, nx, ny, nz, backend=backend)
 
     x = interface.vector()
-    n = len(x)
+    n = x.size
 
-    x = numpy.random.random(n)
+    x = interface.vector_from_array(numpy.random.random(n))
     interface.save_state('x-test', x)
 
     assert os.path.isfile('x-test.npy')
@@ -79,4 +97,4 @@ def test_save_load(nx=4):
 
     x2 = interface.load_state('x-test')
     assert parameters['Eigenvalue Solver']['Target'] == 1 + 3j
-    assert numpy.linalg.norm(x - x2) < 1e-14
+    assert utils.norm(x - x2) < 1e-14

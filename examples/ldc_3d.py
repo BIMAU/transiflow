@@ -1,4 +1,3 @@
-import numpy
 import pickle
 
 from transiflow import Continuation
@@ -26,51 +25,6 @@ def compute_volume_averaged_kinetic_energy(x_local, interface):
     return utils.compute_volume_averaged_kinetic_energy(x_local.array, postprocess_interface)
 
 
-def write_solution(interface, x, mu, name=None, enable_output=True):
-    if not enable_output:
-        return
-
-    nx = interface.nx_global
-    ny = interface.ny_global
-    nz = interface.nz_global
-
-    if not name:
-        name = mu
-
-    try:
-        x_local = x.gather()
-    except AttributeError:
-        x_local = x
-
-    if interface.comm.MyPID() == 0:
-        ke = compute_volume_averaged_kinetic_energy(x_local, interface)
-
-        with open('ldc_' + str(name) + '_ke_' + str(nx) + '_' + str(ny) + '_' + str(nz) + '.npy', 'wb') as f:
-            numpy.save(f, ke)
-
-        with open('ldc_' + str(name) + '_mu_' + str(nx) + '_' + str(ny) + '_' + str(nz) + '.npy', 'wb') as f:
-            numpy.save(f, mu)
-
-        with open('ldc_' + str(name) + '_x_' + str(nx) + '_' + str(ny) + '_' + str(nz) + '.npy', 'wb') as f:
-            numpy.save(f, x_local.array)
-
-
-def read_solution(interface, name):
-    nx = interface.nx_global
-    ny = interface.ny_global
-    nz = interface.nz_global
-
-    mu = numpy.load('ldc_' + str(name) + '_mu_' + str(nx) + '_' + str(ny) + '_' + str(nz) + '.npy')
-    if interface.comm.MyPID() == 0:
-        x = numpy.load('ldc_' + str(name) + '_x_' + str(nx) + '_' + str(ny) + '_' + str(nz) + '.npy')
-    else:
-        x = []
-
-    x = interface.vector_from_array(x)
-
-    return x, mu
-
-
 def postprocess(data, interface, x, mu, enable_output):
     if not enable_output:
         return
@@ -87,8 +41,8 @@ def postprocess(data, interface, x, mu, enable_output):
         with open('ldc_bif_' + str(nx) + '_' + str(ny) + '_' + str(nz) + '.obj', 'wb') as f:
             pickle.dump(data, f)
 
-        # Store the solution at every continuation step
-        write_solution(interface, x_local, mu)
+    # Store the solution at every continuation step
+    interface.save_state(str(mu), x)
 
 
 def main():
@@ -146,11 +100,10 @@ def main():
                                       ds, ds_max=100, callback=callback)
 
     # Store point b from which we start locating the bifurcation point
-    write_solution(interface, x, mu, 'b', enable_output)
+    interface.save_state('b', x)
 
     # # Restart from point b. In this case the above code can be disabled
-    # interface.set_parameter('Lid Velocity', 1)
-    # x, mu = read_solution(interface, 'b')
+    # x = interface.load_state('b')
 
     # Now detect the bifurcation point
     parameters['Eigenvalue Solver'] = {}
@@ -164,7 +117,7 @@ def main():
                                         detect_bifurcations=True, callback=callback)
 
     # Store the solution at the bifurcation point
-    write_solution(interface, x, mu, 'c', enable_output)
+    interface.save_state('c', x)
 
 
 if __name__ == '__main__':

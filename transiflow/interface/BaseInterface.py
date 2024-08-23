@@ -78,8 +78,23 @@ class BaseInterface:
         '''Get a parameter from self.parameters through the discretization.'''
         return self.discretization.get_parameter(name)
 
+    def save_parameters(self, name):
+        '''Save the current parameter set to a file.
+
+        Parameters
+        ----------
+        name : str
+            Name of the file without extension.
+
+        '''
+
+        params_name = name + '.params'
+        with open(params_name, 'w') as f:
+            json.dump(self.parameters, f, cls=NumpyEncoder)
+            print('Wrote parameters to', params_name, flush=True)
+
     def save_state(self, name, x):
-        '''Save the state ``x`` along with the current parameter set.```
+        '''Save the state ``x`` along with the current parameter set.
 
         Parameters
         ----------
@@ -89,11 +104,7 @@ class BaseInterface:
             State at the current parameter values.
 
         '''
-
-        params_name = name + '.params'
-        with open(params_name, 'w') as f:
-            json.dump(self.parameters, f, cls=NumpyEncoder)
-            print('Wrote parameters to', params_name, flush=True)
+        self.save_parameters(name)
 
         if not name.endswith('.npy'):
             name += '.npy'
@@ -101,8 +112,22 @@ class BaseInterface:
         numpy.save(name, x)
         print('Wrote state to', name, flush=True)
 
+    def load_parameters(self, name):
+        '''Load the parameter set from a file.
+
+        Parameters
+        ----------
+        name : str
+            Name of the file without extension.
+
+        '''
+        params_name = name + '.params'
+        with open(params_name, 'r') as f:
+            self.parameters.update(json.load(f, object_hook=numpy_decoder))
+            print('Read parameters from', params_name, flush=True)
+
     def load_state(self, name):
-        '''Load the state ``x`` along with the current parameter set.```
+        '''Load the state ``x`` along with the current parameter set.
 
         Parameters
         ----------
@@ -110,10 +135,7 @@ class BaseInterface:
             Name of the file.
 
         '''
-        params_name = name + '.params'
-        with open(params_name, 'r') as f:
-            self.parameters.update(json.load(f, object_hook=numpy_decoder))
-            print('Read parameters from', params_name, flush=True)
+        self.load_parameters(name)
 
         if not name.endswith('.npy'):
             name += '.npy'

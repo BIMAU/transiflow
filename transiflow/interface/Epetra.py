@@ -99,6 +99,24 @@ class Interface(ParallelBaseInterface):
     def array_from_vector(self, vector):
         return Vector.all_gather(vector)
 
+    def save_state(self, name, x):
+        x = x.gather()
+
+        if self.comm.MyPID() == 0:
+            ParallelBaseInterface.save_state(self, name, x)
+
+        self.comm.Barrier()
+
+    def load_state(self, name):
+        self.load_parameters(name)
+
+        if self.comm.MyPID() == 0:
+            x = ParallelBaseInterface.load_state(self, name)
+        else:
+            x = []
+
+        return self.vector_from_array(x)
+
     def create_map(self, overlapping=False):
         '''Create a map on which the local discretization domain is defined.
         The overlapping part is only used for computing the discretization.'''
