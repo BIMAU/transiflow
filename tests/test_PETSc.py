@@ -349,3 +349,30 @@ def test_PETSc(nx=4):
     x = continuation.continuation(x0, "Reynolds Number", start, target, ds)[0]
 
     assert utils.norm(x) > 0
+
+def test_vector(nx=8):
+    try:
+        from transiflow.interface import PETSc as PETScInterface
+    except ImportError:
+        pytest.skip("PETSc not found")
+
+    ny = nx
+    nz = nx
+    dim = 3
+    dof = 4
+    parameters = {"Reynolds Number": 100, "Grid Stretching": True}
+    n = nx * ny * nz * dof
+
+    state = numpy.zeros(n)
+    for i in range(n):
+        state[i] = i + 1
+
+    print(state)
+
+    interface = PETScInterface.Interface(parameters, nx, ny, nz, dim, dof)
+    state_vec = interface.vector_from_array(state)
+    state_gathered = interface.array_from_vector(state_vec)
+
+    print(state_gathered)
+
+    assert state == pytest.approx(state_gathered)
