@@ -30,11 +30,17 @@ def numpy_decoder(obj):
 
 
 class BaseInterface:
-    '''This class defines a base interface to the NumPy backend for the
-    discretization. We use this so we can write higher level methods
-    such as pseudo-arclength continuation without knowing anything
-    about the underlying methods such as the solvers that are present
-    in the backend we are interfacing with.'''
+    '''This is the base class for all interfaces. We use this so we
+    can write higher level methods such as pseudo-arclength
+    continuation without knowing anything about the underlying methods
+    such as the solvers that are present in the backend we are
+    interfacing with.
+
+    This class provides some basic implementations, which generally
+    only work in serial, as well as some abstract methods that need to
+    be implemented by the derived interface.
+
+    '''
 
     def __init__(self, parameters, nx, ny, nz=1, dim=None, dof=None, x=None, y=None, z=None):
         self.nx = nx
@@ -58,28 +64,52 @@ class BaseInterface:
         # Eigenvalue solver caching
         self._subspaces = None
 
-    def debug_print(self, *args):
+    def _debug_print(self, *args):
         if self.parameters.get('Verbose', False):
             print('Debug:', *args, flush=True)
 
-    def debug_print_residual(self, string, jac, x, rhs):
+    def _debug_print_residual(self, string, jac, x, rhs):
         if self.parameters.get('Verbose', False):
             r = norm(jac @ x - rhs)
             self.debug_print(string, '{}'.format(r))
 
+    def vector(self):
+        '''Return a zero-initialized state vector suitable for the
+        currently defined problem type.'''
+        raise NotImplementedError()
+
     def vector_from_array(self, array):
+        '''Create a state vector suitable for this interface from an
+        array.'''
         return array
 
     def array_from_vector(self, vector):
+        '''Create a numpy array suitable for postprocessing from a
+        state vector.'''
         return vector
 
     def set_parameter(self, name, value):
-        '''Set a parameter in self.parameters while also letting the
-        discretization know that we changed a parameter. '''
+        '''Set a parameter in the discretization.
+
+        Parameters
+        ----------
+        name : str
+            Name of the parameter in the parameter list.
+        value : scalar
+            Value of the parameter.
+
+        '''
         self.discretization.set_parameter(name, value)
 
     def get_parameter(self, name):
-        '''Get a parameter from self.parameters through the discretization.'''
+        '''Get a parameter value from the discretization.
+
+        Parameters
+        ----------
+        name : str
+            Name of the parameter in the parameter list.
+
+        '''
         return self.discretization.get_parameter(name)
 
     def save_json(self, name, obj):
@@ -182,22 +212,84 @@ class BaseInterface:
         return x
 
     def rhs(self, state):
-        '''Right-hand side in M * du / dt = F(u).'''
+        r'''Compute the right-hand side of the DAE. That is the
+        right-hand side $F(u, p)$ in
+
+        .. math:: M(p) \frac{\d u}{\d t} = F(u, p)
+
+        Parameters
+        ----------
+        state : array_like
+            State $u$ at which to evaluate $F(u, p)$
+
+        Returns
+        -------
+        rhs : array_like
+            The value of $F(u, p)$
+
+        '''
         raise NotImplementedError()
 
     def jacobian(self, state):
-        '''Jacobian J of F in M * du / dt = F(u).'''
+        r'''Compute the Jacobian matrix $J(u, p)$ of the right-hand
+        side of the DAE. That is the Jacobian matrix of $F(u, p)$ in
+
+        .. math:: M(p) \frac{\d u}{\d t} = F(u, p)
+
+        Parameters
+        ----------
+        state : array_like
+            State $u$ at which to evaluate $J(u, p)$
+
+        Returns
+        -------
+        jac : Matrix
+            The matrix $J(u, p)$ in a suitable sparse format
+
+        '''
         raise NotImplementedError()
 
     def mass_matrix(self):
-        '''Mass matrix M in M * du / dt = F(u).'''
+        r'''Compute the mass matrix of the DAE. That is the mass
+        matrix $M(p)$ in
+
+        .. math:: M(p) \frac{\d u}{\d t} = F(u, p)
+
+        Returns
+        -------
+        mass : Matrix
+            The matrix $M(p)$ in a suitable sparse format
+
+        '''
         raise NotImplementedError()
 
     def solve(self, jac, rhs, rhs2=None, V=None, W=None, C=None):
-        '''Solve J y = x for y.'''
+        '''Solve $J(u, p) y = x$ for $y$.
+
+        Parameters
+        ----------
+        jac : Matrix
+            The Jacobian matrix $J(u, p)$ as returned by
+            ``jacobian()``.
+        rhs : array_like
+           The right-hand side vector $x$.
+        rhs2 : array_like, optional
+            Extension of ``rhs`` in case a bordered system is solved.
+        V : array_like, optional
+            Border case a bordered system ``[A, V; W^T, C] [y; y2] =
+            [x; x2]`` is solved.
+        W : array_like, optional
+            Border case a bordered system ``[A, V; W^T, C] [y; y2] =
+            [x; x2]`` is solved.
+        C : matrix_like, optional
+            Border case a bordered system ``[A, V; W^T, C] [y; y2] =
+            [x; x2]`` is solved.
+
+        '''
         raise NotImplementedError()
 
-    def _eigs(self, jada_interface, jac_op, mass_op, prec_op, state, return_eigenvectors, enable_recycling):
+    def _eigs(self, jada_interface, jac_op, mass_op, prec_op, state,
+              return_eigenvectors, enable_recycling):
         '''Internal helper for eigs()'''
 
         from jadapy import jdqz, orthogonalization
@@ -266,5 +358,26 @@ class BaseInterface:
             return eigs[:num]
 
     def eigs(self, state, return_eigenvectors=False, enable_recycling=False):
-        '''Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v.'''
+        r'''Compute the generalized eigenvalues of $\\beta * J(u, p) *
+        v = \\alpha * M(p) * v$.
+
+        Parameters
+        ----------
+        state : array_like
+            State $u$ at which to evaluate $J(u, p)$.
+        return_eigenvectors : bool, optional
+            Whether to return the eigenvectors $v$.
+        enable_recycling : bool, optional
+            Whether to use the previous eigenvalue space as initial
+            search space.
+
+        Returns
+        -------
+        eigs : array_like
+            Eigenvalues $\\alpha / \\beta$.
+        v : array_like
+            Corresponding eigenvectors in case ``return_eigenvectors``
+            is ``True``.
+
+        '''
         raise NotImplementedError()
