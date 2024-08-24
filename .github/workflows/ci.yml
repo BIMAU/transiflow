@@ -17,6 +17,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
@@ -27,6 +28,15 @@ jobs:
         python -m pip install --upgrade pip
         pip install flake8 pytest
         pip install -r requirements.txt
+
+    - name: Install Linux dependencies
+      run: |
+        sudo apt-get install openmpi-bin libopenmpi-dev
+        pip install mpi4py
+        pip install petsc petsc4py
+      env:
+        PETSC_CONFIGURE_OPTIONS: '--download-mumps --download-scalapack'
+      if: matrix.os == 'ubuntu-latest'
 
     - name: Lint with flake8
       run: |
@@ -46,3 +56,8 @@ jobs:
     - name: Test with pytest
       run: |
         pytest tests
+
+    - name: Run parallel tests
+      run: |
+        mpiexec --oversubscribe -n 4 pytest tests
+      if: matrix.os == 'ubuntu-latest'
