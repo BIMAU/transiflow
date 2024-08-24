@@ -56,9 +56,9 @@ jobs:
 
     - name: Test with pytest
       run: |
-        pytest tests
+        pytest -v -o console_output_style=classic tests
 
     - name: Run parallel tests
       run: |
-        mpiexec --oversubscribe -n 4 pytest tests
+        mpiexec --oversubscribe -n 4 pytest -v -o console_output_style=classic tests
       if: matrix.os == 'ubuntu-latest'
