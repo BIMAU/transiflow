@@ -26,12 +26,6 @@ class Interface(BaseInterface):
     def vector(self):
         return numpy.zeros(self.nx * self.ny * self.nz * self.dof)
 
-    def vector_from_array(self, array):
-        return array
-
-    def array_from_vector(self, vector):
-        return vector
-
     def rhs(self, state):
         '''Right-hand side in M * du / dt = F(u).'''
         return self.discretization.rhs(state)
