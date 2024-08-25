@@ -74,6 +74,18 @@ class ParallelBaseInterface(BaseInterface):
         except AttributeError:
             return self.comm.MyPID()
 
+    def save_state(self, name, x):
+        x = self.array_from_vector(x)
+
+        if self.get_comm_rank() == 0:
+            BaseInterface.save_state(self, name, x)
+
+        self.comm.Barrier()
+
+    def load_state(self, name):
+        x = BaseInterface.load_state(self, name)
+        return self.vector_from_array(x)
+
     def partition_domain(self):
         '''Partition the domain into Cartesian subdomains for computing the
         discretization.'''
