@@ -69,7 +69,7 @@ def test_bordered_matrix(nx=4):
     assert numpy.linalg.norm(y - b3) < 1e-11
 
 
-@pytest.mark.parametrize("backend", ["SciPy", "Epetra", "HYMLS"])
+@pytest.mark.parametrize("backend", ["SciPy", "Epetra", "HYMLS", "PETSc"])
 def test_save_load(backend, nx=4):
     ny = nx
     nz = nx
