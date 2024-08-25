@@ -63,6 +63,12 @@ class BaseInterface:
             r = norm(jac @ x - rhs)
             self.debug_print(string, '{}'.format(r))
 
+    def vector_from_array(self, array):
+        return array
+
+    def array_from_vector(self, vector):
+        return vector
+
     def set_parameter(self, name, value):
         '''Set a parameter in self.parameters while also letting the
         discretization know that we changed a parameter. '''
