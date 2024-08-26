@@ -4,4 +4,4 @@ matplotlib
 sphinx
 sphinxcontrib-apidoc
 sphinx-rtd-theme
-
+numpydoc
