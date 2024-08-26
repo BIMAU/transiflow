@@ -13,27 +13,41 @@ def Interface(parameters, nx, ny, nz=1, dim=None, dof=None, backend="SciPy"):
         pytest.skip(backend + " not found")
 
 
-def test_solve(nx=4):
+@pytest.mark.parametrize("backend", ["SciPy", "Epetra", "HYMLS", "PETSc"])
+def test_solve(backend, nx=4):
     ny = nx
     nz = nx
 
     parameters = {}
-    interface = Interface(parameters, nx, ny, nz)
+    interface = Interface(parameters, nx, ny, nz, backend="SciPy")
 
     x0 = interface.vector()
-    n = len(x0)
+    n = x0.size
 
     A = interface.jacobian(x0)
-    x = numpy.random.random(n)
+
+    x = numpy.zeros(n)
+    for i in range(n):
+        x[i] = i + 1
+
+    pressure_node = 3
+    x[pressure_node] = 0
 
     b = A @ x
 
+    interface = Interface(parameters, nx, ny, nz, backend=backend)
+
+    x0 = interface.vector()
+    A = interface.jacobian(x0)
+    b = interface.vector_from_array(b)
+
     y = interface.solve(A, b)
+    y = interface.array_from_vector(y)
 
-    pressure = 3
+    pressure = y[pressure_node] - x[pressure_node]
 
-    assert numpy.linalg.norm(y) > 0
-    assert numpy.linalg.norm(y - x) - nx * ny * nz * x[pressure] < 1e-11
+    assert utils.norm(y) > 0
+    assert (utils.norm(y - x) - pressure * nx * ny * nz) / utils.norm(b) < 1e-7
 
 def test_bordered_matrix(nx=4):
     ny = nx
@@ -44,7 +58,7 @@ def test_bordered_matrix(nx=4):
     interface.border_scaling = 1
 
     x0 = interface.vector()
-    n = len(x0)
+    n = x0.size
     n2 = 3
 
     x = numpy.random.random(n)
