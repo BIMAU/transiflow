@@ -70,6 +70,10 @@ class ParallelBaseInterface(BaseInterface):
         except AttributeError:
             return self.comm.MyPID()
 
+    def save_json(self, name, obj):
+        if self.get_comm_rank() == 0:
+            BaseInterface.save_json(self, name, obj)
+
     def save_state(self, name, x):
         x = self.array_from_vector(x)
 
