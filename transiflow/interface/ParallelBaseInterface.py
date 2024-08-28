@@ -58,10 +58,6 @@ class ParallelBaseInterface(BaseInterface):
         self.discretization.ny = self.ny_local
         self.discretization.nz = self.nz_local
 
-        self.nx = self.nx_local
-        self.ny = self.ny_local
-        self.nz = self.nz_local
-
     def get_comm_size(self):
         try:
             return self.comm.size
