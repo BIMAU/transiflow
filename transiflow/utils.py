@@ -22,10 +22,10 @@ def create_state_mtx(state, nx=None, ny=None, nz=None, dof=None, interface=None)
     state vector that makes it easier to access the variables.'''
 
     if interface:
-        nx = interface.discretization.nx
-        ny = interface.discretization.ny
-        nz = interface.discretization.nz
-        dof = interface.discretization.dof
+        nx = interface.nx
+        ny = interface.ny
+        nz = interface.nz
+        dof = interface.dof
 
     state_mtx = numpy.zeros((nx, ny, nz, dof))
     for k, j, i, d in numpy.ndindex(nz, ny, nx, dof):
@@ -40,10 +40,11 @@ def create_padded_state_mtx(state, nx=None, ny=None, nz=None, dof=None,
     the other side of the domain is padded to each border.'''
 
     if interface:
-        nx = interface.discretization.nx
-        ny = interface.discretization.ny
-        nz = interface.discretization.nz
-        dof = interface.discretization.dof
+        nx = interface.nx
+        ny = interface.ny
+        nz = interface.nz
+        dof = interface.dof
+
         x_periodic = interface.discretization.x_periodic
         y_periodic = interface.discretization.y_periodic
         z_periodic = interface.discretization.z_periodic
@@ -77,10 +78,10 @@ def create_state_vec(state_mtx, nx=None, ny=None, nz=None, dof=None, interface=N
     create_state_mtx().'''
 
     if interface:
-        nx = interface.discretization.nx
-        ny = interface.discretization.ny
-        nz = interface.discretization.nz
-        dof = interface.discretization.dof
+        nx = interface.nx
+        ny = interface.ny
+        nz = interface.nz
+        dof = interface.dof
 
     state = numpy.zeros(nx * ny * nz * dof)
 
@@ -131,13 +132,13 @@ def compute_coordinate_vector_centers(vec):
     return x
 
 def compute_velocity_magnitude(state, interface, axis=2, position=None):
-    nx = interface.discretization.nx
-    ny = interface.discretization.ny
-    nz = interface.discretization.nz
+    nx = interface.nx
+    ny = interface.ny
+    nz = interface.nz
 
-    x = interface.discretization.x
-    y = interface.discretization.y
-    z = interface.discretization.z
+    x = interface.x
+    y = interface.y
+    z = interface.z
 
     state_mtx = create_padded_state_mtx(state, interface=interface)
 
@@ -189,7 +190,7 @@ def compute_velocity_magnitude(state, interface, axis=2, position=None):
         v = get_v_value(state_mtx, i, j, center, interface)
 
         w = 0
-        if interface.discretization.dim > 2:
+        if interface.dim > 2:
             w = get_w_value(state_mtx, i, j, center, interface)
 
         m[i, j] = sqrt(u * u + v * v + w * w)
@@ -197,24 +198,24 @@ def compute_velocity_magnitude(state, interface, axis=2, position=None):
     return m
 
 def compute_streamfunction(state, interface, axis=2):
-    x = interface.discretization.x
-    y = interface.discretization.y
+    x = interface.x
+    y = interface.y
 
-    nx = interface.discretization.nx
-    ny = interface.discretization.ny
+    nx = interface.nx
+    ny = interface.ny
 
     state_mtx = create_padded_state_mtx(state, interface=interface)
 
-    center = interface.discretization.nz // 2 + 1
+    center = interface.nz // 2 + 1
     u = state_mtx[1:, 1:, center, 0]
     v = state_mtx[1:, 1:, center, 1]
 
     if axis == 1:
-        center = interface.discretization.ny // 2 + 1
+        center = interface.ny // 2 + 1
         u = state_mtx[1:, center, 1:, 0]
         v = state_mtx[1:, center, 1:, 2]
-        y = interface.discretization.z
-        ny = interface.discretization.nz
+        y = interface.z
+        ny = interface.nz
 
     psiu = numpy.zeros((nx, ny))
     psiv = numpy.zeros((nx, ny))
@@ -235,15 +236,15 @@ def compute_streamfunction(state, interface, axis=2):
     return (psiu - psiv) / 2
 
 def compute_vorticity(state, interface, axis=2):
-    x = interface.discretization.x
-    y = interface.discretization.y
+    x = interface.x
+    y = interface.y
 
-    nx = interface.discretization.nx
-    ny = interface.discretization.ny
+    nx = interface.nx
+    ny = interface.ny
 
     state_mtx = create_padded_state_mtx(state, interface=interface)
 
-    center = interface.discretization.nz // 2 + 1
+    center = interface.nz // 2 + 1
     u = state_mtx[1:, 1:, center, 0]
     v = state_mtx[1:, 1:, center, 1]
 
@@ -267,15 +268,15 @@ def compute_vorticity(state, interface, axis=2):
     return zeta
 
 def compute_volume_averaged_kinetic_energy(state, interface):
-    x = interface.discretization.x
-    y = interface.discretization.y
-    z = interface.discretization.z
+    x = interface.x
+    y = interface.y
+    z = interface.z
 
-    nx = interface.discretization.nx
-    ny = interface.discretization.ny
-    nz = interface.discretization.nz
+    nx = interface.nx
+    ny = interface.ny
+    nz = interface.nz
 
-    dim = interface.discretization.dim
+    dim = interface.dim
 
     if nx <= 1:
         assert x[0] - x[-1] == 1
@@ -312,14 +313,14 @@ def get_u_value(state, i, j, k, interface):
     else:
         state_mtx = state
 
-    y = interface.discretization.y
+    y = interface.y
     dy1 = (y[j] - y[j-1]) / 2
     dy2 = (y[j+1] - y[j]) / 2
 
     u1 = (state_mtx[i+1, j+1, k+1, 0] * dy1 + state_mtx[i+1, j+2, k+1, 0] * dy2) / (dy1 + dy2)
     u2 = (state_mtx[i+1, j+1, k+2, 0] * dy1 + state_mtx[i+1, j+2, k+2, 0] * dy2) / (dy1 + dy2)
 
-    z = interface.discretization.z
+    z = interface.z
     dz1 = (z[k] - z[k-1]) / 2
     dz2 = (z[k+1] - z[k]) / 2
 
@@ -333,14 +334,14 @@ def get_v_value(state, i, j, k, interface):
     else:
         state_mtx = state
 
-    x = interface.discretization.x
+    x = interface.x
     dx1 = (x[i] - x[i-1]) / 2
     dx2 = (x[i+1] - x[i]) / 2
 
     v1 = (state_mtx[i+1, j+1, k+1, 1] * dx1 + state_mtx[i+2, j+1, k+1, 1] * dx2) / (dx1 + dx2)
     v2 = (state_mtx[i+1, j+1, k+2, 1] * dx1 + state_mtx[i+2, j+1, k+2, 1] * dx2) / (dx1 + dx2)
 
-    z = interface.discretization.z
+    z = interface.z
     dz1 = (z[k] - z[k-1]) / 2
     dz2 = (z[k+1] - z[k]) / 2
 
@@ -354,14 +355,14 @@ def get_w_value(state, i, j, k, interface):
     else:
         state_mtx = state
 
-    x = interface.discretization.x
+    x = interface.x
     dx1 = (x[i] - x[i-1]) / 2
     dx2 = (x[i+1] - x[i]) / 2
 
     w1 = (state_mtx[i+1, j+1, k+1, 2] * dx1 + state_mtx[i+2, j+1, k+1, 2] * dx2) / (dx1 + dx2)
     w2 = (state_mtx[i+1, j+2, k+1, 2] * dx1 + state_mtx[i+2, j+2, k+1, 2] * dx2) / (dx1 + dx2)
 
-    y = interface.discretization.y
+    y = interface.y
     dy1 = (y[j] - y[j-1]) / 2
     dy2 = (y[j+1] - y[j]) / 2
 
