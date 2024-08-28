@@ -82,6 +82,20 @@ class BaseInterface:
         '''Get a parameter from self.parameters through the discretization.'''
         return self.discretization.get_parameter(name)
 
+    def save_json(self, name, obj):
+        '''Save an object to a json file
+
+        Parameters
+        ----------
+        name : str
+            Name of the file.
+        obj : Any
+            Serializable object to save to the file.
+        '''
+
+        with open(name, 'w') as f:
+            json.dump(obj, f, cls=NumpyEncoder)
+
     def save_parameters(self, name):
         '''Save the current parameter set to a file.
 
@@ -93,9 +107,8 @@ class BaseInterface:
         '''
 
         params_name = name + '.params'
-        with open(params_name, 'w') as f:
-            json.dump(self.parameters, f, cls=NumpyEncoder)
-            print('Wrote parameters to', params_name, flush=True)
+        self.save_json(params_name, self.parameters)
+        print('Wrote parameters to', params_name, flush=True)
 
     def save_state(self, name, x):
         '''Save the state ``x`` along with the current parameter set.
@@ -116,6 +129,18 @@ class BaseInterface:
         numpy.save(name, x)
         print('Wrote state to', name, flush=True)
 
+    def load_json(self, name):
+        '''Load the an object from a json file.
+
+        Parameters
+        ----------
+        name : str
+            Name of the file without extension.
+
+        '''
+        with open(name, 'r') as f:
+            return json.load(f, object_hook=numpy_decoder)
+
     def load_parameters(self, name):
         '''Load the parameter set from a file.
 
@@ -126,9 +151,8 @@ class BaseInterface:
 
         '''
         params_name = name + '.params'
-        with open(params_name, 'r') as f:
-            self.parameters.update(json.load(f, object_hook=numpy_decoder))
-            print('Read parameters from', params_name, flush=True)
+        self.parameters.update(self.load_json(params_name))
+        print('Read parameters from', params_name, flush=True)
 
     def load_state(self, name):
         '''Load the state ``x`` along with the current parameter set.
