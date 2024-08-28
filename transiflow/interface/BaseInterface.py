@@ -49,6 +49,10 @@ class BaseInterface:
         self.dim = dim or self.discretization.dim
         self.dof = dof or self.discretization.dof
 
+        self.x = self.discretization.x
+        self.y = self.discretization.y
+        self.z = self.discretization.z
+
         self.parameters = parameters
 
         # Eigenvalue solver caching
