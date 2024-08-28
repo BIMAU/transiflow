@@ -151,8 +151,16 @@ class BaseInterface:
 
         '''
         params_name = name + '.params'
+
+        old_parameters = self.parameters.copy()
         self.parameters.update(self.load_json(params_name))
         print('Read parameters from', params_name, flush=True)
+
+        for parameter_name, value in self.parameters.items():
+            old_value = old_parameters.get(parameter_name)
+            if value != old_value:
+                print('Updated \'{}\' from {} to {}'.format(parameter_name, old_value, value),
+                      flush=True)
 
     def load_state(self, name):
         '''Load the state ``x`` along with the current parameter set.
