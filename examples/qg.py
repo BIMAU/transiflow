@@ -8,17 +8,10 @@ from transiflow import plot_utils
 from transiflow import utils
 
 
-class Data:
-    def __init__(self):
-        self.mu = []
-        self.value = []
-
-    def append(self, mu, value):
-        self.mu.append(mu)
-        self.value.append(value)
-
-    def callback(self, interface, x, mu):
-        self.append(mu, numpy.max(utils.compute_streamfunction(x, interface)))
+def postprocess(data, interface, x, mu):
+    data['Reynolds Number'].append(mu)
+    data['Stream Function Maximum'].append(
+        numpy.max(utils.compute_streamfunction(x, interface)))
 
 
 def main():
@@ -53,12 +46,13 @@ def main():
 
     # Perform a continuation to Reynolds number 40 without detecting bifurcation points
     # and use this in the bifurcation diagram
-    data2 = Data()
+    data2 = {'Reynolds Number': [], 'Stream Function Maximum': []}
+    callback = lambda interface, x, mu: postprocess(data2, interface, x, mu)
 
     ds = 5
     target = 40
     x2, mu2 = continuation.continuation(x1, 'Reynolds Number', 16, target, ds,
-                                        callback=data2.callback)
+                                        callback=callback)
 
     plot_utils.plot_streamfunction(x2, interface, title='Streamfunction at Re={}'.format(mu2))
 
@@ -81,19 +75,20 @@ def main():
 
     # Now compute the stable branch after the pitchfork bifurcation by going backwards
     # and use this in the bifurcation diagram
-    data6 = Data()
+    data6 = {'Reynolds Number': [], 'Stream Function Maximum': []}
+    callback = lambda interface, x, mu: postprocess(data6, interface, x, mu)
 
     ds = -5
     target = 40
     x6, mu6 = continuation.continuation(x5, 'Reynolds Number', mu4, target, ds,
-                                        callback=data6.callback)
+                                        callback=callback)
 
     # Plot a bifurcation diagram
     plt.title('Bifurcation diagram for the QG model with $n_x=n_y={}$'.format(nx))
     plt.xlabel('Reynolds number')
     plt.ylabel('Maximum value of the streamfunction')
-    plt.plot(data2.mu, data2.value)
-    plt.plot(data6.mu, data6.value)
+    plt.plot(data2['Reynolds Number'], data2['Stream Function Maximum'])
+    plt.plot(data6['Reynolds Number'], data6['Stream Function Maximum'])
     plt.show()
 
 
