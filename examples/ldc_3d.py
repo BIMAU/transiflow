@@ -1,45 +1,22 @@
-import pickle
-
 from transiflow import Continuation
 from transiflow import Interface
 from transiflow import utils
-
-
-class Data:
-    def __init__(self):
-        self.mu = []
-        self.value = []
-
-    def append(self, mu, value):
-        self.mu.append(mu)
-        self.value.append(value)
-
-
-def compute_volume_averaged_kinetic_energy(x_local, interface):
-    # Because HYMLS uses local subdomains, we need a different interface for postprocessing purposes
-    # that operates on the global domain
-    postprocess_interface = Interface(interface.parameters,
-                                      interface.nx_global, interface.ny_global, interface.nz_global,
-                                      interface.discretization.dim, interface.discretization.dof)
-
-    return utils.compute_volume_averaged_kinetic_energy(x_local.array, postprocess_interface)
 
 
 def postprocess(data, interface, x, mu, enable_output):
     if not enable_output:
         return
 
-    nx = interface.nx_global
-    ny = interface.ny_global
-    nz = interface.nz_global
+    nx = interface.nx
+    ny = interface.ny
+    nz = interface.nz
 
-    x_local = x.gather()
-    if interface.comm.MyPID() == 0:
-        # Store data for a bifurcation diagram at every continuation step
-        data.append(mu, utils.compute_volume_averaged_kinetic_energy(x_local, interface))
+    # Store data for a bifurcation diagram at every continuation step
+    data['Reynolds Number'].append(mu)
+    data['Volume Averaged Kinetic Energy'].append(
+        utils.compute_volume_averaged_kinetic_energy(x, interface))
 
-        with open('ldc_bif_' + str(nx) + '_' + str(ny) + '_' + str(nz) + '.obj', 'wb') as f:
-            pickle.dump(data, f)
+    interface.save_json('ldc_bif_' + str(nx) + '_' + str(ny) + '_' + str(nz) + '.json', data)
 
     # Store the solution at every continuation step
     interface.save_state(str(mu), x)
@@ -75,25 +52,27 @@ def main():
     parameters['Solver']['Iterative Solver']['Num Blocks'] = 100
     parameters['Solver']['Iterative Solver']['Convergence Tolerance'] = 1e-6
 
-    # Use one level in the HYMLS preconditioner. More levels means a less accurate factorization,
-    # but more parallelism and a smaller linear system at the coarsest level.
+    # Use one level in the HYMLS preconditioner. More levels means a
+    # less accurate factorization, but more parallelism and a smaller
+    # linear system at the coarsest level.
     parameters['Preconditioner'] = {}
     parameters['Preconditioner']['Number of Levels'] = 1
 
-    # Define a HYMLS interface that handles everything that is different when using HYMLS+Trilinos
-    # instead of NumPy as computational backend
+    # Define a HYMLS interface that handles everything that is
+    # different when using HYMLS+Trilinos instead of SciPy as
+    # computational backend
     interface = Interface(parameters, nx, ny, nz, backend='HYMLS')
-
-    data = Data()
-    callback = lambda interface, x, mu: postprocess(data, interface, x, mu, enable_output)
-
     continuation = Continuation(interface)
 
     # Compute an initial guess
     x0 = interface.vector()
-    x = continuation.continuation(x0, 'Lid Velocity', 0, 1, 1, callback=callback)[0]
+    x = continuation.continuation(x0, 'Lid Velocity', 0, 1, 1)[0]
 
-    # Perform an initial continuation to Reynolds number 1700 without detecting bifurcation points
+    # Perform an initial continuation to Reynolds number 1700 without
+    # detecting bifurcation points
+    data = {'Reynolds Number': [], 'Volume Averaged Kinetic Energy': []}
+    callback = lambda interface, x, mu: postprocess(data, interface, x, mu, enable_output)
+
     ds = 100
     target = 1800
     x, mu = continuation.continuation(x, 'Reynolds Number', 0, target,
