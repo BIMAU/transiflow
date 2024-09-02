@@ -6,12 +6,12 @@ from transiflow.utils import create_state_mtx # noqa: F401
 
 def get_meshgrid(interface, x=None, y=None):
     if x is None:
-        x = interface.discretization.x[:-3]
+        x = interface.x[:-3]
     if y is None:
         if interface.ny > 1:
-            y = interface.discretization.y[:-3]
+            y = interface.y[:-3]
         else:
-            y = interface.discretization.z[:-3]
+            y = interface.z[:-3]
 
     return numpy.meshgrid(x, y)
 
