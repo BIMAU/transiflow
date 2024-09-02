@@ -6,17 +6,10 @@ from transiflow import plot_utils
 from transiflow import utils
 
 
-class Data:
-    def __init__(self):
-        self.mu = []
-        self.value = []
-
-    def append(self, mu, value):
-        self.mu.append(mu)
-        self.value.append(value)
-
-    def callback(self, interface, x, mu):
-        self.append(mu, utils.compute_volume_averaged_kinetic_energy(x, interface))
+def postprocess(data, interface, x, mu):
+    data['Reynolds Number'].append(mu)
+    data['Volume Averaged Kinetic Energy'].append(
+        utils.compute_volume_averaged_kinetic_energy(x, interface))
 
 
 def main():
@@ -43,13 +36,14 @@ def main():
     x0 = continuation.continuation(x0, 'Lid Velocity', 0, 1, 1)[0]
 
     # Store data for computing the bifurcation diagram using postprocessing
-    data = Data()
+    data = {'Reynolds Number': [], 'Volume Averaged Kinetic Energy': []}
+    callback = lambda interface, x, mu: postprocess(data, interface, x, mu)
 
     # Perform an initial continuation to Reynolds number 7000 without detecting bifurcation points
     ds = 100
     target = 6000
     x, mu = continuation.continuation(x0, 'Reynolds Number', 0, target, ds,
-                                      callback=data.callback)
+                                      callback=callback)
 
     # Now detect the bifurcation point
     parameters['Eigenvalue Solver'] = {}
@@ -62,18 +56,18 @@ def main():
     target = 10000
     x2, mu2 = bifurcation_continuation.continuation(x, 'Reynolds Number', mu, target,
                                                     ds, ds_max=100, detect_bifurcations=True,
-                                                    callback=data.callback)
+                                                    callback=callback)
 
     ke = utils.compute_volume_averaged_kinetic_energy(x2, interface)
 
     # Compute the unstable branch after the bifurcation
     target = 10000
     x3, mu3 = continuation.continuation(x2, 'Reynolds Number', mu2, target, ds,
-                                        callback=data.callback)
+                                        callback=callback)
 
     # Plot a bifurcation diagram
     bif = plt.scatter(mu2, ke, marker='^')
-    plt.plot(data.mu, data.value)
+    plt.plot(data['Reynolds Number'], data['Volume Averaged Kinetic Energy'])
 
     plt.title('Bifurcation diagram for the lid-driven cavity with $n_x=n_z={}$'.format(nx))
     plt.xlabel('Reynolds number')
