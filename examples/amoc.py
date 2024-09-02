@@ -1,6 +1,4 @@
 import numpy
-import pickle
-
 import matplotlib.pyplot as plt
 
 from transiflow import Continuation
@@ -9,17 +7,10 @@ from transiflow import plot_utils
 from transiflow import utils
 
 
-class Data:
-    def __init__(self):
-        self.mu = []
-        self.value = []
-
-    def append(self, mu, value):
-        self.mu.append(mu)
-        self.value.append(value)
-
-    def callback(self, interface, x, mu):
-        self.append(mu, numpy.max(utils.compute_streamfunction(x, interface)))
+def postprocess(data, interface, x, mu):
+    data['Freshwater Flux'].append(mu)
+    data['Stream Function Maximum'].append(
+        numpy.max(utils.compute_streamfunction(x, interface)))
 
 
 def generate_plots(interface, x, sigma):
@@ -80,30 +71,29 @@ def main():
 
     generate_plots(interface, x1, 0)
 
-    # Enable the lines below to load the solution instead. Same for the ones below
+    # Enable the line below to load the solution instead. Same for the ones below
     # x1 = interface.load_state('x1')
 
     # Perform a continuation to freshwater flux 0.2 without detecting bifurcation points
     # and use this in the bifurcation diagram
-    data2 = Data()
+    data2 = {'Freshwater Flux': [], 'Stream Function Maximum': []}
+    callback = lambda interface, x, mu: postprocess(data2, interface, x, mu)
 
     ds = 0.05
     target = 0.2
     x2, mu2 = continuation.continuation(x1, 'Freshwater Flux', 0, target,
-                                        ds, ds_min=1e-12, callback=data2.callback)
+                                        ds, ds_min=1e-12, callback=callback)
 
     # Write the solution to a file
     interface.save_state('x2', x2)
 
+    # Write the data to a file
+    interface.save_json('data2.json', data2)
+
     generate_plots(interface, x2, mu2)
 
-    # Write the data to a file
-    with open('data2', 'wb') as f:
-        pickle.dump(data2, f)
-
-    # Enable the lines below to load the data
-    # with open('data2', 'rb') as f:
-    #     data2 = pickle.load(f)
+    # Enable the line below to load the data
+    # data2 = interface.load_json('data2.json')
 
     # Add asymmetry to the problem
     ds = 0.05
@@ -120,7 +110,7 @@ def main():
     # Go back to the symmetric problem
     ds = -0.05
     target = 0
-    x5, mu5 = continuation.continuation(x4, 'Asymmetry Parameter', mu3, target, ds)
+    x5, mu5 = continuation.continuation(x4, 'Asymmetry Parameter', mu3, target, ds, ds_min=1e-12)
 
     # Write the solution to a file
     interface.save_state('x5', x5)
@@ -132,16 +122,20 @@ def main():
 
     # Now compute the stable branch after the pitchfork bifurcation by going backwards
     # and use this in the bifurcation diagram
-    data6 = Data()
+    data6 = {'Freshwater Flux': [], 'Stream Function Maximum': []}
+    callback = lambda interface, x, mu: postprocess(data6, interface, x, mu)
 
     ds = -0.01
     target = 0.2
     x6, mu6 = continuation.continuation(x5, 'Freshwater Flux', mu4, target,
                                         ds, ds_min=1e-12, ds_max=0.005,
-                                        callback=data6.callback)
+                                        callback=callback)
 
     # Write the solution to a file
     interface.save_state('x6', x6)
+
+    # Write the data to a file
+    interface.save_json('data6.json', data6)
 
     generate_plots(interface, x6, mu6)
 
@@ -149,8 +143,8 @@ def main():
     plt.title(f'Bifurcation diagram for the AMOC model with $n_x={nx}$, $n_y={ny}$')
     plt.xlabel('$\\sigma$')
     plt.ylabel('Maximum value of the streamfunction')
-    plt.plot(data2.mu, data2.value)
-    plt.plot(data6.mu, data6.value)
+    plt.plot(data2['Freshwater Flux'], data2['Stream Function Maximum'])
+    plt.plot(data6['Freshwater Flux'], data6['Stream Function Maximum'])
     plt.savefig('bifurcation_diagram.eps')
     plt.close()
 
