@@ -657,7 +657,7 @@ class Discretization:
 
             theta = self.get_parameter('Temperature Forcing')
             asym = self.get_parameter('Asymmetry Parameter')
-            A = self.x[self.nx-1]
+            A = self.parameters.get('X-max', 1.0)
 
             T_S = numpy.zeros((self.nx + 2, self.nz + 2))
             T_S[:, 0] = 1 / 2 * ((1 - asym) * numpy.cos(2 * numpy.pi * (x / A - 1 / 2))
