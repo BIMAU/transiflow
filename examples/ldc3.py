@@ -7,17 +7,10 @@ from transiflow import TimeIntegration
 from transiflow import utils
 
 
-class Data:
-    def __init__(self):
-        self.t = []
-        self.value = []
-
-    def append(self, t, value):
-        self.t.append(t)
-        self.value.append(value)
-
-    def callback(self, interface, x, t):
-        self.append(t, utils.compute_volume_averaged_kinetic_energy(x, interface))
+def postprocess(data, interface, x, t):
+    data['t'].append(t)
+    data['Volume Averaged Kinetic Energy'].append(
+        utils.compute_volume_averaged_kinetic_energy(x, interface))
 
 
 def main():
@@ -39,7 +32,8 @@ def main():
     interface = Interface(parameters, nx, ny)
 
     # Store data for computing the bifurcation diagram using postprocessing
-    data = Data()
+    data = {'t': [], 'Volume Averaged Kinetic Energy': []}
+    callback = lambda interface, x, t: postprocess(data, interface, x, t)
 
     n = interface.discretization.dof * nx * ny
     x = numpy.random.random(n)
@@ -50,14 +44,14 @@ def main():
     for mu in range(0, 100, 10):
         interface.set_parameter('Reynolds Number', mu)
         time_integration = TimeIntegration(interface)
-        x, t = time_integration.integration(x, 1, 10, data.callback)
+        x, t = time_integration.integration(x, 1, 10, callback)
 
         # Plot the traced value during the time integration
         # plt.plot(data.t, data.value)
         # plt.show()
 
         mu_list.append(mu)
-        value_list.append(data.value[-1])
+        value_list.append(data['Volume Averaged Kinetic Energy'][-1])
 
     # Plot a bifurcation diagram
     plt.plot(mu_list, value_list)
