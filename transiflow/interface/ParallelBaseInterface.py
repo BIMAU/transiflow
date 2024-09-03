@@ -26,16 +26,13 @@ def get_local_coordinate_vector(x, nx_offset, nx_local):
 
 
 class ParallelBaseInterface(BaseInterface):
-    '''This class defines an interface to the Epetra backend for the
-    discretization. We use this so we can write higher level methods
-    such as pseudo-arclength continuation without knowing anything
-    about the underlying methods such as the solvers that are present
-    in the backend we are interfacing with.
+    '''This is the base class for all parallel interfaces. It
+    implements methods for creating a Cartesian partitioning of the
+    domain that can be used for computing local discretizations with
+    the required overlap. The subdomains will be distributed over
+    multiple processors if MPI is used to run the application.
 
-    The Epetra backend partitions the domain into Cartesian subdomains,
-    while solving linear systems on skew Cartesian subdomains to deal
-    with the C-grid discretization. The subdomains will be distributed
-    over multiple processors if MPI is used to run the application.'''
+    '''
     def __init__(self, comm, parameters, nx, ny, nz=1, dim=None, dof=None):
         super().__init__(parameters, nx, ny, nz, dim, dof)
 
@@ -59,12 +56,14 @@ class ParallelBaseInterface(BaseInterface):
         self.discretization.nz = self.nz_local
 
     def get_comm_size(self):
+        '''Get the total number of processors.'''
         try:
             return self.comm.size
         except AttributeError:
             return self.comm.NumProc()
 
     def get_comm_rank(self):
+        '''Get the rank of the current processor.'''
         try:
             return self.comm.rank
         except AttributeError:
@@ -88,7 +87,11 @@ class ParallelBaseInterface(BaseInterface):
 
     def partition_domain(self):
         '''Partition the domain into Cartesian subdomains for computing the
-        discretization.'''
+        discretization.
+
+        :meta private:
+
+        '''
 
         rmin = 1e100
 
@@ -160,7 +163,11 @@ class ParallelBaseInterface(BaseInterface):
 
     def is_ghost(self, i, j=None, k=None):
         '''If a node is a ghost node that is used only for computing the
-        discretization and is located outside of an interior boundary.'''
+        discretization and is located outside of an interior boundary.
+
+        :meta private:
+
+        '''
 
         if j is None:
             i, j, k, _ = ind2sub(self.nx_local, self.ny_local, self.nz_local, i, self.dof)
@@ -183,7 +190,11 @@ class ParallelBaseInterface(BaseInterface):
 
     def create_map(self, overlapping=False):
         '''Create a map on which the local discretization domain is defined.
-        The overlapping part is only used for computing the discretization.'''
+        The overlapping part is only used for computing the discretization.
+
+        :meta private:
+
+        '''
 
         local_elements = [0] * self.nx_local * self.ny_local * self.nz_local * self.dof
 
@@ -207,28 +218,3 @@ class ParallelBaseInterface(BaseInterface):
                         pos += 1
 
         return local_elements[0:pos]
-
-    def rhs(self, state):
-        '''Right-hand side in M * du / dt = F(u).'''
-
-        raise NotImplementedError()
-
-    def jacobian(self, state):
-        '''Jacobian J of F in M * du / dt = F(u).'''
-
-        raise NotImplementedError()
-
-    def mass_matrix(self):
-        '''Mass matrix M in M * du / dt = F(u).'''
-
-        raise NotImplementedError()
-
-    def solve(self, jac, rhs, rhs2=None, V=None, W=None, C=None, solver=None):
-        '''Solve J y = x for y with the possibility of solving a bordered system.'''
-
-        raise NotImplementedError()
-
-    def eigs(self, state, return_eigenvectors=False, enable_recycling=False):
-        '''Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v.'''
-
-        raise NotImplementedError()

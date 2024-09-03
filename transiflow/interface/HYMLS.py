@@ -155,15 +155,15 @@ class Interface(EpetraInterface):
         x.Random()
         self.jacobian(x)
 
-        self.compute_scaling()
-        self.scale_jacobian()
+        self._compute_scaling()
+        self._scale_jacobian()
 
         self.preconditioner = HYMLS.Preconditioner(self.jac, self.teuchos_parameters)
         self.preconditioner.Initialize()
 
         self.solver = HYMLS.BorderedSolver(self.jac, self.preconditioner, self.teuchos_parameters)
 
-        self.unscale_jacobian()
+        self._unscale_jacobian()
 
         # Put back the original parameters
         for i in parameter_names:
@@ -180,7 +180,7 @@ class Interface(EpetraInterface):
 
         x_sol = Vector(rhs_sol)
 
-        self.compute_scaling()
+        self._compute_scaling()
 
         if rhs2 is not None:
             rhs2_sol = Epetra.SerialDenseMatrix(1, 1)
@@ -191,20 +191,20 @@ class Interface(EpetraInterface):
             V_sol = Vector(self.solve_map)
             V_sol.Import(V, self.solve_importer, Epetra.Insert)
 
-            self.scale_rhs(V_sol)
+            self._scale_rhs(V_sol)
 
             W_sol = Vector(self.solve_map)
             W_sol.Import(W, self.solve_importer, Epetra.Insert)
 
-            self.unscale_lhs(W_sol)
+            self._unscale_lhs(W_sol)
 
             C_sol = Epetra.SerialDenseMatrix(1, 1)
             C_sol[0, 0] = C
 
             solver.SetBorder(V_sol, W_sol, C_sol)
 
-        self.scale_jacobian()
-        self.scale_rhs(rhs_sol)
+        self._scale_jacobian()
+        self._scale_rhs(rhs_sol)
 
         self.preconditioner.Compute()
         if rhs2 is not None:
@@ -216,8 +216,8 @@ class Interface(EpetraInterface):
 
         solver.UnsetBorder()
 
-        self.unscale_jacobian()
-        self.unscale_lhs(x_sol)
+        self._unscale_jacobian()
+        self._unscale_lhs(x_sol)
 
         x = Vector(rhs)
         x.Export(x_sol, self.solve_importer, Epetra.Insert)
@@ -243,10 +243,10 @@ class Interface(EpetraInterface):
         jac_op = EpetraInterface.CrsMatrix(self.jacobian(state))
         mass_op = EpetraInterface.CrsMatrix(self.mass_matrix())
 
-        self.compute_scaling()
-        self.scale_matrix(jac_op)
-        self.scale_matrix(mass_op)
-        self.scale_jacobian()
+        self._compute_scaling()
+        self._scale_matrix(jac_op)
+        self._scale_matrix(mass_op)
+        self._scale_jacobian()
 
         if arithmetic == 'complex':
             jada_interface = JaDaHYMLSInterface(self)
@@ -259,8 +259,8 @@ class Interface(EpetraInterface):
                          state, return_eigenvectors, enable_recycling)
 
         if return_eigenvectors:
-            self.unscale_lhs(ret[1])
+            self._unscale_lhs(ret[1])
 
-        self.unscale_jacobian()
+        self._unscale_jacobian()
 
         return ret
