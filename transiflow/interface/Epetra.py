@@ -56,15 +56,26 @@ class Vector(Epetra.Vector):
 
 class Interface(ParallelBaseInterface):
     '''This class defines an interface to the Epetra backend for the
-    discretization. We use this so we can write higher level methods
-    such as pseudo-arclength continuation without knowing anything
-    about the underlying methods such as the solvers that are present
-    in the backend we are interfacing with.
+    discretization. This backend can be used for testing
+    low-resolution parallel runs as well as a base for a class that
+    implements a better linear solver. It should not be used for any
+    meaningful simulations.
 
-    The Epetra backend partitions the domain into Cartesian subdomains,
-    while solving linear systems on skew Cartesian subdomains to deal
-    with the C-grid discretization. The subdomains will be distributed
-    over multiple processors if MPI is used to run the application.'''
+    The Epetra backend partitions the domain into Cartesian subdomains. The
+    subdomains will be distributed over multiple processors if MPI is
+    used to run the application.
+
+    See :mod:`.Discretization` for the descriptions of the constructor
+    arguments.
+
+    Parameters
+    ----------
+    parameters : dict
+        Key-value pairs that can be used to modify parameters in the
+        discretization as well as the linear solver and eigenvalue
+        solver.
+
+    '''
     def __init__(self, parameters, nx, ny, nz=1, dim=None, dof=None, comm=None):
         if comm is None:
             comm = Epetra.PyComm()
@@ -101,15 +112,36 @@ class Interface(ParallelBaseInterface):
 
     def create_map(self, overlapping=False):
         '''Create a map on which the local discretization domain is defined.
-        The overlapping part is only used for computing the discretization.'''
+        The overlapping part is only used for computing the discretization.
+
+        :meta private:
+
+        '''
 
         local_elements = ParallelBaseInterface.create_map(self, overlapping)
         return Epetra.Map(-1, local_elements, 0, self.comm)
 
     def rhs(self, state):
-        '''Right-hand side in M * du / dt = F(u) defined on the
-        non-overlapping discretization domain map.'''
+        r'''Compute the right-hand side of the DAE. That is the
+        right-hand side $F(u, p)$ in
 
+        .. math:: M(p) \frac{\d u}{\d t} = F(u, p)
+
+        The RHS is computed on the overlapping subdomain map and then
+        distributed using the non-overlapping map that is used by the
+        linear solver.
+
+        Parameters
+        ----------
+        state : array_like
+            State $u$ at which to evaluate $F(u, p)$.
+
+        Returns
+        -------
+        rhs : array_like
+            The value of $F(u, p)$.
+
+        '''
         state_ass = Vector(self.assembly_map)
         state_ass.Import(state, self.assembly_importer, Epetra.Insert)
 
@@ -120,9 +152,27 @@ class Interface(ParallelBaseInterface):
         return rhs
 
     def jacobian(self, state):
-        '''Jacobian J of F in M * du / dt = F(u) defined on the
-        domain map used by Epetra.'''
+        r'''Compute the Jacobian matrix $J(u, p)$ of the right-hand
+        side of the DAE. That is the Jacobian matrix of $F(u, p)$ in
 
+        .. math:: M(p) \frac{\d u}{\d t} = F(u, p)
+
+        The Jacobian matrix is computed on the overlapping subdomain
+        map and then distributed using the non-overlapping map that is
+        used by the linear solver.
+
+        Parameters
+        ----------
+        state : array_like
+            State $u$ at which to evaluate $J(u, p)$.
+
+        Returns
+        -------
+        jac : Epetra.FECrsMatrix
+            The matrix $J(u, p)$ in a CSR matrix format that allows
+            for distributing the overlap.
+
+        '''
         state_ass = Vector(self.assembly_map)
         state_ass.Import(state, self.assembly_importer, Epetra.Insert)
 
@@ -146,9 +196,22 @@ class Interface(ParallelBaseInterface):
         return self.jac
 
     def mass_matrix(self):
-        '''Mass matrix M in M * du / dt = F(u) defined on the
-        domain map used by Epetra.'''
+        r'''Compute the mass matrix of the DAE. That is the mass matrix
+        $M(p)$ in
 
+        .. math:: M(p) \frac{\d u}{\d t} = F(u, p)
+
+        The mass matrix is computed on the overlapping subdomain map
+        and then distributed using the non-overlapping map that is
+        used by the linear solver.
+
+        Returns
+        -------
+        mass : Epetra.FECrsMatrix
+            The matrix $M(p)$ in a CSR matrix format that allows for
+            distributing the overlap.
+
+        '''
         local_mass = self.discretization.mass_matrix()
 
         if self.mass is None:
@@ -168,8 +231,9 @@ class Interface(ParallelBaseInterface):
 
         return self.mass
 
-    def compute_scaling(self):
-        '''Compute scaling for the linear problem'''
+    def _compute_scaling(self):
+        '''Compute scaling for the linear problem. This scaling makes
+        solving the linear system more stable.'''
 
         self.left_scaling = Vector(self.solve_map)
         self.left_scaling.PutScalar(1.0)
@@ -208,41 +272,39 @@ class Interface(ParallelBaseInterface):
                     self.right_scaling[lid] = 1 / value
                     self.inv_right_scaling[lid] = value
 
-    def scale_matrix(self, mat):
+    def _scale_matrix(self, mat):
         assert not hasattr(mat, 'scaled') or not mat.scaled
         mat.scaled = True
 
         mat.LeftScale(self.left_scaling)
         mat.RightScale(self.right_scaling)
 
-    def scale_jacobian(self):
-        self.scale_matrix(self.jac)
+    def _scale_jacobian(self):
+        self._scale_matrix(self.jac)
 
-    def scale_rhs(self, rhs):
+    def _scale_rhs(self, rhs):
         rhs.Multiply(1.0, self.left_scaling, rhs, 0.0)
 
-    def scale_lhs(self, lhs):
+    def _scale_lhs(self, lhs):
         lhs.Multiply(1.0, self.inv_right_scaling, lhs, 0.0)
 
-    def unscale_matrix(self, mat):
+    def _unscale_matrix(self, mat):
         assert mat.scaled
         mat.scaled = False
 
         mat.LeftScale(self.inv_left_scaling)
         mat.RightScale(self.inv_right_scaling)
 
-    def unscale_jacobian(self):
-        self.unscale_matrix(self.jac)
+    def _unscale_jacobian(self):
+        self._unscale_matrix(self.jac)
 
-    def unscale_rhs(self, rhs):
+    def _unscale_rhs(self, rhs):
         rhs.Multiply(1.0, self.inv_left_scaling, rhs, 0.0)
 
-    def unscale_lhs(self, lhs):
+    def _unscale_lhs(self, lhs):
         lhs.Multiply(1.0, self.right_scaling, lhs, 0.0)
 
     def solve(self, jac, rhs, rhs2=None, V=None, W=None, C=None, solver=None):
-        '''Solve J y = x for y with the possibility of solving a bordered system.'''
-
         if rhs2:
             raise NotImplementedError()
 
@@ -258,6 +320,4 @@ class Interface(ParallelBaseInterface):
         return x
 
     def eigs(self, state, return_eigenvectors=False, enable_recycling=False):
-        '''Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v.'''
-
         raise NotImplementedError()
