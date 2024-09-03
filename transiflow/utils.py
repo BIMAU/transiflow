@@ -3,12 +3,15 @@ import numpy
 from math import sqrt
 
 def dot(x, y):
+    '''Dot product between the vectors ``x`` and ``y`` that can be used for
+    any backend'''
     try:
         return x.T.conj() @ y
     except AttributeError:
         return x.dot(y)
 
 def norm(x):
+    '''2-norm of the vector ``x`` that can be used for any backend'''
     if len(x.shape) > 1:
         ret = numpy.zeros(x.shape[1])
         for i in range(x.shape[1]):
@@ -19,8 +22,30 @@ def norm(x):
 
 def create_state_mtx(state, nx=None, ny=None, nz=None, dof=None, interface=None):
     '''Helper to create an (nx, ny, nz, dof) dimensional array out of a
-    state vector that makes it easier to access the variables.'''
+    state vector that makes it easier to access the variables.
 
+    Parameters
+    ----------
+    state : array_like
+        State vector that you want to convert.
+    nx : int
+        Grid size in the x direction.
+    ny : int
+        Grid size in the y direction.
+    nz : int, optional
+        Grid size in the z direction.
+    dof : int, optional
+        Degrees of freedom of the problem associated with the state
+        vector.
+    interface : Interface, optional
+        Sets ``nx, ny, nz, dof`` to the right values if supplied.
+
+    Returns
+    -------
+    state_mtx : array_like
+        An ``(nx, ny, nz, dof)`` dimensional array.
+
+    '''
     if interface:
         nx = interface.nx
         ny = interface.ny
@@ -37,10 +62,40 @@ def create_state_mtx(state, nx=None, ny=None, nz=None, dof=None, interface=None)
 def create_padded_state_mtx(state, nx=None, ny=None, nz=None, dof=None,
                             x_periodic=True, y_periodic=True, z_periodic=True,
                             interface=None):
-    '''Helper to create an (nx+2, ny+2, nz+2, dof) dimensional array out of a
-    state vector that makes it easier to access the variables. The value from
-    the other side of the domain is padded to each border.'''
+    '''Helper to create an (nx+2, ny+2, nz+2, dof) dimensional array
+    out of a state vector that makes it easier to access the
+    variables. The value from the other side of the domain is padded
+    to each border in case the domain is periodic.
 
+    Parameters
+    ----------
+    state : array_like
+        State vector that you want to convert.
+    nx : int
+        Grid size in the x direction.
+    ny : int
+        Grid size in the y direction.
+    nz : int, optional
+        Grid size in the z direction.
+    dof : int, optional
+        Degrees of freedom of the problem associated with the state
+        vector.
+    x_periodic : bool, optional
+        Use periodic borders in the x direction.
+    y_periodic : bool, optional
+        Use periodic borders in the y direction.
+    z_periodic : bool, optional
+        Use periodic borders in the z direction.
+    interface : Interface, optional
+        Sets ``nx, ny, nz, dof, x_periodic, y_periodic, z_periodic`` to
+        the right values if supplied.
+
+    Returns
+    -------
+    state_mtx : array_like
+        An ``(nx+2, ny+2, nz+2, dof)`` dimensional array.
+
+    '''
     if interface:
         nx = interface.nx
         ny = interface.ny
@@ -79,8 +134,30 @@ def create_padded_state_mtx(state, nx=None, ny=None, nz=None, dof=None,
 
 def create_state_vec(state_mtx, nx=None, ny=None, nz=None, dof=None, interface=None):
     '''Helper to create a state vector out of an array created with
-    create_state_mtx().'''
+    :meth:`create_state_mtx`.
 
+    Parameters
+    ----------
+    state : array_like
+        State vector that you want to convert.
+    nx : int
+        Grid size in the x direction.
+    ny : int
+        Grid size in the y direction.
+    nz : int, optional
+        Grid size in the z direction.
+    dof : int, optional
+        Degrees of freedom of the problem associated with the state
+        vector.
+    interface : Interface, optional
+        Sets ``nx, ny, nz, dof`` to the right values if supplied.
+
+    Returns
+    -------
+    state_mtx : array_like
+        An ``nx * ny * nz * dof`` dimensional array.
+
+    '''
     if interface:
         nx = interface.nx
         ny = interface.ny
@@ -96,11 +173,51 @@ def create_state_vec(state_mtx, nx=None, ny=None, nz=None, dof=None, interface=N
     return state
 
 def create_uniform_coordinate_vector(start, end, nx):
+    '''Create a uniformly distributed vector that can be used as
+    coordinate vector in a Discretization.
+
+    Parameters
+    ----------
+    start : int
+        Start of the domain.
+    end : int
+        End of the domain.
+    nx : int
+        Amount of elements in this coordinate direction.
+
+    Returns
+    -------
+    state : array_like
+        An array of size ``nx + 3``. This includes padding for cells just
+        outside of the domain.
+
+    '''
     dx = (end - start) / nx
     x = start + numpy.arange(-1, nx + 2) * dx
     return numpy.roll(x, -2)
 
 def create_stretched_coordinate_vector(start, end, nx, sigma):
+    '''Create coordinated vector that can be used in a Discretization
+    with more cells near the boundaries. This uses a `tanh` for stretching.
+
+    Parameters
+    ----------
+    start : int
+        Start of the domain.
+    end : int
+        End of the domain.
+    nx : int
+        Amount of elements in this coordinate direction.
+    sigma : float
+        Stretching factor.
+
+    Returns
+    -------
+    state : array_like
+        An array of size ``nx + 3``. This includes padding for cells just
+        outside of the domain.
+
+    '''
     x = create_uniform_coordinate_vector(0, 1, nx)
     x = 0.5 * (1 + numpy.tanh(2 * sigma * (x - 0.5)) / numpy.tanh(sigma))
     x = start + x * (end - start)
@@ -115,6 +232,27 @@ def create_stretched_coordinate_vector(start, end, nx, sigma):
     return x
 
 def create_stretched_coordinate_vector2(start, end, nx, sigma):
+    '''Create coordinated vector that can be used in a Discretization
+    with more cells near the boundaries. This uses a `sin` for stretching.
+
+    Parameters
+    ----------
+    start : int
+        Start of the domain.
+    end : int
+        End of the domain.
+    nx : int
+        Amount of elements in this coordinate direction.
+    sigma : float
+        Stretching factor.
+
+    Returns
+    -------
+    state : array_like
+        An array of size ``nx + 3``. This includes padding for cells just
+        outside of the domain.
+
+    '''
     x = create_uniform_coordinate_vector(0, 1, nx)
     x = x - sigma * numpy.sin(2 * numpy.pi * x)
     x = start + x * (end - start)
@@ -129,6 +267,20 @@ def create_stretched_coordinate_vector2(start, end, nx, sigma):
     return x
 
 def compute_coordinate_vector_centers(vec):
+    '''Compute the centers of cells in the direction of the supplied
+    coordinate vector.
+
+    Parameters
+    ----------
+    vec : array_like
+        A coordinate vector
+
+    Returns
+    -------
+    x : array_like
+        A vector containing all of the cell centers.
+
+    '''
     x = numpy.zeros(len(vec) - 1)
     for i in range(-1, len(vec) - 2):
         x[i] = (vec[i] + vec[i-1]) / 2
@@ -136,6 +288,26 @@ def compute_coordinate_vector_centers(vec):
     return x
 
 def compute_velocity_magnitude(state, interface, axis=2, position=None):
+    '''Compute the velocity magnitude at the grid points in a plane.
+
+    Parameters
+    ----------
+    state : array_like
+        The state vector to extract the velocities from.
+    interface : Interface
+        Interface corresponding to the state vector.
+    axis : int, optional
+        Axis along which we take the center point, or a set position
+        if provided. Not necessary in case the problem is 2D.
+    position : float, optional
+        Point along the provided axis at wich we take the plane.
+
+    Returns
+    -------
+    x : array_like
+        A 2D vector containing the velocity magnitudes.
+
+    '''
     nx = interface.nx
     ny = interface.ny
     nz = interface.nz
@@ -202,6 +374,24 @@ def compute_velocity_magnitude(state, interface, axis=2, position=None):
     return m
 
 def compute_streamfunction(state, interface, axis=2):
+    '''Compute the stream function at the grid points in a plane.
+
+    Parameters
+    ----------
+    state : array_like
+        The state vector to extract the velocities from.
+    interface : Interface
+        Interface corresponding to the state vector.
+    axis : int, optional
+        Axis along which we take the center point. Not necessary in
+        case the problem is 2D.
+
+    Returns
+    -------
+    x : array_like
+        A 2D vector containing the stream function values.
+
+    '''
     x = interface.x
     y = interface.y
 
@@ -240,6 +430,24 @@ def compute_streamfunction(state, interface, axis=2):
     return (psiu - psiv) / 2
 
 def compute_vorticity(state, interface, axis=2):
+    '''Compute the vorticity at the grid points in a plane.
+
+    Parameters
+    ----------
+    state : array_like
+        The state vector to extract the velocities from.
+    interface : Interface
+        Interface corresponding to the state vector.
+    axis : int, optional
+        Axis along which we take the center point. Not necessary in
+        case the problem is 2D.
+
+    Returns
+    -------
+    x : array_like
+        A 2D vector containing the vorticity values.
+
+    '''
     x = interface.x
     y = interface.y
 
@@ -272,6 +480,21 @@ def compute_vorticity(state, interface, axis=2):
     return zeta
 
 def compute_volume_averaged_kinetic_energy(state, interface):
+    '''Compute the volume averaged kinetic energy at the grid points.
+
+    Parameters
+    ----------
+    state : array_like
+        The state vector to extract the velocities from.
+    interface : Interface
+        Interface corresponding to the state vector.
+
+    Returns
+    -------
+    E : scalar
+        The volume averaged kinetic energy.
+
+    '''
     x = interface.x
     y = interface.y
     z = interface.z
@@ -310,8 +533,27 @@ def compute_volume_averaged_kinetic_energy(state, interface):
     return Ek / 2
 
 def get_u_value(state, i, j, k, interface):
-    '''Get the value of u at a grid point.'''
+    '''Get the value of u at a grid point.
 
+    Parameters
+    ----------
+    state : array_like
+        The state vector to extract the velocities from.
+    i : int
+        Index in the x direction.
+    j : int
+        Index in the y direction.
+    k : int
+        Index in the z direction.
+    interface : Interface
+        Interface corresponding to the state vector.
+
+    Returns
+    -------
+    u : scalar
+        Value at the grid point.
+
+    '''
     if len(state.shape) < 4:
         state_mtx = create_padded_state_mtx(state, interface=interface)
     else:
@@ -331,8 +573,27 @@ def get_u_value(state, i, j, k, interface):
     return (u1 * dz1 + u2 * dz2) / (dz1 + dz2)
 
 def get_v_value(state, i, j, k, interface):
-    '''Get the value of v at a grid point.'''
+    '''Get the value of v at a grid point.
 
+    Parameters
+    ----------
+    state : array_like
+        The state vector to extract the velocities from.
+    i : int
+        Index in the x direction.
+    j : int
+        Index in the y direction.
+    k : int
+        Index in the z direction.
+    interface : Interface
+        Interface corresponding to the state vector.
+
+    Returns
+    -------
+    v : scalar
+        Value at the grid point.
+
+    '''
     if len(state.shape) < 4:
         state_mtx = create_padded_state_mtx(state, interface=interface)
     else:
@@ -352,8 +613,27 @@ def get_v_value(state, i, j, k, interface):
     return (v1 * dz1 + v2 * dz2) / (dz1 + dz2)
 
 def get_w_value(state, i, j, k, interface):
-    '''Get the value of w at a grid point.'''
+    '''Get the value of w at a grid point.
 
+    Parameters
+    ----------
+    state : array_like
+        The state vector to extract the velocities from.
+    i : int
+        Index in the x direction.
+    j : int
+        Index in the y direction.
+    k : int
+        Index in the z direction.
+    interface : Interface
+        Interface corresponding to the state vector.
+
+    Returns
+    -------
+    w : scalar
+        Value at the grid point.
+
+    '''
     if len(state.shape) < 4:
         state_mtx = create_padded_state_mtx(state, interface=interface)
     else:
