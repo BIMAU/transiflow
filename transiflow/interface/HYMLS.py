@@ -10,13 +10,13 @@ from transiflow.interface.Epetra import Interface as EpetraInterface
 
 import HYMLS
 
-def set_default_parameter(parameterlist, name, value):
+def _set_default_parameter(parameterlist, name, value):
     if name not in parameterlist:
         parameterlist[name] = value
 
     return parameterlist[name]
 
-def convert_parameters(parameters, teuchos_parameters=None):
+def _convert_parameters(parameters, teuchos_parameters=None):
     if isinstance(parameters, Teuchos.ParameterList):
         return Teuchos.ParameterList(parameters)
 
@@ -26,7 +26,7 @@ def convert_parameters(parameters, teuchos_parameters=None):
     for i, j in parameters.items():
         if isinstance(j, dict):
             sublist = teuchos_parameters.sublist(i)
-            convert_parameters(j, sublist)
+            _convert_parameters(j, sublist)
         else:
             try:
                 teuchos_parameters.set(i, j)
@@ -37,15 +37,25 @@ def convert_parameters(parameters, teuchos_parameters=None):
 
 class Interface(EpetraInterface):
     '''This class defines an interface to the HYMLS backend for the
-    discretization. We use this so we can write higher level methods
-    such as pseudo-arclength continuation without knowing anything
-    about the underlying methods such as the solvers that are present
-    in the backend we are interfacing with.
+    discretization. This backend can be used for parallel simulations.
+    It uses the HYMLS preconditioner for solving linear systems.
 
     The HYMLS backend partitions the domain into Cartesian subdomains,
     while solving linear systems on skew Cartesian subdomains to deal
     with the C-grid discretization. The subdomains will be distributed
-    over multiple processors if MPI is used to run the application.'''
+    over multiple processors if MPI is used to run the application.
+
+    See :mod:`.Discretization` for the descriptions of the constructor
+    arguments.
+
+    Parameters
+    ----------
+    parameters : dict
+        Key-value pairs that can be used to modify parameters in the
+        discretization as well as the preconditioner, iterative solver
+        and eigenvalue solver.
+
+    '''
 
     def __init__(self, parameters, nx, ny, nz=1, dim=None, dof=None, comm=None):
         EpetraInterface.__init__(self, parameters, nx, ny, nz, dim, dof, comm)
@@ -59,7 +69,7 @@ class Interface(EpetraInterface):
             self._debug_print('PID %d: Disable output to stdout' % self.comm.MyPID())
             sys.stdout = open(os.devnull, 'w')
 
-        self.teuchos_parameters = self.get_teuchos_parameters()
+        self.teuchos_parameters = self._get_teuchos_parameters()
 
         partitioner = HYMLS.SkewCartesianPartitioner(self.teuchos_parameters, self.comm)
         partitioner.Partition()
@@ -78,21 +88,21 @@ class Interface(EpetraInterface):
             sys.stdout = self._original_stdout
             self._debug_print('PID %d: Re-enable output to stdout' % self.comm.MyPID())
 
-    def get_teuchos_parameters(self):
-        teuchos_parameters = convert_parameters(self.parameters)
+    def _get_teuchos_parameters(self):
+        teuchos_parameters = _convert_parameters(self.parameters)
 
         problem_parameters = teuchos_parameters.sublist('Problem')
-        set_default_parameter(problem_parameters, 'nx', self.nx_global)
-        set_default_parameter(problem_parameters, 'ny', self.ny_global)
-        set_default_parameter(problem_parameters, 'nz', self.nz_global)
+        _set_default_parameter(problem_parameters, 'nx', self.nx_global)
+        _set_default_parameter(problem_parameters, 'ny', self.ny_global)
+        _set_default_parameter(problem_parameters, 'nz', self.nz_global)
 
-        set_default_parameter(problem_parameters, 'Dimension', self.dim)
-        set_default_parameter(problem_parameters, 'Degrees of Freedom', self.dof)
-        set_default_parameter(problem_parameters, 'Equations', 'Stokes-C')
+        _set_default_parameter(problem_parameters, 'Dimension', self.dim)
+        _set_default_parameter(problem_parameters, 'Degrees of Freedom', self.dof)
+        _set_default_parameter(problem_parameters, 'Equations', 'Stokes-C')
 
-        set_default_parameter(problem_parameters, 'x-periodic', self.discretization.x_periodic)
-        set_default_parameter(problem_parameters, 'y-periodic', self.discretization.y_periodic)
-        set_default_parameter(problem_parameters, 'z-periodic', self.discretization.z_periodic)
+        _set_default_parameter(problem_parameters, 'x-periodic', self.discretization.x_periodic)
+        _set_default_parameter(problem_parameters, 'y-periodic', self.discretization.y_periodic)
+        _set_default_parameter(problem_parameters, 'z-periodic', self.discretization.z_periodic)
 
         solver_parameters = teuchos_parameters.sublist('Solver')
         solver_parameters.set('Initial Vector', 'Zero')
@@ -100,28 +110,28 @@ class Interface(EpetraInterface):
 
         iterative_solver_parameters = solver_parameters.sublist('Iterative Solver')
         iterative_solver_parameters.set('Output Stream', 0)
-        maxit = set_default_parameter(iterative_solver_parameters, 'Maximum Iterations', 1000)
-        maxsize = set_default_parameter(iterative_solver_parameters, 'Num Blocks', 100)
-        set_default_parameter(iterative_solver_parameters, 'Maximum Restarts', maxit // maxsize)
-        set_default_parameter(iterative_solver_parameters, 'Flexible Gmres', False)
-        set_default_parameter(iterative_solver_parameters, 'Convergence Tolerance', 1e-8)
-        set_default_parameter(iterative_solver_parameters, 'Output Frequency', 1)
-        set_default_parameter(iterative_solver_parameters, 'Show Maximum Residual Norm Only', False)
-        set_default_parameter(iterative_solver_parameters, 'Implicit Residual Scaling', 'Norm of RHS')
-        set_default_parameter(iterative_solver_parameters, 'Explicit Residual Scaling', 'Norm of RHS')
+        maxit = _set_default_parameter(iterative_solver_parameters, 'Maximum Iterations', 1000)
+        maxsize = _set_default_parameter(iterative_solver_parameters, 'Num Blocks', 100)
+        _set_default_parameter(iterative_solver_parameters, 'Maximum Restarts', maxit // maxsize)
+        _set_default_parameter(iterative_solver_parameters, 'Flexible Gmres', False)
+        _set_default_parameter(iterative_solver_parameters, 'Convergence Tolerance', 1e-8)
+        _set_default_parameter(iterative_solver_parameters, 'Output Frequency', 1)
+        _set_default_parameter(iterative_solver_parameters, 'Show Maximum Residual Norm Only', False)
+        _set_default_parameter(iterative_solver_parameters, 'Implicit Residual Scaling', 'Norm of RHS')
+        _set_default_parameter(iterative_solver_parameters, 'Explicit Residual Scaling', 'Norm of RHS')
 
         prec_parameters = teuchos_parameters.sublist('Preconditioner')
         prec_parameters.set('Partitioner', 'Skew Cartesian')
-        set_default_parameter(prec_parameters, 'Separator Length', min(8, self.nx_global))
-        set_default_parameter(prec_parameters, 'Coarsening Factor', 2)
-        set_default_parameter(prec_parameters, 'Number of Levels', 1)
+        _set_default_parameter(prec_parameters, 'Separator Length', min(8, self.nx_global))
+        _set_default_parameter(prec_parameters, 'Coarsening Factor', 2)
+        _set_default_parameter(prec_parameters, 'Number of Levels', 1)
 
         coarse_solver_parameters = prec_parameters.sublist('Coarse Solver')
-        set_default_parameter(coarse_solver_parameters, "amesos: solver type", "Amesos_Superludist")
+        _set_default_parameter(coarse_solver_parameters, "amesos: solver type", "Amesos_Superludist")
 
         return teuchos_parameters
 
-    def unset_parameter(self, name, original_parameters):
+    def _unset_parameter(self, name, original_parameters):
         '''Set a parameter in self.parameters back to its original value. '''
 
         if name in original_parameters:
@@ -137,8 +147,11 @@ class Interface(EpetraInterface):
     def initialize(self):
         '''Initialize the Jacobian and the preconditioner, but make sure the
         nonlinear part is also nonzero so we can replace all values
-        later, rather than insert them.'''
+        later, rather than insert them.
 
+        :meta private:
+
+        '''
         # Backup the original parameters and put model parameters to 1
         parameter_names = ['Reynolds Number', 'Rayleigh Number',
                            'Prandtl Number', 'Rossby Parameter']
@@ -167,11 +180,9 @@ class Interface(EpetraInterface):
 
         # Put back the original parameters
         for i in parameter_names:
-            self.unset_parameter(i, original_parameters)
+            self._unset_parameter(i, original_parameters)
 
     def solve(self, jac, rhs, rhs2=None, V=None, W=None, C=None, solver=None):
-        '''Solve J y = x for y with the possibility of solving a bordered system.'''
-
         if solver is None:
             solver = self.solver
 
@@ -228,8 +239,6 @@ class Interface(EpetraInterface):
         return x
 
     def eigs(self, state, return_eigenvectors=False, enable_recycling=False):
-        '''Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v.'''
-
         parameters = self.parameters.get('Eigenvalue Solver', {})
         arithmetic = parameters.get('Arithmetic', 'complex')
 
