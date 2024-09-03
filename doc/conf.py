@@ -50,7 +50,6 @@ apidoc_excluded_paths = [
     'interface/JaDa.py',
     'interface/JaDaHYMLS.py',
     'interface/ParallelBaseInterface.py',
-    'interface/PETSc.py',
 ]
 apidoc_separate_modules = True
 apidoc_toc_file = False

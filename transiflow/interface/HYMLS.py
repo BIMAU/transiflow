@@ -69,7 +69,7 @@ class Interface(EpetraInterface):
             self._debug_print('PID %d: Disable output to stdout' % self.comm.MyPID())
             sys.stdout = open(os.devnull, 'w')
 
-        self.teuchos_parameters = self._get_teuchos_parameters()
+        self.teuchos_parameters = self.get_teuchos_parameters()
 
         partitioner = HYMLS.SkewCartesianPartitioner(self.teuchos_parameters, self.comm)
         partitioner.Partition()
@@ -88,7 +88,15 @@ class Interface(EpetraInterface):
             sys.stdout = self._original_stdout
             self._debug_print('PID %d: Re-enable output to stdout' % self.comm.MyPID())
 
-    def _get_teuchos_parameters(self):
+    def get_teuchos_parameters(self):
+        '''Get the parameter list in Teuchos.ParameterList format.
+        This is a copy of the internal list to solve issues with the
+        ``Output Stream`` parameter and the fact that the ``get()``
+        method actually sets values in the parameter list.
+
+        :meta private:
+
+        '''
         teuchos_parameters = _convert_parameters(self.parameters)
 
         problem_parameters = teuchos_parameters.sublist('Problem')
