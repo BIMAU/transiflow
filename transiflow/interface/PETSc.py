@@ -8,7 +8,8 @@ petsc4py.init()
 
 
 class Vector(PETSc.Vec):
-    """Distributed ghosted PETSc Vector with some extra methods added to it for convenience."""
+    """Distributed ghosted PETSc Vector with some extra methods added
+    to it for convenience."""
 
     @staticmethod
     def from_array(m, x, ghosts=(), comm=PETSc.COMM_WORLD):
@@ -38,19 +39,30 @@ class Vector(PETSc.Vec):
 
 class Interface(ParallelBaseInterface):
     """This class defines an interface to the PETSc backend for the
-    discretization. We use this so we can write higher level methods
-    such as pseudo-arclength continuation without knowing anything
-    about the underlying methods such as the solvers that are present
-    in the backend we are interfacing with.
+    discretization. This backend can be used for testing
+    low-resolution parallel runs as well as a base for a class that
+    implements a better linear solver. It should not be used for any
+    meaningful simulations.
 
-    The PETSc backend partitions the domain into Cartesian subdomains,
-    while solving linear systems on skew Cartesian subdomains to deal
-    with the C-grid discretization. The subdomains will be distributed
-    over multiple processors if MPI is used to run the application.
+    The PETSc backend partitions the domain into Cartesian subdomains. The
+    subdomains will be distributed over multiple processors if MPI is
+    used to run the application.
 
-    PETSc parallel vectors (and matrices) are distributed such that each process owns a
-    contiguous range of indices (rows) without holes. The natural ordering is therefore
-    mapped to PETSc's ordering.
+    PETSc parallel vectors (and matrices) are distributed such that
+    each process owns a contiguous range of indices (rows) without
+    holes. The natural ordering is therefore mapped to PETSc's
+    ordering.
+
+    See :mod:`.Discretization` for the descriptions of the constructor
+    arguments.
+
+    Parameters
+    ----------
+    parameters : dict
+        Key-value pairs that can be used to modify parameters in the
+        discretization as well as the linear solver and eigenvalue
+        solver.
+
     """
 
     def __init__(self, parameters, nx, ny, nz=1, dim=None, dof=None, comm=PETSc.COMM_WORLD):
@@ -70,10 +82,10 @@ class Interface(ParallelBaseInterface):
         sct.scatter(indices_natural, indices_natural_global)
         self.index_natural_global_permut = numpy.argsort(indices_natural_global)
 
-        self.ghosts = self.ghosts_petsc(ghosts_natural, indices_natural_global)
+        self.ghosts = self._ghosts_petsc(ghosts_natural, indices_natural_global)
 
         self.index_ordering = PETSc.AO().createMapping(self.map_natural.indices)
-        self.map = self.create_map_petsc()
+        self.map = self._create_map_petsc()
 
         self.index_natural_local_permut = numpy.argsort(
             numpy.r_[self.map_natural.indices, ghosts_natural]
@@ -95,7 +107,7 @@ class Interface(ParallelBaseInterface):
     def array_from_vector(self, vector):
         return Vector.all_gather(vector).array[self.index_natural_global_permut]
 
-    def ghosts_petsc(self, ghosts_natural, indices_natural_global):
+    def _ghosts_petsc(self, ghosts_natural, indices_natural_global):
         """Get global indices of ghosts in PETSc ordering."""
         ghosts_petsc = []
         for ghost in ghosts_natural:
@@ -103,7 +115,7 @@ class Interface(ParallelBaseInterface):
 
         return ghosts_petsc
 
-    def create_map_petsc(self):
+    def _create_map_petsc(self):
         """Create a PETSc index map, using PETSc's ordering (contiguous row ownership),
         from the naturally ordered indices."""
         return PETSc.LGMap().create(
@@ -112,15 +124,37 @@ class Interface(ParallelBaseInterface):
 
     def create_map(self, overlapping=False):
         """Create a PETSc map on which the local discretization domain is defined.
-        The overlapping part is only used for computing the discretization."""
+        The overlapping part is only used for computing the discretization.
+
+        :meta private:
+
+        """
         local_elements = ParallelBaseInterface.create_map(self, overlapping)
         return PETSc.LGMap().create(local_elements, bsize=None, comm=self.comm)
 
     def rhs(self, state):
-        """Right-hand side in M * du / dt = F(u) defined on the
-        non-overlapping discretization domain map."""
+        r"""Compute the right-hand side of the DAE. That is the
+        right-hand side $F(u, p)$ in
 
-        state.ghostUpdate(addv=PETSc.InsertMode.INSERT_VALUES, mode=PETSc.ScatterMode.FORWARD)
+        .. math:: M(p) \frac{\d u}{\d t} = F(u, p)
+
+        The RHS is computed on the overlapping subdomain map and then
+        distributed using the non-overlapping map that is used by the
+        linear solver.
+
+        Parameters
+        ----------
+        state : array_like
+            State $u$ at which to evaluate $F(u, p)$.
+
+        Returns
+        -------
+        rhs : array_like
+            The value of $F(u, p)$.
+
+        """
+        state.ghostUpdate(addv=PETSc.InsertMode.INSERT_VALUES,
+                          mode=PETSc.ScatterMode.FORWARD)
         ind_local_nat = self.index_natural_local_permut
 
         with state.localForm() as lf:
@@ -134,12 +168,31 @@ class Interface(ParallelBaseInterface):
         return rhs_vec
 
     def jacobian(self, state):
-        """Jacobian J of F in M * du / dt = F(u) defined on the
-        domain map used by PETSc."""
+        r"""Compute the Jacobian matrix $J(u, p)$ of the right-hand
+        side of the DAE. That is the Jacobian matrix of $F(u, p)$ in
 
+        .. math:: M(p) \frac{\d u}{\d t} = F(u, p)
+
+        The Jacobian matrix is computed on the overlapping subdomain
+        map and then distributed using the non-overlapping map that is
+        used by the linear solver.
+
+        Parameters
+        ----------
+        state : array_like
+            State $u$ at which to evaluate $J(u, p)$.
+
+        Returns
+        -------
+        jac : PETSc.Mat
+            The matrix $J(u, p)$ in a CSR matrix format that allows
+            for distributing the overlap.
+
+        """
         ind_local_nat = self.index_natural_local_permut
 
-        state.ghostUpdate(addv=PETSc.InsertMode.INSERT_VALUES, mode=PETSc.ScatterMode.FORWARD)
+        state.ghostUpdate(addv=PETSc.InsertMode.INSERT_VALUES,
+                          mode=PETSc.ScatterMode.FORWARD)
 
         with state.localForm() as lf:
             local_jac = self.discretization.jacobian(lf.array[ind_local_nat])
@@ -173,14 +226,7 @@ class Interface(ParallelBaseInterface):
 
         return self.jac
 
-    def mass_matrix(self):
-        """Mass matrix M in M * du / dt = F(u) defined on the
-        domain map used by HYMLS."""
-        return None
-
     def solve(self, jac, rhs):
-        """Currently unused direct solver that was used for testing."""
-
         ksp = PETSc.KSP().create()
         ksp.setType("preonly")
         pc = ksp.getPC()
@@ -190,7 +236,7 @@ class Interface(ParallelBaseInterface):
         ksp.setFromOptions()
 
         dof = self.dim
-        self.set_dirichlet_bc(jac, rhs, dof, 0.0)
+        self._set_dirichlet_bc(jac, rhs, dof, 0.0)
 
         ksp.setOperators(jac)
         x = self.vector()
@@ -200,7 +246,7 @@ class Interface(ParallelBaseInterface):
         x.ghostUpdate(addv=PETSc.InsertMode.INSERT_VALUES, mode=PETSc.ScatterMode.FORWARD)
         return x
 
-    def set_dirichlet_bc(self, A, b, i, value):
+    def _set_dirichlet_bc(self, A, b, i, value):
         """Set Dirichlet BC to specified value at index i.
         Single values or sequences of indices and values are accepted.
         """
@@ -208,7 +254,3 @@ class Interface(ParallelBaseInterface):
         b.setValues(i, value)
         b.assemble()
         b.ghostUpdate(addv=PETSc.InsertMode.INSERT_VALUES, mode=PETSc.ScatterMode.FORWARD)
-
-    def eigs(self, state, return_eigenvectors=False, enable_recycling=False):
-        """Compute the generalized eigenvalues of beta * J(x) * v = alpha * M * v."""
-        raise NotImplementedError()
