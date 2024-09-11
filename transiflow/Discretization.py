@@ -133,6 +133,8 @@ class Discretization:
 
         self.atom = None
 
+        self._setup_boundary_conditions()
+
     def set_parameter(self, name, value):
         '''Set a parameter in ``self.parameters``. Changing a value in
         ``self.parameters`` will make us recompute the linear part of
@@ -708,25 +710,31 @@ class Discretization:
         return frc
 
     def boundaries(self, atom):
-        '''Compute boundary conditions for the currently defined problem type.
+        '''Apply the boundary conditions specified in
+        ``self.boundary_conditions``.
 
         :meta private:
 
         '''
+        return self.boundary_conditions(atom)
+
+    def _setup_boundary_conditions(self):
+
+        '''Setup boundary conditions for the currently defined problem type.'''
 
         # TODO: Make it possible to interface this from the outside.
 
         if self.problem_type_equals('Lid-driven Cavity'):
-            return self._lid_driven_cavity(atom)
+            self.boundary_conditions = self._lid_driven_cavity
         elif (self.problem_type_equals('Rayleigh-Benard')
               or self.problem_type_equals('Rayleigh-Benard Perturbation')):
-            return self._rayleigh_benard(atom)
+            self.boundary_conditions = self._rayleigh_benard
         elif self.problem_type_equals('Differentially Heated Cavity'):
-            return self._differentially_heated_cavity(atom)
+            self.boundary_conditions = self._differentially_heated_cavity
         elif self.problem_type_equals('Double Gyre'):
-            return self._double_gyre(atom)
+            self.boundary_conditions = self._double_gyre
         elif self.problem_type_equals('AMOC'):
-            return self._amoc(atom)
+            self.boundary_conditions = self._amoc
         else:
             raise Exception('Invalid problem type %s' % self.get_parameter('Problem Type'))
 

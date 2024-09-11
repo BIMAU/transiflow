@@ -47,10 +47,10 @@ class BaseInterface:
         self.ny = ny
         self.nz = nz
 
-        self.discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
-
         if 'Problem Type' in parameters and 'Taylor-Couette' in parameters['Problem Type']:
             self.discretization = CylindricalDiscretization(parameters, nx, ny, nz, dim, dof, x, y, z)
+        else:
+            self.discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
 
         self.dim = dim or self.discretization.dim
         self.dof = dof or self.discretization.dof

@@ -362,6 +362,7 @@ def test_v_v():
 
     state_mtx = utils.create_padded_state_mtx(state, nx, ny, nz, dof, False, True, False)
 
+    parameters['Problem Type'] = 'Taylor-Couette'
     discretization = CylindricalDiscretization(parameters, nx, ny, nz, dim, dof, x, y, z)
 
     atomJ = numpy.zeros([nx, ny, nz, dof, dof, 3, 3, 3])

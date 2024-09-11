@@ -141,17 +141,13 @@ class CylindricalDiscretization(Discretization):
 
         return frc
 
-    def boundaries(self, atom):
-        '''Compute boundary conditions for the currently defined problem type.
-
-        :meta private:
-
-        '''
+    def _setup_boundary_conditions(self):
+        '''Setup boundary conditions for the currently defined problem type.'''
 
         # TODO: Make it possible to interface this from the outside.
 
         if self.problem_type_equals('Taylor-Couette'):
-            return self._taylor_couette(atom)
+            self.boundary_conditions = self._taylor_couette
         else:
             raise Exception('Invalid problem type %s' % self.get_parameter('Problem Type'))
 
