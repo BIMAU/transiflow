@@ -563,6 +563,29 @@ class Discretization:
         elif self.problem_type_equals('AMOC'):
             self.dof = self.dim + 3
 
+    # Boundary conditions
+
+    def _lid_driven_cavity(self, atom):
+        '''Boundary conditions for the lid-driven cavity'''
+        boundary_conditions = BoundaryConditions(
+            self.nx, self.ny, self.nz, self.dim, self.dof, self.x, self.y, self.z)
+
+        v = self.get_parameter('Lid Velocity', 1)
+        boundary_conditions.no_slip_east(atom)
+        boundary_conditions.no_slip_west(atom)
+
+        boundary_conditions.no_slip_south(atom)
+        if self.dim == 2 or self.nz <= 1:
+            boundary_conditions.moving_lid_north(atom, v)
+            return boundary_conditions.get_forcing()
+
+        boundary_conditions.no_slip_north(atom)
+
+        boundary_conditions.no_slip_bottom(atom)
+        boundary_conditions.moving_lid_top(atom, v)
+
+        return boundary_conditions.get_forcing()
+
     def boundaries(self, atom):
         '''Compute boundary conditions for the currently defined problem type.
 
@@ -575,19 +598,7 @@ class Discretization:
         boundary_conditions = BoundaryConditions(self.nx, self.ny, self.nz, self.dim, self.dof, self.x, self.y, self.z)
 
         if self.problem_type_equals('Lid-driven Cavity'):
-            v = self.get_parameter('Lid Velocity', 1)
-            boundary_conditions.no_slip_east(atom)
-            boundary_conditions.no_slip_west(atom)
-
-            boundary_conditions.no_slip_south(atom)
-            if self.dim == 2 or self.nz <= 1:
-                boundary_conditions.moving_lid_north(atom, v)
-                return boundary_conditions.get_forcing()
-
-            boundary_conditions.no_slip_north(atom)
-
-            boundary_conditions.no_slip_bottom(atom)
-            boundary_conditions.moving_lid_top(atom, v)
+            return self._lid_driven_cavity(atom)
         elif (self.problem_type_equals('Rayleigh-Benard')
               or self.problem_type_equals('Rayleigh-Benard Perturbation')):
             asym = self.get_parameter('Asymmetry Parameter')
