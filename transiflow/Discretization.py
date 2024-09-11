@@ -657,6 +657,56 @@ class Discretization:
 
         return frc
 
+    def _amoc(self, atom):
+        '''Boundary conditions for the 2D AMOC'''
+        boundary_conditions = BoundaryConditions(
+            self.nx, self.ny, self.nz, self.dim, self.dof, self.x, self.y, self.z)
+
+        boundary_conditions.heat_flux_east(atom, 0)
+        boundary_conditions.heat_flux_west(atom, 0)
+        boundary_conditions.salinity_flux_east(atom, 0)
+        boundary_conditions.salinity_flux_west(atom, 0)
+        boundary_conditions.free_slip_east(atom)
+        boundary_conditions.free_slip_west(atom)
+
+        boundary_conditions.heat_flux_south(atom, 0)
+        boundary_conditions.salinity_flux_south(atom, 0)
+        boundary_conditions.free_slip_south(atom)
+
+        x = utils.compute_coordinate_vector_centers(self.x)
+
+        theta = self.get_parameter('Temperature Forcing')
+        asym = self.get_parameter('Asymmetry Parameter')
+        A = self.parameters.get('X-max', 1.0)
+
+        T_S = numpy.zeros((self.nx + 2, self.nz + 2))
+        T_S[:, 0] = 1 / 2 * ((1 - asym) * numpy.cos(2 * numpy.pi * (x / A - 1 / 2))
+                             + asym * numpy.cos(numpy.pi * x / A) + 1)
+        boundary_conditions.temperature_north(atom, theta * T_S)
+
+        sigma = self.get_parameter('Freshwater Flux')
+        p = 2
+
+        Q_S = numpy.zeros((self.nx + 2, self.nz + 2))
+        Q_S[:, 0] = 3 * numpy.cos(p * numpy.pi * (x / A - 1 / 2)) - 6 / (p * numpy.pi) * numpy.sin(p * numpy.pi / 2)
+        boundary_conditions.salinity_flux_north(atom, sigma * Q_S)
+
+        boundary_conditions.free_slip_north(atom)
+
+        # Fix one salinity value
+        row = self.dim + 2
+        for k, j, i, d, z, y, x in numpy.ndindex(self.nz, self.ny, self.nx, self.dof, 3, 3, 3):
+            if ((i + x - 1) % self.nx) * self.dof \
+               + ((j + y - 1) % self.ny) * self.nx * self.dof + \
+               + ((k + z - 1) % self.nz) * self.nx * self.ny * self.dof + self.dim + 2 == row:
+                atom[i, j, k, d, self.dim+2, x, y, z] = 0
+
+        atom[0, 0, 0, self.dim+2, self.dim+2, 1, 1, 1] = -1
+
+        frc = boundary_conditions.get_forcing()
+        frc[row] = 0
+        return frc
+
     def boundaries(self, atom):
         '''Compute boundary conditions for the currently defined problem type.
 
@@ -665,8 +715,6 @@ class Discretization:
         '''
 
         # TODO: Make it possible to interface this from the outside.
-
-        boundary_conditions = BoundaryConditions(self.nx, self.ny, self.nz, self.dim, self.dof, self.x, self.y, self.z)
 
         if self.problem_type_equals('Lid-driven Cavity'):
             return self._lid_driven_cavity(atom)
@@ -678,54 +726,9 @@ class Discretization:
         elif self.problem_type_equals('Double Gyre'):
             return self._double_gyre(atom)
         elif self.problem_type_equals('AMOC'):
-            boundary_conditions.heat_flux_east(atom, 0)
-            boundary_conditions.heat_flux_west(atom, 0)
-            boundary_conditions.salinity_flux_east(atom, 0)
-            boundary_conditions.salinity_flux_west(atom, 0)
-            boundary_conditions.free_slip_east(atom)
-            boundary_conditions.free_slip_west(atom)
-
-            boundary_conditions.heat_flux_south(atom, 0)
-            boundary_conditions.salinity_flux_south(atom, 0)
-            boundary_conditions.free_slip_south(atom)
-
-            x = utils.compute_coordinate_vector_centers(self.x)
-
-            theta = self.get_parameter('Temperature Forcing')
-            asym = self.get_parameter('Asymmetry Parameter')
-            A = self.parameters.get('X-max', 1.0)
-
-            T_S = numpy.zeros((self.nx + 2, self.nz + 2))
-            T_S[:, 0] = 1 / 2 * ((1 - asym) * numpy.cos(2 * numpy.pi * (x / A - 1 / 2))
-                                 + asym * numpy.cos(numpy.pi * x / A) + 1)
-            boundary_conditions.temperature_north(atom, theta * T_S)
-
-            sigma = self.get_parameter('Freshwater Flux')
-            p = 2
-
-            Q_S = numpy.zeros((self.nx + 2, self.nz + 2))
-            Q_S[:, 0] = 3 * numpy.cos(p * numpy.pi * (x / A - 1 / 2)) - 6 / (p * numpy.pi) * numpy.sin(p * numpy.pi / 2)
-            boundary_conditions.salinity_flux_north(atom, sigma * Q_S)
-
-            boundary_conditions.free_slip_north(atom)
-
-            # Fix one salinity value
-            row = self.dim + 2
-            for k, j, i, d, z, y, x in numpy.ndindex(self.nz, self.ny, self.nx, self.dof, 3, 3, 3):
-                if ((i + x - 1) % self.nx) * self.dof \
-                   + ((j + y - 1) % self.ny) * self.nx * self.dof + \
-                   + ((k + z - 1) % self.nz) * self.nx * self.ny * self.dof + self.dim + 2 == row:
-                    atom[i, j, k, d, self.dim+2, x, y, z] = 0
-
-            atom[0, 0, 0, self.dim+2, self.dim+2, 1, 1, 1] = -1
-
-            frc = boundary_conditions.get_forcing()
-            frc[row] = 0
-            return frc
+            return self._amoc(atom)
         else:
             raise Exception('Invalid problem type %s' % self.get_parameter('Problem Type'))
-
-        return boundary_conditions.get_forcing()
 
     # Below are all of the discretizations of separate parts of
     # equations that we can solve using FVM. This takes into account
