@@ -109,6 +109,38 @@ class CylindricalDiscretization(Discretization):
 
         return (atomJ, atomF)
 
+    def _taylor_couette(self, atom):
+        '''Boundary conditions for the Taylor-Couette problem'''
+        boundary_conditions = BoundaryConditions(
+            self.nx, self.ny, self.nz, self.dim, self.dof, self.x, self.y, self.z)
+
+        ri = self.parameters.get('R-min', 1.0)
+        ro = self.parameters.get('R-max', 2.0)
+        wo = self.get_parameter('Outer Angular Velocity', 0)
+        wi = self.get_parameter('Inner Angular Velocity', 1)
+
+        # This is not supported by the non-dimensionalization
+        assert wo == 0
+
+        boundary_conditions.moving_lid_east(atom, (wo * ro) / (wi * ri))
+        boundary_conditions.moving_lid_west(atom, 1)
+
+        if self.dim <= 2 or self.nz <= 1:
+            return boundary_conditions.get_forcing()
+
+        asym = self.get_parameter('Asymmetry Parameter')
+        frc2 = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
+        frc2[self.nx-1, 0, :, 2] = asym * numpy.cos(self.z[0:self.nz] / self.z[self.nz-1] * numpy.pi)
+
+        frc = boundary_conditions.get_forcing()
+        frc += utils.create_state_vec(frc2, self.nx, self.ny, self.nz, self.dof)
+
+        if not self.z_periodic:
+            boundary_conditions.no_slip_top(atom)
+            boundary_conditions.no_slip_bottom(atom)
+
+        return frc
+
     def boundaries(self, atom):
         '''Compute boundary conditions for the currently defined problem type.
 
@@ -118,39 +150,10 @@ class CylindricalDiscretization(Discretization):
 
         # TODO: Make it possible to interface this from the outside.
 
-        boundary_conditions = BoundaryConditions(self.nx, self.ny, self.nz, self.dim, self.dof, self.x, self.y, self.z)
-
         if self.problem_type_equals('Taylor-Couette'):
-            ri = self.parameters.get('R-min', 1.0)
-            ro = self.parameters.get('R-max', 2.0)
-            wo = self.get_parameter('Outer Angular Velocity', 0)
-            wi = self.get_parameter('Inner Angular Velocity', 1)
-
-            # This is not supported by the non-dimensionalization
-            assert wo == 0
-
-            boundary_conditions.moving_lid_east(atom, (wo * ro) / (wi * ri))
-            boundary_conditions.moving_lid_west(atom, 1)
-
-            if self.dim <= 2 or self.nz <= 1:
-                return boundary_conditions.get_forcing()
-
-            asym = self.get_parameter('Asymmetry Parameter')
-            frc2 = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
-            frc2[self.nx-1, 0, :, 2] = asym * numpy.cos(self.z[0:self.nz] / self.z[self.nz-1] * numpy.pi)
-
-            frc = boundary_conditions.get_forcing()
-            frc += utils.create_state_vec(frc2, self.nx, self.ny, self.nz, self.dof)
-
-            if not self.z_periodic:
-                boundary_conditions.no_slip_top(atom)
-                boundary_conditions.no_slip_bottom(atom)
-
-            return frc
+            return self._taylor_couette(atom)
         else:
             raise Exception('Invalid problem type %s' % self.get_parameter('Problem Type'))
-
-        return boundary_conditions.get_forcing()
 
     # Below are all of the discretizations of separate parts of
     # equations that we can solve using FVM. This takes into account
