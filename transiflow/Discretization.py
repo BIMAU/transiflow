@@ -586,6 +586,39 @@ class Discretization:
 
         return boundary_conditions.get_forcing()
 
+    def _rayleigh_benard(self, atom):
+        '''Boundary conditions for the Rayleigh-Benard problem'''
+        boundary_conditions = BoundaryConditions(
+            self.nx, self.ny, self.nz, self.dim, self.dof, self.x, self.y, self.z)
+
+        asym = self.get_parameter('Asymmetry Parameter')
+        boundary_conditions.heat_flux_east(atom, asym)
+        boundary_conditions.heat_flux_west(atom, 0)
+        boundary_conditions.no_slip_east(atom)
+        boundary_conditions.no_slip_west(atom)
+
+        Bi = self.get_parameter('Biot Number')
+        bottom_temperature = 1 if self.problem_type_equals('Rayleigh-Benard') else 0
+
+        if self.dim == 2 or self.nz <= 1:
+            boundary_conditions.heat_flux_north(atom, 0, Bi)
+            boundary_conditions.temperature_south(atom, bottom_temperature)
+            boundary_conditions.free_slip_north(atom)
+            boundary_conditions.no_slip_south(atom)
+            return boundary_conditions.get_forcing()
+
+        boundary_conditions.heat_flux_north(atom, 0)
+        boundary_conditions.heat_flux_south(atom, 0)
+        boundary_conditions.no_slip_north(atom)
+        boundary_conditions.no_slip_south(atom)
+
+        boundary_conditions.heat_flux_top(atom, 0, Bi)
+        boundary_conditions.temperature_bottom(atom, bottom_temperature)
+        boundary_conditions.free_slip_top(atom)
+        boundary_conditions.no_slip_bottom(atom)
+
+        return boundary_conditions.get_forcing()
+
     def boundaries(self, atom):
         '''Compute boundary conditions for the currently defined problem type.
 
@@ -601,31 +634,7 @@ class Discretization:
             return self._lid_driven_cavity(atom)
         elif (self.problem_type_equals('Rayleigh-Benard')
               or self.problem_type_equals('Rayleigh-Benard Perturbation')):
-            asym = self.get_parameter('Asymmetry Parameter')
-            boundary_conditions.heat_flux_east(atom, asym)
-            boundary_conditions.heat_flux_west(atom, 0)
-            boundary_conditions.no_slip_east(atom)
-            boundary_conditions.no_slip_west(atom)
-
-            Bi = self.get_parameter('Biot Number')
-            bottom_temperature = 1 if self.problem_type_equals('Rayleigh-Benard') else 0
-
-            if self.dim == 2 or self.nz <= 1:
-                boundary_conditions.heat_flux_north(atom, 0, Bi)
-                boundary_conditions.temperature_south(atom, bottom_temperature)
-                boundary_conditions.free_slip_north(atom)
-                boundary_conditions.no_slip_south(atom)
-                return boundary_conditions.get_forcing()
-
-            boundary_conditions.heat_flux_north(atom, 0)
-            boundary_conditions.heat_flux_south(atom, 0)
-            boundary_conditions.no_slip_north(atom)
-            boundary_conditions.no_slip_south(atom)
-
-            boundary_conditions.heat_flux_top(atom, 0, Bi)
-            boundary_conditions.temperature_bottom(atom, bottom_temperature)
-            boundary_conditions.free_slip_top(atom)
-            boundary_conditions.no_slip_bottom(atom)
+            return self._rayleigh_benard(atom)
         elif self.problem_type_equals('Differentially Heated Cavity'):
             boundary_conditions.temperature_east(atom, -1/2)
             boundary_conditions.temperature_west(atom, 1/2)
