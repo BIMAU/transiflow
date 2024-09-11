@@ -619,6 +619,29 @@ class Discretization:
 
         return boundary_conditions.get_forcing()
 
+    def _differentially_heated_cavity(self, atom):
+        '''Boundary conditions for the differentially heated cavity'''
+        boundary_conditions = BoundaryConditions(
+            self.nx, self.ny, self.nz, self.dim, self.dof, self.x, self.y, self.z)
+
+        boundary_conditions.temperature_east(atom, -1/2)
+        boundary_conditions.temperature_west(atom, 1/2)
+        boundary_conditions.no_slip_east(atom)
+        boundary_conditions.no_slip_west(atom)
+
+        boundary_conditions.heat_flux_north(atom, 0)
+        boundary_conditions.heat_flux_south(atom, 0)
+        boundary_conditions.no_slip_north(atom)
+        boundary_conditions.no_slip_south(atom)
+
+        if self.dim > 2 and self.nz > 1:
+            boundary_conditions.heat_flux_top(atom, 0)
+            boundary_conditions.heat_flux_bottom(atom, 0)
+            boundary_conditions.no_slip_top(atom)
+            boundary_conditions.no_slip_bottom(atom)
+
+        return boundary_conditions.get_forcing()
+
     def boundaries(self, atom):
         '''Compute boundary conditions for the currently defined problem type.
 
@@ -636,21 +659,7 @@ class Discretization:
               or self.problem_type_equals('Rayleigh-Benard Perturbation')):
             return self._rayleigh_benard(atom)
         elif self.problem_type_equals('Differentially Heated Cavity'):
-            boundary_conditions.temperature_east(atom, -1/2)
-            boundary_conditions.temperature_west(atom, 1/2)
-            boundary_conditions.no_slip_east(atom)
-            boundary_conditions.no_slip_west(atom)
-
-            boundary_conditions.heat_flux_north(atom, 0)
-            boundary_conditions.heat_flux_south(atom, 0)
-            boundary_conditions.no_slip_north(atom)
-            boundary_conditions.no_slip_south(atom)
-
-            if self.dim > 2 and self.nz > 1:
-                boundary_conditions.heat_flux_top(atom, 0)
-                boundary_conditions.heat_flux_bottom(atom, 0)
-                boundary_conditions.no_slip_top(atom)
-                boundary_conditions.no_slip_bottom(atom)
+            return self._differentially_heated_cavity(atom)
         elif self.problem_type_equals('Double Gyre'):
             frc = self.wind_stress()
 
