@@ -642,6 +642,21 @@ class Discretization:
 
         return boundary_conditions.get_forcing()
 
+    def _double_gyre(self, atom):
+        '''Boundary conditions for the double-gyre QG problem'''
+        boundary_conditions = BoundaryConditions(
+            self.nx, self.ny, self.nz, self.dim, self.dof, self.x, self.y, self.z)
+
+        frc = self.wind_stress()
+
+        boundary_conditions.no_slip_east(atom)
+        boundary_conditions.no_slip_west(atom)
+
+        boundary_conditions.free_slip_north(atom)
+        boundary_conditions.free_slip_south(atom)
+
+        return frc
+
     def boundaries(self, atom):
         '''Compute boundary conditions for the currently defined problem type.
 
@@ -661,15 +676,7 @@ class Discretization:
         elif self.problem_type_equals('Differentially Heated Cavity'):
             return self._differentially_heated_cavity(atom)
         elif self.problem_type_equals('Double Gyre'):
-            frc = self.wind_stress()
-
-            boundary_conditions.no_slip_east(atom)
-            boundary_conditions.no_slip_west(atom)
-
-            boundary_conditions.free_slip_north(atom)
-            boundary_conditions.free_slip_south(atom)
-
-            return frc
+            return self._double_gyre(atom)
         elif self.problem_type_equals('AMOC'):
             boundary_conditions.heat_flux_east(atom, 0)
             boundary_conditions.heat_flux_west(atom, 0)
