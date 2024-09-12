@@ -567,11 +567,8 @@ class Discretization:
 
     # Boundary conditions
 
-    def _lid_driven_cavity(self, atom):
+    def _lid_driven_cavity(self, boundary_conditions, atom):
         '''Boundary conditions for the lid-driven cavity'''
-        boundary_conditions = BoundaryConditions(
-            self.nx, self.ny, self.nz, self.dim, self.dof, self.x, self.y, self.z)
-
         v = self.get_parameter('Lid Velocity', 1)
         boundary_conditions.no_slip_east(atom)
         boundary_conditions.no_slip_west(atom)
@@ -588,11 +585,8 @@ class Discretization:
 
         return boundary_conditions.get_forcing()
 
-    def _rayleigh_benard(self, atom):
+    def _rayleigh_benard(self, boundary_conditions, atom):
         '''Boundary conditions for the Rayleigh-Benard problem'''
-        boundary_conditions = BoundaryConditions(
-            self.nx, self.ny, self.nz, self.dim, self.dof, self.x, self.y, self.z)
-
         asym = self.get_parameter('Asymmetry Parameter')
         boundary_conditions.heat_flux_east(atom, asym)
         boundary_conditions.heat_flux_west(atom, 0)
@@ -621,11 +615,8 @@ class Discretization:
 
         return boundary_conditions.get_forcing()
 
-    def _differentially_heated_cavity(self, atom):
+    def _differentially_heated_cavity(self, boundary_conditions, atom):
         '''Boundary conditions for the differentially heated cavity'''
-        boundary_conditions = BoundaryConditions(
-            self.nx, self.ny, self.nz, self.dim, self.dof, self.x, self.y, self.z)
-
         boundary_conditions.temperature_east(atom, -1/2)
         boundary_conditions.temperature_west(atom, 1/2)
         boundary_conditions.no_slip_east(atom)
@@ -644,11 +635,8 @@ class Discretization:
 
         return boundary_conditions.get_forcing()
 
-    def _double_gyre(self, atom):
+    def _double_gyre(self, boundary_conditions, atom):
         '''Boundary conditions for the double-gyre QG problem'''
-        boundary_conditions = BoundaryConditions(
-            self.nx, self.ny, self.nz, self.dim, self.dof, self.x, self.y, self.z)
-
         frc = self.wind_stress()
 
         boundary_conditions.no_slip_east(atom)
@@ -659,11 +647,8 @@ class Discretization:
 
         return frc
 
-    def _amoc(self, atom):
+    def _amoc(self, boundary_conditions, atom):
         '''Boundary conditions for the 2D AMOC'''
-        boundary_conditions = BoundaryConditions(
-            self.nx, self.ny, self.nz, self.dim, self.dof, self.x, self.y, self.z)
-
         boundary_conditions.heat_flux_east(atom, 0)
         boundary_conditions.heat_flux_west(atom, 0)
         boundary_conditions.salinity_flux_east(atom, 0)
@@ -716,7 +701,10 @@ class Discretization:
         :meta private:
 
         '''
-        return self.boundary_conditions(atom)
+        boundary_conditions = BoundaryConditions(
+            self.nx, self.ny, self.nz, self.dim, self.dof, self.x, self.y, self.z)
+
+        return self.boundary_conditions(boundary_conditions, atom)
 
     def _setup_boundary_conditions(self):
 

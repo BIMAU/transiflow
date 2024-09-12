@@ -1,7 +1,6 @@
 import numpy
 
 from transiflow import utils
-from transiflow import BoundaryConditions
 from transiflow.Discretization import Discretization
 
 class CylindricalDiscretization(Discretization):
@@ -109,11 +108,8 @@ class CylindricalDiscretization(Discretization):
 
         return (atomJ, atomF)
 
-    def _taylor_couette(self, atom):
+    def _taylor_couette(self, boundary_conditions, atom):
         '''Boundary conditions for the Taylor-Couette problem'''
-        boundary_conditions = BoundaryConditions(
-            self.nx, self.ny, self.nz, self.dim, self.dof, self.x, self.y, self.z)
-
         ri = self.parameters.get('R-min', 1.0)
         ro = self.parameters.get('R-max', 2.0)
         wo = self.get_parameter('Outer Angular Velocity', 0)
