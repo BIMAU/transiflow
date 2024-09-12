@@ -8,9 +8,9 @@ from transiflow import utils
 from transiflow.interface import create
 
 
-def Interface(parameters, nx, ny, nz=1, dim=None, dof=None, backend="SciPy"):
+def Interface(*args, backend="SciPy", **kwargs):
     try:
-        return create(parameters, nx, ny, nz, dim, dof, backend=backend)
+        return create(*args, backend=backend, **kwargs)
     except ImportError:
         pytest.skip(backend + " not found")
 
@@ -271,7 +271,7 @@ def test_continuation_rayleigh_benard_formulations_2D(backend, nx=8):
                   'X-max': 10,
                   'Bordered Solver': True}
 
-    interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
+    interface = Interface(parameters, nx, ny, nz, dim, dof, backend=backend)
     continuation = Continuation(interface)
 
     x0 = interface.vector()
@@ -340,7 +340,7 @@ def test_continuation_rayleigh_benard_formulations(backend, nx=4):
                   'Y-max': 10,
                   'Bordered Solver': True}
 
-    interface = Interface(parameters, nx, ny, nz, dim, dof, backend)
+    interface = Interface(parameters, nx, ny, nz, dim, dof, backend=backend)
     continuation = Continuation(interface)
 
     x0 = interface.vector()
