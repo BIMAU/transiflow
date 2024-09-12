@@ -702,6 +702,58 @@ def test_bous_bnd():
             assert B.jcoA[j] == A.jcoA[j]
             assert B.coA[j] == pytest.approx(A.coA[j])
 
+def test_manual_bous_bnd():
+    nx = 4
+    ny = nx
+    nz = nx
+    dim = 3
+    dof = 5
+    parameters = {'Rayleigh Number': 100, 'Prandtl Number': 100}
+    n = nx * ny * nz * dof
+
+    def boundaries(boundary_conditions, atom):
+        boundary_conditions.heat_flux_east(atom, 0)
+        boundary_conditions.heat_flux_west(atom, 0)
+        boundary_conditions.no_slip_east(atom)
+        boundary_conditions.no_slip_west(atom)
+
+        boundary_conditions.heat_flux_north(atom, 0)
+        boundary_conditions.heat_flux_south(atom, 0)
+        boundary_conditions.no_slip_north(atom)
+        boundary_conditions.no_slip_south(atom)
+
+        Bi = 0
+        boundary_conditions.heat_flux_top(atom, 0, Bi)
+        boundary_conditions.temperature_bottom(atom, 0)
+        boundary_conditions.free_slip_top(atom)
+        boundary_conditions.no_slip_bottom(atom)
+
+        return boundary_conditions.get_forcing()
+
+    discretization = Discretization(parameters, nx, ny, nz, dim, dof,
+                                    boundary_conditions=boundaries)
+    atom = discretization.linear_part()
+    discretization.boundaries(atom)
+    A = discretization.assemble_jacobian(atom)
+
+    B = read_matrix('data/bous_bnd_%sx%sx%s.txt' % (nx, ny, nz))
+
+    for i in range(n):
+        print(i)
+
+        print('Expected:')
+        print(B.jcoA[B.begA[i]:B.begA[i+1]])
+        print(B.coA[B.begA[i]:B.begA[i+1]])
+
+        print('Got:')
+        print(A.jcoA[A.begA[i]:A.begA[i+1]])
+        print(A.coA[A.begA[i]:A.begA[i+1]])
+
+        assert B.begA[i+1] - B.begA[i] == A.begA[i+1] - A.begA[i]
+        for j in range(B.begA[i], B.begA[i+1]):
+            assert B.jcoA[j] == A.jcoA[j]
+            assert B.coA[j] == pytest.approx(A.coA[j])
+
 def test_ldc_bil():
     nx = 4
     ny = nx

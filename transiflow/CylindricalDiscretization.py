@@ -12,7 +12,8 @@ class CylindricalDiscretization(Discretization):
 
     '''
 
-    def __init__(self, parameters, nr, ntheta, nz, dim=None, dof=None, r=None, theta=None, z=None):
+    def __init__(self, parameters, nr, ntheta, nz, dim=None, dof=None,
+                 r=None, theta=None, z=None, boundary_conditions=None):
         self.parameters = parameters
 
         ri = self.parameters.get('R-min', 1.0)
@@ -29,7 +30,8 @@ class CylindricalDiscretization(Discretization):
 
         z = utils.create_uniform_coordinate_vector(0, L / self.eta, nz) if z is None else z
 
-        Discretization.__init__(self, parameters, nr, ntheta, nz, dim, dof, r, theta, z)
+        Discretization.__init__(self, parameters, nr, ntheta, nz, dim, dof,
+                                r, theta, z, boundary_conditions)
 
         self.y_periodic = True
         if self.parameters.get('Z-periodic', False):
@@ -139,10 +141,9 @@ class CylindricalDiscretization(Discretization):
 
     def _setup_boundary_conditions(self):
         '''Setup boundary conditions for the currently defined problem type.'''
-
-        # TODO: Make it possible to interface this from the outside.
-
-        if self.problem_type_equals('Taylor-Couette'):
+        if self.boundary_conditions:
+            return
+        elif self.problem_type_equals('Taylor-Couette'):
             self.boundary_conditions = self._taylor_couette
         else:
             raise Exception('Invalid problem type %s' % self.get_parameter('Problem Type'))

@@ -59,6 +59,11 @@ class Discretization:
         Coordinate vector in the y direction.
     z : array_like, optional
         Coordinate vector in the z direction.
+    boundary_conditions : function, optional
+        User-supplied function that implements the boundary
+        conditions. It is called as ``boundary_conditions(bc, atom)``
+        where ``bc`` is an instance of the :class:`.BoundaryConditions`
+        class.
 
     Notes
     -----
@@ -98,7 +103,8 @@ class Discretization:
 
     '''
 
-    def __init__(self, parameters, nx, ny, nz=1, dim=None, dof=None, x=None, y=None, z=None):
+    def __init__(self, parameters, nx, ny, nz=1, dim=None, dof=None,
+                 x=None, y=None, z=None, boundary_conditions=None):
         self.parameters = parameters
         self.old_parameters = None
 
@@ -133,6 +139,7 @@ class Discretization:
 
         self.atom = None
 
+        self.boundary_conditions = boundary_conditions
         self._setup_boundary_conditions()
 
     def set_parameter(self, name, value):
@@ -709,10 +716,9 @@ class Discretization:
     def _setup_boundary_conditions(self):
 
         '''Setup boundary conditions for the currently defined problem type.'''
-
-        # TODO: Make it possible to interface this from the outside.
-
-        if self.problem_type_equals('Lid-driven Cavity'):
+        if self.boundary_conditions:
+            return
+        elif self.problem_type_equals('Lid-driven Cavity'):
             self.boundary_conditions = self._lid_driven_cavity
         elif (self.problem_type_equals('Rayleigh-Benard')
               or self.problem_type_equals('Rayleigh-Benard Perturbation')):
