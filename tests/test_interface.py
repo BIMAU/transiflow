@@ -6,9 +6,9 @@ from transiflow import utils
 from transiflow.interface import create
 
 
-def Interface(parameters, nx, ny, nz=1, dim=None, dof=None, backend="SciPy"):
+def Interface(*args, backend="SciPy", **kwargs):
     try:
-        return create(parameters, nx, ny, nz, dim, dof, backend=backend)
+        return create(*args, backend=backend, **kwargs)
     except ImportError:
         pytest.skip(backend + " not found")
 
