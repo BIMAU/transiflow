@@ -1,7 +1,8 @@
 def _icmp(first, second):
     return first.lower() == second.lower()
 
-def create(parameters, nx, ny, nz=1, dim=None, dof=None, backend='SciPy'):
+def create(parameters, nx, ny, nz=1, dim=None, dof=None,
+           boundary_conditions=None, backend='SciPy'):
     '''Helper function to create an interface with a certain backend.
     This functions is aliased as ``Interface``. It can be called as
 
@@ -32,6 +33,11 @@ def create(parameters, nx, ny, nz=1, dim=None, dof=None, backend='SciPy'):
         plus 1 for each of pressure, temperature and salinity, if they
         are required for your problem. For example a 3D differentially
         heated cavity has dof = 3 + 1 + 1 = 5.
+    boundary_conditions : function, optional
+        User-supplied function that implements the boundary
+        conditions. It is called as ``boundary_conditions(bc, atom)``
+        where ``bc`` is an instance of the :class:`.BoundaryConditions`
+        class.
     backend : str, optional
         The backend to use. Can be ``Epetra``, ``HYMLS``, ``PETSc``, ``SciPy``.
 
@@ -44,15 +50,19 @@ def create(parameters, nx, ny, nz=1, dim=None, dof=None, backend='SciPy'):
 
     if _icmp(backend, 'Epetra'):
         from .Epetra import Interface
-        return Interface(parameters, nx, ny, nz, dim, dof)
+        return Interface(parameters, nx, ny, nz, dim, dof,
+                         boundary_conditions=boundary_conditions)
 
     if _icmp(backend, 'HYMLS'):
         from .HYMLS import Interface
-        return Interface(parameters, nx, ny, nz, dim, dof)
+        return Interface(parameters, nx, ny, nz, dim, dof,
+                         boundary_conditions=boundary_conditions)
 
     if _icmp(backend, 'PETSc'):
         from .PETSc import Interface
-        return Interface(parameters, nx, ny, nz, dim, dof)
+        return Interface(parameters, nx, ny, nz, dim, dof,
+                         boundary_conditions=boundary_conditions)
 
     from .SciPy import Interface
-    return Interface(parameters, nx, ny, nz, dim, dof)
+    return Interface(parameters, nx, ny, nz, dim, dof,
+                     boundary_conditions=boundary_conditions)

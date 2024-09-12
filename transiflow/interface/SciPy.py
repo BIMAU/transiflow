@@ -22,8 +22,9 @@ class Interface(BaseInterface):
         solver.
 
     '''
-    def __init__(self, parameters, nx, ny, nz=1, dim=None, dof=None, x=None, y=None, z=None):
-        super().__init__(parameters, nx, ny, nz, dim, dof, x, y, z)
+    def __init__(self, parameters, nx, ny, nz=1, dim=None, dof=None,
+                 x=None, y=None, z=None, boundary_conditions=None):
+        super().__init__(parameters, nx, ny, nz, dim, dof, x, y, z, boundary_conditions)
 
         # Select one pressure node to fix
         self.pressure_row = self.dim

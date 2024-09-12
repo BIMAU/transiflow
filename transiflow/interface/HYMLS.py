@@ -57,8 +57,10 @@ class Interface(EpetraInterface):
 
     '''
 
-    def __init__(self, parameters, nx, ny, nz=1, dim=None, dof=None, comm=None):
-        EpetraInterface.__init__(self, parameters, nx, ny, nz, dim, dof, comm)
+    def __init__(self, parameters, nx, ny, nz=1, dim=None, dof=None,
+                 boundary_conditions=None, comm=None):
+        EpetraInterface.__init__(self, parameters, nx, ny, nz, dim, dof,
+                                 boundary_conditions, comm)
 
         # Disable HYMLS output from MPI ranks != 0
         HYMLS.Tools.InitializeIO(self.comm)
