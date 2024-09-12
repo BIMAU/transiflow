@@ -33,8 +33,10 @@ class ParallelBaseInterface(BaseInterface):
     multiple processors if MPI is used to run the application.
 
     '''
-    def __init__(self, comm, parameters, nx, ny, nz=1, dim=None, dof=None):
-        super().__init__(parameters, nx, ny, nz, dim, dof)
+    def __init__(self, comm, parameters, nx, ny, nz=1, dim=None, dof=None,
+                 boundary_conditions=None):
+        super().__init__(parameters, nx, ny, nz, dim, dof,
+                         boundary_conditions=boundary_conditions)
 
         self.nx_global = self.nx
         self.ny_global = self.ny

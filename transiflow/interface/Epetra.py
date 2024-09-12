@@ -76,11 +76,13 @@ class Interface(ParallelBaseInterface):
         solver.
 
     '''
-    def __init__(self, parameters, nx, ny, nz=1, dim=None, dof=None, comm=None):
+    def __init__(self, parameters, nx, ny, nz=1, dim=None, dof=None,
+                 boundary_conditions=None, comm=None):
         if comm is None:
             comm = Epetra.PyComm()
 
-        ParallelBaseInterface.__init__(self, comm, parameters, nx, ny, nz, dim, dof)
+        ParallelBaseInterface.__init__(self, comm, parameters, nx, ny, nz, dim, dof,
+                                       boundary_conditions)
 
         self.map = self.create_map()
 

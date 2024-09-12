@@ -112,3 +112,37 @@ def test_save_load(backend, nx=4):
     x2 = interface.load_state('x-test')
     assert parameters['Eigenvalue Solver']['Target'] == 1 + 3j
     assert utils.norm(x - x2) < 1e-14
+
+
+@pytest.mark.parametrize("backend", ["SciPy", "Epetra", "HYMLS", "PETSc"])
+def test_custom_bc(backend, nx=4):
+    def boundaries(boundary_conditions, atom):
+        boundary_conditions.heat_flux_east(atom, 0)
+        boundary_conditions.heat_flux_west(atom, 0)
+        boundary_conditions.no_slip_east(atom)
+        boundary_conditions.no_slip_west(atom)
+
+        boundary_conditions.heat_flux_north(atom, 0)
+        boundary_conditions.heat_flux_south(atom, 0)
+        boundary_conditions.no_slip_north(atom)
+        boundary_conditions.no_slip_south(atom)
+
+        Bi = 0
+        boundary_conditions.heat_flux_top(atom, 0, Bi)
+        boundary_conditions.temperature_bottom(atom, 0)
+        boundary_conditions.free_slip_top(atom)
+        boundary_conditions.no_slip_bottom(atom)
+
+        return boundary_conditions.get_forcing()
+
+    ny = nx
+    nz = nx
+    dim = 3
+    dof = 5
+
+    parameters = {'Rayleigh Number': 100, 'Prandtl Number': 100}
+    interface = Interface(parameters, nx, ny, nz, dim, dof, backend=backend,
+                          boundary_conditions=boundaries)
+
+    x = interface.vector()
+    interface.rhs(x)

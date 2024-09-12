@@ -42,15 +42,18 @@ class BaseInterface:
 
     '''
 
-    def __init__(self, parameters, nx, ny, nz=1, dim=None, dof=None, x=None, y=None, z=None):
+    def __init__(self, parameters, nx, ny, nz=1, dim=None, dof=None,
+                 x=None, y=None, z=None, boundary_conditions=None):
         self.nx = nx
         self.ny = ny
         self.nz = nz
 
         if 'Problem Type' in parameters and 'Taylor-Couette' in parameters['Problem Type']:
-            self.discretization = CylindricalDiscretization(parameters, nx, ny, nz, dim, dof, x, y, z)
+            self.discretization = CylindricalDiscretization(parameters, nx, ny, nz, dim, dof,
+                                                            x, y, z, boundary_conditions)
         else:
-            self.discretization = Discretization(parameters, nx, ny, nz, dim, dof, x, y, z)
+            self.discretization = Discretization(parameters, nx, ny, nz, dim, dof,
+                                                 x, y, z, boundary_conditions)
 
         self.dim = dim or self.discretization.dim
         self.dof = dof or self.discretization.dof
