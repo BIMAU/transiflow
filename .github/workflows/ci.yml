@@ -56,7 +56,7 @@ jobs:
 
     - name: Test with pytest
       run: |
-        pytest -v -o console_output_style=classic tests
+        pytest -v -o console_output_style=classic --enable-example-tests tests
 
     - name: Run parallel tests
       run: |
