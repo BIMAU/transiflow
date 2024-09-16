@@ -10,9 +10,8 @@ from jadapy import jdqz
 import matplotlib.pyplot as plt
 
 
-def main():
+def main(nx=16):
     ''' An example of performing a continuation for a 2D lid-driven cavity and computing eigenvalues along the way'''
-    nx = 16
     ny = nx
 
     # Define the problem
