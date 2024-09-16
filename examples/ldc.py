@@ -12,9 +12,8 @@ def postprocess(data, interface, x, mu):
         utils.compute_volume_averaged_kinetic_energy(x, interface))
 
 
-def main():
+def main(nx=32):
     ''' An example of performing a continuation for a 2D lid-driven cavity and detecting a bifurcation point'''
-    nx = 32
     ny = nx
     nz = 1
 
