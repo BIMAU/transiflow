@@ -13,9 +13,8 @@ def postprocess(data, interface, x, t):
         utils.compute_volume_averaged_kinetic_energy(x, interface))
 
 
-def main():
+def main(nx=16):
     ''' An example of performing a "poor man's continuation" for a 2D lid-driven cavity using time integration'''
-    nx = 16
     ny = nx
 
     # Define the problem
