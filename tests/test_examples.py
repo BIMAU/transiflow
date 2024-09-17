@@ -41,3 +41,9 @@ def test_qg_example():
     from examples.qg import main
 
     main()
+
+@pytest.mark.example
+def test_amoc_example():
+    from examples.amoc import main
+
+    main(nx=4)

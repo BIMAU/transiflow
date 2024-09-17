@@ -37,13 +37,12 @@ def generate_plots(interface, x, sigma):
     plt.close()
 
 
-def main():
+def main(nx=60):
     '''An example of performing a continuation for a 2D AMOC, where the plots and interim
     solutions are written to files instead of storing them in memory and showing them on
     the screen.'''
 
-    nx = 60
-    ny = 30
+    ny = nx // 2
 
     # Define the problem
     parameters = {'Problem Type': 'AMOC',
