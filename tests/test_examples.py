@@ -20,3 +20,9 @@ def test_ldc3_example():
     from examples.ldc3 import main
 
     main(nx=4)
+
+@pytest.mark.example
+def test_dhc_example():
+    from examples.dhc import main
+
+    main(nx=16)
