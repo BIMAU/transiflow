@@ -165,6 +165,44 @@ def test_continuation_time_integration(nx=4):
     assert numpy.linalg.norm(x[1:len(x):dof] - x3[1:len(x):dof]) < 1e-4
 
 @pytest.mark.parametrize("backend", ["SciPy", "HYMLS"])
+def test_continuation_dhc(backend, nx=8):
+    try:
+        from transiflow.interface import JaDa # noqa: F401
+    except ImportError:
+        pytest.skip('jadapy not found')
+
+    numpy.random.seed(1234)
+
+    ny = nx
+
+    parameters = {'Problem Type': 'Differentially Heated Cavity',
+                  'Rayleigh Number': 1,
+                  'Prandtl Number': 1000,
+                  'Reynolds Number': 1}
+
+    interface = Interface(parameters, nx, ny, backend=backend)
+    continuation = Continuation(interface, newton_tolerance=1e-9)
+
+    x0 = interface.vector()
+
+    start = 0
+    target = 9e7
+    ds = 1e4
+    x, mu = continuation.continuation(x0, 'Rayleigh Number', start, target, ds, ds_max=1e7)
+
+    parameters['Eigenvalue Solver'] = {}
+    parameters['Eigenvalue Solver']['Number of Eigenvalues'] = 2
+
+    target = 1e9
+    ds = 5e6
+    x, mu = continuation.continuation(x, 'Rayleigh Number', mu, target, ds, ds_max=5e6,
+                                      detect_bifurcations=True)
+
+    assert utils.norm(x) > 0
+    assert mu > 9e7
+    assert mu < target
+
+@pytest.mark.parametrize("backend", ["SciPy", "HYMLS"])
 def test_continuation_rayleigh_benard(backend, nx=8):
     try:
         from transiflow.interface import JaDa # noqa: F401
