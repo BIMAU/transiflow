@@ -14,12 +14,11 @@ def postprocess(data, interface, x, mu):
         numpy.max(utils.compute_streamfunction(x, interface)))
 
 
-def main():
+def main(nx=32):
     '''An example of performing a continuation for a double-gyre
     wind-driven ocean, plotting the streamfunction at different Reynolds
     numbers, and plotting the bifurcation diagram.'''
 
-    nx = 32
     ny = nx
 
     # Define the problem
