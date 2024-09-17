@@ -35,3 +35,9 @@ def test_dhc_example():
     from examples.dhc import main
 
     main(nx=16)
+
+@pytest.mark.example
+def test_qg_example():
+    from examples.qg import main
+
+    main()
