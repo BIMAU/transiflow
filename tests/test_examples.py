@@ -22,6 +22,15 @@ def test_ldc3_example():
     main(nx=4)
 
 @pytest.mark.example
+def test_ldc_3d_example():
+    try:
+        from examples.ldc_3d import main
+
+        main(nx=4)
+    except ImportError:
+        pytest.skip("HYMLS not found")
+
+@pytest.mark.example
 def test_dhc_example():
     from examples.dhc import main
 

@@ -22,7 +22,7 @@ def postprocess(data, interface, x, mu, enable_output):
     interface.save_state(str(mu), x)
 
 
-def main():
+def main(nx=16):
     ''' An example of performing a continuation for a 3D lid-driven cavity using HYMLS.
     Multiple processors can be used by calling this script using mpi, e.g.:
 
@@ -30,7 +30,6 @@ def main():
 
     Disabling threading is adviced, since this is broken in Epetra.'''
 
-    nx = 16
     ny = nx
     nz = nx
 
