@@ -41,7 +41,7 @@ def main(nx=32):
     # Perform an initial continuation to Reynolds number 7000 without detecting bifurcation points
     ds = 100
     target = 6000
-    x, mu = continuation.continuation(x0, 'Reynolds Number', 0, target, ds,
+    x, mu = continuation.continuation(x0, 'Reynolds Number', 1, target, ds,
                                       callback=callback)
 
     # Now detect the bifurcation point

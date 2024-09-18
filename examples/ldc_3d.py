@@ -74,7 +74,7 @@ def main(nx=16):
 
     ds = 100
     target = 1800
-    x, mu = continuation.continuation(x, 'Reynolds Number', 0, target,
+    x, mu = continuation.continuation(x, 'Reynolds Number', 1, target,
                                       ds, ds_max=100, callback=callback)
 
     # Store point b from which we start locating the bifurcation point
