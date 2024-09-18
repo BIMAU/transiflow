@@ -15,6 +15,7 @@ The package is fully agnostic of the computational back-end, which allows for ea
    :caption: Usage
 
    continuation
+   custom-bc
 
 .. _problem definitions:
 .. toctree::
