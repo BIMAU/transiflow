@@ -39,7 +39,7 @@ extensions = [
 
 numpydoc_show_class_members = False
 
-templates_path = ['_templates']
+templates_path = ['templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 add_module_names = False
