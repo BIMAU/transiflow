@@ -341,6 +341,11 @@ class Interface(BaseInterface):
 
 
 def gmres(A, b, maxit, tol, restart=None, prec=None):
+    '''Helper for running GMRES with different SciPy versions.
+
+    :meta private:
+
+    '''
     iterations = 0
 
     def callback(_r):
