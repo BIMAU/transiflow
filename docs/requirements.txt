@@ -1,7 +1,7 @@
 numpy
 scipy
 matplotlib
-sphinx
-sphinxcontrib-apidoc
-sphinx-rtd-theme
-numpydoc
+sphinx==7.3.7
+sphinxcontrib-apidoc==0.5.0
+sphinx-rtd-theme==2.0.0
+numpydoc==1.7.0
