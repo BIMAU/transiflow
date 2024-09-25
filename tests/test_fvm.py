@@ -6,6 +6,8 @@ from transiflow import utils
 from transiflow import CrsMatrix
 from transiflow import Discretization, CylindricalDiscretization
 
+from tests import testutils
+
 def create_coordinate_vector(nx):
     dx = 1 / (nx + 1)
     a = []
@@ -383,51 +385,6 @@ def test_v_v():
                 assert rhs[i * dof + j * nx * dof + k * nx * ny * dof] * x[i] == pytest.approx(
                     atom_value * averages_v[i, j, k+1] ** 2)
 
-def read_matrix(fname):
-    A = CrsMatrix([], [], [0])
-
-    dirname = os.path.dirname(__file__)
-    with open(os.path.join(dirname, fname), 'r') as f:
-        rows = []
-        idx = 0
-        for i in f.readlines():
-            r, c, v = [j.strip() for j in i.strip().split(' ') if j]
-            r = int(r) - 1
-            c = int(c) - 1
-            v = float(v)
-            rows.append(r)
-            while r >= len(A.begA):
-                A.begA.append(idx)
-            A.jcoA.append(c)
-            A.coA.append(v)
-            idx += 1
-        A.begA.append(idx)
-        assert rows == sorted(rows)
-
-    return A
-
-def write_matrix(A, fname):
-    dirname = os.path.dirname(__file__)
-    with open(os.path.join(dirname, fname), 'w') as f:
-        for i in range(len(A.begA)-1):
-            for j in range(A.begA[i], A.begA[i+1]):
-                f.write('%12d%12d %.16e\n' % (i+1, A.jcoA[j]+1, A.coA[j]))
-
-def read_vector(fname):
-    vec = numpy.array([])
-
-    dirname = os.path.dirname(__file__)
-    with open(os.path.join(dirname, fname), 'r') as f:
-        for i in f.readlines():
-            vec = numpy.append(vec, float(i.strip()))
-    return vec
-
-def write_vector(vec, fname):
-    dirname = os.path.dirname(__file__)
-    with open(os.path.join(dirname, fname), 'w') as f:
-        for i in range(len(vec)):
-            f.write('%.16e\n' % vec[i])
-
 def assemble_jacobian(atom, nx, ny, nz, dof):
     row = 0
     idx = 0
@@ -557,7 +514,7 @@ def test_ldc_lin():
     atom = discretization.linear_part()
     A = assemble_jacobian(atom, nx, ny, nz, dof)
 
-    B = read_matrix('data/ldc_lin_%sx%sx%s.txt' % (nx, ny, nz))
+    B = testutils.read_matrix('data/ldc_lin_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -588,7 +545,7 @@ def test_bous_lin():
     atom = discretization.linear_part()
     A = assemble_jacobian(atom, nx, ny, nz, dof)
 
-    B = read_matrix('data/bous_lin_%sx%sx%s.txt' % (nx, ny, nz))
+    B = testutils.read_matrix('data/bous_lin_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -652,7 +609,7 @@ def test_ldc_bnd():
     discretization.boundaries(atom)
     A = discretization.assemble_jacobian(atom)
 
-    B = read_matrix('data/ldc_bnd_%sx%sx%s.txt' % (nx, ny, nz))
+    B = testutils.read_matrix('data/ldc_bnd_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -684,7 +641,7 @@ def test_bous_bnd():
     discretization.boundaries(atom)
     A = discretization.assemble_jacobian(atom)
 
-    B = read_matrix('data/bous_bnd_%sx%sx%s.txt' % (nx, ny, nz))
+    B = testutils.read_matrix('data/bous_bnd_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -736,7 +693,7 @@ def test_manual_bous_bnd():
     discretization.boundaries(atom)
     A = discretization.assemble_jacobian(atom)
 
-    B = read_matrix('data/bous_bnd_%sx%sx%s.txt' % (nx, ny, nz))
+    B = testutils.read_matrix('data/bous_bnd_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -772,7 +729,7 @@ def test_ldc_bil():
     discretization.boundaries(atom)
     A = discretization.assemble_jacobian(atom)
 
-    B = read_matrix('data/ldc_bil_%sx%sx%s.txt' % (nx, ny, nz))
+    B = testutils.read_matrix('data/ldc_bil_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -815,7 +772,7 @@ def test_bous_bil():
     discretization.boundaries(atom)
     A = discretization.assemble_jacobian(atom)
 
-    B = read_matrix('data/bous_bil_%sx%sx%s.txt' % (nx, ny, nz))
+    B = testutils.read_matrix('data/bous_bil_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -857,8 +814,8 @@ def test_ldc():
     A = discretization.jacobian(state)
     rhs = discretization.rhs(state)
 
-    B = read_matrix('data/ldc_%sx%sx%s.txt' % (nx, ny, nz))
-    rhs_B = read_vector('data/ldc_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+    B = testutils.read_matrix('data/ldc_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = testutils.read_vector('data/ldc_rhs_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -895,8 +852,8 @@ def test_ldc_stretched():
     A = discretization.jacobian(state)
     rhs = discretization.rhs(state)
 
-    B = read_matrix('data/ldc_stretched_%sx%sx%s.txt' % (nx, ny, nz))
-    rhs_B = read_vector('data/ldc_stretched_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+    B = testutils.read_matrix('data/ldc_stretched_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = testutils.read_vector('data/ldc_stretched_rhs_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -985,8 +942,8 @@ def test_bous():
     A = discretization.jacobian(state)
     rhs = discretization.rhs(state)
 
-    B = read_matrix('data/bous_%sx%sx%s.txt' % (nx, ny, nz))
-    rhs_B = read_vector('data/bous_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+    B = testutils.read_matrix('data/bous_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = testutils.read_vector('data/bous_rhs_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -1024,8 +981,8 @@ def test_bous_stretched():
     A = discretization.jacobian(state)
     rhs = discretization.rhs(state)
 
-    B = read_matrix('data/bous_stretched_%sx%sx%s.txt' % (nx, ny, nz))
-    rhs_B = read_vector('data/bous_stretched_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+    B = testutils.read_matrix('data/bous_stretched_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = testutils.read_vector('data/bous_stretched_rhs_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -1115,8 +1072,8 @@ def test_dhc():
     A = discretization.jacobian(state)
     rhs = discretization.rhs(state)
 
-    B = read_matrix('data/dhc_%sx%sx%s.txt' % (nx, ny, nz))
-    rhs_B = read_vector('data/dhc_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+    B = testutils.read_matrix('data/dhc_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = testutils.read_vector('data/dhc_rhs_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -1154,8 +1111,8 @@ def test_tc():
     A = discretization.jacobian(state)
     rhs = discretization.rhs(state)
 
-    B = read_matrix('data/tc_%sx%sx%s.txt' % (nx, ny, nz))
-    rhs_B = read_vector('data/tc_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+    B = testutils.read_matrix('data/tc_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = testutils.read_vector('data/tc_rhs_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -1194,8 +1151,8 @@ def test_qg():
     A = discretization.jacobian(state)
     rhs = discretization.rhs(state)
 
-    B = read_matrix('data/qg_%sx%sx%s.txt' % (nx, ny, nz))
-    rhs_B = read_vector('data/qg_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+    B = testutils.read_matrix('data/qg_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = testutils.read_vector('data/qg_rhs_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -1235,8 +1192,8 @@ def test_amoc():
     A = discretization.jacobian(state)
     rhs = discretization.rhs(state)
 
-    B = read_matrix('data/amoc_%sx%sx%s.txt' % (nx, ny, nz))
-    rhs_B = read_vector('data/amoc_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+    B = testutils.read_matrix('data/amoc_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = testutils.read_vector('data/amoc_rhs_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
@@ -1276,8 +1233,8 @@ def test_ldc8():
     if not os.path.isfile('ldc_%sx%sx%s.txt' % (nx, ny, nz)):
         return
 
-    B = read_matrix('data/ldc_%sx%sx%s.txt' % (nx, ny, nz))
-    rhs_B = read_vector('data/ldc_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+    B = testutils.read_matrix('data/ldc_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = testutils.read_vector('data/ldc_rhs_%sx%sx%s.txt' % (nx, ny, nz))
 
     for i in range(n):
         print(i)
