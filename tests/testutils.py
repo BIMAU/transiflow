@@ -24,6 +24,12 @@ def read_matrix(fname):
         A.begA.append(idx)
         assert rows == sorted(rows)
 
+    A.coA = numpy.array(A.coA)
+    A.jcoA = numpy.array(A.jcoA)
+    A.begA = numpy.array(A.begA)
+
+    A.compress()
+
     return A
 
 def write_matrix(A, fname):
