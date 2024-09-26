@@ -51,7 +51,8 @@ class OceanDiscretization(Discretization):
         return -Ek_H * (self.u_xx() + self.u_yy()
                         - self.icos2uscale(self.value_u() + 2 * self.sinuscale(self.v_x()))
                         + self.v_xx() + self.v_yy()
-                        - self.icos2vscale(self.value_v() + 2 * self.sinvscale(self.u_x())))
+                        - self.icos2vscale(self.value_v() + 2 * self.sinvscale(self.u_x()))) \
+                        + (self.icosuscale(self.p_x()) + self.p_y())
 
     def nonlinear_part(self, state):
         # state_mtx = utils.create_padded_state_mtx(state, self.nx, self.ny, self.nz, self.dof,
@@ -79,6 +80,20 @@ class OceanDiscretization(Discretization):
     # equations that we can solve using FVM. This takes into account
     # non-uniform grids. New discretizations such as derivatives have
     # to be implemented in a similar way.
+
+    def icosuscale(self, atom):
+        '''Scale atom by $1 / cos(y)$ at the location of u.
+
+        :meta private:
+
+        '''
+        y_center = utils.compute_coordinate_vector_centers(self.y)
+        ucos = numpy.cos(y_center)
+
+        for j in range(self.ny):
+            atom[:, j, :, :, :, :, :, :] /= ucos[j]
+
+        return atom
 
     def icos2uscale(self, atom):
         '''Scale atom by $1 / cos(y)^2$ at the location of u.

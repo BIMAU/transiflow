@@ -36,6 +36,8 @@ def test_thcm_lin():
         print('Got:')
         print(A.jcoA[A.begA[i]:A.begA[i+1]])
         print(A.coA[A.begA[i]:A.begA[i+1]])
+
+        print('Scaled:')
         print(A.coA[A.begA[i]:A.begA[i+1]] / scaling)
 
         assert B.begA[i+1] - B.begA[i] == A.begA[i+1] - A.begA[i]
