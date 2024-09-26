@@ -23,8 +23,12 @@ class OceanDiscretization(Discretization):
         ymax = self.parameters.get('Y-max', 85.5) * numpy.pi / 180
         y = utils.create_uniform_coordinate_vector(ymin, ymax, ny) if y is None else y
 
-        D = self.parameters.get('Z-max', 0) - self.parameters.get('Z-min', -1)
-        z = utils.create_uniform_coordinate_vector(-D, 0, nz) if z is None else z
+        zmin = self.parameters.get('Z-min', -1)
+        zmax = self.parameters.get('Z-max', 0)
+        qz = self.parameters.get('Grid Stretching Factor', 2.25)
+        z = utils.create_stretched_coordinate_vector_from_function(
+            zmin, zmax, nz,
+            lambda z: numpy.tanh(qz * z) / numpy.tanh(qz))
 
         Discretization.__init__(self, parameters, nx, ny, nz, dim, dof,
                                 x, y, z, boundary_conditions)
@@ -52,7 +56,7 @@ class OceanDiscretization(Discretization):
                         - self.icos2uscale(self.value_u() + 2 * self.sinuscale(self.v_x()))
                         + self.v_xx() + self.v_yy()
                         - self.icos2vscale(self.value_v() + 2 * self.sinvscale(self.u_x()))) \
-                        + (self.icosuscale(self.p_x()) + self.p_y())
+                        + (self.icosuscale(self.p_x()) + self.p_y() + self.p_z())
 
     def nonlinear_part(self, state):
         # state_mtx = utils.create_padded_state_mtx(state, self.nx, self.ny, self.nz, self.dof,
