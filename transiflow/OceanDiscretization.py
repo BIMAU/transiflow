@@ -36,10 +36,6 @@ class OceanDiscretization(Discretization):
         raise NotImplementedError
 
     def _linear_part_3D(self):
-        '''Compute the linear part of the equation in case the domain is 3D.
-        In case Re = 0 we instead compute the linear part for the Stokes
-        problem.'''
-
         # Dimensional parameters
         A_H = self.parameters.get('Horizontal Friction Coefficient', 2.5e+05)
         Omega_0 = self.parameters.get('Earth Rotation Rate', 7.292e-05)
@@ -52,16 +48,12 @@ class OceanDiscretization(Discretization):
         Ek_H = self.parameters.get('Horizontal Ekman Number',
                                    A_H / (2 * Omega_0 * r_0 * r_0)) * 100
 
-        return -Ek_H * (self.u_xx() + self.u_yy() + self.v_xx() + self.v_yy())
+        return -Ek_H * (self.u_xx() + self.u_yy()
+                        - self.icos2uscale(self.value_u() + 2 * self.sinuscale(self.v_x()))
+                        + self.v_xx() + self.v_yy()
+                        - self.icos2vscale(self.value_v() + 2 * self.sinvscale(self.u_x())))
 
     def nonlinear_part(self, state):
-        r'''Compute the nonlinear part of the equation. In case $\Re = 0$ this
-        does nothing.
-
-        :meta private:
-
-        '''
-
         # state_mtx = utils.create_padded_state_mtx(state, self.nx, self.ny, self.nz, self.dof,
         #                                           self.x_periodic, self.y_periodic, self.z_periodic)
 
@@ -87,6 +79,58 @@ class OceanDiscretization(Discretization):
     # equations that we can solve using FVM. This takes into account
     # non-uniform grids. New discretizations such as derivatives have
     # to be implemented in a similar way.
+
+    def icos2uscale(self, atom):
+        '''Scale atom by $1 / cos(y)^2$ at the location of u.
+
+        :meta private:
+
+        '''
+        y_center = utils.compute_coordinate_vector_centers(self.y)
+        ucos2 = numpy.cos(y_center) ** 2
+
+        for j in range(self.ny):
+            atom[:, j, :, :, :, :, :, :] /= ucos2[j]
+
+        return atom
+
+    def sinuscale(self, atom):
+        '''Scale atom by $sin(y)$ at the location of u.
+
+        :meta private:
+
+        '''
+        y_center = utils.compute_coordinate_vector_centers(self.y)
+        usin = numpy.sin(y_center)
+
+        for j in range(self.ny):
+            atom[:, j, :, :, :, :, :, :] *= usin[j]
+
+        return atom
+
+    def icos2vscale(self, atom):
+        '''Scale atom by $1 / cos(y)^2$ at the location of v.
+
+        :meta private:
+
+        '''
+        vcos2 = numpy.cos(self.y) ** 2
+        for j in range(self.ny):
+            atom[:, j, :, :, :, :, :, :] /= vcos2[j]
+
+        return atom
+
+    def sinvscale(self, atom):
+        '''Scale atom by $sin(y)$ at the location of v.
+
+        :meta private:
+
+        '''
+        vsin = numpy.sin(self.y)
+        for j in range(self.ny):
+            atom[:, j, :, :, :, :, :, :] *= vsin[j]
+
+        return atom
 
     @staticmethod
     def _u_xx(atom, i, j, k, x, y, z):
@@ -188,3 +232,19 @@ class OceanDiscretization(Discretization):
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._v_yy(atom[i, j, k, 1, 1, 1, :, 1], i, j, k, self.x, self.y, self.z)
         return atom
+
+    def u_x(self):
+        ''':meta private:'''
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
+        for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
+            self._backward_u_x(atom[i, j, k, 1, 0, :, 1, 1], i, j, k, self.x, self.y, self.z)
+            self._backward_u_x(atom[i, j, k, 1, 0, :, 2, 1], i, j, k, self.x, self.y, self.z)
+        return atom / 2
+
+    def v_x(self):
+        ''':meta private:'''
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
+        for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
+            self._forward_u_x(atom[i, j, k, 0, 1, :, 0, 1], i, j, k, self.x, self.y, self.z)
+            self._forward_u_x(atom[i, j, k, 0, 1, :, 1, 1], i, j, k, self.x, self.y, self.z)
+        return atom / 2
