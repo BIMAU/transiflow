@@ -1108,19 +1108,32 @@ class Discretization:
             self._backward_average_x(atom[i, j, k, self.dim+1, 2, 1, 1, :], k, j, i, self.z, self.y, self.x)
         return atom
 
-    def coriolis(self):
+    def u_at_v(self):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            # Value of yu at the position of v
             self._forward_average_x(atom[i, j, k, 1, 0, 0, :, 1], j, i, k, self.y, self.x, self.z)
             self._forward_average_x(atom[i, j, k, 1, 0, 1, :, 1], j, i, k, self.y, self.x, self.z)
-            atom[i, j, k, 1, 0, :, :, :] *= self.y[j] / 2
+        return atom / 2
 
-            # Value of -yv at the position of u
+    def v_at_u(self):
+        ''':meta private:'''
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
+        for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._forward_average_x(atom[i, j, k, 0, 1, :, 0, 1], i, j, k, self.x, self.y, self.z)
             self._forward_average_x(atom[i, j, k, 0, 1, :, 1, 1], i, j, k, self.x, self.y, self.z)
-            atom[i, j, k, 0, 1, :, :, :] *= -(self.y[j] + self.y[j-1]) / 4
+        return atom / 2
+
+    def coriolis(self):
+        ''':meta private:'''
+        atom = self.u_at_v()
+        for j in range(self.ny):
+            atom[:, j, :, 1, 0, :, :, :] *= self.y[j]
+
+        atom += self.v_at_u()
+        for j in range(self.ny):
+            atom[:, j, :, 0, 1, :, :, :] *= -(self.y[j] + self.y[j-1]) / 2
+
         return atom
 
     def wind_stress(self):
