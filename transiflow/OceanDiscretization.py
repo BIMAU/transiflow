@@ -52,11 +52,11 @@ class OceanDiscretization(Discretization):
         Ek_H = self.parameters.get('Horizontal Ekman Number',
                                    A_H / (2 * Omega_0 * r_0 * r_0)) * 100
 
-        return -Ek_H * (self.u_xx() + self.u_yy()
-                        - self.icos2uscale(self.value_u() + 2 * self.sinuscale(self.v_x()))
-                        + self.v_xx() + self.v_yy()
-                        - self.icos2vscale(self.value_v() + 2 * self.sinvscale(self.u_x()))) \
-                        + (self.icosuscale(self.p_x()) + self.p_y() + self.p_z())
+        return Ek_H * (self.u_xx() + self.u_yy()
+                       - self.icos2uscale(self.value_u() + 2 * self.sinuscale(self.v_x()))
+                       + self.v_xx() + self.v_yy()
+                       - self.icos2vscale(self.value_v() + 2 * self.sinvscale(self.u_x()))) \
+            - (self.icosuscale(self.p_x()) + self.p_y() + self.p_z())
 
     def nonlinear_part(self, state):
         # state_mtx = utils.create_padded_state_mtx(state, self.nx, self.ny, self.nz, self.dof,

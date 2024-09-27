@@ -43,4 +43,4 @@ def test_thcm_lin():
         assert B.begA[i+1] - B.begA[i] == A.begA[i+1] - A.begA[i]
         for j in range(B.begA[i], B.begA[i+1]):
             assert B.jcoA[j] == A.jcoA[j]
-            assert B.coA[j] == pytest.approx(A.coA[j] / scaling)
+            assert B.coA[j] == pytest.approx(-A.coA[j] / scaling)
