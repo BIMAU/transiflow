@@ -44,6 +44,7 @@ class OceanDiscretization(Discretization):
         A_H = self.parameters.get('Horizontal Friction Coefficient', 2.5e+05)
         A_V = self.parameters.get('Vertical Friction Coefficient', 5.0e-03)
         Omega_0 = self.parameters.get('Earth Rotation Rate', 7.292e-05)
+        eta_f = self.parameters.get('Rotation flag', 1)
         r_0 = self.parameters.get('Earth Radius', 6.37e+06)
         depth = self.parameters.get('Depth', 5000)
 
@@ -58,7 +59,8 @@ class OceanDiscretization(Discretization):
                        + self.v_xx() + self.v_yy()
                        - self.icos2vscale(self.value_v() - 2 * self.sinvscale(self.u_x()))) \
             + Ek_V * (self.u_zz() + self.v_zz()) \
-            - (self.icosuscale(self.p_x()) + self.p_y() + self.p_z())
+            - (self.icosuscale(self.p_x()) + self.p_y() + self.p_z()) \
+            + eta_f * (self.sinuscale(self.v_at_u()) - self.sinvscale(self.u_at_v()))
 
     def nonlinear_part(self, state):
         # state_mtx = utils.create_padded_state_mtx(state, self.nx, self.ny, self.nz, self.dof,
