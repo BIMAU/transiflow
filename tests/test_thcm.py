@@ -27,7 +27,7 @@ def test_thcm_lin():
     for i in range(n):
         print(i)
 
-        scaling = mass_matrix[i, i]
+        scaling = mass_matrix[i, i] or -mass_matrix[i+1, i+1]
 
         print('Expected:')
         print(B.jcoA[B.begA[i]:B.begA[i+1]])

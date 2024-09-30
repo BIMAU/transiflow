@@ -55,12 +55,13 @@ class OceanDiscretization(Discretization):
                                    A_V / (2 * Omega_0 * depth * depth))
 
         return Ek_H * (self.u_xx() + self.u_yy()
-                       - self.icos2uscale(self.value_u() + 2 * self.sinuscale(self.v_x()))
+                       - self.icos2uscale(self.value_u() + 2 * self.sinuscale(self.v_x_at_u()))
                        + self.v_xx() + self.v_yy()
-                       - self.icos2vscale(self.value_v() - 2 * self.sinvscale(self.u_x()))) \
+                       - self.icos2vscale(self.value_v() - 2 * self.sinvscale(self.u_x_at_v()))) \
             + Ek_V * (self.u_zz() + self.v_zz()) \
             - (self.icosuscale(self.p_x()) + self.p_y() + self.p_z()) \
-            + eta_f * (self.sinuscale(self.v_at_u()) - self.sinvscale(self.u_at_v()))
+            + eta_f * (self.sinuscale(self.v_at_u()) - self.sinvscale(self.u_at_v())) \
+            + self.div()
 
     def nonlinear_part(self, state):
         # state_mtx = utils.create_padded_state_mtx(state, self.nx, self.ny, self.nz, self.dof,
@@ -154,6 +155,10 @@ class OceanDiscretization(Discretization):
             atom[:, j, :, :, :, :, :, :] *= vsin[j]
 
         return atom
+
+    def div(self):
+        ''':meta private:'''
+        return self.icosuscale(self.u_x() + self.v_y()) + self.w_z()
 
     @staticmethod
     def _u_xx(atom, i, j, k, x, y, z):
@@ -256,7 +261,15 @@ class OceanDiscretization(Discretization):
             self._v_yy(atom[i, j, k, 1, 1, 1, :, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
-    def u_x(self):
+    def v_y(self):
+        ''':meta private:'''
+        atom = Discretization.v_y(self)
+        for j in range(self.ny):
+            atom[:, j, :, self.dim, 1, 1, 0, 1] *= numpy.cos(self.y[j-1])
+            atom[:, j, :, self.dim, 1, 1, 1, 1] *= numpy.cos(self.y[j])
+        return atom
+
+    def u_x_at_v(self):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
@@ -264,7 +277,7 @@ class OceanDiscretization(Discretization):
             self._backward_u_x(atom[i, j, k, 1, 0, :, 2, 1], i, j, k, self.x, self.y, self.z)
         return atom / 2
 
-    def v_x(self):
+    def v_x_at_u(self):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
