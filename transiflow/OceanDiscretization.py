@@ -43,9 +43,12 @@ class OceanDiscretization(Discretization):
         # Dimensional parameters
         A_H = self.parameters.get('Horizontal Friction Coefficient', 2.5e+05)
         A_V = self.parameters.get('Vertical Friction Coefficient', 5.0e-03)
+        K_H = self.parameters.get('Horizontal Heat Diffusivity', 0.5e+03)
+        K_V = self.parameters.get('Vertical Heat Diffusivity', 0.8e-04)
         Omega_0 = self.parameters.get('Earth Rotation Rate', 7.292e-05)
-        eta_f = self.parameters.get('Rotation flag', 1)
+        eta_f = self.parameters.get('Rotation Flag', 1)
         r_0 = self.parameters.get('Earth Radius', 6.37e+06)
+        U = self.parameters.get('Velocity Scale', 0.1)
         depth = self.parameters.get('Depth', 5000)
 
         # Non-dimensional parameters
@@ -53,6 +56,10 @@ class OceanDiscretization(Discretization):
                                    A_H / (2 * Omega_0 * r_0 * r_0)) * 100
         Ek_V = self.parameters.get('Vertical Ekman Number',
                                    A_V / (2 * Omega_0 * depth * depth))
+        Pe_H = self.parameters.get('Horizontal Peclet Number',
+                                   K_H / (U * r_0))
+        Pe_V = self.parameters.get('Vertical Peclet Number',
+                                   K_V * r_0 / (U * depth * depth))
 
         return Ek_H * (self.u_xx() + self.u_yy()
                        - self.icos2uscale(self.value_u() + 2 * self.sinuscale(self.v_x_at_u()))
@@ -61,6 +68,7 @@ class OceanDiscretization(Discretization):
             + Ek_V * (self.u_zz() + self.v_zz()) \
             - (self.icosuscale(self.p_x()) + self.p_y() + self.p_z()) \
             + eta_f * (self.sinuscale(self.v_at_u()) - self.sinvscale(self.u_at_v())) \
+            + Pe_H * (self.T_xx() + self.T_yy() + self.S_xx() + self.S_yy()) \
             + self.div()
 
     def nonlinear_part(self, state):
@@ -259,6 +267,56 @@ class OceanDiscretization(Discretization):
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._v_yy(atom[i, j, k, 1, 1, 1, :, 1], i, j, k, self.x, self.y, self.z)
+        return atom
+
+    @staticmethod
+    def _C_xx(atom, i, j, k, x, y, z):
+        # distance between T[i] and T[i-1]
+        dx = (x[i] - x[i-2]) / 2
+        # distance between T[i+1] and T[i]
+        dxp1 = (x[i+1] - x[i-1]) / 2
+        # volume size in the y direction
+        dy = y[j] - y[j-1]
+        # volume size in the z direction
+        dz = z[k] - z[k-1]
+
+        cos2 = numpy.cos(y[j-1] + dy / 2) ** 2
+
+        # second order finite difference
+        atom[0] = 1 / dx / cos2 * dy * dz
+        atom[2] = 1 / dxp1 / cos2 * dy * dz
+        atom[1] = -atom[0] - atom[2]
+
+    def C_xx(self, var):
+        ''':meta private:'''
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
+        for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
+            self._C_xx(atom[i, j, k, var, var, :, 1, 1], i, j, k, self.x, self.y, self.z)
+        return atom
+
+    @staticmethod
+    def _C_yy(atom, i, j, k, x, y, z):
+        # distance between T[j] and T[j-1]
+        dy = (y[j] - y[j-2]) / 2
+        # distance between T[j+1] and T[j]
+        dyp1 = (y[j+1] - y[j-1]) / 2
+        # volume size in the x direction
+        dx = x[i] - x[i-1]
+        # volume size in the z direction
+        dz = z[k] - z[k-1]
+
+        yc = y[j] - (y[j] - y[j-1]) / 2
+
+        # second order finite difference
+        atom[0] = 1 / dy * numpy.cos(y[j-1]) / numpy.cos(yc) * dx * dz
+        atom[2] = 1 / dyp1 * numpy.cos(y[j]) / numpy.cos(yc) * dx * dz
+        atom[1] = -atom[0] - atom[2]
+
+    def C_yy(self, var):
+        ''':meta private:'''
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
+        for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
+            self._C_yy(atom[i, j, k, var, var, 1, :, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
     def v_y(self):
