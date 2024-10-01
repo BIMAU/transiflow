@@ -60,6 +60,7 @@ class OceanDiscretization(Discretization):
                                    K_H / (U * r_0))
         Pe_V = self.parameters.get('Vertical Peclet Number',
                                    K_V * r_0 / (U * depth * depth))
+        Bi = self.parameters.get('Biot Number', 14.8)
 
         return Ek_H * (self.u_xx() + self.u_yy()
                        - self.icos2uscale(self.value_u() + 2 * self.sinuscale(self.v_x_at_u()))
@@ -70,6 +71,7 @@ class OceanDiscretization(Discretization):
             + eta_f * (self.sinuscale(self.v_at_u()) - self.sinvscale(self.u_at_v())) \
             + Pe_H * (self.T_xx() + self.T_yy() + self.S_xx() + self.S_yy()) \
             + Pe_V * (self.T_zz() + self.S_zz()) \
+            - Bi * self.T_surface() \
             + self.div()
 
     def nonlinear_part(self, state):
@@ -318,6 +320,25 @@ class OceanDiscretization(Discretization):
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             self._C_yy(atom[i, j, k, var, var, 1, :, 1], i, j, k, self.x, self.y, self.z)
+        return atom
+
+    @staticmethod
+    def _value_C(atom, i, j, k, x, y, z):
+        # volume size in the x direction
+        dx = x[i] - x[i-1]
+        # volume size in the y direction
+        dy = y[j] - y[j-1]
+        # volume size in the z direction
+        dz = z[k] - z[k-1]
+
+        atom[1] = dx * dy * dz
+
+    def T_surface(self):
+        ''':meta private:'''
+        atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
+        k = self.nz - 1
+        for i, j in numpy.ndindex(self.nx, self.ny):
+            self._value_C(atom[i, j, k, self.dim+1, self.dim+1, 1, :, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
     def v_y(self):
