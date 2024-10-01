@@ -256,11 +256,11 @@ class Discretization:
 
         if self.dof > 3:
             atom += 1 / (Pr * numpy.sqrt(Gr)) * (self.T_xx() + self.T_yy())
-            atom += self.forward_average_T_y()
+            atom += self.T_at_v()
 
         if self.dof > 4:
             atom += 1 / (Le * Pr * numpy.sqrt(Gr)) * (self.S_xx() + self.S_yy())
-            atom -= self.forward_average_S_y()
+            atom -= self.S_at_v()
 
         if self.problem_type_equals('Rayleigh-Benard Perturbation'):
             Bi = self.get_parameter('Biot Number')
@@ -296,16 +296,16 @@ class Discretization:
         if self.dof > 4:
             atom += 1 / (Pr * numpy.sqrt(Gr)) * (self.T_xx() + self.T_yy() + self.T_zz())
             if self.nz > 1:
-                atom += self.forward_average_T_z()
+                atom += self.T_at_w()
             else:
-                atom += self.forward_average_T_y()
+                atom += self.T_at_v()
 
         if self.dof > 5:
             atom += 1 / (Le * Pr * numpy.sqrt(Gr)) * (self.S_xx() + self.S_yy() + self.S_zz())
             if self.nz > 1:
-                atom -= self.forward_average_S_z()
+                atom -= self.S_at_w()
             else:
-                atom -= self.forward_average_S_y()
+                atom -= self.S_at_v()
 
         if self.problem_type_equals('Rayleigh-Benard Perturbation'):
             Bi = self.get_parameter('Biot Number')
@@ -1065,19 +1065,19 @@ class Discretization:
             Discretization._forward_average_x(atom[i, j, k, 2, var, 1, 1, :], k, j, i, self.z, self.y, self.x)
         return atom
 
-    def forward_average_T_y(self):
+    def T_at_v(self):
         ''':meta private:'''
         return self.forward_average_C_y(self.dim + 1)
 
-    def forward_average_T_z(self):
+    def T_at_w(self):
         ''':meta private:'''
         return self.forward_average_C_z(self.dim + 1)
 
-    def forward_average_S_y(self):
+    def S_at_v(self):
         ''':meta private:'''
         return self.forward_average_C_y(self.dim + 2)
 
-    def forward_average_S_z(self):
+    def S_at_w(self):
         ''':meta private:'''
         return self.forward_average_C_z(self.dim + 2)
 
