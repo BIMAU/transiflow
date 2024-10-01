@@ -757,21 +757,21 @@ class Discretization:
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._u_xx(atom[i, j, k, 0, 0, :, 1, 1], i, j, k, self.x, self.y, self.z)
+            Discretization._u_xx(atom[i, j, k, 0, 0, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
     def v_yy(self):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._u_xx(atom[i, j, k, 1, 1, 1, :, 1], j, i, k, self.y, self.x, self.z)
+            Discretization._u_xx(atom[i, j, k, 1, 1, 1, :, 1], j, i, k, self.y, self.x, self.z)
         return atom
 
     def w_zz(self):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._u_xx(atom[i, j, k, 2, 2, 1, 1, :], k, j, i, self.z, self.y, self.x)
+            Discretization._u_xx(atom[i, j, k, 2, 2, 1, 1, :], k, j, i, self.z, self.y, self.x)
         return atom
 
     @staticmethod
@@ -794,21 +794,21 @@ class Discretization:
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._u_yy(atom[i, j, k, 0, 0, 1, :, 1], i, j, k, self.x, self.y, self.z)
+            Discretization._u_yy(atom[i, j, k, 0, 0, 1, :, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
     def v_xx(self):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._u_yy(atom[i, j, k, 1, 1, :, 1, 1], j, i, k, self.y, self.x, self.z)
+            Discretization._u_yy(atom[i, j, k, 1, 1, :, 1, 1], j, i, k, self.y, self.x, self.z)
         return atom
 
     def w_yy(self):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._u_yy(atom[i, j, k, 2, 2, 1, :, 1], k, j, i, self.z, self.y, self.x)
+            Discretization._u_yy(atom[i, j, k, 2, 2, 1, :, 1], k, j, i, self.z, self.y, self.x)
         return atom
 
     @staticmethod
@@ -831,21 +831,21 @@ class Discretization:
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._u_zz(atom[i, j, k, 0, 0, 1, 1, :], i, j, k, self.x, self.y, self.z)
+            Discretization._u_zz(atom[i, j, k, 0, 0, 1, 1, :], i, j, k, self.x, self.y, self.z)
         return atom
 
     def v_zz(self):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._u_zz(atom[i, j, k, 1, 1, 1, 1, :], j, i, k, self.y, self.x, self.z)
+            Discretization._u_zz(atom[i, j, k, 1, 1, 1, 1, :], j, i, k, self.y, self.x, self.z)
         return atom
 
     def w_xx(self):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._u_zz(atom[i, j, k, 2, 2, :, 1, 1], k, j, i, self.z, self.y, self.x)
+            Discretization._u_zz(atom[i, j, k, 2, 2, :, 1, 1], k, j, i, self.z, self.y, self.x)
         return atom
 
     @staticmethod
@@ -868,21 +868,21 @@ class Discretization:
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._C_xx(atom[i, j, k, var, var, :, 1, 1], i, j, k, self.x, self.y, self.z)
+            Discretization._C_xx(atom[i, j, k, var, var, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
     def C_yy(self, var):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._C_xx(atom[i, j, k, var, var, 1, :, 1], j, i, k, self.y, self.x, self.z)
+            Discretization._C_xx(atom[i, j, k, var, var, 1, :, 1], j, i, k, self.y, self.x, self.z)
         return atom
 
     def C_zz(self, var):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._C_xx(atom[i, j, k, var, var, 1, 1, :], k, j, i, self.z, self.y, self.x)
+            Discretization._C_xx(atom[i, j, k, var, var, 1, 1, :], k, j, i, self.z, self.y, self.x)
         return atom
 
     def T_xx(self):
@@ -924,21 +924,21 @@ class Discretization:
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._forward_u_x(atom[i, j, k, 0, var, :, 1, 1], i, j, k, self.x, self.y, self.z)
+            Discretization._forward_u_x(atom[i, j, k, 0, var, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
     def C_y(self, var):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._forward_u_x(atom[i, j, k, 1, var, 1, :, 1], j, i, k, self.y, self.x, self.z)
+            Discretization._forward_u_x(atom[i, j, k, 1, var, 1, :, 1], j, i, k, self.y, self.x, self.z)
         return atom
 
     def C_z(self, var):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._forward_u_x(atom[i, j, k, 2, var, 1, 1, :], k, j, i, self.z, self.y, self.x)
+            Discretization._forward_u_x(atom[i, j, k, 2, var, 1, 1, :], k, j, i, self.z, self.y, self.x)
         return atom
 
     def p_x(self):
@@ -968,21 +968,21 @@ class Discretization:
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._backward_u_x(atom[i, j, k, self.dim, 0, :, 1, 1], i, j, k, self.x, self.y, self.z)
+            Discretization._backward_u_x(atom[i, j, k, self.dim, 0, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
     def v_y(self):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._backward_u_x(atom[i, j, k, self.dim, 1, 1, :, 1], j, i, k, self.y, self.x, self.z)
+            Discretization._backward_u_x(atom[i, j, k, self.dim, 1, 1, :, 1], j, i, k, self.y, self.x, self.z)
         return atom
 
     def w_z(self):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._backward_u_x(atom[i, j, k, self.dim, 2, 1, 1, :], k, j, i, self.z, self.y, self.x)
+            Discretization._backward_u_x(atom[i, j, k, self.dim, 2, 1, 1, :], k, j, i, self.z, self.y, self.x)
         return atom
 
     @staticmethod
@@ -1028,14 +1028,14 @@ class Discretization:
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._value_u(atom[i, j, k, 0, 0, :, 1, 1], i, j, k, self.x, self.y, self.z)
+            Discretization._value_u(atom[i, j, k, 0, 0, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom
 
     def value_v(self):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._value_u(atom[i, j, k, 1, 1, :, 1, 1], j, i, k, self.y, self.x, self.z)
+            Discretization._value_u(atom[i, j, k, 1, 1, :, 1, 1], j, i, k, self.y, self.x, self.z)
         return atom
 
     @staticmethod
@@ -1055,14 +1055,14 @@ class Discretization:
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._forward_average_x(atom[i, j, k, 1, var, 1, :, 1], j, i, k, self.y, self.x, self.z)
+            Discretization._forward_average_x(atom[i, j, k, 1, var, 1, :, 1], j, i, k, self.y, self.x, self.z)
         return atom
 
     def forward_average_C_z(self, var):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._forward_average_x(atom[i, j, k, 2, var, 1, 1, :], k, j, i, self.z, self.y, self.x)
+            Discretization._forward_average_x(atom[i, j, k, 2, var, 1, 1, :], k, j, i, self.z, self.y, self.x)
         return atom
 
     def forward_average_T_y(self):
@@ -1098,30 +1098,30 @@ class Discretization:
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._backward_average_x(atom[i, j, k, self.dim+1, 1, 1, :, 1], j, i, k, self.y, self.x, self.z)
+            Discretization._backward_average_x(atom[i, j, k, self.dim+1, 1, 1, :, 1], j, i, k, self.y, self.x, self.z)
         return atom
 
     def backward_average_w_z(self):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._backward_average_x(atom[i, j, k, self.dim+1, 2, 1, 1, :], k, j, i, self.z, self.y, self.x)
+            Discretization._backward_average_x(atom[i, j, k, self.dim+1, 2, 1, 1, :], k, j, i, self.z, self.y, self.x)
         return atom
 
     def u_at_v(self):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._forward_average_x(atom[i, j, k, 1, 0, 0, :, 1], j, i, k, self.y, self.x, self.z)
-            self._forward_average_x(atom[i, j, k, 1, 0, 1, :, 1], j, i, k, self.y, self.x, self.z)
+            Discretization._forward_average_x(atom[i, j, k, 1, 0, 0, :, 1], j, i, k, self.y, self.x, self.z)
+            Discretization._forward_average_x(atom[i, j, k, 1, 0, 1, :, 1], j, i, k, self.y, self.x, self.z)
         return atom / 2
 
     def v_at_u(self):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._forward_average_x(atom[i, j, k, 0, 1, :, 0, 1], i, j, k, self.x, self.y, self.z)
-            self._forward_average_x(atom[i, j, k, 0, 1, :, 1, 1], i, j, k, self.x, self.y, self.z)
+            Discretization._forward_average_x(atom[i, j, k, 0, 1, :, 0, 1], i, j, k, self.x, self.y, self.z)
+            Discretization._forward_average_x(atom[i, j, k, 0, 1, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom / 2
 
     def coriolis(self):
@@ -1170,21 +1170,21 @@ class Discretization:
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._mass_x(atom[i, j, k, 0:1], i, j, k, self.x, self.y, self.z)
+            Discretization._mass_x(atom[i, j, k, 0:1], i, j, k, self.x, self.y, self.z)
         return atom
 
     def mass_y(self):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._mass_x(atom[i, j, k, 1:2], j, i, k, self.y, self.x, self.z)
+            Discretization._mass_x(atom[i, j, k, 1:2], j, i, k, self.y, self.x, self.z)
         return atom
 
     def mass_z(self):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._mass_x(atom[i, j, k, 2:3], k, j, i, self.z, self.y, self.x)
+            Discretization._mass_x(atom[i, j, k, 2:3], k, j, i, self.z, self.y, self.x)
         return atom
 
     @staticmethod
@@ -1202,7 +1202,7 @@ class Discretization:
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._mass_C(atom[i, j, k, var:var+1], i, j, k, self.x, self.y, self.z)
+            Discretization._mass_C(atom[i, j, k, var:var+1], i, j, k, self.x, self.y, self.z)
         return atom
 
     def mass_T(self):
@@ -1266,7 +1266,7 @@ class Discretization:
 
         atom = numpy.zeros(2)
         for i in range(self.nx):
-            self._weighted_average(atom, i, self.x)
+            Discretization._weighted_average(atom, i, self.x)
 
             averages[i, :, :] += atom[0] * cropped_state[i+1, :, :]
             averages[i, :, :] += atom[1] * cropped_state[i+2, :, :]
@@ -1281,7 +1281,7 @@ class Discretization:
 
         atom = numpy.zeros(2)
         for j in range(self.ny):
-            self._weighted_average(atom, j, self.y)
+            Discretization._weighted_average(atom, j, self.y)
 
             averages[:, j, :] += atom[0] * cropped_state[:, j+1, :]
             averages[:, j, :] += atom[1] * cropped_state[:, j+2, :]
@@ -1296,7 +1296,7 @@ class Discretization:
 
         atom = numpy.zeros(2)
         for k in range(self.nz):
-            self._weighted_average(atom, k, self.z)
+            Discretization._weighted_average(atom, k, self.z)
 
             averages[:, :, k] += atom[0] * cropped_state[:, :, k+1]
             averages[:, :, k] += atom[1] * cropped_state[:, :, k+2]
@@ -1309,7 +1309,7 @@ class Discretization:
 
         atom = numpy.zeros(3)
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._forward_u_x(atom, i, j, k, self.x, self.y, self.z)
+            Discretization._forward_u_x(atom, i, j, k, self.x, self.y, self.z)
             atomF[i, j, k, 0, 0, 0:2, 1, 1] -= atom[1] * averages[i, j, k] * 1 / 2
             atomF[i, j, k, 0, 0, 1:3, 1, 1] -= atom[2] * averages[i+1, j, k] * 1 / 2
 
@@ -1324,11 +1324,11 @@ class Discretization:
         atom = numpy.zeros(3)
         atom_average = numpy.zeros(2)
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._backward_u_y(atom, j, i, k, self.y, self.x, self.z)
+            Discretization._backward_u_y(atom, j, i, k, self.y, self.x, self.z)
             atomF[i, j, k, 1, 1, 0:2, 1, 1] -= atom[0] * averages_u[i, j, k+1] * 1 / 2
             atomF[i, j, k, 1, 1, 1:3, 1, 1] -= atom[1] * averages_u[i+1, j, k+1] * 1 / 2
 
-            self._weighted_average(atom_average, j, self.y)
+            Discretization._weighted_average(atom_average, j, self.y)
             atomJ[i, j, k, 1, 0, 0, 1:3, 1] -= atom[0] * averages_v[i, j, k] * atom_average
             atomJ[i, j, k, 1, 0, 1, 1:3, 1] -= atom[1] * averages_v[i+1, j, k] * atom_average
 
@@ -1340,11 +1340,11 @@ class Discretization:
         atom = numpy.zeros(3)
         atom_average = numpy.zeros(2)
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._backward_u_z(atom, k, j, i, self.z, self.y, self.x)
+            Discretization._backward_u_z(atom, k, j, i, self.z, self.y, self.x)
             atomF[i, j, k, 2, 2, 0:2, 1, 1] -= atom[0] * averages_u[i, j+1, k] * 1 / 2
             atomF[i, j, k, 2, 2, 1:3, 1, 1] -= atom[1] * averages_u[i+1, j+1, k] * 1 / 2
 
-            self._weighted_average(atom_average, k, self.z)
+            Discretization._weighted_average(atom_average, k, self.z)
             atomJ[i, j, k, 2, 0, 0, 1, 1:3] -= atom[0] * averages_w[i, j, k] * atom_average
             atomJ[i, j, k, 2, 0, 1, 1, 1:3] -= atom[1] * averages_w[i+1, j, k] * atom_average
 
@@ -1355,7 +1355,7 @@ class Discretization:
 
         atom = numpy.zeros(3)
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._backward_u_x(atom, i, j, k, self.x, self.y, self.z)
+            Discretization._backward_u_x(atom, i, j, k, self.x, self.y, self.z)
             atomF[i, j, k, var, var, 0:2, 1, 1] -= atom[0] * averages_u[i, j, k] * 1/2
             atomF[i, j, k, var, var, 1:3, 1, 1] -= atom[1] * averages_u[i+1, j, k] * 1/2
 
@@ -1378,11 +1378,11 @@ class Discretization:
         atom = numpy.zeros(3)
         atom_average = numpy.zeros(2)
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._backward_u_y(atom, i, j, k, self.x, self.y, self.z)
+            Discretization._backward_u_y(atom, i, j, k, self.x, self.y, self.z)
             atomF[i, j, k, 0, 0, 1, 0:2, 1] -= atom[0] * averages_v[i, j, k+1] * 1 / 2
             atomF[i, j, k, 0, 0, 1, 1:3, 1] -= atom[1] * averages_v[i, j+1, k+1] * 1 / 2
 
-            self._weighted_average(atom_average, i, self.x)
+            Discretization._weighted_average(atom_average, i, self.x)
             atomJ[i, j, k, 0, 1, 1:3, 0, 1] -= atom[0] * averages_u[i, j, k] * atom_average
             atomJ[i, j, k, 0, 1, 1:3, 1, 1] -= atom[1] * averages_u[i, j+1, k] * atom_average
 
@@ -1392,7 +1392,7 @@ class Discretization:
 
         atom = numpy.zeros(3)
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._forward_u_x(atom, j, i, k, self.y, self.x, self.z)
+            Discretization._forward_u_x(atom, j, i, k, self.y, self.x, self.z)
             atomF[i, j, k, 1, 1, 1, 0:2, 1] -= atom[1] * averages[i, j, k] * 1 / 2
             atomF[i, j, k, 1, 1, 1, 1:3, 1] -= atom[2] * averages[i, j+1, k] * 1 / 2
 
@@ -1407,11 +1407,11 @@ class Discretization:
         atom = numpy.zeros(3)
         atom_average = numpy.zeros(2)
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._backward_u_y(atom, k, j, i, self.z, self.y, self.x)
+            Discretization._backward_u_y(atom, k, j, i, self.z, self.y, self.x)
             atomF[i, j, k, 2, 2, 1, 0:2, 1] -= atom[0] * averages_v[i+1, j, k] * 1 / 2
             atomF[i, j, k, 2, 2, 1, 1:3, 1] -= atom[1] * averages_v[i+1, j+1, k] * 1 / 2
 
-            self._weighted_average(atom_average, k, self.z)
+            Discretization._weighted_average(atom_average, k, self.z)
             atomJ[i, j, k, 2, 1, 1, 0, 1:3] -= atom[0] * averages_w[i, j, k] * atom_average
             atomJ[i, j, k, 2, 1, 1, 1, 1:3] -= atom[1] * averages_w[i, j+1, k] * atom_average
 
@@ -1422,7 +1422,7 @@ class Discretization:
 
         atom = numpy.zeros(3)
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._backward_u_x(atom, j, i, k, self.y, self.x, self.z)
+            Discretization._backward_u_x(atom, j, i, k, self.y, self.x, self.z)
             atomF[i, j, k, var, var, 1, 0:2, 1] -= atom[0] * averages_v[i, j, k] * 1/2
             atomF[i, j, k, var, var, 1, 1:3, 1] -= atom[1] * averages_v[i, j+1, k] * 1/2
 
@@ -1445,11 +1445,11 @@ class Discretization:
         atom = numpy.zeros(3)
         atom_average = numpy.zeros(2)
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._backward_u_z(atom, i, j, k, self.x, self.y, self.z)
+            Discretization._backward_u_z(atom, i, j, k, self.x, self.y, self.z)
             atomF[i, j, k, 0, 0, 1, 1, 0:2] -= atom[0] * averages_w[i, j+1, k] * 1 / 2
             atomF[i, j, k, 0, 0, 1, 1, 1:3] -= atom[1] * averages_w[i, j+1, k+1] * 1 / 2
 
-            self._weighted_average(atom_average, i, self.x)
+            Discretization._weighted_average(atom_average, i, self.x)
             atomJ[i, j, k, 0, 2, 1:3, 1, 0] -= atom[0] * averages_u[i, j, k] * atom_average
             atomJ[i, j, k, 0, 2, 1:3, 1, 1] -= atom[1] * averages_u[i, j, k+1] * atom_average
 
@@ -1461,11 +1461,11 @@ class Discretization:
         atom = numpy.zeros(3)
         atom_average = numpy.zeros(2)
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._backward_u_z(atom, j, i, k, self.y, self.x, self.z)
+            Discretization._backward_u_z(atom, j, i, k, self.y, self.x, self.z)
             atomF[i, j, k, 1, 1, 1, 1, 0:2] -= atom[0] * averages_w[i+1, j, k] * 1 / 2
             atomF[i, j, k, 1, 1, 1, 1, 1:3] -= atom[1] * averages_w[i+1, j, k+1] * 1 / 2
 
-            self._weighted_average(atom_average, j, self.y)
+            Discretization._weighted_average(atom_average, j, self.y)
             atomJ[i, j, k, 1, 2, 1, 1:3, 0] -= atom[0] * averages_v[i, j, k] * atom_average
             atomJ[i, j, k, 1, 2, 1, 1:3, 1] -= atom[1] * averages_v[i, j, k+1] * atom_average
 
@@ -1475,7 +1475,7 @@ class Discretization:
 
         atom = numpy.zeros(3)
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._forward_u_x(atom, k, j, i, self.z, self.y, self.x)
+            Discretization._forward_u_x(atom, k, j, i, self.z, self.y, self.x)
             atomF[i, j, k, 2, 2, 1, 1, 0:2] -= atom[1] * averages[i, j, k] * 1 / 2
             atomF[i, j, k, 2, 2, 1, 1, 1:3] -= atom[2] * averages[i, j, k+1] * 1 / 2
 
@@ -1489,7 +1489,7 @@ class Discretization:
 
         atom = numpy.zeros(3)
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            self._backward_u_x(atom, k, j, i, self.z, self.y, self.x)
+            Discretization._backward_u_x(atom, k, j, i, self.z, self.y, self.x)
             atomF[i, j, k, var, var, 1, 1, 0:2] -= atom[0] * averages_w[i, j, k] * 1/2
             atomF[i, j, k, var, var, 1, 1, 1:3] -= atom[1] * averages_w[i, j, k+1] * 1/2
 
