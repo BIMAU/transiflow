@@ -69,6 +69,7 @@ class OceanDiscretization(Discretization):
             - (self.icosuscale(self.p_x()) + self.p_y() + self.p_z()) \
             + eta_f * (self.sinuscale(self.v_at_u()) - self.sinvscale(self.u_at_v())) \
             + Pe_H * (self.T_xx() + self.T_yy() + self.S_xx() + self.S_yy()) \
+            + Pe_V * (self.T_zz() + self.S_zz()) \
             + self.div()
 
     def nonlinear_part(self, state):
