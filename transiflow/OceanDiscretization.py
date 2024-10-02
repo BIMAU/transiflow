@@ -33,7 +33,7 @@ class OceanDiscretization(Discretization):
         Discretization.__init__(self, parameters, nx, ny, nz, dim, dof,
                                 x, y, z, boundary_conditions)
 
-        if self.parameters.get('X-periodic', False):
+        if self.parameters.get('X-periodic', True):
             self.x_periodic = True
 
     def _linear_part_2D(self):
@@ -82,11 +82,26 @@ class OceanDiscretization(Discretization):
             + self.div()
 
     def nonlinear_part(self, state):
-        # state_mtx = utils.create_padded_state_mtx(state, self.nx, self.ny, self.nz, self.dof,
-        #                                           self.x_periodic, self.y_periodic, self.z_periodic)
+        state_mtx = utils.create_padded_state_mtx(state, self.nx, self.ny, self.nz, self.dof,
+                                                  self.x_periodic, self.y_periodic, self.z_periodic)
 
         atomJ = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         atomF = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
+
+        # Dimensional parameters
+        Omega_0 = self.parameters.get('Earth Rotation Rate', 7.292e-05)
+        r_0 = self.parameters.get('Earth Radius', 6.37e+06)
+        U = self.parameters.get('Velocity Scale', 0.1)
+
+        # Non-dimensional parameters
+        eps_R = self.parameters.get('Rossby Number', U / (2 * Omega_0 * r_0))
+
+        self.u_u_x(atomJ, atomF, state_mtx)
+
+        atomJ += atomF
+
+        atomJ *= eps_R
+        atomF *= eps_R
 
         return (atomJ, atomF)
 
@@ -371,3 +386,39 @@ class OceanDiscretization(Discretization):
             self._forward_u_x(atom[i, j, k, 0, 1, :, 0, 1], i, j, k, self.x, self.y, self.z)
             self._forward_u_x(atom[i, j, k, 0, 1, :, 1, 1], i, j, k, self.x, self.y, self.z)
         return atom / 2
+
+    # The discretizations below are worse than the ones in
+    # Discretization. We use them for now just to match THCM.
+
+    @staticmethod
+    def _central_u_x(atom, i, j, k, x, y, z):
+        # volume size in the y direction
+        dy = y[j] - y[j-1]
+        # volume size in the z direction
+        dz = z[k] - z[k-1]
+
+        # central difference
+        atom[2] = dy * dz / 2
+        atom[0] = -atom[2]
+
+    def u_u_x(self, atomJ_in, atomF_in, state):
+        ''':meta private:'''
+        atomJ = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
+        atomF = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
+
+        cropped_state = state[:, 1:self.ny+1, 1:self.nz+1]
+
+        atom = numpy.zeros(3)
+        for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
+            self._central_u_x(atom, i, j, k, self.x, self.y, self.z)
+            atomF[i, j, k, 0, 0, 0, 1, 1] -= atom[0] * cropped_state[i, j, k, 0] * 1 / 2
+            atomF[i, j, k, 0, 0, 2, 1, 1] -= atom[2] * cropped_state[i+2, j, k, 0] * 1 / 2
+
+            atomJ[i, j, k, 0, 0, 0, 1, 1] -= atom[0] * cropped_state[i, j, k, 0] * 1 / 2
+            atomJ[i, j, k, 0, 0, 2, 1, 1] -= atom[2] * cropped_state[i+2, j, k, 0] * 1 / 2
+
+        self.icosuscale(atomJ)
+        self.icosuscale(atomF)
+
+        atomJ_in += atomJ
+        atomF_in += atomF
