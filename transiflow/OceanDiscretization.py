@@ -97,6 +97,7 @@ class OceanDiscretization(Discretization):
         eps_R = self.parameters.get('Rossby Number', U / (2 * Omega_0 * r_0))
 
         self.u_u_x(atomJ, atomF, state_mtx)
+        self.v_u_y(atomJ, atomF, state_mtx)
 
         atomJ += atomF
 
@@ -419,6 +420,34 @@ class OceanDiscretization(Discretization):
 
         self.icosuscale(atomJ)
         self.icosuscale(atomF)
+
+        atomJ_in += atomJ
+        atomF_in += atomF
+
+    def v_u_y(self, atomJ_in, atomF_in, state):
+        ''':meta private:'''
+        atomJ = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
+        atomF = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
+
+        # TODO: Add a vscale method that scales by cos / cos or something
+        averages_u = self.average_y(state[:, :, :, 0])
+        averages_v = self.weighted_average_x(state[:, :, :, 1])
+
+        y_center = utils.compute_coordinate_vector_centers(self.y)
+
+        atom = numpy.zeros(3)
+        atom_average = numpy.zeros(2)
+        for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
+            scale0 = numpy.cos(self.y[j-1]) / numpy.cos(y_center[j])
+            scale1 = numpy.cos(self.y[j]) / numpy.cos(y_center[j])
+
+            Discretization._backward_u_y(atom, i, j, k, self.x, self.y, self.z)
+            atomF[i, j, k, 0, 0, 1, 0:2, 1] -= scale0 * atom[0] * averages_v[i, j, k+1] * 1 / 2
+            atomF[i, j, k, 0, 0, 1, 1:3, 1] -= scale1 * atom[1] * averages_v[i, j+1, k+1] * 1 / 2
+
+            # Discretization._weighted_average(atom_average, i, self.x)
+            # atomJ[i, j, k, 0, 1, 1:3, 0, 1] -= scale0 * atom[0] * averages_u[i, j, k] * atom_average
+            # atomJ[i, j, k, 0, 1, 1:3, 1, 1] -= scale1 * atom[1] * averages_u[i, j+1, k] * atom_average
 
         atomJ_in += atomJ
         atomF_in += atomF
