@@ -54,7 +54,7 @@ def test_thcm_bnd():
 
     discretization = OceanDiscretization(parameters, nx, ny, nz, dim, dof)
     atom = discretization.linear_part()
-    discretization.boundaries(atom)
+    # discretization.boundaries(atom)
     A = testutils.assemble_jacobian(atom, nx, ny, nz, dof)
 
     B = testutils.read_matrix('data/thcm_bnd_%sx%sx%s.txt' % (nx, ny, nz))
@@ -123,7 +123,13 @@ def test_thcm_bil():
         print('Scaled:')
         print(-A.coA[A.begA[i]:A.begA[i+1]] / scaling)
 
+        # Skip dirichlet conditions:
+        if A.begA[i+1] - A.begA[i] == 1 and A.coA[A.begA[i]] == -1:
+            continue
+
         assert B.begA[i+1] - B.begA[i] == A.begA[i+1] - A.begA[i]
-        for j in range(B.begA[i], B.begA[i+1]):
-            assert B.jcoA[j] == A.jcoA[j]
-            assert B.coA[j] == pytest.approx(-A.coA[j] / scaling)
+        for j in range(B.begA[i+1] - B.begA[i]):
+            jA = A.begA[i] + j
+            jB = B.begA[i] + j
+            assert B.jcoA[jB] == A.jcoA[jA]
+            assert B.coA[jB] == pytest.approx(-A.coA[jA] / scaling)

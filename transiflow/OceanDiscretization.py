@@ -108,6 +108,9 @@ class OceanDiscretization(Discretization):
 
     def _ocean(self, boundary_conditions, atom):
         '''Boundary conditions for the 3D ocean circulation'''
+        boundary_conditions.no_slip_south(atom)
+        boundary_conditions.no_slip_north(atom)
+
         return boundary_conditions.get_forcing()
 
     def _setup_boundary_conditions(self):
@@ -445,9 +448,9 @@ class OceanDiscretization(Discretization):
             atomF[i, j, k, 0, 0, 1, 0:2, 1] -= scale0 * atom[0] * averages_v[i, j, k+1] * 1 / 2
             atomF[i, j, k, 0, 0, 1, 1:3, 1] -= scale1 * atom[1] * averages_v[i, j+1, k+1] * 1 / 2
 
-            # Discretization._weighted_average(atom_average, i, self.x)
-            # atomJ[i, j, k, 0, 1, 1:3, 0, 1] -= scale0 * atom[0] * averages_u[i, j, k] * atom_average
-            # atomJ[i, j, k, 0, 1, 1:3, 1, 1] -= scale1 * atom[1] * averages_u[i, j+1, k] * atom_average
+            Discretization._weighted_average(atom_average, i, self.x)
+            atomJ[i, j, k, 0, 1, 1:3, 0, 1] -= scale0 * atom[0] * averages_u[i, j, k] * atom_average
+            atomJ[i, j, k, 0, 1, 1:3, 1, 1] -= scale1 * atom[1] * averages_u[i, j+1, k] * atom_average
 
         atomJ_in += atomJ
         atomF_in += atomF
