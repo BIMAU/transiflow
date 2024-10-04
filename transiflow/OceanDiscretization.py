@@ -98,6 +98,7 @@ class OceanDiscretization(Discretization):
 
         self.u_u_x(atomJ, atomF, state_mtx)
         self.v_u_y(atomJ, atomF, state_mtx)
+        self.u_v_tan(atomJ, atomF, state_mtx)
 
         atomJ += atomF
 
@@ -454,3 +455,18 @@ class OceanDiscretization(Discretization):
 
         atomJ_in += atomJ
         atomF_in += atomF
+
+    def u_v_tan(self, atomJ, atomF, state):
+        ''':meta private:'''
+        averages_v = self.weighted_average_x(state[:, :, :, 1])
+
+        y_center = utils.compute_coordinate_vector_centers(self.y)
+
+        atom = numpy.zeros(3)
+        for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
+            scale = numpy.tan(y_center[j])
+
+            Discretization._forward_average_x(atom, j, i, k, self.y, self.x, self.z)
+            # TODO: Is this the right sign?
+            atomF[i, j, k, 0, 0, 1, 1, 1] -= scale * atom[1] * averages_v[i, j, k+1]
+            atomF[i, j, k, 0, 0, 1, 1, 1] -= scale * atom[2] * averages_v[i, j+1, k+1]
