@@ -85,6 +85,9 @@ class OceanDiscretization(Discretization):
         state_mtx = utils.create_padded_state_mtx(state, self.nx, self.ny, self.nz, self.dof,
                                                   self.x_periodic, self.y_periodic, self.z_periodic)
 
+        # TODO: For compatibility
+        state_mtx[:, :, self.nz+1, :] = state_mtx[:, :, self.nz, :]
+
         atomJ = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         atomF = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
 
@@ -99,6 +102,7 @@ class OceanDiscretization(Discretization):
         self.u_u_x(atomJ, atomF, state_mtx)
         self.v_u_y(atomJ, atomF, state_mtx)
         self.u_v_tan(atomJ, atomF, state_mtx)
+        self.w_u_z(atomJ, atomF, state_mtx)
 
         atomJ += atomF
 
@@ -111,6 +115,8 @@ class OceanDiscretization(Discretization):
         '''Boundary conditions for the 3D ocean circulation'''
         boundary_conditions.no_slip_south(atom)
         boundary_conditions.no_slip_north(atom)
+
+        boundary_conditions.no_slip_bottom(atom)
 
         return boundary_conditions.get_forcing()
 
