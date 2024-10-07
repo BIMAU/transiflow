@@ -104,6 +104,7 @@ class OceanDiscretization(Discretization):
         self.u_v_tan(atomJ, atomF, state_mtx)
         self.w_u_z(atomJ, atomF, state_mtx)
 
+        self.u_v_x(atomJ, atomF, state_mtx)
         self.w_v_z(atomJ, atomF, state_mtx)
 
         atomJ += atomF
@@ -175,6 +176,18 @@ class OceanDiscretization(Discretization):
 
         for j in range(self.ny):
             atom[:, j, :, :, :, :, :, :] *= usin[j]
+
+        return atom
+
+    def icosvscale(self, atom):
+        '''Scale atom by $1 / cos(y)$ at the location of v.
+
+        :meta private:
+
+        '''
+        vcos = numpy.cos(self.y)
+        for j in range(self.ny):
+            atom[:, j, :, :, :, :, :, :] /= vcos[j]
 
         return atom
 
@@ -432,6 +445,19 @@ class OceanDiscretization(Discretization):
 
         self.icosuscale(atomJ)
         self.icosuscale(atomF)
+
+        atomJ_in += atomJ
+        atomF_in += atomF
+
+    def u_v_x(self, atomJ_in, atomF_in, state):
+        ''':meta private:'''
+        atomJ = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
+        atomF = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
+
+        Discretization.u_v_x(self, atomJ, atomF, state)
+
+        self.icosvscale(atomJ)
+        self.icosvscale(atomF)
 
         atomJ_in += atomJ
         atomF_in += atomF
