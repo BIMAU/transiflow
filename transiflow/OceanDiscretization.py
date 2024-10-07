@@ -104,6 +104,8 @@ class OceanDiscretization(Discretization):
         self.u_v_tan(atomJ, atomF, state_mtx)
         self.w_u_z(atomJ, atomF, state_mtx)
 
+        self.w_v_z(atomJ, atomF, state_mtx)
+
         atomJ += atomF
 
         atomJ *= eps_R
