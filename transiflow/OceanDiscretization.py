@@ -463,6 +463,7 @@ class OceanDiscretization(Discretization):
         y_center = utils.compute_coordinate_vector_centers(self.y)
 
         atom = numpy.zeros(3)
+        atom_average = numpy.zeros(2)
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
             scale = numpy.tan(y_center[j])
 
@@ -470,3 +471,7 @@ class OceanDiscretization(Discretization):
             # TODO: Is this the right sign?
             atomF[i, j, k, 0, 0, 1, 1, 1] -= scale * atom[1] * averages_v[i, j, k+1]
             atomF[i, j, k, 0, 0, 1, 1, 1] -= scale * atom[2] * averages_v[i, j+1, k+1]
+
+            Discretization._weighted_average(atom_average, i, self.x)
+            atomJ[i, j, k, 0, 1, 1:3, 0, 1] -= scale * atom[1] * state[i+1, j+1, k+1, 0] * atom_average
+            atomJ[i, j, k, 0, 1, 1:3, 1, 1] -= scale * atom[2] * state[i+1, j+1, k+1, 0] * atom_average
