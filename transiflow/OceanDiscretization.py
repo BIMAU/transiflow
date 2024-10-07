@@ -105,6 +105,7 @@ class OceanDiscretization(Discretization):
         self.w_u_z(atomJ, atomF, state_mtx)
 
         self.u_v_x(atomJ, atomF, state_mtx)
+        self.v_v_y(atomJ, atomF, state_mtx)
         self.w_v_z(atomJ, atomF, state_mtx)
 
         atomJ += atomF
@@ -486,6 +487,28 @@ class OceanDiscretization(Discretization):
             Discretization._weighted_average(atom_average, i, self.x)
             atomJ[i, j, k, 0, 1, 1:3, 0, 1] -= scale0 * atom[0] * averages_u[i, j, k] * atom_average
             atomJ[i, j, k, 0, 1, 1:3, 1, 1] -= scale1 * atom[1] * averages_u[i, j+1, k] * atom_average
+
+        atomJ_in += atomJ
+        atomF_in += atomF
+
+    def v_v_y(self, atomJ_in, atomF_in, state):
+        ''':meta private:'''
+        atomJ = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
+        atomF = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
+
+        cropped_state = state[1:self.nx+1, :, 1:self.nz+1]
+
+        atom = numpy.zeros(3)
+        for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
+            scale0 = numpy.cos(self.y[j-1]) / numpy.cos(self.y[j])
+            scale1 = numpy.cos(self.y[j+1]) / numpy.cos(self.y[j])
+
+            self._central_u_x(atom, j, i, k, self.y, self.x, self.z)
+            atomF[i, j, k, 1, 1, 1, 0, 1] -= scale0 * atom[0] * cropped_state[i, j, k, 1] * 1 / 2
+            atomF[i, j, k, 1, 1, 1, 2, 1] -= scale1 * atom[2] * cropped_state[i, j+2, k, 1] * 1 / 2
+
+            atomJ[i, j, k, 1, 1, 1, 0, 1] -= scale0 * atom[0] * cropped_state[i, j, k, 1] * 1 / 2
+            atomJ[i, j, k, 1, 1, 1, 2, 1] -= scale1 * atom[2] * cropped_state[i, j+2, k, 1] * 1 / 2
 
         atomJ_in += atomJ
         atomF_in += atomF
