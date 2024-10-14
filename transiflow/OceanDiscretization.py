@@ -114,6 +114,8 @@ class OceanDiscretization(Discretization):
 
         self.u_T_x(atomJ, atomF, state_mtx)
         self.u_S_x(atomJ, atomF, state_mtx)
+        self.v_T_y(atomJ, atomF, state_mtx)
+        self.v_S_y(atomJ, atomF, state_mtx)
 
         atomJ += atomF
 
@@ -542,6 +544,25 @@ class OceanDiscretization(Discretization):
 
         atomJ_in += atomJ
         atomF_in += atomF
+
+    def v_C_y(self, atomJ, atomF, state, var):
+        ''':meta private:'''
+        averages_v = state[1:self.nx+1, 0:self.ny+1, 1:self.nz+1, 1]
+        averages_C = self.average_y(state[:, :, :, var])
+
+        y_center = utils.compute_coordinate_vector_centers(self.y)
+
+        atom = numpy.zeros(3)
+        for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
+            scale0 = numpy.cos(self.y[j-1]) / numpy.cos(y_center[j])
+            scale1 = numpy.cos(self.y[j]) / numpy.cos(y_center[j])
+
+            Discretization._backward_u_x(atom, j, i, k, self.y, self.x, self.z)
+            atomF[i, j, k, var, var, 1, 0:2, 1] -= scale0 * atom[0] * averages_v[i, j, k] * 1 / 2
+            atomF[i, j, k, var, var, 1, 1:3, 1] -= scale1 * atom[1] * averages_v[i, j+1, k] * 1 / 2
+
+            atomJ[i, j, k, var, 1, 1, 0, 1] -= scale0 * atom[0] * averages_C[i, j, k]
+            atomJ[i, j, k, var, 1, 1, 1, 1] -= scale1 * atom[1] * averages_C[i, j+1, k]
 
     def u_v_tan(self, atomJ, atomF, state):
         ''':meta private:'''
