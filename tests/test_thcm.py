@@ -104,9 +104,6 @@ def test_thcm_bil():
 
     mass_matrix = discretization.mass_matrix()
 
-    # TODO:
-    n = B.n
-
     for i in range(n):
         print(i)
 

@@ -109,10 +109,13 @@ class OceanDiscretization(Discretization):
         self.v_v_y(atomJ, atomF, state_mtx)
         self.w_v_z(atomJ, atomF, state_mtx)
 
-        atomJ += atomF
-
         atomJ *= eps_R
         atomF *= eps_R
+
+        self.u_T_x(atomJ, atomF, state_mtx)
+        self.u_S_x(atomJ, atomF, state_mtx)
+
+        atomJ += atomF
 
         return (atomJ, atomF)
 
@@ -460,6 +463,32 @@ class OceanDiscretization(Discretization):
 
         self.icosvscale(atomJ)
         self.icosvscale(atomF)
+
+        atomJ_in += atomJ
+        atomF_in += atomF
+
+    def u_T_x(self, atomJ_in, atomF_in, state):
+        ''':meta private:'''
+        atomJ = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
+        atomF = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
+
+        Discretization.u_T_x(self, atomJ, atomF, state)
+
+        self.icosuscale(atomJ)
+        self.icosuscale(atomF)
+
+        atomJ_in += atomJ
+        atomF_in += atomF
+
+    def u_S_x(self, atomJ_in, atomF_in, state):
+        ''':meta private:'''
+        atomJ = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
+        atomF = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
+
+        Discretization.u_S_x(self, atomJ, atomF, state)
+
+        self.icosuscale(atomJ)
+        self.icosuscale(atomF)
 
         atomJ_in += atomJ
         atomF_in += atomF
