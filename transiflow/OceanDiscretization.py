@@ -116,6 +116,8 @@ class OceanDiscretization(Discretization):
         self.u_S_x(atomJ, atomF, state_mtx)
         self.v_T_y(atomJ, atomF, state_mtx)
         self.v_S_y(atomJ, atomF, state_mtx)
+        self.w_T_z(atomJ, atomF, state_mtx)
+        self.w_S_z(atomJ, atomF, state_mtx)
 
         atomJ += atomF
 
