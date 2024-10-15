@@ -65,8 +65,6 @@ class BoundaryConditions:
         atom[self.nx-1, :, :, 0, :, :, :, :] = 0
         atom[self.nx-1, :, :, :, :, 2, :, :] = 0
         atom[self.nx-1, :, :, 0, 0, 1, 1, 1] = -1
-        # TODO: Do we need this?
-        atom[self.nx-2, :, :, 0, 0, 2, :, :] = 0
 
         self.frc[self.nx-1, :, :, 0] = 0
 
@@ -95,8 +93,6 @@ class BoundaryConditions:
         atom[:, self.ny-1, :, 1, :, :, :, :] = 0
         atom[:, self.ny-1, :, :, :, :, 2, :] = 0
         atom[:, self.ny-1, :, 1, 1, 1, 1, 1] = -1
-        # TODO: Do we need this?
-        atom[:, self.ny-2, :, 1, 1, :, 2, :] = 0
 
         self.frc[:, self.ny-1, :, 1] = 0
 
@@ -125,8 +121,6 @@ class BoundaryConditions:
         atom[:, :, self.nz-1, 2, :, :, :, :] = 0
         atom[:, :, self.nz-1, :, :, :, :, 2] = 0
         atom[:, :, self.nz-1, 2, 2, 1, 1, 1] = -1
-        # TODO: Do we need this?
-        atom[:, :, self.nz-2, 2, 2, :, :, 2] = 0
 
         self.frc[:, :, self.nz-1, 1] = 0
 
@@ -155,8 +149,6 @@ class BoundaryConditions:
         atom[self.nx-1, :, :, 0, :, :, :, :] = 0
         atom[self.nx-1, :, :, :, :, 2, :, :] = 0
         atom[self.nx-1, :, :, 0, 0, 1, 1, 1] = -1
-        # TODO: Do we need this?
-        atom[self.nx-2, :, :, 0, 0, 2, :, :] = 0
 
         self.frc[self.nx-1, :, :, 0] = 0
 
@@ -185,8 +177,6 @@ class BoundaryConditions:
         atom[:, self.ny-1, :, 1, :, :, :, :] = 0
         atom[:, self.ny-1, :, :, :, :, 2, :] = 0
         atom[:, self.ny-1, :, 1, 1, 1, 1, 1] = -1
-        # TODO: Do we need this?
-        atom[:, self.ny-2, :, 1, 1, :, 2, :] = 0
 
         self.frc[:, self.ny-1, :, 1] = 0
 
@@ -215,8 +205,6 @@ class BoundaryConditions:
         atom[:, :, self.nz-1, 2, :, :, :, :] = 0
         atom[:, :, self.nz-1, :, :, :, :, 2] = 0
         atom[:, :, self.nz-1, 2, 2, 1, 1, 1] = -1
-        # TODO: Do we need this?
-        atom[:, :, self.nz-2, 2, 2, :, :, 2] = 0
 
         self.frc[:, :, self.nz-1, 1] = 0
 

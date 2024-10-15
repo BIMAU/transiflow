@@ -125,10 +125,22 @@ class OceanDiscretization(Discretization):
 
     def _ocean(self, boundary_conditions, atom):
         '''Boundary conditions for the 3D ocean circulation'''
+        boundary_conditions.heat_flux_south(atom, 0)
+        boundary_conditions.heat_flux_north(atom, 0)
+
+        boundary_conditions.salinity_flux_south(atom, 0)
+        boundary_conditions.salinity_flux_north(atom, 0)
+
         boundary_conditions.no_slip_south(atom)
         boundary_conditions.no_slip_north(atom)
 
+        boundary_conditions.heat_flux_bottom(atom, 0)
+        boundary_conditions.salinity_flux_bottom(atom, 0)
         boundary_conditions.no_slip_bottom(atom)
+
+        boundary_conditions.heat_flux_top(atom, 0)
+        boundary_conditions.salinity_flux_top(atom, 0)
+        boundary_conditions.free_slip_top(atom)
 
         return boundary_conditions.get_forcing()
 
