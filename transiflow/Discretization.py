@@ -382,12 +382,19 @@ class Discretization:
 
         '''
 
+        # atomJ, atomF = self.nonlinear_part(state)
+        # atomF += self.linear_part()
+
+        # frc = self.boundaries(atomF)
+
+        # return self.assemble_rhs(state, atomF) + frc
+
         atomJ, atomF = self.nonlinear_part(state)
         atomF += self.linear_part()
 
         frc = self.boundaries(atomF)
 
-        return self.assemble_rhs(state, atomF) + frc
+        return self.assemble_jacobian(atomF) @ state + frc
 
     def jacobian(self, state):
         r'''Compute the Jacobian matrix $J(u, p)$ of the right-hand

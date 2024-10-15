@@ -186,4 +186,4 @@ def test_thcm():
             assert B.jcoA[jB] == A.jcoA[jA]
             assert B.coA[jB] == pytest.approx(-A.coA[jA] / scaling)
 
-        # assert rhs_B[i] == pytest.approx(rhs[i])
+        assert rhs_B[i] == pytest.approx(rhs[i] / scaling)
