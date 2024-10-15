@@ -75,7 +75,7 @@ class OceanDiscretization(Discretization):
             + Ek_V * (self.u_zz() + self.v_zz()) \
             - (self.icosuscale(self.p_x()) + self.p_y() + self.p_z()) \
             + eta_f * (self.sinuscale(self.v_at_u()) - self.sinvscale(self.u_at_v())) \
-            - Ra * lamb * self.S_at_w() \
+            + Ra * (self.T_at_w() - lamb * self.S_at_w()) \
             + Pe_H * (self.T_xx() + self.T_yy() + self.S_xx() + self.S_yy()) \
             + Pe_V * (self.T_zz() + self.S_zz()) \
             - Bi * self.T_surface() \
