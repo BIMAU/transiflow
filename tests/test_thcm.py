@@ -136,3 +136,54 @@ def test_thcm_bil():
             jB = B.begA[i] + j
             assert B.jcoA[jB] == A.jcoA[jA]
             assert B.coA[jB] == pytest.approx(-A.coA[jA] / scaling)
+
+def test_thcm():
+    nx = 4
+    ny = nx
+    nz = nx
+    dim = 3
+    dof = 6
+    parameters = {'Problem Type': 'Ocean'}
+    n = nx * ny * nz * dof
+
+    state = numpy.zeros(n)
+    for i in range(n):
+        state[i] = i+1
+
+    discretization = OceanDiscretization(parameters, nx, ny, nz, dim, dof)
+    A = discretization.jacobian(state)
+    rhs = discretization.rhs(state)
+
+    B = testutils.read_matrix('data/thcm_%sx%sx%s.txt' % (nx, ny, nz))
+    rhs_B = testutils.read_vector('data/thcm_rhs_%sx%sx%s.txt' % (nx, ny, nz))
+
+    mass_matrix = discretization.mass_matrix()
+
+    for i in range(n):
+        print(i)
+
+        scaling = mass_matrix[i, i] or -mass_matrix[i+1, i+1]
+
+        print('Expected:')
+        print(B.jcoA[B.begA[i]:B.begA[i+1]])
+        print(B.coA[B.begA[i]:B.begA[i+1]])
+
+        print('Got:')
+        print(A.jcoA[A.begA[i]:A.begA[i+1]])
+        print(A.coA[A.begA[i]:A.begA[i+1]])
+
+        print('Scaled:')
+        print(-A.coA[A.begA[i]:A.begA[i+1]] / scaling)
+
+        # Skip dirichlet conditions:
+        if A.begA[i+1] - A.begA[i] == 1 and A.coA[A.begA[i]] == -1:
+            continue
+
+        assert B.begA[i+1] - B.begA[i] == A.begA[i+1] - A.begA[i]
+        for j in range(B.begA[i+1] - B.begA[i]):
+            jA = A.begA[i] + j
+            jB = B.begA[i] + j
+            assert B.jcoA[jB] == A.jcoA[jA]
+            assert B.coA[jB] == pytest.approx(-A.coA[jA] / scaling)
+
+        # assert rhs_B[i] == pytest.approx(rhs[i])
