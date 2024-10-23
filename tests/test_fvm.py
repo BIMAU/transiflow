@@ -376,12 +376,11 @@ def test_v_v():
 
     rhs = discretization.assemble_rhs(state, atomF)
 
-    atom_value = numpy.zeros(1)
     for i in range(nx):
         for j in range(ny):
             for k in range(nz):
                 print(i, j, k)
-                Discretization._mass_x(atom_value, i, j, k, x, y, z)
+                atom_value = Discretization._mass_x(i, j, k, x, y, z)
                 assert rhs[i * dof + j * nx * dof + k * nx * ny * dof] * x[i] == pytest.approx(
                     atom_value * averages_v[i, j, k+1] ** 2)
 

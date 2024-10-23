@@ -1163,7 +1163,7 @@ class Discretization:
         return utils.create_state_vec(frc, self.nx, self.ny, self.nz, self.dof)
 
     @staticmethod
-    def _mass_x(atom, i, j, k, x, y, z):
+    def _mass_x(i, j, k, x, y, z):
         # volume size in the x direction
         dx = (x[i+1] - x[i-1]) / 2
         # volume size in the y direction
@@ -1171,31 +1171,31 @@ class Discretization:
         # volume size in the z direction
         dz = z[k] - z[k-1]
 
-        atom[0] = dx * dy * dz
+        return dx * dy * dz
 
     def mass_x(self):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            Discretization._mass_x(atom[i, j, k, 0:1], i, j, k, self.x, self.y, self.z)
+            atom[i, j, k, 0] = Discretization._mass_x(i, j, k, self.x, self.y, self.z)
         return atom
 
     def mass_y(self):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            Discretization._mass_x(atom[i, j, k, 1:2], j, i, k, self.y, self.x, self.z)
+            atom[i, j, k, 1] = Discretization._mass_x(j, i, k, self.y, self.x, self.z)
         return atom
 
     def mass_z(self):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            Discretization._mass_x(atom[i, j, k, 2:3], k, j, i, self.z, self.y, self.x)
+            atom[i, j, k, 2] = Discretization._mass_x(k, j, i, self.z, self.y, self.x)
         return atom
 
     @staticmethod
-    def _mass_C(atom, i, j, k, x, y, z):
+    def _mass_C(i, j, k, x, y, z):
         # volume size in the x direction
         dx = x[i] - x[i-1]
         # volume size in the y direction
@@ -1203,13 +1203,13 @@ class Discretization:
         # volume size in the z direction
         dz = z[k] - z[k-1]
 
-        atom[0] = dx * dy * dz
+        return dx * dy * dz
 
     def mass_C(self, var):
         ''':meta private:'''
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof))
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            Discretization._mass_C(atom[i, j, k, var:var+1], i, j, k, self.x, self.y, self.z)
+            atom[i, j, k, var] = Discretization._mass_C(i, j, k, self.x, self.y, self.z)
         return atom
 
     def mass_T(self):

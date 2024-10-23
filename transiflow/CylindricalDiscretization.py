@@ -375,10 +375,10 @@ class CylindricalDiscretization(Discretization):
 
         atom = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
 
-        atom_value = numpy.zeros(1)
         atom_average = numpy.zeros(2)
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            Discretization._mass_x(atom_value, i, j, k, self.x, self.y, self.z)
+            atom_value = Discretization._mass_x(i, j, k, self.x, self.y, self.z)
+
             Discretization._weighted_average(atom_average, i, self.x)
             atom[i, j, k, 0, 1, 1:3, 0, 1] += atom_value * atom_average * averages_v[i, j, k+1] * 1 / 2
             atom[i, j, k, 0, 1, 1:3, 1, 1] += atom_value * atom_average * averages_v[i, j, k+1] * 1 / 2
@@ -397,10 +397,9 @@ class CylindricalDiscretization(Discretization):
         atomJ = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         atomF = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
 
-        atom_value = numpy.zeros(1)
         atom_average = numpy.zeros(2)
         for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
-            Discretization._mass_x(atom_value, j, i, k, self.y, self.x, self.z)
+            atom_value = Discretization._mass_x(j, i, k, self.y, self.x, self.z)
             atomF[i, j, k, 1, 1, 1, 1:2, 1] -= atom_value * averages_u[i, j, k+1]
 
             Discretization._weighted_average(atom_average, j, self.y)
