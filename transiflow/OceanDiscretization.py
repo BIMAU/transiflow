@@ -42,20 +42,22 @@ class OceanDiscretization(Discretization):
     def _linear_part_3D(self):
         # Dimensional parameters
         A_H = self.parameters.get('Horizontal Friction Coefficient', 2.5e+05)
+        A_V = self.parameters.get('Vertical Friction Coefficient', 5.0e-03)
         Omega_0 = self.parameters.get('Earth Rotation Rate', 7.292e-05)
         r_0 = self.parameters.get('Earth Radius', 6.37e+06)
         depth = self.parameters.get('Depth', 5000)
 
         # Non-dimensional parameters
-        Ek_V = self.parameters.get('Vertical Ekman Number',
-                                   A_H / (2 * Omega_0 * depth * depth))
         Ek_H = self.parameters.get('Horizontal Ekman Number',
                                    A_H / (2 * Omega_0 * r_0 * r_0)) * 100
+        Ek_V = self.parameters.get('Vertical Ekman Number',
+                                   A_V / (2 * Omega_0 * depth * depth))
 
         return Ek_H * (self.u_xx() + self.u_yy()
                        - self.icos2uscale(self.value_u() + 2 * self.sinuscale(self.v_x()))
                        + self.v_xx() + self.v_yy()
                        - self.icos2vscale(self.value_v() + 2 * self.sinvscale(self.u_x()))) \
+            + Ek_V * (self.u_zz() + self.v_zz()) \
             - (self.icosuscale(self.p_x()) + self.p_y() + self.p_z())
 
     def nonlinear_part(self, state):
