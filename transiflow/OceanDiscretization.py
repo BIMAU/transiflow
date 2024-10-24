@@ -44,7 +44,7 @@ class OceanDiscretization(Discretization):
 
         '''
         # Dimensional parameters
-        self.A_H = self.parameters.get('Horizontal Friction Coefficient', 2.5e+05)
+        self.A_H = self.parameters.get('Horizontal Friction Coefficient', 2.5e+07)
         self.A_V = self.parameters.get('Vertical Friction Coefficient', 5.0e-03)
         self.K_H = self.parameters.get('Horizontal Heat Diffusivity', 0.5e+03)
         self.K_V = self.parameters.get('Vertical Heat Diffusivity', 0.8e-04)
@@ -63,7 +63,7 @@ class OceanDiscretization(Discretization):
 
         # Non-dimensional parameters
         self.Ek_H = self.parameters.get('Horizontal Ekman Number',
-                                        self.A_H / (2 * self.Omega_0 * self.r_0 * self.r_0)) * 100
+                                        self.A_H / (2 * self.Omega_0 * self.r_0 * self.r_0))
         self.Ek_V = self.parameters.get('Vertical Ekman Number',
                                         self.A_V / (2 * self.Omega_0 * self.depth * self.depth))
         self.Pe_H = self.parameters.get('Horizontal Peclet Number',
