@@ -36,52 +36,63 @@ class OceanDiscretization(Discretization):
         if self.parameters.get('X-periodic', True):
             self.x_periodic = True
 
+        self._get_parameter_values()
+
+    def _get_parameter_values(self):
+        '''A central point for obtaining parameter values. Call this
+        before using any of the attributes.
+
+        '''
+        # Dimensional parameters
+        self.A_H = self.parameters.get('Horizontal Friction Coefficient', 2.5e+05)
+        self.A_V = self.parameters.get('Vertical Friction Coefficient', 5.0e-03)
+        self.K_H = self.parameters.get('Horizontal Heat Diffusivity', 0.5e+03)
+        self.K_V = self.parameters.get('Vertical Heat Diffusivity', 0.8e-04)
+        self.alpha_S = self.parameters.get('Solutal Compressibility Coefficient', 7.6e-04)
+        self.alpha_T = self.parameters.get('Thermal Compressibility Coefficient', 1.0e-04)
+        self.Omega_0 = self.parameters.get('Earth Rotation Rate', 7.292e-05)
+        self.eta_f = self.parameters.get('Rotation Flag', 1)
+        self.r_0 = self.parameters.get('Earth Radius', 6.37e+06)
+        self.U = self.parameters.get('Velocity Scale', 0.1)
+        self.depth = self.parameters.get('Depth', 5000)
+        self.g = self.parameters.get('Gravitational Constant', 9.8)
+
+        # Non-dimensional parameters
+        self.Ek_H = self.parameters.get('Horizontal Ekman Number',
+                                        self.A_H / (2 * self.Omega_0 * self.r_0 * self.r_0)) * 100
+        self.Ek_V = self.parameters.get('Vertical Ekman Number',
+                                        self.A_V / (2 * self.Omega_0 * self.depth * self.depth))
+        self.Pe_H = self.parameters.get('Horizontal Peclet Number',
+                                        self.K_H / (self.U * self.r_0))
+        self.Pe_V = self.parameters.get('Vertical Peclet Number',
+                                        self.K_V * self.r_0 / (self.U * self.depth * self.depth))
+        self.Bi = self.parameters.get('Biot Number', 14.8)
+        self.Ra = self.parameters.get('Rayleigh Number',
+                                      self.alpha_T * self.g * self.depth / (2 * self.Omega_0 * self.U * self.r_0))
+        self.lamb = self.parameters.get('Bouyancy Ratio', self.alpha_S / self.alpha_T)
+
     def _linear_part_2D(self):
         raise NotImplementedError
 
     def _linear_part_3D(self):
-        # Dimensional parameters
-        A_H = self.parameters.get('Horizontal Friction Coefficient', 2.5e+05)
-        A_V = self.parameters.get('Vertical Friction Coefficient', 5.0e-03)
-        K_H = self.parameters.get('Horizontal Heat Diffusivity', 0.5e+03)
-        K_V = self.parameters.get('Vertical Heat Diffusivity', 0.8e-04)
-        alpha_S = self.parameters.get('Solutal Compressibility Coefficient', 7.6e-04)
-        alpha_T = self.parameters.get('Thermal Compressibility Coefficient', 1.0e-04)
-        Omega_0 = self.parameters.get('Earth Rotation Rate', 7.292e-05)
-        eta_f = self.parameters.get('Rotation Flag', 1)
-        r_0 = self.parameters.get('Earth Radius', 6.37e+06)
-        U = self.parameters.get('Velocity Scale', 0.1)
-        depth = self.parameters.get('Depth', 5000)
-        g = self.parameters.get('Gravitational Constant', 9.8)
+        self._get_parameter_values()
 
-        # Non-dimensional parameters
-        Ek_H = self.parameters.get('Horizontal Ekman Number',
-                                   A_H / (2 * Omega_0 * r_0 * r_0)) * 100
-        Ek_V = self.parameters.get('Vertical Ekman Number',
-                                   A_V / (2 * Omega_0 * depth * depth))
-        Pe_H = self.parameters.get('Horizontal Peclet Number',
-                                   K_H / (U * r_0))
-        Pe_V = self.parameters.get('Vertical Peclet Number',
-                                   K_V * r_0 / (U * depth * depth))
-        Bi = self.parameters.get('Biot Number', 14.8)
-        Ra = self.parameters.get('Rayleigh Number',
-                                 alpha_T * g * depth / (2 * Omega_0 * U * r_0))
-        lamb = self.parameters.get('Bouyancy Ratio', alpha_S / alpha_T)
-
-        return Ek_H * (self.u_xx() + self.u_yy()
-                       - self.icos2uscale(self.value_u() + 2 * self.sinuscale(self.v_x_at_u()))
-                       + self.v_xx() + self.v_yy()
-                       - self.icos2vscale(self.value_v() - 2 * self.sinvscale(self.u_x_at_v()))) \
-            + Ek_V * (self.u_zz() + self.v_zz()) \
+        return self.Ek_H * (self.u_xx() + self.u_yy()
+                            - self.icos2uscale(self.value_u() + 2 * self.sinuscale(self.v_x_at_u()))
+                            + self.v_xx() + self.v_yy()
+                            - self.icos2vscale(self.value_v() - 2 * self.sinvscale(self.u_x_at_v()))) \
+            + self.Ek_V * (self.u_zz() + self.v_zz()) \
             - (self.icosuscale(self.p_x()) + self.p_y() + self.p_z()) \
-            + eta_f * (self.sinuscale(self.v_at_u()) - self.sinvscale(self.u_at_v())) \
-            + Ra * (self.T_at_w() - lamb * self.S_at_w()) \
-            + Pe_H * (self.T_xx() + self.T_yy() + self.S_xx() + self.S_yy()) \
-            + Pe_V * (self.T_zz() + self.S_zz()) \
-            - Bi * self.T_surface() \
+            + self.eta_f * (self.sinuscale(self.v_at_u()) - self.sinvscale(self.u_at_v())) \
+            + self.Ra * (self.T_at_w() - self.lamb * self.S_at_w()) \
+            + self.Pe_H * (self.T_xx() + self.T_yy() + self.S_xx() + self.S_yy()) \
+            + self.Pe_V * (self.T_zz() + self.S_zz()) \
+            - self.Bi * self.T_surface() \
             + self.div()
 
     def nonlinear_part(self, state):
+        self._get_parameter_values()
+
         state_mtx = utils.create_padded_state_mtx(state, self.nx, self.ny, self.nz, self.dof,
                                                   self.x_periodic, self.y_periodic, self.z_periodic)
 
@@ -91,13 +102,8 @@ class OceanDiscretization(Discretization):
         atomJ = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
         atomF = numpy.zeros((self.nx, self.ny, self.nz, self.dof, self.dof, 3, 3, 3))
 
-        # Dimensional parameters
-        Omega_0 = self.parameters.get('Earth Rotation Rate', 7.292e-05)
-        r_0 = self.parameters.get('Earth Radius', 6.37e+06)
-        U = self.parameters.get('Velocity Scale', 0.1)
-
         # Non-dimensional parameters
-        eps_R = self.parameters.get('Rossby Number', U / (2 * Omega_0 * r_0))
+        eps_R = self.parameters.get('Rossby Number', self.U / (2 * self.Omega_0 * self.r_0))
 
         self.u_u_x(atomJ, atomF, state_mtx)
         self.v_u_y(atomJ, atomF, state_mtx)
