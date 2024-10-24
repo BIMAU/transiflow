@@ -447,6 +447,56 @@ def compute_streamfunction(state, interface, axis=2):
 
     return (psiu - psiv) / 2
 
+def compute_overturning_streamfunction(state, interface):
+    '''Compute the overturning stream function at the grid points.
+
+    Parameters
+    ----------
+    state : array_like
+        The state vector to extract the velocities from.
+    interface : Interface
+        Interface corresponding to the state vector.
+    axis : int, optional
+        Axis along which we take the center point. Not necessary in
+        case the problem is 2D.
+
+    Returns
+    -------
+    x : array_like
+        A 2D vector containing the stream function values in Sv.
+
+    '''
+    x = interface.x
+    y = interface.y
+    z = interface.z
+
+    nx = interface.nx
+    ny = interface.ny
+    nz = interface.nz
+
+    state = interface.discretization.dimensional_state(state)
+    state_mtx = create_state_mtx(state, interface=interface)
+    v = state_mtx[:, :, :, 1]
+
+    depth = interface.discretization.depth
+    r_0 = interface.discretization.r_0
+
+    # FIXME: periodic BC
+    vint = numpy.zeros((ny, nz))
+    for i in range(nx):
+        dx = x[i] - x[i-1]
+        vint += v[i, :, :] * dx * r_0
+
+    psim = numpy.zeros((ny, nz))
+    for j, k in numpy.ndindex(ny, nz):
+        dz = z[k] - z[k-1]
+        psim[j, k] = vint[j, k] * dz * depth * numpy.cos(y[j])
+
+        if k > 0:
+            psim[j, k] += psim[j, k-1]
+
+    return psim / 1e6
+
 def compute_vorticity(state, interface, axis=2):
     '''Compute the vorticity at the grid points in a plane.
 

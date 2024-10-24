@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from transiflow import utils
 from transiflow.utils import create_state_mtx # noqa: F401
 
-def get_meshgrid(interface, x=None, y=None):
+def get_meshgrid(interface, x=None, y=None, axis=2):
     '''Wrapper around `numpy.meshgrid(x, y)` that obtains necessary
     information from the interface.
 
@@ -26,9 +26,13 @@ def get_meshgrid(interface, x=None, y=None):
 
     '''
     if x is None:
-        x = interface.x[:-3]
+        if axis != 0:
+            x = interface.x[:-3]
+        else:
+            x = interface.y[:-3]
+
     if y is None:
-        if interface.ny > 1:
+        if interface.ny > 1 and axis != 0:
             y = interface.y[:-3]
         else:
             y = interface.z[:-3]
@@ -120,7 +124,7 @@ def plot_velocity_magnitude(state, interface, axis=2, position=None, title='Velo
     '''
     m = utils.compute_velocity_magnitude(state, interface, axis, position)
 
-    x, y = get_meshgrid(interface)
+    x, y = get_meshgrid(interface, axis=axis)
 
     return plot_contour(x, y, m, axis=axis, title=title, *args, **kwargs)
 
@@ -132,9 +136,24 @@ def plot_streamfunction(state, interface, axis=2, title='Stream function', *args
     '''
     psi = utils.compute_streamfunction(state, interface, axis)
 
-    x, y = get_meshgrid(interface)
+    x, y = get_meshgrid(interface, axis=axis)
 
     return plot_contour(x, y, psi, axis=axis, title=title, *args, **kwargs)
+
+def plot_overturning_streamfunction(state, interface, title='Overturning stream function', *args, **kwargs):
+    '''Create a plot of the overturning stream function.
+
+    See :meth:`plot_contour` and :func:`.compute_streamfunction` for details.
+
+    '''
+    psi = utils.compute_overturning_streamfunction(state, interface)
+
+    x, y = get_meshgrid(interface, axis=0)
+
+    x *= 180 / numpy.pi
+    y *= interface.discretization.depth
+
+    return plot_contour(x, y, psi, axis=0, title=title, *args, **kwargs)
 
 def plot_vorticity(state, interface, axis=2, title='Vorticity', *args, **kwargs):
     '''Create a plot of the vorticity.
@@ -144,7 +163,7 @@ def plot_vorticity(state, interface, axis=2, title='Vorticity', *args, **kwargs)
     '''
     psi = utils.compute_vorticity(state, interface, axis)
 
-    x, y = get_meshgrid(interface)
+    x, y = get_meshgrid(interface, axis=axis)
 
     return plot_contour(x, y, psi, axis=axis, title=title, *args, **kwargs)
 

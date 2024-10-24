@@ -57,6 +57,10 @@ class OceanDiscretization(Discretization):
         self.depth = self.parameters.get('Depth', 5000)
         self.g = self.parameters.get('Gravitational Constant', 9.8)
 
+        self.rho_0 = self.parameters.get('Reference Density', 1.0e+3)
+        self.T_0 = self.parameters.get('Reference Temperature', 15.0)
+        self.S_0 = self.parameters.get('Reference Salinity', 35.0)
+
         # Non-dimensional parameters
         self.Ek_H = self.parameters.get('Horizontal Ekman Number',
                                         self.A_H / (2 * self.Omega_0 * self.r_0 * self.r_0)) * 100
@@ -70,6 +74,30 @@ class OceanDiscretization(Discretization):
         self.Ra = self.parameters.get('Rayleigh Number',
                                       self.alpha_T * self.g * self.depth / (2 * self.Omega_0 * self.U * self.r_0))
         self.lamb = self.parameters.get('Bouyancy Ratio', self.alpha_S / self.alpha_T)
+
+        self.delta_T = 1
+        self.delta_S = 1
+
+    def dimensional_state(self, state):
+        '''Turn the non-dimensional state into a dimensional state for
+        postprocessing purposes.'''
+        self._get_parameter_values()
+
+        state_mtx = utils.create_state_mtx(state, self.nx, self.ny, self.nz, self.dof)
+        state_mtx[:, :, :, 0:3] *= self.U
+
+        z = utils.compute_coordinate_vector_centers(self.z)
+        state_mtx[:, :, :, 3] *= 2 * self.Omega_0 * self.r_0 * self.U * self.rho_0
+        for k in range(self.nz):
+            state_mtx[:, :, k, 3] += -self.rho_0 * self.g * z[k]
+
+        state_mtx[:, :, :, 4] *= self.delta_T
+        state_mtx[:, :, :, 4] += self.T_0
+
+        state_mtx[:, :, :, 5] *= self.delta_S
+        state_mtx[:, :, :, 5] += self.S_0
+
+        return utils.create_state_vec(state_mtx, self.nx, self.ny, self.nz, self.dof)
 
     def _linear_part_2D(self):
         raise NotImplementedError
