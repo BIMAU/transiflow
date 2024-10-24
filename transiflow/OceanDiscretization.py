@@ -2,6 +2,7 @@ import numpy
 
 from transiflow import utils
 from transiflow.Discretization import Discretization
+from transiflow.CrsMatrix import CrsMatrix
 
 class OceanDiscretization(Discretization):
     '''Finite volume discretization of an ocean model in a spherical
@@ -25,10 +26,14 @@ class OceanDiscretization(Discretization):
 
         zmin = self.parameters.get('Z-min', -1)
         zmax = self.parameters.get('Z-max', 0)
-        qz = self.parameters.get('Grid Stretching Factor', 2.25)
-        z = utils.create_stretched_coordinate_vector_from_function(
-            zmin, zmax, nz,
-            lambda z: numpy.tanh(qz * z) / numpy.tanh(qz))
+
+        if self.parameters.get('Grid Stretching', True):
+            qz = self.parameters.get('Grid Stretching Factor', 2.25)
+            z = utils.create_stretched_coordinate_vector_from_function(
+                zmin, zmax, nz,
+                lambda z: numpy.tanh(qz * z) / numpy.tanh(qz))
+        else:
+            z = utils.create_uniform_coordinate_vector(zmin, zmax, nz)
 
         Discretization.__init__(self, parameters, nx, ny, nz, dim, dof,
                                 x, y, z, boundary_conditions)
@@ -146,6 +151,8 @@ class OceanDiscretization(Discretization):
         atomJ *= eps_R
         atomF *= eps_R
 
+        # TODO: These are the alternative implementations in THCM
+
         self.u_T_x(atomJ, atomF, state_mtx)
         self.u_S_x(atomJ, atomF, state_mtx)
         self.v_T_y(atomJ, atomF, state_mtx)
@@ -156,6 +163,110 @@ class OceanDiscretization(Discretization):
         atomJ += atomF
 
         return (atomJ, atomF)
+
+    def set_dof(self):
+        self.dof = self.dim + 3
+
+    # Integral condition
+
+    def jacobian(self, state):
+        A = Discretization.jacobian(self, state)
+
+        n = self.nx * self.ny * self.nz * self.dof
+        coA = numpy.zeros(n)
+        jcoA = numpy.zeros(n, dtype=int)
+        begA = numpy.zeros(n+1, dtype=int)
+
+        # Remove the last row
+        A.begA[n] = A.begA[n-1]
+
+        y = utils.compute_coordinate_vector_centers(self.y)
+
+        idx = 0
+        for i, j, k in numpy.ndindex(self.nx, self.ny, self.nz):
+            jcoA[idx] = (i + (j + k * self.ny) * self.nx) * self.dof + self.dim + 2
+            coA[idx] = Discretization._mass_C(i, j, k, self.x, self.y, self.z) * numpy.cos(y[j])
+            idx += 1
+
+        begA[n] = idx
+        return A + CrsMatrix(coA, jcoA, begA)
+
+    def rhs(self, state):
+        rhs = Discretization.rhs(self, state)
+        rhs[-1] = 0
+        return rhs
+
+    def mass_matrix(self):
+        atom = self.mass_x() + self.mass_y()
+        atom += self.mass_T()
+        atom += self.mass_S()
+
+        mass = self.assemble_mass_matrix(atom)
+        mass.begA[-2] = mass.begA[-1]
+        return mass
+
+    # Boundary conditions
+
+    def _temperature(self, boundary_conditions, atom):
+        '''Idealized temperature forcing applied to the upper layer as
+        body forcing.'''
+        self._get_parameter_values()
+
+        temp = self.parameters.get('Temperature Forcing', 0)
+
+        y_center = utils.compute_coordinate_vector_centers(self.y)
+        T_S = numpy.zeros((self.nx+2, self.ny+2))
+        for j in range(self.ny+2):
+            T_S[:, j] = numpy.cos(numpy.pi * y_center[j] / self.y[self.ny-1])
+
+        T_S *= Discretization._mass_C(0, 0, 0, self.x, self.y, self.z)
+
+        boundary_conditions.frc[:, :, -1, 4] = self.Bi * temp * T_S[0:-2, 0:-2]
+
+    def _salinity(self, boundary_conditions, atom):
+        '''Idealized salinity forcing applied to the upper layer as
+        body forcing.'''
+        self._get_parameter_values()
+
+        F_0 = self.parameters.get('Salinity Flux Amplitude', 1e-7)
+        salt = self.parameters.get('Salinity Forcing', 0)
+        dz = self.z[self.nz-1] - self.z[self.nz-2]
+        gamma = self.parameters.get('Salinity Flux Strength',
+                                    F_0 * self.r_0 / (self.U * self.delta_S * self.depth * dz))
+
+        y_center = utils.compute_coordinate_vector_centers(self.y)
+        F_S = numpy.zeros((self.nx+2, self.ny+2))
+        for j in range(self.ny+2):
+            F_S[:, j] = numpy.cos(numpy.pi * y_center[j] / self.y[self.ny-1]) / numpy.cos(y_center[j])
+
+        F_S *= Discretization._mass_C(0, 0, 0, self.x, self.y, self.z)
+
+        boundary_conditions.frc[:, :, -1, 5] = gamma * salt * F_S[0:-2, 0:-2]
+
+    def _2d_ocean(self, boundary_conditions, atom):
+        '''Boundary conditions for the 2D double-hemispheric basin
+        set-up'''
+        boundary_conditions.heat_flux_south(atom, 0)
+        boundary_conditions.heat_flux_north(atom, 0)
+
+        boundary_conditions.salinity_flux_south(atom, 0)
+        boundary_conditions.salinity_flux_north(atom, 0)
+
+        boundary_conditions.free_slip_south(atom)
+        boundary_conditions.free_slip_north(atom)
+
+        boundary_conditions.heat_flux_bottom(atom, 0)
+        boundary_conditions.salinity_flux_bottom(atom, 0)
+        boundary_conditions.free_slip_bottom(atom)
+
+        self._temperature(boundary_conditions, atom)
+        self._salinity(boundary_conditions, atom)
+
+        boundary_conditions.heat_flux_top(atom, 0)
+        boundary_conditions.salinity_flux_top(atom, 0)
+        boundary_conditions.free_slip_top(atom)
+
+        return boundary_conditions.get_forcing()
 
     def _ocean(self, boundary_conditions, atom):
         '''Boundary conditions for the 3D ocean circulation'''
@@ -182,6 +293,8 @@ class OceanDiscretization(Discretization):
         '''Setup boundary conditions for the currently defined problem type.'''
         if self.boundary_conditions:
             return
+        elif self.problem_type_equals('2D Ocean'):
+            self.boundary_conditions = self._2d_ocean
         elif self.problem_type_equals('Ocean'):
             self.boundary_conditions = self._ocean
         else:

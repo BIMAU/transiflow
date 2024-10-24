@@ -5,6 +5,7 @@ from transiflow.utils import norm
 
 from transiflow.Discretization import Discretization
 from transiflow.CylindricalDiscretization import CylindricalDiscretization
+from transiflow.OceanDiscretization import OceanDiscretization
 
 
 class NumpyEncoder(json.JSONEncoder):
@@ -51,6 +52,10 @@ class BaseInterface:
         if 'Problem Type' in parameters and 'Taylor-Couette' in parameters['Problem Type']:
             self.discretization = CylindricalDiscretization(parameters, nx, ny, nz, dim, dof,
                                                             x, y, z, boundary_conditions)
+
+        elif 'Problem Type' in parameters and 'Ocean' in parameters['Problem Type']:
+            self.discretization = OceanDiscretization(parameters, nx, ny, nz, dim, dof,
+                                                      x, y, z, boundary_conditions)
         else:
             self.discretization = Discretization(parameters, nx, ny, nz, dim, dof,
                                                  x, y, z, boundary_conditions)

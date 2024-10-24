@@ -172,6 +172,16 @@ def test_thcm():
         print(A.jcoA[A.begA[i]:A.begA[i+1]])
         print(A.coA[A.begA[i]:A.begA[i+1]])
 
+        # Integral condition
+        if B.begA[i+1] - B.begA[i] == n // dof:
+            dx = discretization.x[1] - discretization.x[0]
+            dy = discretization.y[1] - discretization.y[0]
+            dz = 1 / 4
+
+            scaling = -dx * dy * dz
+
+            rhs_B[i] = 0
+
         print('Scaled:')
         print(-A.coA[A.begA[i]:A.begA[i+1]] / scaling)
 
