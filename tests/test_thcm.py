@@ -5,6 +5,33 @@ from tests import testutils
 
 from transiflow import OceanDiscretization
 
+def get_scaling(discretization, n):
+    dof = 6
+
+    x = discretization.x
+    y = discretization.y
+    z = discretization.z
+
+    nx = discretization.nx
+    ny = discretization.ny
+    nz = discretization.nz
+    dof = discretization.dof
+
+    i = (n // dof) % nx
+    j = (n // dof // nx) % ny
+    k = (n // dof // nx // ny) % nz
+
+    if n % dof == 0:
+        return discretization._mass_x(i, j, k, x, y, z)
+    elif n % dof == 1:
+        return discretization._mass_x(j, i, k, y, x, z)
+    elif n % dof == 2:
+        return discretization._mass_x(k, j, i, z, y, x)
+    elif n % dof == 3:
+        return -discretization._mass_C(i, j, k, x, y, z)
+    else:
+        return discretization._mass_C(i, j, k, x, y, z)
+
 def test_thcm_lin():
     nx = 4
     ny = nx
@@ -20,12 +47,10 @@ def test_thcm_lin():
 
     B = testutils.read_matrix('data/thcm_lin_%sx%sx%s.txt' % (nx, ny, nz))
 
-    mass_matrix = discretization.mass_matrix()
-
     for i in range(n):
         print(i)
 
-        scaling = mass_matrix[i, i] or -mass_matrix[i+1, i+1]
+        scaling = get_scaling(discretization, i)
 
         print('Expected:')
         print(B.jcoA[B.begA[i]:B.begA[i+1]])
@@ -59,12 +84,10 @@ def test_thcm_bnd():
 
     B = testutils.read_matrix('data/thcm_bnd_%sx%sx%s.txt' % (nx, ny, nz))
 
-    mass_matrix = discretization.mass_matrix()
-
     for i in range(n):
         print(i)
 
-        scaling = mass_matrix[i, i] or -mass_matrix[i+1, i+1]
+        scaling = get_scaling(discretization, i)
 
         print('Expected:')
         print(B.jcoA[B.begA[i]:B.begA[i+1]])
@@ -108,12 +131,10 @@ def test_thcm_bil():
 
     B = testutils.read_matrix('data/thcm_bil_%sx%sx%s.txt' % (nx, ny, nz))
 
-    mass_matrix = discretization.mass_matrix()
-
     for i in range(n):
         print(i)
 
-        scaling = mass_matrix[i, i] or -mass_matrix[i+1, i+1]
+        scaling = get_scaling(discretization, i)
 
         print('Expected:')
         print(B.jcoA[B.begA[i]:B.begA[i+1]])
@@ -157,12 +178,10 @@ def test_thcm():
     B = testutils.read_matrix('data/thcm_%sx%sx%s.txt' % (nx, ny, nz))
     rhs_B = testutils.read_vector('data/thcm_rhs_%sx%sx%s.txt' % (nx, ny, nz))
 
-    mass_matrix = discretization.mass_matrix()
-
     for i in range(n):
         print(i)
 
-        scaling = mass_matrix[i, i] or -mass_matrix[i+1, i+1]
+        scaling = get_scaling(discretization, i)
 
         print('Expected:')
         print(B.jcoA[B.begA[i]:B.begA[i+1]])
