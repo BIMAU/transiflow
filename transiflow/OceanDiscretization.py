@@ -66,6 +66,9 @@ class OceanDiscretization(Discretization):
         self.T_0 = self.parameters.get('Reference Temperature', 15.0)
         self.S_0 = self.parameters.get('Reference Salinity', 35.0)
 
+        self.delta_T = 1
+        self.delta_S = 1
+
         # Non-dimensional parameters
         self.Ek_H = self.parameters.get('Horizontal Ekman Number',
                                         self.A_H / (2 * self.Omega_0 * self.r_0 * self.r_0))
@@ -75,13 +78,12 @@ class OceanDiscretization(Discretization):
                                         self.K_H / (self.U * self.r_0))
         self.Pe_V = self.parameters.get('Vertical Peclet Number',
                                         self.K_V * self.r_0 / (self.U * self.depth * self.depth))
+        Ra_g = self.alpha_T * self.delta_T * self.g * self.depth / (
+            2 * self.Omega_0 * self.U * self.r_0)
+        Ra = (self.eta_f + (1 - self.eta_f) * self.Ek_H) * Ra_g
+        self.Ra = self.parameters.get('Rayleigh Number', Ra)
         self.Bi = self.parameters.get('Biot Number', 14.8)
-        self.Ra = self.parameters.get('Rayleigh Number',
-                                      self.alpha_T * self.g * self.depth / (2 * self.Omega_0 * self.U * self.r_0))
         self.lamb = self.parameters.get('Bouyancy Ratio', self.alpha_S / self.alpha_T)
-
-        self.delta_T = 1
-        self.delta_S = 1
 
     def dimensional_state(self, state):
         '''Turn the non-dimensional state into a dimensional state for
@@ -243,9 +245,19 @@ class OceanDiscretization(Discretization):
 
         boundary_conditions.frc[:, :, -1, 5] = gamma * salt * F_S[0:-2, 0:-2]
 
-    def _2d_ocean(self, boundary_conditions, atom):
+    def _ocean_basin(self, boundary_conditions, atom):
         '''Boundary conditions for the 2D double-hemispheric basin
         set-up'''
+        if not self.x_periodic:
+            boundary_conditions.heat_flux_east(atom, 0)
+            boundary_conditions.heat_flux_west(atom, 0)
+
+            boundary_conditions.salinity_flux_east(atom, 0)
+            boundary_conditions.salinity_flux_west(atom, 0)
+
+            boundary_conditions.free_slip_east(atom)
+            boundary_conditions.free_slip_west(atom)
+
         boundary_conditions.heat_flux_south(atom, 0)
         boundary_conditions.heat_flux_north(atom, 0)
 
@@ -293,8 +305,8 @@ class OceanDiscretization(Discretization):
         '''Setup boundary conditions for the currently defined problem type.'''
         if self.boundary_conditions:
             return
-        elif self.problem_type_equals('2D Ocean'):
-            self.boundary_conditions = self._2d_ocean
+        elif self.problem_type_equals('Ocean Basin'):
+            self.boundary_conditions = self._ocean_basin
         elif self.problem_type_equals('Ocean'):
             self.boundary_conditions = self._ocean
         else:

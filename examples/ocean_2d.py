@@ -11,7 +11,7 @@ def main():
     nz = 16
 
     # Define the problem
-    parameters = {'Problem Type': '2D Ocean',
+    parameters = {'Problem Type': 'Ocean Basin',
                   'Grid Stretching': False,
                   'X-min': 0,
                   'X-max': 180 / numpy.pi,
@@ -26,6 +26,7 @@ def main():
                   'Biot Number': 10,
                   'Rayleigh Number': 1.2e-4,
                   'Bouyancy Ratio': 1,
+                  'Salinity Flux Strength': 0,
                   }
 
     interface = Interface(parameters, nx, ny, nz)
