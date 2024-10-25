@@ -209,6 +209,25 @@ class OceanDiscretization(Discretization):
 
     # Boundary conditions
 
+    def _tau_x(self):
+        y_center = utils.compute_coordinate_vector_centers(self.y)
+        tau_x = numpy.zeros((self.nx+2, self.ny+2))
+        for j in range(self.ny+2):
+            tau_x[:, j] = -numpy.cos(2 * numpy.pi * y_center[j] / self.y[self.ny-1])
+        return tau_x
+
+    def _wind(self, boundary_conditions, atom):
+        '''Idealized wind forcing applied to the upper layer as body
+        forcing.'''
+        tau_0 = self.parameters.get('Wind Stress Amplitude', 0.1)
+        wind = self.parameters.get('Wind Forcing', 0)
+
+        dz = self.z[self.nz-1] - self.z[self.nz-2]
+        alpha_tau = tau_0 / (2 * self.Omega_0 * self.rho_0 * self.depth * self.U * dz)
+        tau_x = self._tau_x() * Discretization._mass_C(0, 0, 0, self.x, self.y, self.z)
+
+        boundary_conditions.frc[:, :, -1, 0] = alpha_tau * wind * tau_x[0:-2, 0:-2]
+
     def _temperature(self, boundary_conditions, atom):
         '''Idealized temperature forcing applied to the upper layer as
         body forcing.'''
@@ -273,6 +292,7 @@ class OceanDiscretization(Discretization):
 
         self._temperature(boundary_conditions, atom)
         self._salinity(boundary_conditions, atom)
+        self._wind(boundary_conditions, atom)
 
         boundary_conditions.heat_flux_top(atom, 0)
         boundary_conditions.salinity_flux_top(atom, 0)
