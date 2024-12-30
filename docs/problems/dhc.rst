@@ -1,6 +1,7 @@
 Differentially Heated Cavity
 ============================
 In the differentially heated cavity, the fluid is driven by two opposite vertical walls that have different temperatures $T_A$ and $T_B$.
+Since we use a nondimensional formulation, $T_A$ and $T_B$ are only used when rescaling back to dimensional quantities.
 
 Governing Equations
 -------------------
