@@ -40,12 +40,15 @@ Parameters
 ----------
 These are the relevant parameters in the ``parameters`` dictionary for this problem type.
 
-===================== ============= =====
-Parameter name        Default value Notes
-===================== ============= =====
-``'Problem Type'``                  Set to ``'AMOC'``
-``'Rayleigh Number'`` 1.0           Unused if Gr is defined
-``'Prandtl Number'``  1.0
-``'Grashof Number'``  Ra / Pr       Overrides Ra if defined
-``'Lewis Number'``    1.0
-===================== ============= =====
+========================= ============= =====
+Parameter name            Default value Notes
+========================= ============= =====
+``'Problem Type'``                      Set to ``'AMOC'``
+``'Rayleigh Number'``     1.0           Unused if Gr is defined
+``'Prandtl Number'``      1.0
+``'Grashof Number'``      Ra / Pr       Overrides Ra if defined
+``'Lewis Number'``        1.0
+``'Asymmetry Parameter'`` 0.0           Used to switch branches
+``'Freshwater Flux'``     0.0           Magnitude of $Q_S$
+``'Temperature Forcing'`` 0.0           Magnitude of $T_S$
+========================= ============= =====

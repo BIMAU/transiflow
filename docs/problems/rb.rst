@@ -1,6 +1,7 @@
 Rayleigh-Bénard Convection
 ==========================
 Rayleigh-Bénard convection describes the flow in a liquid that is heated from below.
+Since we use a nondimensional formulation, temperatures $T_A$ and $T_B$ are only used when rescaling back to dimensional quantities.
 
 Governing Equations
 -------------------
@@ -60,13 +61,14 @@ Parameters
 ----------
 These are the relevant parameters in the ``parameters`` dictionary for this problem type.
 
-===================== ============= =====
-Parameter name        Default value Notes
-===================== ============= =====
-``'Problem Type'``                  | Set to ``'Rayleigh-Benard'`` or
-                                    | ``'Rayleigh-Benard Perturbation'``
-``'Rayleigh Number'`` 1.0           Unused if Gr is defined
-``'Prandtl Number'``  1.0
-``'Grashof Number'``  Ra / Pr       Overrides Ra if defined
-``'Biot Number'``     0.0
-===================== ============= =====
+========================= ============= =====
+Parameter name            Default value Notes
+========================= ============= =====
+``'Problem Type'``                      | Set to ``'Rayleigh-Benard'`` or
+                                        | ``'Rayleigh-Benard Perturbation'``
+``'Rayleigh Number'``     1.0           Unused if Gr is defined
+``'Prandtl Number'``      1.0
+``'Grashof Number'``      Ra / Pr       Overrides Ra if defined
+``'Biot Number'``         0.0
+``'Asymmetry Parameter'`` 0.0           Used to switch branches
+========================= ============= =====
