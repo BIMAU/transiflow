@@ -16,6 +16,7 @@ The package is fully agnostic of the computational back-end, which allows for ea
 
    continuation
    custom-bc
+   custom-model
 
 .. _problem definitions:
 .. toctree::
