@@ -7,7 +7,7 @@ Welcome to TransiFlow's documentation!
 ======================================
 
 TransiFlow is a Python package for performing analysis on transitions in fluid flows.
-For this purpose, we implement a pseudo-arclength continuation method, an implicit time integration method, as well as finite-volume discretizations of various fluid flow problems.
+For this purpose, we implement a pseudo-arclength :mod:`continuation <.Continuation>` method, an implicit :mod:`time integration <.TimeIntegration>` method, as well as finite-volume :mod:`discretizations <.Discretization>` of various fluid flow problems.
 The package is fully agnostic of the computational backend, which allows for easy switching between e.g. SciPy for performing small scale simulations and PyTrilinos for large scale parallel computations.
 
 .. toctree::
