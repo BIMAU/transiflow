@@ -5,7 +5,7 @@ The full example can be found in ``examples/qg.py``.
 
 First we create an :func:`Interface <.create>`.
 This is the interface to the computational backend and to the discretization of the problem.
-The problem is defined by the ``parameters`` dictionary, the problem size by ``nx`` and ``ny``, and optionally ``nz`` for 3D problems.
+The :ref:`problem <problem definitions>` is defined by the ``parameters`` dictionary, the problem size by ``nx`` and ``ny``, and optionally ``nz`` for 3D problems.
 By specifying the ``backend`` parameter, we could use a :ref:`different computational backend <choosing a backend>` (the default is SciPy) and everything would work exactly the same.
 
 .. code-block:: Python
