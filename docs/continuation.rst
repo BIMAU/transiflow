@@ -4,9 +4,9 @@ In this section, we will briefly guide you through the :ref:`Double-gyre wind-dr
 The full example can be found in ``examples/qg.py``.
 
 First we create an :func:`Interface <.create>`.
-This is the interface to the computational back-end and to the discretization of the problem.
+This is the interface to the computational backend and to the discretization of the problem.
 The problem is defined by the ``parameters`` dictionary, the problem size by ``nx`` and ``ny``, and optionally ``nz`` for 3D problems.
-By specifying the ``backend`` parameter, we could use a different computational back-end (the default is SciPy) and everything would work exactly the same.
+By specifying the ``backend`` parameter, we could use a :ref:`different computational backend <choosing a backend>` (the default is SciPy) and everything would work exactly the same.
 
 .. code-block:: Python
 
