@@ -45,7 +45,7 @@ If there is insufficient continuity between the projects, knowledge of how to us
 In climate modelling, this is a prominent issue, since the models are complex, are usually intercoupled with other models (e.g., ocean, atmosphere, ice), take a very long time to run (i.e., multiple months) and require large amounts of parallelism to reach a sufficient resolution (i.e., using thousands of cores for a single run) [@thies:09; @mulder:21].
 Therefore, ease of developing and using the parallel software is crucial.
 
-By abstracting away the computational back-end from the user, the user can develop their model on their own machine (e.g., a laptop) in Python using the SciPy back-end, and once the model works, run a large scale simulation on a supercomputer, e.g., using the `Trilinos` back-end, which can use a combination of OpenMP, MPI and potentially GPUs, without requiring any changes to the code.
+By abstracting away the computational back-end from the user, the user can adjust a model to their own needs on their own machine (e.g., a laptop) in Python using the SciPy back-end, and once the model works, run a large scale simulation on a supercomputer, e.g., using the `Trilinos` back-end, which can use a combination of OpenMP, MPI and potentially GPUs, without requiring any changes to the code.
 The computationally expensive parts of the program are implemented by these libraries, so one does not have to worry about the efficiency of the Python implementation of the model.
 Initial tests indicate that the overhead of using Python is less than 1% of the total computational cost.
 
@@ -56,7 +56,7 @@ Solid lines indicate stable steady states of the system, dashed lines indicate u
 # Statement of need
 
 `TransiFlow` aims to be an easy to use tool for performing bifurcation analysis on fluid flow problems that can be used in combination with fast parallel solvers without any additional effort.
-Moreover, `TransiFlow` includes discretizations of the governing equations for several canonical fluid flow problems, a feature none of its competitors provides.
+For this purpose, `TransiFlow` implements pseudo-arclength continuation and implicit time integration methods, as well as finite-volume discretizations of various canonical fluid flow problems such as a lid-driven and differentially heated cavities, Rayleigh-Bénard convection and Taylor-Couette flow, a feature none of its competitors provide.
 
 The main competitors are [`AUTO`](http://indy.cs.concordia.ca/auto/) [@doedel:07], [`MatCont`](https://sourceforge.net/projects/matcont/) [@dhooge:08] and [`pde2path`](https://www.staff.uni-oldenburg.de/hannes.uecker/pde2path/) [@uecker:14].
 These packages are widely used, and they are much more feature complete in terms of bifurcation analysis.
