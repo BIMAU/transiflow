@@ -13,7 +13,7 @@ from unittest.mock import MagicMock
 project = 'TransiFlow'
 copyright = '2024 Utrecht University'
 author = 'Sven Baars'
-release = '0.0.0'
+release = '1.0.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
