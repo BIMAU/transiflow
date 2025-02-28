@@ -50,7 +50,7 @@ The computationally expensive parts of the program are implemented by these libr
 Initial tests indicate that the overhead of using Python is less than 1% of the total computational cost.
 
 ![Bifurcation diagram of the double-gyre wind-driven circulation configuration that is included in `TransiFlow`.
-The markers indicate pitchfork and saddle-node bifurcations that were automatically detected by the software.
+The markers indicate pitchfork, Hopf and saddle-node bifurcations that were automatically detected by the software.
 Solid lines indicate stable steady states of the system, dashed lines indicate unstable steady states.](qg-bif.pdf){height=250pt}
 
 # Statement of need
