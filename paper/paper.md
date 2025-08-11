@@ -31,8 +31,9 @@ bibliography: paper.bib
 # Summary
 
 Dynamical systems such as those derived from models of fluid flows show transition behavior associated with fluid flow instabilities [@wubs:23].
-Examples are dynamical systems from ocean models in which transition behavior is caused by slow changes in parameters representing the surface forcing [@westen:24].
-Such changes in the stability of the fluid flow can be studied by performing numerical simulations with a model and observing its transient behavior after a certain time.
+Examples include dynamical systems from ocean models in which transition behavior is caused by slow changes in parameters representing the surface forcing [@westen:24].
+Such changes in the stability of the fluid flow can be caused by the presence of bifurcation points, which, in certain cases, are also referred to as tipping points.
+Studying these phenomena (bifurcation analysis) can be done by performing numerical simulations with a model and observing its transient behavior after a certain time.
 This is, however, computationally very expensive, and in many cases infeasible.
 Instead, so called continuation methods are able to trace stable and unstable steady states in parameter space, obviating expensive transient simulations [@dijkstra:05].
 The `TransiFlow` Python package implements a continuation framework in which fluid flow problems can be studied with the help of several computational back-ends that can, based on the needs of the user, easily be switched between.
@@ -51,12 +52,15 @@ Initial tests indicate that the overhead of using Python is less than 1% of the 
 
 ![Bifurcation diagram of the double-gyre wind-driven circulation configuration that is included in `TransiFlow`.
 The markers indicate pitchfork, Hopf and saddle-node bifurcations that were automatically detected by the software.
-Solid lines indicate stable steady states of the system, dashed lines indicate unstable steady states.](qg-bif.pdf){height=250pt}
+Solid lines indicate stable steady states of the system; dashed lines indicate unstable steady states.
+A more extensive description of the bifurcation diagram and steps to reproduce it can be found in @[sapsis:13].
+](qg-bif.pdf){height=250pt}
 
 # Statement of need
 
 `TransiFlow` aims to be an easy to use tool for performing bifurcation analysis on fluid flow problems that can be used in combination with fast parallel solvers without any additional effort.
-For this purpose, `TransiFlow` implements pseudo-arclength continuation and implicit time integration methods, as well as finite-volume discretizations of various canonical fluid flow problems such as a lid-driven and differentially heated cavities, Rayleigh-Bénard convection and Taylor-Couette flow, a feature none of its competitors provide.
+For this purpose, `TransiFlow` implements pseudo-arclength continuation and implicit time integration methods, as well as finite-volume discretizations for the incompressible Navier-Stokes equations with optional heat and salinity transport.
+We also provide implementations of various canonical fluid flow problems such as lid-driven and differentially heated cavities, Rayleigh-Bénard convection and Taylor-Couette flow, a feature none of its competitors provide.
 
 The main competitors are [`AUTO`](http://indy.cs.concordia.ca/auto/) [@doedel:07], [`MatCont`](https://sourceforge.net/projects/matcont/) [@dhooge:08] and [`pde2path`](https://www.staff.uni-oldenburg.de/hannes.uecker/pde2path/) [@uecker:14].
 These packages are widely used, and they are much more feature complete in terms of bifurcation analysis.
