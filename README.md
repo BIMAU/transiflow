@@ -32,6 +32,11 @@ An example of how to perform a continuation and compute eigenvalues can be found
 
 ## Installation
 
+TransiFlow is available on [PyPi](https://pypi.org/project/transiflow/), and can be installed by running
+```
+pip install transiflow
+```
+
 TransiFlow is best installed in a [virtual environment](https://docs.python.org/3/library/venv.html).
 We state the most common steps for creating and using a virtual environment here.
 Refer to the documentation for more details.
@@ -46,9 +51,11 @@ and to activate the virtual environment, run
 source /path/to/new/virtual/environment/bin/activate
 ```
 
-After this, we can upgrade pip and install TransiFlow in editable mode from the transiflow source directory.
+After this, we can install TransiFlow from PyPi as described above, or from this source repository, to allow for easy modifications of the code.
+To clone the TransiFlow git repository and install TransiFlow in editable mode from the transiflow source directory, one can perform the following commands
 ```
-pip install --upgrade pip
+git clone https://github.com/BIMAU/transiflow.git
+cd transiflow
 pip install -e .
 ```
 This will also install all of the dependencies.
