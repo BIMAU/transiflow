@@ -62,7 +62,7 @@ A more extensive description of the bifurcation diagram and steps to reproduce i
 For this purpose, `TransiFlow` implements pseudo-arclength continuation and implicit time integration methods, as well as finite-volume discretizations for the incompressible Navier-Stokes equations with optional heat and salinity transport.
 We also provide implementations of various canonical fluid flow problems such as lid-driven and differentially heated cavities, Rayleigh-Bénard convection and Taylor-Couette flow, a feature none of its competitors provide.
 
-The main competitors are [`AUTO`](http://indy.cs.concordia.ca/auto/) [@doedel:07], [`MatCont`](https://sourceforge.net/projects/matcont/) [@dhooge:08] and [`pde2path`](https://www.staff.uni-oldenburg.de/hannes.uecker/pde2path/) [@uecker:14].
+The main competitors are [`AUTO`](http://indy.cs.concordia.ca/auto/) [@doedel:07], [`MatCont`](https://sourceforge.net/projects/matcont/) [@dhooge:08] [BifurcationKit.jl](https://bifurcationkit.github.io/BifurcationKitDocs.jl/stable/) [@veltz:20] and [`pde2path`](https://www.staff.uni-oldenburg.de/hannes.uecker/pde2path/) [@uecker:14].
 These packages are widely used, and they are much more feature complete in terms of bifurcation analysis.
 They do, however, lack the discretized fluid flow models and parallel solver interfaces that make `TransiFlow` easy to use.
 
