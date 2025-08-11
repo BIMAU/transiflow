@@ -73,3 +73,11 @@ ldc.py:64: UserWarning: Matplotlib is currently using agg, which is a non-GUI ba
 ```
 this means that [tkinter](https://docs.python.org/3/library/tkinter.html) is not available.
 You can either just save the image to the disk, or install e.g. `python3-tk` or `python3-matplotlib` on Debian-based Linux distributions.
+
+## Optional dependencies
+
+To use the optional computational backends, you can install the following:
+
+- HYMLS: Install Trilinos with PyTrilinos enabled, then install [HYMLS](https://github.com/nlesc-smcm/hymls).
+- Epetra: Install Trilinos with PyTrilinos enabled. This is enough to use the backend, but since there is no preconditioner, this may not be very useful.
+- PETSc: Run `PETSC_CONFIGURE_OPTIONS='--download-mumps --download-scalapack' pip install mpi4py petsc4py`. This is enough to use the backend, but since there is no preconditioner yet, this may not be very useful.
