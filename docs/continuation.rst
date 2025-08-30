@@ -2,6 +2,7 @@ Performing a continuation
 =========================
 In this section, we will briefly guide you through the :ref:`Double-gyre wind-driven circulation` example as a means of explaining what a typical workflow looks like.
 The full example can be found in ``examples/qg.py``.
+Note that the examples are kept simple to give an idea on how to implement a continuation for your own use case, not to give a demo of the most fancy features that are available.
 
 First we create an :func:`Interface <.create>`.
 This is the interface to the computational backend and to the discretization of the problem.
