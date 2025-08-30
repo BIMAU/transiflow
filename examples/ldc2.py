@@ -1,3 +1,6 @@
+'''An example of performing a continuation for a 2D lid-driven cavity
+and computing eigenvalues along the way.'''
+
 import numpy
 
 from transiflow import Continuation
@@ -11,7 +14,6 @@ import matplotlib.pyplot as plt
 
 
 def main(nx=16):
-    ''' An example of performing a continuation for a 2D lid-driven cavity and computing eigenvalues along the way'''
     ny = nx
 
     # Define the problem

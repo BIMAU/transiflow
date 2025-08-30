@@ -1,3 +1,10 @@
+''' An example of performing a continuation for a 3D lid-driven cavity using HYMLS.
+Multiple processors can be used by calling this script using mpi, e.g.:
+
+OMP_NUM_THREADS=1 mpiexec -np 4 python examples/ldc_3d.py
+
+Disabling threading is adviced, since this is broken in Epetra.'''
+
 from transiflow import Continuation
 from transiflow import Interface
 from transiflow import utils
@@ -23,13 +30,6 @@ def postprocess(data, interface, x, mu, enable_output):
 
 
 def main(nx=16):
-    ''' An example of performing a continuation for a 3D lid-driven cavity using HYMLS.
-    Multiple processors can be used by calling this script using mpi, e.g.:
-
-    OMP_NUM_THREADS=1 mpiexec -np 4 python examples/ldc_3d.py
-
-    Disabling threading is adviced, since this is broken in Epetra.'''
-
     ny = nx
     nz = nx
 

@@ -1,3 +1,6 @@
+'''An example of performing a continuation for a 2D lid-driven cavity
+and detecting a bifurcation point.'''
+
 import matplotlib.pyplot as plt
 
 from transiflow import Continuation
@@ -13,7 +16,6 @@ def postprocess(data, interface, x, mu):
 
 
 def main(nx=32):
-    ''' An example of performing a continuation for a 2D lid-driven cavity and detecting a bifurcation point'''
     ny = nx
     nz = 1
 
