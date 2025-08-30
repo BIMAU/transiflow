@@ -1,3 +1,6 @@
+'''An example of performing a "poor man's continuation" for a 2D
+lid-driven cavity using time integration.'''
+
 import numpy
 
 import matplotlib.pyplot as plt
@@ -14,7 +17,6 @@ def postprocess(data, interface, x, t):
 
 
 def main(nx=16):
-    ''' An example of performing a "poor man's continuation" for a 2D lid-driven cavity using time integration'''
     ny = nx
 
     # Define the problem

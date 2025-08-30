@@ -1,3 +1,7 @@
+'''An example of performing a continuation for a 2D AMOC, where the
+plots and interim solutions are written to files instead of storing
+them in memory and showing them on the screen.'''
+
 import numpy
 import matplotlib.pyplot as plt
 
@@ -38,10 +42,6 @@ def generate_plots(interface, x, sigma):
 
 
 def main(nx=60):
-    '''An example of performing a continuation for a 2D AMOC, where the plots and interim
-    solutions are written to files instead of storing them in memory and showing them on
-    the screen.'''
-
     ny = nx // 2
 
     # Define the problem

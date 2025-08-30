@@ -1,3 +1,7 @@
+'''An example of performing a continuation for a double-gyre
+wind-driven ocean, plotting the streamfunction at different Reynolds
+numbers, and plotting the bifurcation diagram.'''
+
 import numpy
 
 import matplotlib.pyplot as plt
@@ -15,10 +19,6 @@ def postprocess(data, interface, x, mu):
 
 
 def main(nx=32):
-    '''An example of performing a continuation for a double-gyre
-    wind-driven ocean, plotting the streamfunction at different Reynolds
-    numbers, and plotting the bifurcation diagram.'''
-
     ny = nx
 
     # Define the problem
