@@ -32,7 +32,12 @@ bibliography: paper.bib
 
 Dynamical systems such as those derived from models of fluid flows show transition behavior associated with fluid flow instabilities [@wubs:23].
 Examples include dynamical systems from ocean models in which transition behavior is caused by slow changes in parameters representing the surface forcing [@westen:24].
-Such changes in the stability of the fluid flow can be caused by the presence of bifurcation points, which, in certain cases, are also referred to as tipping points.
+By flow transition one means a qualitative change in the flow when a specific parameter is changed, e.g. a transition from a no-flow heat-conducting fluid to a heat-transporting flow (as in Rayleigh-Bénard convection), or a flow which has a steady forcing and steady boundary conditions that turns from a steady flow into a transient flow which may even produce sound (as in the von Kármán vortex street).
+In the foregoing two examples both qualitatively different solutions do not just appear out of the blue.
+If one perturbs the steady solution before the transition point then with time the perturbation will die out and we will recover the steady solution.
+This means that the steady solution is stable.
+However, the perturbation already reveals the shape of the flow that will occur after the transition point.
+After this point that shape will grow into a steady flow (the no-flow solution becomes unstable) for the first example and a transient flow in the second example (the stationary flow becomes unstable).The parameter value for which the transition sets in is called a bifurcation point, which, in certain cases, is also referred to as tipping point.
 Studying these phenomena (bifurcation analysis) can be done by performing numerical simulations with a model and observing its transient behavior after a certain time.
 This is, however, computationally very expensive, and in many cases infeasible.
 Instead, so called continuation methods are able to trace stable and unstable steady states in parameter space, obviating expensive transient simulations [@dijkstra:05].
