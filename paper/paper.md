@@ -38,6 +38,7 @@ If one perturbs the steady solution before the transition point then with time t
 This means that the steady solution is stable.
 However, the perturbation already reveals the shape of the flow that will occur after the transition point.
 After this point that shape will grow into a steady flow (the no-flow solution becomes unstable) for the first example and a transient flow in the second example (the stationary flow becomes unstable).The parameter value for which the transition sets in is called a bifurcation point, which, in certain cases, is also referred to as tipping point.
+
 Studying these phenomena (bifurcation analysis) can be done by performing numerical simulations with a model and observing its transient behavior after a certain time.
 This is, however, computationally very expensive, and in many cases infeasible.
 Instead, so called continuation methods are able to trace stable and unstable steady states in parameter space, obviating expensive transient simulations [@dijkstra:05].
@@ -58,7 +59,7 @@ Initial tests indicate that the overhead of using Python is less than 1% of the 
 ![Bifurcation diagram of the double-gyre wind-driven circulation configuration that is included in `TransiFlow`.
 The markers indicate pitchfork, Hopf and saddle-node bifurcations that were automatically detected by the software.
 Solid lines indicate stable steady states of the system; dashed lines indicate unstable steady states.
-A more extensive description of the bifurcation diagram and steps to reproduce it can be found in @[sapsis:13].
+A more extensive description of the bifurcation diagram and steps to reproduce it can be found in [@sapsis:13].
 ](qg-bif.pdf){height=250pt}
 
 # Statement of need
