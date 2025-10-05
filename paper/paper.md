@@ -56,7 +56,7 @@ Therefore, ease of developing and using the parallel software is crucial.
 
 By abstracting away the computational back-end the user can adjust a model to their own needs on their own machine (e.g., a laptop) in Python using the SciPy back-end, and once the model works, run a large scale simulation on a supercomputer using, e.g., the `Trilinos` back-end, which can use a combination of OpenMP, MPI, and potentially GPUs, without requiring any changes to the code.
 The computationally expensive parts of the program are implemented by these libraries so one does not have to worry about the efficiency of the Python implementation of the model.
-Initial tests indicate that the overhead of using Python is less than 1% of the total computational cost.
+Initial tests indicate that the overhead of using Python is small when compared to the expensive linear system solves that are handled by the external libraries that are implemented in e.g. C++.
 
 ![Bifurcation diagram of the double-gyre wind-driven circulation configuration that is included in `TransiFlow`.
 The markers indicate pitchfork, Hopf and saddle-node bifurcations that were automatically detected by the software.
