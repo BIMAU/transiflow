@@ -85,7 +85,9 @@ It is, however, difficult to extend, the latest version of the software is not f
 
 `TransiFlow` has been used to generate results in [@wubs:23]  and [@bernuzzi:24] and has been used in courses at Utrecht University and the University of Groningen (NL).
 Earlier versions have also been used to generate results in [@song:19] and [@baars:20].
-The code is currently being used in various projects at Utrecht University and by several external researchers.
+The code is currently being used in various projects at Utrecht University, such as a project for coupling climate models and a project for studying transitions in the Atlantic Meridional Overturning Circulation.
+There is also ongoing work on adding 3D ocean and atmosphere discretizations to `TransiFlow`.
+`TransiFlow` is also used by several external researchers.
 
 # Acknowledgements
 
