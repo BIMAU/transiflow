@@ -19,6 +19,7 @@ The package is fully agnostic of the computational backend, which allows for eas
    examples
    custom-bc
    custom-model
+   custom-backend
 
 .. _problem definitions:
 .. toctree::
