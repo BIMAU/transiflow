@@ -55,7 +55,7 @@ In climate modelling, this is a prominent issue, since the models are complex, a
 Therefore, ease of developing and using the parallel software is crucial.
 
 We achieve this by abstracting away the computational back-end, which allows the user to adjust a model to their own needs on their own machine (e.g., a laptop) in Python using the SciPy back-end.
-Then, once the model works, and assuming it is implemented on a Cartesian grid, the user can run a large-scale simulation on an HPC system using, e.g., the `Trilinos` back-end, which can use a combination of OpenMP, MPI, and potentially GPUs, without requiring any changes to the model code.
+Assuming it is implemented on a Cartesian grid, the user can then run a large-scale simulation on an HPC system using, e.g., the `Trilinos` back-end, which can use a combination of OpenMP, MPI, and potentially GPUs, without requiring any changes to the model code.
 The computationally expensive parts of the program are implemented by these libraries so one does not have to worry about the efficiency of the Python implementation of the model.
 Initial tests indicate that the overhead of using Python is small when compared to the expensive linear system solves that are handled by the external libraries that are implemented in e.g. C++.
 
