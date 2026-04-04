@@ -62,7 +62,7 @@ Initial tests indicate that the overhead of using Python is small when compared 
 ![Bifurcation diagram of the double-gyre wind-driven circulation configuration that is included in `TransiFlow`.
 The markers indicate pitchfork, Hopf and saddle-node bifurcations that were automatically detected by the software.
 Solid lines indicate stable steady states of the system; dashed lines indicate unstable steady states.
-A more extensive description of the bifurcation diagram and steps to reproduce it can be found in [@sapsis:13].
+A more extensive description of the bifurcation diagram and steps to reproduce it can be found in @sapsis:13.
 ](qg-bif.pdf){height=250pt}
 
 # Statement of need
@@ -84,8 +84,8 @@ It is, however, difficult to extend, the latest version of the software is not f
 
 # Past and ongoing research
 
-`TransiFlow` has been used to generate results in [@wubs:23]  and [@bernuzzi:24] and has been used in courses at Utrecht University and the University of Groningen (NL).
-Earlier versions have also been used to generate results in [@song:19] and [@baars:20].
+`TransiFlow` has been used to generate results in @wubs:23 and @bernuzzi:24 and has been used in courses at Utrecht University and the University of Groningen (NL).
+Earlier versions have also been used to generate results in @song:19 and @baars:20.
 The code is currently being used in various projects at Utrecht University, such as a project for coupling climate models and a project for studying transitions in the Atlantic Meridional Overturning Circulation.
 There is also ongoing work on adding 3D ocean and atmosphere discretizations to `TransiFlow`.
 `TransiFlow` is also used by several external researchers.
