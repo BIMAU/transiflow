@@ -128,7 +128,7 @@ class BoundaryConditions:
         # TODO: Do we need this?
         atom[:, :, self.nz-2, 2, 2, :, :, 2] = 0
 
-        self.frc[:, :, self.nz-1, 1] = 0
+        self.frc[:, :, self.nz-1, 2] = 0
 
     def no_slip_bottom(self, atom):
         '''Apply a no slip boundary condition at the bottom boundary. At this
@@ -218,7 +218,7 @@ class BoundaryConditions:
         # TODO: Do we need this?
         atom[:, :, self.nz-2, 2, 2, :, :, 2] = 0
 
-        self.frc[:, :, self.nz-1, 1] = 0
+        self.frc[:, :, self.nz-1, 2] = 0
 
     def free_slip_bottom(self, atom):
         '''Apply a free slip boundary condition at the south boundary. At this
