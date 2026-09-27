@@ -14,20 +14,22 @@ def test_solve(nx=4):
 
     n = dof * nx * ny * nz
 
-    x = numpy.random.random(n)
+    for shape in (n, (n, 1)):
+        x = numpy.random.random(shape)
 
-    x0 = numpy.zeros(n)
-    A = interface.jacobian(x0)
+        x0 = numpy.zeros(n)
+        A = interface.jacobian(x0)
 
-    b = A @ x
+        b = A @ x
 
-    y = interface.solve(A, b)
+        y = interface.solve(A, b)
 
-    assert numpy.linalg.norm(y) > 0
+        assert y.shape == b.shape
+        assert numpy.linalg.norm(y) > 0
 
-    y[dim::dof] += x[dim]
-    assert numpy.linalg.norm(y) > 0
-    assert numpy.linalg.norm(y - x) < 1e-11
+        y[dim::dof] += x[dim]
+        assert numpy.linalg.norm(y) > 0
+        assert numpy.linalg.norm(y - x) < 1e-11
 
 def test_iterative_solve(nx=4):
     dim = 3
@@ -41,29 +43,32 @@ def test_iterative_solve(nx=4):
 
     n = dof * nx * ny * nz
 
-    x = numpy.random.random(n)
+    for shape in (n, (n, 1)):
+        x = numpy.random.random(shape)
+        print(x.shape)
 
-    x0 = numpy.zeros(n)
-    A = interface.jacobian(x0)
+        x0 = numpy.zeros(n)
+        A = interface.jacobian(x0)
 
-    b = A @ x
+        b = A @ x
 
-    y = interface.solve(A, b)
+        y = interface.solve(A, b)
 
-    print(y)
-    print(x)
+        print(y)
+        print(x)
 
-    assert numpy.linalg.norm(b) > 0
-    assert numpy.linalg.norm(y) > 0
+        assert y.shape == b.shape
+        assert numpy.linalg.norm(b) > 0
+        assert numpy.linalg.norm(y) > 0
 
-    tol = parameters['Iterative Solver']['Convergence Tolerance'] * numpy.linalg.norm(b) * 10
+        tol = parameters['Iterative Solver']['Convergence Tolerance'] * numpy.linalg.norm(b) * 10
 
-    y[dim::dof] += x[dim]
-    assert numpy.linalg.norm(y) > 0
-    assert numpy.linalg.norm(y - x) > tol / 10 # The pressure is inaccurate
-    assert numpy.linalg.norm(y[0::dof] - x[0::dof]) < tol
-    assert numpy.linalg.norm(y[1::dof] - x[1::dof]) < tol
-    assert numpy.linalg.norm(y[2::dof] - x[2::dof]) < tol
+        y[dim::dof] += x[dim]
+        assert numpy.linalg.norm(y) > 0
+        assert numpy.linalg.norm(y - x) > tol / 10 # The pressure is inaccurate
+        assert numpy.linalg.norm(y[0::dof] - x[0::dof]) < tol
+        assert numpy.linalg.norm(y[1::dof] - x[1::dof]) < tol
+        assert numpy.linalg.norm(y[2::dof] - x[2::dof]) < tol
 
 def test_bordered_matrix(nx=4):
     dim = 3

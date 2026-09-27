@@ -290,6 +290,8 @@ class Interface(BaseInterface):
         if info != 0:
             Exception('GMRES did not converge')
 
+        y = y.reshape(x.shape)
+
         if jac.bordered_lu:
             border_size = 1
             if hasattr(rhs2, 'shape') and len(rhs2.shape) > 0:
