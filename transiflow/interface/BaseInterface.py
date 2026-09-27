@@ -1,5 +1,6 @@
 import json
 import numpy
+import time
 
 from transiflow.utils import norm
 
@@ -69,7 +70,8 @@ class BaseInterface:
 
     def _debug_print(self, *args):
         if self.parameters.get('Verbose', False):
-            print('Debug:', *args, flush=True)
+            t = time.strftime('%H:%M:%S')
+            print(f'Debug: {t}:', *args, flush=True)
 
     def _debug_print_residual(self, string, jac, x, rhs):
         if self.parameters.get('Verbose', False):
