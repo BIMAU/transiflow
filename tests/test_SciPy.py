@@ -1,9 +1,11 @@
 import numpy
+import pytest
 
 from transiflow.interface.SciPy import Interface
 
 
-def test_solve(nx=4):
+@pytest.mark.parametrize("dtype", [float, complex])
+def test_solve(dtype, nx=4):
     dim = 3
     dof = 4
     ny = nx
@@ -15,7 +17,7 @@ def test_solve(nx=4):
     n = dof * nx * ny * nz
 
     for shape in (n, (n, 1)):
-        x = numpy.random.random(shape)
+        x = numpy.random.random(shape).astype(dtype)
 
         x0 = numpy.zeros(n)
         A = interface.jacobian(x0)
@@ -31,7 +33,8 @@ def test_solve(nx=4):
         assert numpy.linalg.norm(y) > 0
         assert numpy.linalg.norm(y - x) < 1e-11
 
-def test_iterative_solve(nx=4):
+@pytest.mark.parametrize("dtype", [float, complex])
+def test_iterative_solve(dtype, nx=4):
     dim = 3
     dof = 4
     ny = nx
@@ -44,7 +47,7 @@ def test_iterative_solve(nx=4):
     n = dof * nx * ny * nz
 
     for shape in (n, (n, 1)):
-        x = numpy.random.random(shape)
+        x = numpy.random.random(shape).astype(dtype)
         print(x.shape)
 
         x0 = numpy.zeros(n)
