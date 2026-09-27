@@ -74,7 +74,7 @@ class BaseInterface:
     def _debug_print_residual(self, string, jac, x, rhs):
         if self.parameters.get('Verbose', False):
             r = norm(jac @ x - rhs)
-            self.debug_print(string, '{}'.format(r))
+            self._debug_print(string, f'{r}')
 
     def vector(self):
         '''Return a zero-initialized state vector suitable for the
