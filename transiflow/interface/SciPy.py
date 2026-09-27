@@ -31,7 +31,6 @@ class Interface(BaseInterface):
 
         # Solver caching
         self.border_scaling = 1e-3
-        self._lu = None
         self._prec = None
 
     def vector(self):
@@ -137,7 +136,6 @@ class Interface(BaseInterface):
         if V is None and hasattr(jac, 'lu') and jac.lu is not None and not jac.bordered_lu:
             return
 
-        self._lu = None
         self._prec = None
         jac.lu = None
 
@@ -152,9 +150,8 @@ class Interface(BaseInterface):
         jac.bordered_lu = V is not None
 
         # Cache the factorization for use in the iterative solver
-        self._lu = jac.lu
         self._prec = linalg.LinearOperator(jac.shape,
-                                           matvec=self._lu.solve,
+                                           matvec=lambda x: self._lu_solve(jac, x),
                                            dtype=jac.dtype)
 
         self._debug_print(
@@ -170,7 +167,6 @@ class Interface(BaseInterface):
         if V is None and hasattr(jac, 'lu') and jac.lu is not None and not jac.bordered_lu:
             return
 
-        self._lu = None
         self._prec = None
         jac.lu = None
 
@@ -184,9 +180,8 @@ class Interface(BaseInterface):
         jac.bordered_lu = A.shape != jac.shape
 
         # Cache the factorization for use in the iterative solver
-        self._lu = jac.lu
         self._prec = linalg.LinearOperator(A.shape,
-                                           matvec=self._lu.solve,
+                                           matvec=lambda x: self._lu_solve(jac, x),
                                            dtype=A.dtype)
 
         self._debug_print('Done computing the sparse ILU factorization of the Jacobian matrix')
