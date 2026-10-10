@@ -220,7 +220,7 @@ def test_continuation_rayleigh_benard(backend, nx=8):
                   'Bordered Solver': True}
 
     interface = Interface(parameters, nx, ny, backend=backend)
-    continuation = Continuation(interface)
+    continuation = Continuation(interface, destination_tolerance=1e-5)
 
     x0 = interface.vector()
     x0 = continuation.newton(x0)
